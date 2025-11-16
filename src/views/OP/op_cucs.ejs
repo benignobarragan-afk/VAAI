@@ -27,8 +27,8 @@ const llNombramiento = lcDerecho.indexOf(",OP_NOMBRA,") > 0
 	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 	<link rel="stylesheet" href="/style.css" type="text/css" media="screen" />
 
-	<link rel="stylesheet" type="text/css" href="/skins/web/dhtmlx.css" />
 	<link rel="stylesheet" type="text/css" href="/skins/terrace/dhtmlx.css" />
+<!--	<link rel="stylesheet" type="text/css" href="/skins/terrace/dhtmlx.css" />		-->
 	<link rel="stylesheet" type="text/css" href="/webix/codebase/webix.css" />
 <!--
 	<link rel="stylesheet" type="text/css" href="/webix/codebase/skins/material.css" />
@@ -533,6 +533,7 @@ const llNombramiento = lcDerecho.indexOf(",OP_NOMBRA,") > 0
 		<%// IF llDere_ofic %>
 		myRibbon = myLayout.cells("a").attachRibbon(data);
 		myRibbon.setSkin('dhx_terrace');
+		//myRibbon.setSkin('dhx_dark');
 
 		myRibbon.attachEvent("onClick", function (id) {
 			if (id == 1) { myTabbar.tabs("a1").attachURL("/op/op_reof0"); }
