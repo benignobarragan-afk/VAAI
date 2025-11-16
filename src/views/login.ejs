@@ -1,0 +1,95 @@
+
+<script src="/constancias/webix/codebase/webix.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+
+
+
+<head>
+	<title></title>
+	<link rel="stylesheet" href="/login.css">
+</head>	
+<div class="wrapper fadeInDown">
+  <div id="formContent">
+    <!-- Tabs Titles -->
+    <h2 class="active"> SICAI </h2>
+    <h2 class="inactive underlineHover"> Ingresa </h2>
+
+    <!-- Icon -->
+    <div class="fadeIn first">
+      <img src="/imagenes/login.png" id="icon" alt="Constancia" style="width: 100px; height: auto; text-align: center;" />
+    </div>
+
+    <!-- Login Form -->
+    <form id="loginForm", name="loginForm">
+      <input type="text" id="username" name="username" class="fadeIn second" placeholder="Usuario">
+      <input type="password" id="password" name="password" class="fadeIn third" placeholder="Contraseña">
+      <input type="submit" class="fadeIn fourth" value="Iniciar sesi&oacute;n" onclick="">
+      <p id="mensajeError"></p>
+    </form>
+
+    <!-- Remind Passowrd -->
+    <div id="formFooter">
+      <a class="underlineHover" href="#">Sistema Integral para el Control y Auditoría Interna</a>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  document.getElementById('loginForm').addEventListener('submit', async function(event) {
+    // Previene el envío predeterminado del formulario
+    event.preventDefault(); 
+    
+    // Obtiene los datos del formulario
+    const form = event.target;
+    const formData = new FormData(form);
+
+    lcUser = document.getElementById('username').value
+    lcPassword = document.getElementById('password').value
+
+    if (lcUser.trim() == '') {
+      //alert('Indique el usuario');
+      Swal.fire("Indique el usuario");
+      return false;
+    }
+
+    if (lcPassword.trim() == '') {
+      //alert('Indique la Contrase�a');
+      Swal.fire("Indique la contrase&ntilde;a");
+      return false;
+    }
+
+    // Convierte los datos del formulario a un objeto JSON simple
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+        const response = await fetch('/api/auth/signin', { // <-- Asegúrate de que esta URL sea correcta
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json' // Indica que el cuerpo es JSON
+            },
+            body: JSON.stringify(data) // Envía los datos
+        });
+
+        const resultado = await response.json();
+
+        if (response.ok) {
+            // Éxito: Guarda el token y redirige al usuario
+            localStorage.setItem('x-access-token', resultado.token);
+            window.location.href = '/intro'; // Redirige a la página principal
+        } else {
+            // Error: Muestra el mensaje de error de la API
+            document.getElementById('mensajeError').textContent = resultado.mensaje || 'Credenciales inválidas.';
+            Swal.fire({
+              title: "Error",
+              text: resultado.mensaje,
+              icon: "error"
+            });
+        }
+
+    } catch (error) {
+        document.getElementById('mensajeError').textContent = 'Error de conexión con el servidor.';
+        console.error('Error:', error);
+    }
+});
+</script>

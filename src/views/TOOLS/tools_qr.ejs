@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>Intranet </title>
+  <link rel="stylesheet" href="/style.css" type="text/css" media="screen" />
+  <link rel="icon" href="/imagenes/ico_udg.gif" type="image/gif">
+
+  <link rel="stylesheet" type="text/css" href="/webix/codebase/webix.css" />
+  <link rel="stylesheet" href="https://cdn.materialdesignicons.com/2.7.94/css/materialdesignicons.css?v=6.3.5"
+    type="text/css" charset="utf-8">
+
+  <script src="/webix/codebase/webix.js"></script>
+
+  <style>
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0px;
+      padding: 0px;
+      overflow: hidden;
+    }
+
+    .pendiente{
+      width:35px;
+      height:35px;
+      border-radius: 15px;
+      background-color: orange;
+      color:white !important;
+      vertical-align: top;
+      padding:3px;
+    }
+  </style>
+
+</head>
+
+<body">
+  <form id="form1" name="form1" method="post" action="">
+    <div id="principal" style="position: relative; border: #B5CDE4 1px solid;"></div>
+    <script>
+    webix.ui({    
+        view:"form", id:"formQR", name:"formQR", rows: [
+            {
+            cols:[
+            { 
+            view: "uploader", value: "Seleeciona un imagen con QR", accept:"image/png, image/gif, image/jpg", width:240, 
+            name:"filePDF", id:"filePDF", 
+            link:"list1",  upload:"/api/tools/tools_QRx",
+                on:{
+                        onUploadComplete:(response)=>{
+
+                        //console.log(response);
+                        //console.log(response.message);
+                        //console.log(response.url)
+                        $$("formQR").enable();
+                        $$("textoPDF").setValue(response.message);
+                        if(!!response.url)
+                        {
+                            $$("validador").load(response.url);
+                        }
+                    },
+                    onBeforeFileAdd: function (item) {
+                      //$$("formPDF").showProgress();
+                      
+                      $$("formQR").disable(); 
+                      $$("textoPDF").setValue("Subiendo y procesando archivo...");
+                      webix.message({ type:"info", text:"Subiendo y procesando archivo...", id:"loadingMsg" });
+    
+                      return true;
+                    },
+                }
+            },
+            {
+            view:"list",  id:"list1", type:"uploader",
+            autoheight:true, borderless:true	
+            },
+            { view:"textarea", id:"textoPDF", name:"textoPDF", labelPosition:"top", label:"Texto recuperado"}]},
+            {view : 'iframe', name: 'validador', id: 'validador',  src : 'about:blank'}
+        ]
+    });
+
+
+    </script>
+  </form>
+  </body>
+
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+		<meta http-equiv="Content-Type" content="text/html" charset="iso-8859-1">
+		<link rel="stylesheet" href="/style.css" type="text/css" media="screen" />
+		<link rel="stylesheet" type="text/css" href="/webix/codebase/webix.css" />
+		<link rel="stylesheet" href="https://cdn.materialdesignicons.com/2.7.94/css/materialdesignicons.css?v=6.0.7"
+				type="text/css" charset="utf-8">
+		<script src="/webix/codebase/webix.js"></script>
+		<script src="/webix/codebase/locale.js"></script>
+		<script src="/js/funciones_webix.js"></script>
+
+		<style type="text/css">
+				.glosario {
+						background-color: red;
+						font-weight: bold;
+				}
+
+				.uno {
+						background-color: #f2efa1;
+						font-weight: bold;
+						border: #cccccc solid 1px;
+				}
+
+				.dos {
+						background-color: #c0e1c3;
+						font-weight: bold;
+						border: #cccccc solid 1px;
+				}
+
+				.nueve {
+						background-color: #e6a5ad;
+						font-weight: bold;
+						border: #cccccc solid 1px;
+				}
+		</style>
+</head>
+
+<body>
+		<script>
+			let today = new Date()
+				var xx = 0;
+				var bus = undefined;
+
+				var w1, loInter,
+						lnVentana = 0,
+						fisico = false,
+						auto = false,
+						nuev_capt = false,
+						txtUlti_regi = 0,
+						lnlugarid = null;
+
+				var options = [
+						{ id: "todas", value: "Ver todas" },
+                        <% for (let i = 0; i < rows.length; i++) { %>
+                        { id: "<%=rows[i].id_dep%>", value: "(<%=rows[i].cve%>) <%=rows[i].corto%>"},
+                        <% } %>
+
+				];
+
+				var option = [
+						<% //  FOR xx = YEAR(DATE()) TO 2019 STEP - 1 %>
+						{ id: "<% // response.write(xx)%>", value: "<% // response.write(xx)%>" },
+						<% //  ENDFOR %>
+				];
+
+				var grida2 = [{
+						id: "grida2", responsive: "grida2", view: "datatable", resizeRow: true,
+						select: "row", resizeColumn: true, tooltip: true, hover: "myhover", footer: true,
+						columns: [
+								{ id: "rank", header: "", css: "rank", width: 50, footer: { colspan: 2, content: "rowCount", css: "footer" } },
+								{ id: "oficio", header: ["Oficio", { content: "textFilter" }], sort: "string", width: 100 },
+								{ id: "fecha_asig", header: ["Fecha asig.", { content: "textFilter" }], sort: "string", width: 160, css: { 'text-align': 'left' } },
+								{ id: "area_remi", header: ["&Aacute;rea requirente", { content: "textFilter" }], sort: "string", width: 300 },
+								{ id: "nomb_remi", header: ["Solicit&oacute;", { content: "textFilter" }], sort: "string", width: 300 },
+								{ id: "fech_ofic", header: ["Fecha ofic.", { content: "textFilter" }], sort: "string", width: 120, css: { 'text-align': 'left' } },
+								{ id: "asunto", header: ["Asunto", { content: "textFilter" }], sort: "string", width: 300, css: { 'text-align': 'left' } },
+								{ id: "nota", header: ["Nota", { content: "textFilter" }], sort: "string", width: 300, css: { 'text-align': 'left' } },
+								{ id: "nomb_dest", header: ["Dirigido", { content: "textFilter" }], sort: "date", width: 300 },
+								{ id: "estado", header: ["Estado", { content: "selectFilter" }], sort: "string", width: 120, css: { 'text-align': 'left' }, },
+								{ id: "realizo", header: ["Realiz&oacute;", { content: "textFilter" }], sort: "string", width: 300 },
+						],
+						on: {
+								onBeforeLoad: function () { this.showOverlay("Cargando..."); },
+								onAfterLoad: function () {
+										this.hideOverlay();
+										this.adjustRowHeight();
+										this.render();
+								},
+								onItemDblClick: function(id) {
+										var item = this.getItem(id.row);
+										window.parent.deta_ingr(item.id_oficio,1);
+								}
+						},
+				}]
+
+				var menus = [
+						{
+								rows: [
+										{
+												id: "a1", responsive: "a1", view: "toolbar", id: "myToolbar", borderless: true,
+												cols: [
+														{ view: "button", type: "icon", icon: "mdi mdi-sync", id: "recargar", width: 40, click: cargar},
+														{ view: "button", id: "print", type: "icon", icon: "mdi mdi-printer", width: 40, click: function () { webix.print($$("grida2")); } },
+														{
+																view: "combo", id: "depe", value: "todas", width: 160,
+																options: {
+																		fitMaster: false,
+																		width: 400,
+																		filter: function (item, value) {
+																				if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+																						return true;
+																				return false;
+																		},
+																		body: {
+																				keyPressTimeout: 300,
+																				template: "#value#",
+																				data: options
+																		}
+																},
+																on: {
+																		onChange: cargar
+																}
+
+														},
+
+														{
+																view: "datepicker", stringResult: true, name: "inicio", id: "inicio", width: 150, format: "%d/%m/%Y", value:new Date(today.getFullYear(), today.getMonth()-1, 1), label:"Inicio", labelPosition:"top",
+																on:{
+																		onChange:()=>{
+																				cargar()
+																		}
+																}
+														},
+														{
+																view: "datepicker", stringResult: true, name: "fin", id: "fin", width: 150, format: "%d/%m/%Y",   value:today, label:"Fin",  labelPosition:"top",
+																on:{
+																		onChange:()=>{
+																				cargar()
+																		}
+																}
+														},
+
+
+														// { 
+														//     view: "select", id: "anio", value: "<% // response.write(YEAR(DATE()))%>", width: 100, options: option,
+														//     on: {
+														//         onChange: cargar
+														//     }
+														// },
+													 // { id: "most", label: "Mostrar todos", labelWidth: 110, view: "checkbox", value: 1, uncheckValue: "false", checkValue: "true" },
+												]
+										}]
+						}];
+
+				webix.ui({
+						rows: [
+								{
+										cols: [
+												{ view: "toolbar", responsive: true, elements: menus },
+										]
+								},
+								{
+										id: "a3", responsive: "a3",
+										cols: [
+												{ view: "form", id: "gridas2", scroll: false, elements: grida2, responsive: true }
+										]
+								}
+						]
+				});
+
+				webix.ready(function () {
+						cargar();
+
+				})
+
+				function cargar() {
+						$$("grida2").clearAll();
+						$$("grida2").load("/csg_sServx2.fwx?lnDepe=" + $$("depe").getValue() + "&inicio=" + $$("inicio").getValue() + "&fin=" + $$("fin").getValue());
+
+				}
+
+		</script>
+</body>
+
+</html>

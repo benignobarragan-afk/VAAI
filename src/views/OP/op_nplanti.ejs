@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="/style.css" type="text/css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="/webix/codebase/webix.css" />
+    <link rel="stylesheet" href="https://cdn.materialdesignicons.com/2.7.94/css/materialdesignicons.css?v=6.0.7"
+        type="text/css" charset="utf-8">
+    <script src="/codebase/dhtmlx.js"></script>
+    <script src="/webix/codebase/webix.js">
+        webix.setLocale("es-ES")
+    </script>
+    <script src="/webix/codebase/locale.js"></script>
+    <%
+    /*
+LOCAL llError, lcCentro, lcPie, llAplicar, lnOficio, lcOficio, lcPrevio, lnMens_usua
+LOCAL llNBusca, lcCVE, lcIniciales, lnIden, lcRuta_tabl
+LOCAL lcDiri_nomb, lnDiri_codi, lcDiri_carg, lcAten_nomb, lnAten_codi, lcAten_carg, llNBusca2, lnCant_ofic
+
+SET PROCEDURE TO mylib
+SET DATE DMY
+
+IF !Derechos("OFICIO")
+    lcRuta = ALLTRIM(config.ruta)
+    SET PROCEDURE TO
+    CLOSE TABLES ALL
+    CLOSE DATABASES ALL
+    response.redirect("/"+lcRuta+"/sin_derechos.fwx")
+ENDIF
+  
+lnID = VAL(Request.QueryString("lnID"))
+
+
+lcSQL = "SELECT id_cent, cve, depen, clave FROM GEN_TIPO_OFIC WHERE cve in (SELECT DISTINCT cve "
+lcSQL = lcSQL + "FROM GEN_DERE_OFIC WHERE user_id = ?pcUser) ORDER BY 3"
+
+lcQbase_cgce = config.qbase_cgce
+
+lnCone_cgce = &lcQbase_cgce
+IF SQLEXEC(lnCone_cgce, lcSQL, "cSoli") != 1
+	a=Aerror(Mat)
+	?SQLDISCONNECT(0)
+	Response.write(Mat(2) + " Linea: 67")
+	return
+ENDIF
+
+IF SQLEXEC(lnCone_cgce, "SELECT * FROM gen_ofic_plan WHERE id_plantilla_pk = ?lnID", "cGrupo") != 1
+	a=Aerror(Mat)
+	?SQLDISCONNECT(0)
+	Response.write(Mat(2) + " Linea: 67")
+	return
+ENDIF
+
+SQLDISCONNECT(0)
+
+    */
+%>
+
+
+    <style type="text/css">
+        .dhtmlx-error {
+            font-weight: bold;
+            color: white;
+            background-color: #770000;
+        }
+
+        .webix_dtable .webix_ss_header {
+            font-weight: bold;
+        }
+
+        .edited {
+            font-weight: bold;
+        }
+
+        .footer {
+            font-weight: bold;
+
+        }
+    </style>
+</head>
+<body onLoad="doOnLoad();">
+    <script>
+        var w1;
+        var mygrid;
+        var section = [
+            {
+                rows: [
+                    {
+                        view: "combo", id: "cmbOficio", value: <%=rows2[0].id_cent%>,
+                        width: 300,
+                        options: {
+                            fitMaster: false,
+                            width: 300,
+                            body: {
+                                data: [
+                                    <%
+                                    /*
+                                    SELECT cSoli
+                                    GO TOP
+                                    SCAN
+                                    */
+                                    %>
+                                    //{ id: <% //  Response.Write(cSoli.id_cent) %>, value: "<% // Response.Write(ALLTRIM(cSoli.depen))%>" },
+                                    <% //  ENDSCAN %>
+                                    <%for (var i = 0; i < rows.length; i++) {%>
+                                    { id: "<%= rows[i].id_cent%>", value: "(<%=rows[i].cve%>) <%=rows[i].depen%>" },
+                                    <%}%>
+
+                                ], 
+                            }
+                        }
+                    },
+                    {
+                        view: "text", id: "nombre", name: "nombre", labelPosition: "top",
+                        value: "<%=rows2[0].nombre%>",
+                        label: "Nombre plantilla", width: 600, required: true, invalidMessage: "El nombre no puede ir vacio",
+                        attributes: { maxlength: 50 }
+                    },
+                    { maxHeight: 40, template: "" },
+                    {
+                        view: "textarea", id: "descrip", name: "descrip", labelPosition: "top",
+                        value: `<%=rows2[0].descrip%>`,
+                        label: "Concepto", required: true, invalidMessage: "La plantilla no puede ir vacio"
+                    },
+                    {
+                        view: "button", label: "Guardar", align: "right", width: 170, click: guardar
+                        
+                    }
+
+                ]
+            },
+        ]
+
+        function doOnLoad() {
+
+
+            webix.ui.datafilter.rowCount = webix.extend({
+                refresh: function (master, node, value) {
+                    node.firstChild.innerHTML = "Total: " + master.count();
+                }
+            }, webix.ui.datafilter.summColumn)
+
+
+            var ui = webix.ui({
+                view: "scrollview",
+                id: "verses",
+                scroll: "y",
+                body: {
+                    margin: 30, rows: [
+                        { view: "form", elements: section },
+
+                    ]
+                }
+            });
+        }
+
+       
+        function guardar() {
+            if (!$$("nombre").validate() || !$$("descrip").validate()) {
+                webix.message({ type: "debug", text: "Los campos con * son obligatorios", expire: 2500 })
+                return false;
+            }
+
+            webix.ajax()
+                .post("/api/op/op_nplantix",
+                    { id: <%=(id === undefined) ? 0 : id%>, nombre: $$("nombre").getValue(), descrip: $$("descrip").getValue(), id_cent: $$("cmbOficio").getValue()})
+                .then(function (res) {
+                    if (res.json().error)
+                    {
+                        Swal.fire({
+                        title: res.json().message,
+                        icon: "error",
+                        draggable: true,
+                        timer: 1500
+                        });
+                        //webix.alert({ text: res.json().message })
+                        return false;
+                    }
+                    else 
+                    {
+                        Swal.fire({
+                        title: "Registro agregado",
+                        icon: "success",
+                        draggable: true,
+                        timer: 1500
+                        });
+                        
+                        //webix.alert({ text: res.json().message });
+
+                        var id = window.parent.$$("tbView").getValue();
+                        if (!id) return;
+                        window.parent.$$("tbView").removeView(id);
+                    }
+
+                });
+        }
+
+    </script>
+</body>
+
+
+</html>

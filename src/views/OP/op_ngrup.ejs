@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title></title>
+	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+	<link rel="stylesheet" href="/style.css" type="text/css" media="screen" />
+	<link rel="stylesheet" type="text/css" href="/webix/codebase/webix.css" />
+	<link rel="stylesheet" href="https://cdn.materialdesignicons.com/2.7.94/css/materialdesignicons.css?v=6.0.7"
+			type="text/css" charset="utf-8">
+	<script src="/codebase/dhtmlx.js"></script>
+	<script src="/webix/codebase/webix.js">
+			webix.setLocale("es-ES")
+	</script>
+	<script src="/webix/codebase/locale.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.0.0/animate.min.css" />
+	<%
+    /*
+	LOCAL llError, lcCentro, lcPie, llAplicar, lnOficio, lcOficio, lcPrevio, lnMens_usua
+	LOCAL llNBusca, lcCVE, lcIniciales, lnIden, lcRuta_tabl
+	LOCAL lcDiri_nomb, lnDiri_codi, lcDiri_carg, lcAten_nomb, lnAten_codi, lcAten_carg, llNBusca2, lnCant_ofic
+
+	SET PROCEDURE TO mylib
+	SET DATE DMY
+
+	IF !Derechos("OFICIO")
+			lcRuta = ALLTRIM(config.ruta)
+			SET PROCEDURE TO
+			CLOSE TABLES ALL
+			CLOSE DATABASES ALL
+			response.redirect("/"+lcRuta+"/sin_derechos.fwx")
+	ENDIF
+		
+	lnID = VAL(Request.QueryString("lnID"))
+
+
+	lcSQL = "SELECT id_cent, cve, depen, clave FROM GEN_TIPO_OFIC WHERE cve in (SELECT DISTINCT cve "
+	lcSQL = lcSQL + "FROM GEN_DERE_OFIC WHERE user_id = ?pcUser) ORDER BY 3"
+
+	lcQbase_cgce = config.qbase_cgce
+
+	lnCone_cgce = &lcQbase_cgce
+	IF SQLEXEC(lnCone_cgce, lcSQL, "cSoli") != 1
+		a=Aerror(Mat)
+		?SQLDISCONNECT(0)
+		Response.write(Mat(2) + " Linea: 47")
+		return
+	ENDIF
+
+	IF SQLEXEC(lnCone_cgce, "SELECT * FROM gen_op_grupo WHERE id_grupo = ?lnID", "cGrupo") != 1
+		a=Aerror(Mat)
+		?SQLDISCONNECT(0)
+		Response.write(Mat(2) + " Linea: 54")
+		return
+	ENDIF
+
+	IF SQLEXEC(lnCone_cgce, "SELECT * FROM opc_op_config", "op_config") != 1
+		a=Aerror(Mat)
+		SQLDISCONNECT(0)
+		sdsd
+	ENDIF
+
+	SQLDISCONNECT(0)
+    */
+	%>
+
+
+	<style type="text/css">
+		.dhtmlx-error {
+				font-weight: bold;
+				color: white;
+				background-color: #770000;
+		}
+
+		.webix_dtable .webix_ss_header {
+				font-weight: bold;
+		}
+
+		.edited {
+				font-weight: bold;
+		}
+
+		.footer {
+				font-weight: bold;
+
+		}
+	</style>
+
+	<script>
+		webix.ui.datafilter.rowCount = webix.extend({
+			refresh: function (master, node, value) {
+					node.firstChild.innerHTML = "Total: " + master.count();
+			}
+		}, webix.ui.datafilter.summColumn)
+
+
+		var section = [
+		{
+			rows: [
+			{
+				view: "combo", id: "cmbOficio", value: 0<% //  Response.Write(IIF(!EMPTY(cGrupo.id_cent), cGrupo.id_cent, cSoli.id_cent)) %>, width: 300,
+				options: {
+					fitMaster: false,width: 300,
+					body: {
+						data: [
+						<%
+                        /*
+						SELECT cSoli
+						GO TOP
+						SCAN
+						*/
+                        %>
+						//{ id: <% //  Response.Write(cSoli.id_cent) %>, value: "<% // Response.Write(ALLTRIM(cSoli.depen))%>" },
+						<% //  ENDSCAN %>
+						]
+					}
+				}
+			},
+			{
+				view: "text", id: "nomb_grup", name: "nomb_grup", labelPosition: "top", labelAlign: "left",
+				value: "<% //  Response.Write(IIF(!EMPTY(cGrupo.nombre_grupo), ALLTRIM(cGrupo.nombre_grupo), '')) %>",
+				label: "Nombre del grupo", width: 600, required: true, invalidMessage: "El nombre no puede ir vacio"
+			},
+			{ maxHeight: 40, template: "" },
+			{
+				view: "radio", id: "cmbTipo_depe", name: "cmbTipo_depe", value: 1, inputWidth: 1000, 
+				options: [
+					{ id: 1, value: "<% // Response.write(op_config.nobr_inst)%>" },
+					{ id: 2, value: "Ajena <% // Response.write(op_config.nobr_inst)%>" },
+				],
+				on: {
+					onChange: function (id) {
+						if (id == 1) {
+							$$("cmbServicio").show();
+							$$("cmbAjena").hide();
+						} else {
+							$$("cmbServicio").hide();
+							$$("cmbAjena").show();
+						}
+
+					}
+				}
+			},
+			{
+				cols: [
+				{
+					view: "combo", id: "cmbServicio", name: "cmbServicio", labelPosition: "top", labelAlign: "left", label: "Servicio", width: 300, inputWidth: 300,
+					options: {
+						// view: "suggest",
+						filter: function (item, value) {
+							if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+								return true;
+							return false;
+						},
+						keyPressTimeout: 1000,
+						body: {
+							fitMaster: false, width: 550, template: "#value#", dataFeed: "/api/gen/cmb_depew"
+						}
+					},
+				},
+				{
+					view: "text", id: "cmbAjena", name: "cmbAjena", labelPosition: "top", labelAlign: "left",
+					label: "Servicio", width: 300, hidden: true, editable: true,
+					suggest: {
+						id:"suggestAjena",
+						fitMaster: false,
+						keyPressTimeout: 1000,
+						width: 550,
+						filter: function (item, value) {
+							if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+								return true;
+							return false;
+						},
+						body: {
+							template: "#value#",
+							dataFeed: "/<% // Response.Write(config.ruta)%>/cmb_depew.fwx?lnTipo=2"
+						},
+						on:{
+							"onValueSuggest": function (obj) {
+								$$("cmbAjena").setValue(obj.value.substr(obj.value.indexOf(')') + 1).trim())
+								$$('id_ajena').setValue(obj.id)
+								dirigido(obj.id, 2);
+							}
+						}
+					},
+					on: {
+						"onKeyPress": function(code, e){
+							$$("id_ajena").setValue()
+						}
+					}
+				},
+				{
+					view:"text", hidden:true, id:"id_ajena", name:"id_ajena", readonly:true
+				},
+				{ maxWidth: 60 },
+				{
+					view: "text", id: "corr_ofic", name: "corr_ofic", labelPosition: "top", labelAlign: "left",
+					label: "Correo de oficial&iacute;a", width: 300, inputWidth: 300,
+				},
+				{
+					view: "select", label: "Tipo", id: "cmbTipo", value: 1, width: 100, labelPosition: "top", labelAlign: "left", options: [
+					{ id: 1, value: "Dirigido a" },
+					{ id: 2, value: "Con copia" },
+					{ id: 3, value: "Autoriza" },
+					{ id: 4, value: "Vo. Bo." },
+					{ id: 5, value: "Atenci&oacute;n a" },
+					]
+				},
+				{
+					view:"richselect", id:"precargado", name:"precargado", label:"Personas precargadas (No se guarda el valor)",	width: 300,	labelPosition:"top",	options:[], 
+					on:{
+						onChange:(id)=>{
+							if(!id)
+								return
+							let element =	$$("precargado").getList().getItem(id)
+							$$("cmbPers").setValue(element["value"].substring(0, element["value"].indexOf('(') > 0? element["value"].indexOf('('):element["value"].length));
+							$$("corr_ofic").setValue(element["corr_ofic"]);
+							$$("cargo").setValue(element["cargo"])
+							$$("copias").setValue(element["copias"])
+						}
+					}
+				}]
+			},
+			{
+				cols: [
+				{
+					view: "text", id: "cmbPers", name: "cmbPers", labelPosition: "top", labelAlign: "left", label: "Nombre", width: 300, inputWidth: 300,
+					suggest: {
+						keyPressTimeout: 1000,
+						body: {
+							dataFeed: "/<% // Response.Write(config.ruta)%>/cmb_persw.fwx?lnTipo=10"
+						}
+				}
+				},
+				{ maxWidth: 60 },
+				{
+					view: "text", id: "cargo", name: "cargo", labelPosition: "top", labelAlign: "left", label: "Cargo", width: 300, inputWidth: 300,
+				},
+				{
+					view: "text", id: "txtGrid", name: "txtGrid", hidden: true
+				},
+				{ maxWidth: 60 },
+				{
+					view: "text", id: "copias", name: "copias", labelPosition: "top", labelAlign: "left", readonly:true, disabled:true,
+					label: "Copias", width: 300, inputWidth: 300,
+				}
+				]
+			},
+			{
+				cols: [
+				{
+						view: "button",
+						type: "icon",
+						icon: "mdi mdi-sync",
+						align: "left",
+						label: "",
+						width: 40,
+						on: {
+								onItemClick: genera
+						}
+				},
+				{
+					view: "button", type: "icon", icon: "mdi mdi-plus", label: "Agregar al grupo", width: 170,
+					on: {
+						onItemClick: () => {
+							registro(1);
+						}
+					}
+				},
+				{
+					view: "button", type: "icon", icon: "mdi mdi-plus", label: "Eliminar del grupo", width: 170,
+					on: {
+						onItemClick: function () {
+							registro(2);
+						}
+					}
+				}
+			]
+			}
+		]
+		}
+	]
+
+
+		webix.ready(()=>{
+			webix.ui({
+				view: "scrollview",
+				id: "verses",
+				scroll: "y",
+				body: {
+					margin: 30, rows: [
+						{ view: "form", elements: section },
+						{
+							view: "datatable", id: "dtable", select: "row", editaction: "dblclick", rowCss: "#css#",
+							footer: true, scrollY: true, scrollX: true, resizeColumn: true, resizeRow: true, navigation: true,
+							editable: true, height: 300,
+							columns: [
+							{ id: "servicio", hidden: true },
+							{ id: "nomb_serv", header: ["Servicio", { content: "textFilter" }], width: 240, sort: "string", css: { 'text-align': 'left' } },
+							{ id: "nombre", editor: "popup", header: ["Nombre", { content: "textFilter" }], width: 180, sort: "string", css: { 'text-align': 'left' } },
+							{ id: "correo", editor: "popup", header: ["Correo oficial&iacute;a", { content: "textFilter" }], width: 180, sort: "string", css: { 'text-align': 'left' } },
+							{ id: "ocupacion", editor: "popup", header: ["Ocupaci�n", { content: "textFilter" }], width: 180, sort: "string", css: { 'text-align': 'left' } },
+							{
+								id: "tipo_depe", editor: "select", header: ["Origen serv.", { content: "selectFilter" }], width: 140,
+								options: [
+									{ id: 1, value: "HCG" },
+									{ id: 2, value: "Ajena HCG" }
+								]
+							},
+							{
+								id: "tipo", editor: "select", header: ["Tipo", { content: "selectFilter" }], width: 140,
+								options: [
+									{ id: 1, value: "Dirigido a" },
+									{ id: 2, value: "Con copia" },
+									{ id: 3, value: "Autoriza" },
+									{ id: 4, value: "Vo. Bo." },
+									{ id: 5, value: "Atenci&oacute;n a" },
+								]
+							},
+							{ id: "copias", header: ["Copias", { content: "textFilter" }], width: 210, sort: "string", css: { 'text-align': 'left' } },
+							],
+							on: {
+								onBeforeLoad: function () { this.showOverlay("Cargando..."); },
+								onAfterLoad: function () {
+									this.hideOverlay();
+									this.adjustRowHeight("nomb_serv", true);
+									this.render();
+								},
+							},
+						},
+						{
+							view: "button", label: "Guardar", align: "right", width: 170,
+							on: {onItemClick: guardar}
+						}
+					]
+				}
+			});
+
+			var listServicio = $$("cmbServicio").getPopup().getList();
+			listServicio.attachEvent("onAfterSelect", function (id) {
+				dirigido(id, 9)
+			});
+
+			<% //  IF !EMPTY(lnID) %>
+			genera();
+			<% //  ENDIF %>
+				
+
+		});
+
+		function genera() {
+			$$("dtable").clearAll();
+			$$("dtable").load('/<% // Response.Write(config.ruta)%>/op_ngrupx2.fwx?lnID=<% // Response.Write(lnID)%>')
+		}
+
+		function veri_corr(correo) {
+			var regex = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+			return regex.test(correo);
+		}
+
+		function registro(tipo) {
+			
+			if (tipo == 1) {
+				var lnTipo_cont = parseInt($$("cmbTipo").getValue());
+
+	
+				var lnDepe = (lnTipo_cont > 1 ? 0 : $$("cmbTipo_depe").getValue()); //si es diferente a dirigido as
+		
+				var lnServicio = (lnDepe == 1 ? $$("cmbServicio").getValue() : lnDepe == 2 ? $$("id_ajena").getValue() : 0);
+	
+				var lcText_depe = (lnDepe == 1 ? $$("cmbServicio").getText() : lnDepe == 2 ? $$("cmbAjena").getValue() : "");
+
+				if(lnDepe == 1 && !$$("cmbServicio").getValue()){
+					webix.message("Selecciona el servicio", "error", 3000)
+					return
+				}
+
+				if(lnDepe == 2 && !$$("cmbAjena").getValue() && !$$("id_ajena").getValue()){
+					webix.message("Selecciona el servicio", "error", 3000)
+					return
+				}
+
+				if(lnTipo_cont == 1 && (!$$("corr_ofic").getValue() || !$$("cmbPers").getValue() || !$$("cargo").getValue())){
+					webix.message("Debes de llenar los campos correo, nombre y cargo para continuar", "error", 3000)
+					return
+				}
+
+				// if (lnTipo_cont == 1 && ((lnDepe == 1 && $$("cmbServicio").getValue() == "") || (lnDepe == 2 && $$("cmbAjena").getValue() == "") || $$("corr_ofic").getValue() == "" || $$("cmbPers").getValue() == "" || $$("cargo").getValue() == "")) {
+				// 	webix.alert("Tienes que llenar todos los campos para poder agregar una persona de tipo 'Dirigido a'");
+				// 	return
+				// }
+
+				if ((lnTipo_cont == 2 || lnTipo_cont == 3 || lnTipo_cont == 4) && ($$("corr_ofic").getValue() == "" || $$("cmbPers").getValue() == "")) {
+					webix.message("Tienes que por lo menos el nombre y correo para los tipos de persona 'Con copia', 'Autoriza', 'Vo. Bo.'", "error", 3000);
+					return
+				}
+
+				if ((lnTipo_cont == 5) && ($$("cargo").getValue() == "" || $$("cmbPers").getValue() == "")) {
+					webix.message("El nombre y puesto deben ser llenados para el tipo 'Atenci&oacute;n a'", "error", 3000);
+					return
+				}
+
+				if (!veri_corr($$("corr_ofic").getValue())) {
+					webix.message("El correo tiene un formato invalido", "error", 3000);
+					return
+				}
+
+				$$("dtable").add({
+					servicio: lnServicio ,
+					nomb_serv: lcText_depe ,
+					correo: $$("corr_ofic").getValue(),
+					nombre: $$("cmbPers").getValue(),
+					ocupacion: $$("cargo").getValue(),
+					tipo: $$("cmbTipo").getValue(),
+					tipo_depe: $$("cmbTipo_depe").getValue(),
+					copias:$$("copias").getValue()
+				});
+
+				$$("cmbServicio").setValue();
+				$$("corr_ofic").setValue();
+				$$("cmbPers").setValue();
+				$$("cargo").setValue();
+			} else {
+				if ($$("dtable").getSelectedId() == undefined)
+					webix.message({ type: "debug", text: "Selecciona un registro para eliminar", expire: 2500 })
+				else
+					if (confirm("Estas seguro que deseas eliminar el registro?"))
+						$$("dtable").remove($$("dtable").getSelectedId());
+			}
+		}
+
+		
+		function dirigido(id, tipo_depe) {
+			var list = $$("precargado").getList(); 
+			list.clearAll()
+			$$("precargado").setValue();
+			$$("cmbPers").setValue();
+			$$("corr_ofic").setValue();
+			$$("cargo").setValue()
+			$$("copias").setValue()
+			
+			webix.ajax().post("/<% // Response.write(config.ruta)%>/op_noficx.fwx", {txtTipo:tipo_depe, centro:id, tipo_depe:tipo_depe}).then((res)=>{
+				res = res.json();
+				if(res.status){
+					if (tipo_depe == 9){
+						list.add({id:"0", value:""})
+						// list.parse(res.personas)
+						res.personas.forEach((element, index)=>{
+							list.add(element);
+							if(element["titular"] == 1 || res.personas.length == 1){
+								$$("precargado").setValue(element["id"])
+							}
+						})
+					}else{
+						$$("cmbPers").setValue(res.personas[0].nombre);
+						$$("corr_ofic").setValue(res.personas[0].corr_ofic);
+						$$("cargo").setValue(res.personas[0].cargo)
+					}
+				}
+			})
+			return 
+		}
+
+
+		function guardar() {
+			if (!$$("nomb_grup").validate()) {
+				webix.message({ type: "debug", text: "El nombre de grupo no puede ir vacio", expire: 2500 })
+				return false;
+			}
+
+			Swal.fire({
+				title: 'Atenci&oacute;n', text: "Seguro de guardar el grupo ingresado?", icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33',
+				confirmButtonText: 'Aceptar', cancelButtonText:'Cancelar',
+			}).then((result) => {
+				if(result.isConfirmed){
+					webix.ajax().post("/<% // Response.Write(config.ruta)%>/op_ngrupx.fwx",
+					{
+						id: 0<% //  Response.Write(lnID) %>, nombre_grupo: $$("nomb_grup").getValue(),
+						grupo: JSON.stringify($$("dtable").serialize()), id_cent: $$("cmbOficio").getValue()
+					})
+					.then((res)=>{
+						webix.alert({ text: res.json()[0].message });
+						var id = window.parent.$$("tbView").getValue();
+						if (!id) return;
+							window.parent.$$("tbView").removeView(id);
+
+					});
+				}
+			})
+
+					
+		}
+
+	</script>
+</head>
+
+<body>
+
+</body>
+
+
+</html>

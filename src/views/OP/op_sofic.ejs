@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title></title>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <link rel="stylesheet" href="/style.css" type="text/css" media="screen" />
+
+  <link rel="stylesheet" type="text/css" href="/webix_8.4.0/codebase/webix.css" />
+  <link rel="stylesheet" href="https://cdn.materialdesignicons.com/2.7.94/css/materialdesignicons.css?v=6.3.5"
+    type="text/css" charset="utf-8">
+
+  <script src="/webix_8.4.0/codebase/webix.js"></script>
+
+  <%
+  /*
+  LOCAL lcCVE, lnOfic, lcAnio, lcAnexo, lcStatus, llAplicar, ldFec_sta, lnStatus, llAqui, llModi
+  LOCAL lldere, lctram, lltram, llasig, lcRuta_tabl, llImagen
+
+  SET PROCEDURE TO mylib
+  SET DATE DMY
+  SET DELETE ON
+
+  lcCVE	= ALLTRIM(Request.QueryString("lcCVE"))
+  lnOfic	= VAL(Request.QueryString("lnOfic"))
+  lcAnio	= ALLTRIM(Request.QueryString("lnAnio"))
+  lnIden  = VAL(Request.QueryString("lnIden"))
+  lcParent = ALLTRIM(Request.QuerysTring("pd"))
+
+  lcQbase_cgce = config.qbase_cgce
+  lnCone_cgce = &lcQbase_cgce
+
+  IF SQLEXEC(lnCone_cgce, "SELECT IFNULL(nombra,0) as NOMBRA, cve FROM gen_oficio WHERE id_iden = ?lnIden AND cve = ?lcCVE AND idoficio = ?lnOfic", "cSeek") = -1
+    AERROR(laError)
+    SQLDISCONNECT(0)
+    Response.write(laError(2))
+    return 
+  ENDIF
+
+  IF RECCOUNT("cSeek") = 0
+    lcRuta = ALLTRIM(config.ruta)
+    SET PROCEDURE TO
+    CLOSE TABLES ALL
+    CLOSE DATABASES ALL
+    response.redirect("/"+lcRuta+"/sin_derechos.fwx")
+  ENDIF
+
+  SQLDISCONNECT(0)
+*/
+%>
+</head>
+<body>
+    <% // = // JSON.stringify(laQuery) %>
+  <form id="form1" name="form1" method="post" action="">
+    <div id="principal" style="position: relative; border: #B5CDE4 1px solid;"></div>
+    <script>
+      var cells = [
+        {
+          header: "<span class='webix_icon mdi mdi-file-find'></span>Detalle", body: {
+            view: "scrollview",
+            scroll: false,
+            body: {
+              rows: [
+                {
+                  view: "iframe", src: "/op/op_seofic?lcCVE=<%=laQuery.lcCVE%>&lnOfic=<%=laQuery.lnOfic%>&lnAnio=<%=laQuery.lnAnio%>&lnIden=<%=laQuery.lnIden%>&pd=<%=laQuery.pd%>",
+                  type: {
+                    height: 60
+                  },
+                  select: true,
+                }
+              ]
+            }
+          }
+        },
+        {
+          header: "<span class='webix_icon mdi mdi-file-document-outline'></span>Dirigido a.", body: {
+            view: "scrollview",
+            scroll: false,
+            body: {
+              rows: [
+                {
+                  //view: "iframe", src: "" //<% // Response.Write(config.ruta)%>/op_sdofic.fwx?lcCVE=<% // Response.Write(ALLTRIM(lcCVE))%>&lnOfic=<% // Response.Write(lnOfic)%>&lnAnio=<% // Response.Write(lcAnio)%>&lnIden=<% // Response.Write(lnIden)%>",
+                  view: "iframe", src: "/op/op_sdofic?lcCVE=<%=laQuery.lcCVE%>&lnOfic=<%=laQuery.lnOfic%>&lnAnio=<%=laQuery.lnAnio%>&lnIden=<%=laQuery.lnIden%>&pd=<%=laQuery.pd%>",
+
+                }
+              ]
+            }
+          }
+        },
+        <% // IF cSeek.nombra = 1 AND INLIST(cSeek.cve, 'SP', 'CA')%>
+        {
+          header: "<span class='webix_icon mdi mdi-account-details'></span>Nombramientos", body: {
+            view: "scrollview",
+            scroll: "y",
+            body: {
+              rows: [
+                {
+                  //view: "iframe", src: ""  //<% // Response.Write(config.ruta)%>/op_snofic.fwx?cve=<% // Response.Write(ALLTRIM(lcCVE))%>&oficio=<% // Response.Write(lnOfic)%>&anio=<% // Response.Write(lcAnio)%>&iden=<% // Response.Write(lnIden)%>",
+                  view: "iframe", src: "/op/op_snofic?lcCVE=<%=laQuery.lcCVE%>&lnOfic=<%=laQuery.lnOfic%>&lnAnio=<%=laQuery.lnAnio%>&lnIden=<%=laQuery.lnIden%>&pd=<%=laQuery.pd%>",
+                }
+              ]
+            }
+          }
+        }
+        <% // ENDIF%>
+          
+
+      ];
+
+      webix.ready(function () {
+        webix.ui({
+          rows: [
+
+            {
+              view: "tabview",
+              tabbar: {
+                tabMinWidth: 150,
+                tabMoreWidth: 80,
+                padding: 2,
+                moreTemplate: "<span class='webix_icon mdi mdi-dots-vertical'></span>",
+                //or moreTemplate:function(){ return "Show more" },
+                popupWidth: 250,
+                //popupTemplate: "#value#",
+                yCount: 10,
+              },
+              cells: cells
+            }
+          ]
+        });
+      });
+    </script>
+  </form>
+</body>
+
+</html>

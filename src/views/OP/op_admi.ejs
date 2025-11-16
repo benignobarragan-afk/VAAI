@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+	<title></title>
+	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+	<link rel="stylesheet" href="/style.css" type="text/css" media="screen" />
+	<link rel="stylesheet" type="text/css" href="/webix/codebase/webix.css" />
+	<link rel="stylesheet" href="https://cdn.materialdesignicons.com/2.7.94/css/materialdesignicons.css?v=6.0.7"
+		type="text/css" charset="utf-8">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.2/css/all.css">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+
+	<script src="/codebase/dhtmlx.js"></script>
+	<script src="/webix/codebase/webix.js"></script>
+	<script src="/webix/codebase/locale.js"></script>
+	<script src="/js/funciones_webix.js"></script>
+
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.0.0/animate.min.css" />
+
+	<%
+    /*
+		LOCAL llError, lcCentro, lcPie, llAplicar, lnOficio, lcOficio, lcPrevio, lnMens_usua
+		LOCAL llNBusca, lcCVE, lcIniciales, lnIden, lcRuta_tabl
+		LOCAL lcDiri_nomb, lnDiri_codi, lcDiri_carg, lcAten_nomb, lnAten_codi, lcAten_carg, llNBusca2, lnCant_ofic
+
+		SET PROCEDURE TO mylib
+		SET DATE DMY
+
+		IF !DERECHOS("OP_TOTA") 
+			lcRuta = ALLTRIM(config.ruta)
+			SET PROCEDURE TO
+			CLOSE TABLES ALL
+			CLOSE DATABASES ALL
+			response.redirect("/"+lcRuta+"/sin_derechos.fwx")
+		ENDIF
+    */
+%>
+	<style>
+		.descartar {
+			font-weight: bold !important;
+			color: #fff !important
+		}
+	</style>
+</head>
+
+<body onLoad="doOnLoad();">
+	<script>
+		var w1;
+		var mygrid;
+
+		webix.ui.datafilter.rowCount = webix.extend({
+			refresh: function (master, node, value) {
+				node.firstChild.innerHTML = "Total: " + master.count();
+			}
+		}, webix.ui.datafilter.summColumn)
+		function doOnLoad() {
+			webix.ui(
+				{
+					view: "scrollview",
+					id: "verses",
+					scroll: "y",
+					body: {
+						margin: 30, rows: [
+							{
+								view: "form",
+								id: "myform",
+								elementsConfig:{
+									labelPosition:"upper"
+								},
+								rows: [
+									{
+										id: "sub",
+										rows: [
+											{
+												responsive: "sub", cols: [
+													{
+														view: "text", label: "Clave oficialia", maxWidth: 400, name: "clave", id:"clave", required: true,
+														invalidMessage: "Este campo es obligatorio",
+														on:{
+															onBlur:()=>{
+																$$("clave").setValue($$("clave").getValue().toUpperCase())
+															}
+														}
+													},
+													{},
+													{ view: "text", label: "Previo", minWidth: 100, name: "previo" },
+													{},
+													{
+														view:"button", width:120, label:"Personas", click:()=>{openWindow("Administrar personas por servicio", "/<% // Response.write(config.ruta)%>/op_pers_serv.fwx")}
+													}
+												]
+											},
+										]
+									},
+									{
+										cols:[{
+											view: "combo", id: "cmbServicio", name: "cmbServicio",  labelAlign: "left",
+											label: "Servicio", required: true, invalidMessage: "Este campo es obligatorio",
+											minWidth: 300, maxWidth: 600,
+											options: {
+												fitMaster: false,
+												width: 550,
+												keyPressTimeout: 300,
+												filter: function (item, value) {
+													if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+														return true;
+													return false;
+												},
+												body: {
+													template: "#value#",
+													dataFeed: "/api/gen/cmb_depew?lnTipo=1"
+												}
+											}
+										},
+										{
+											view:"combo", name:"compartir", id:"compartir", label:"Compartir folio",
+											options:{
+												filter: function (item, value) {
+													if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+														return true;
+													return false;
+												},
+												body:{
+													template:"(#cve#) #depen#"
+												},
+												data:[]
+											},
+											on:{
+												onChange:(newv)=>{
+													if(newv && newv != ''){
+														webix.message("Atenci�n, si se asigna a alguna otra oficialia se compartira el numero de oficio del seleccionado", 'warning', 10000)
+													}
+												}
+											}
+										},
+										{ 
+											view: "text", label: "Folio inicial", minWidth: 100, maxWidth: 150, name: "folio", id:"folio",  value:1 
+										},
+										]
+									},
+									{
+										id: "sub3",
+										rows: [
+											{
+												responsive: "sub3", cols: [
+													{ view: "text", label: "Correo servicio", minWidth: 300, maxWidth: 400, required:true, name: "correo_area" },
+													{},
+													{
+														hidden:true,
+														view: "text", id: "correo_copia", name: "correo_copia",
+														label: 'Correo copia(s&iacute; son varios separados por ";")', minWidth: 300, maxWidth: 400,
+														suggest: {
+															fitMaster: false,
+															width: 550,
+															body: {
+																keyPressTimeout: 500,
+																dataFeed: "/<% // Response.Write(config.ruta)%>/cmb_correo.fwx?lnTipo=2"
+															}
+
+														}
+													},
+													{}
+												]
+											}
+										]
+									},
+									{
+										view:"fieldset", label:"Jefe del servicio", 
+										body:{
+											id:"sub5",
+											rows:[{
+												responsive:"sub5",
+												cols:[{
+													view: "combo", id: "firm_rud", name: "firm_rud", label: "C&oacute;digo", required:true, labelWidth: 120,
+													attributes:{ autocomplete :"off" },
+													suggest: {
+														filter: function (item, value) {
+															if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+																return true;
+															return false;
+														},
+														body: {
+															fitMaster: false,
+															template: "#value#",
+															dataFeed: "/<% // Response.Write(config.ruta)%>/cmb_persW.fwx?lnTipo=1"
+														},
+													},
+												},{
+													maxWidth:100
+												},{
+													view:"text", label:"Nombre que aparecer&aacute; en oficio",  required:true, id:"firm_nomb", name:"firm_nomb",  placeholder:"Ejemplo: Dr. Benancio Gutierrez"
+												}]
+											},{
+												responsive:"sub5",
+												cols:[{
+													view:"text", label:"Cargo", required:true, id:"firm_carg", name:"firm_carg", maxWidth:300,
+												},{
+													maxWidth:100
+												},{
+													view:"text", label:"Iniciales", required:true, id:"firm_inic", name:"firm_inic", width:200, attributes:{ maxlength:10 }
+												},{
+
+												},
+												]
+											},
+											// {
+											// 	view: "datatable", id: "dtable2", select: "row", rowCss: "#css#", height:200,
+											// 	columns:[{
+											// 		id: "titular", header: ["Titular"], width: 60, sort: "int", css: { 'text-align': 'left' }, template:"{common.radio()}"
+											// 	},{
+											// 		id: "rud", header:[{text:"Rud",css:{'text-align':'center'}}], width: 100
+											// 	},{ 
+											// 		id: "nombre", header: ["Nombre"], width: 300, sort: "int", css: { 'text-align': 'left' }
+											// 	},{
+											// 		id: "cargo", header: ["Cargo"], width: 300, sort: "int", css: { 'text-align': 'left' }
+											// 	},{
+											// 		id: "inicia", header: ["Iniciales"], width: 100, sort: "int", css: { 'text-align': 'left' }
+											// 	}]
+											// }
+											]
+										}
+									},
+									{
+										id: "sub4",
+										rows: [
+											{
+												responsive: "sub4", cols: [
+													{
+														view: "button", value: "", width: 33, type:"icon", icon:"mdi mdi-sync", click: ()=>{genera()}
+													},
+													{	width: 30 },
+													{
+														view: "button", value: "Guardar datos", maxWidth: 200, click: guardar
+													},
+												]
+											},
+										]
+									},
+									{
+										cols:[
+										{
+											view:"button", click:()=>{genera()}, label:"Recargar", width:100
+										},
+										{},
+										{
+											view:"button", click:()=>{excel()}, label:"Exportar", width:100
+										}
+										]
+									},
+									{
+										view: "datatable", id: "dtable", select: "row", rowCss: "#css#",
+										columns: [
+											{ id: "rank", header: ["#", { content: "numberFilter" }], width: 50, footer: { colspan: "3", content: "rowCount", css: "footer" } },
+											
+											{ id: "cve", header: ["Clave", { content: "textFilter" }], width: 80, sort: "string", css: { 'text-align': 'left' } },
+											{ id: "depen", header: ["Servicio", { content: "textFilter" }], width: 300, sort: "string", css: { 'text-align': 'left' } },
+											{
+												id: "plantilla", header: ["Plantilla", { content: "textFilter" }], width: 80, sort: "string", template: function (obj, common) {
+													if (obj.plantilla === "") return "<div class='webix_el_button'><button onclick='gene_plan(" + '"'  + obj.cve + '"' +  ")' style='background-color:#2b96cc; color: #fff;  border-radius: 15px; border: 1px solid #d5eefb; cursor: pointer;'>Generar plantilla</button></div>";
+													else return "<div class='webix_el_button' style='cursor: pointer;' align='center'><a href='" + obj.plantilla +  "' target='_blank'><i style='font-size:32px;color:#2b96cc;' class='far fa-file-word'></i></a></div>"
+										
+												}
+											},
+											{ 
+												id: "personal", header: ["Personal", { content: "textFilter" }], width: 80, sort: "string", css: { 'text-align': 'left' },
+												template:(obj)=>{
+													return `<div class='webix_el_button' align='center'><button type="button" style="background: white;border-radius: 50%; padding: 5px; cursor: pointer;" onclick='personal("${obj.cve}")' ><i style='font-size:32px;color:#2b96cc;' class='far fa-solid fa-user'></i></button></div>`
+												}
+											},
+											{ id: "nomb_firm", header: ["Responsable", { content: "textFilter" }], width: 300, sort: "string", css: { 'text-align': 'left' } },
+											{ id: "carg_firm", header: ["Cargo", { content: "textFilter" }], width: 300, sort: "string", css: { 'text-align': 'left' } },
+											{ id: "iniciales", header: ["Iniciales", { content: "textFilter" }], width: 100, sort: "string", css: { 'text-align': 'left' } },
+											{ id: "correo_area", header: ["Correo del area", { content: "textFilter" }], width: 220, sort: "string", css: { 'text-align': 'left' } },
+											{ id: "correo_copia", header: ["Correo copia", { content: "textFilter" }], width: 220, sort: "string", css: { 'text-align': 'left' } },
+											{ id: "titular", header: ["Titular", { content: "textFilter" }], width: 50, sort: "int", css: { 'text-align': 'left' } },
+											{ id: "compartir", header: ["Folio Comp.", { content: "textFilter" }], width: 100, sort: "string", css: { 'text-align': 'left' } },
+										],
+										on: {
+											onBeforeLoad: function () { this.showOverlay("Cargando..."); },
+											onAfterLoad: function () {
+												this.hideOverlay();
+												this.adjustRowHeight();
+												this.render();
+											},
+											onItemDblClick:  function(id) {
+												openWindow("Detalle de oficialia", "/<% // Response.Write(config.ruta)%>/op_nadmi.fwx?lcID=" + id.row)
+											}
+										},
+										scrollY: true, scrollX: true, resizeColumn: true, resizeRow: true, navigation: true,
+										footer: true, borderless: false, fixedRowHeight: false, height: 600,
+
+									}
+								]
+							}
+						]
+					}
+				});
+
+
+			var listServicio = $$("cmbServicio").getPopup().getList();
+			listServicio.attachEvent("onAfterSelect", function (id) {
+				actualizaCombo(id)
+			});
+			webix.extend($$("myform"), webix.ProgressBar);
+			genera();
+
+		}
+
+
+  	function excel() {
+			var fecha = new Date();
+			var mes = fecha.getMonth() + 1;
+			var dia = fecha.getDate();
+			var anio = fecha.getFullYear();
+
+			var lcFecha = dia.toString() + '-' + mes.toString() + '-' + +anio.toString();
+
+
+			webix.toExcel($$("dtable"), {
+				filename: "Oficialias- "+ lcFecha,
+			});
+		}
+
+
+
+		const personal = (cve) =>{
+			openWindow("Administrar personas por oficialia", "/<% // Response.write(config.ruta)%>/op_admi_cve.fwx?cve="+cve, false)
+		}
+
+		const actualizaCombo = (id)=>{
+			$$("compartir").setValue()
+			$$("compartir").getList().clearAll();
+			$$("compartir").getList().load(`/api/op/op_admix2?servicio=${id}`)
+		}
+
+		function genera() {
+			$$("dtable").clearAll();
+			$$("dtable").load("/api/op/op_admix2")
+		}
+
+		function agrega() {
+			var nombre = $$("firm_nomb").getValue();
+			var iniciales = $$("firm_inic").getValue();
+			var rud = $$("firm_rud").getValue();
+			var cargo = $$("firm_carg").getValue();
+
+			if(nombre != '' && iniciales != '' && rud != '' && cargo != ''){
+				$$("dtable2").add({
+					titular:0,
+					rud:rud,
+					nombre: nombre,
+					cargo:cargo,
+					inicia:iniciales
+				});
+
+				$$("firm_nomb").setValue();
+				$$("firm_inic").setValue();
+				$$("firm_rud").setValue();
+				$$("firm_carg").setValue();
+
+			}else{
+				webix.message("Debes llenar los campos","error", 3000);
+			}
+		}
+
+		function guardar() {
+			if (!$$("myform").validate()) {
+				webix.message({ type: "error", text: "Los campos con * son obligatorios", expire: 2500 });
+				return;
+			}
+
+			$$("myform").disable();
+			$$("myform").showProgress();
+
+			var formula = $$("myform").getValues();
+
+			Swal.fire({
+				title: 'Seguro de guardar los datos ingresados?', icon: 'warning', showCancelButton: true,
+				confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Aceptar',
+			}).then((result) => {
+				if(result.isConfirmed){
+					webix.ajax().post("/<% // Response.Write(config.ruta)%>/op_admix.fwx", formula).then(function (res) {
+						$$("myform").enable();
+						$$("myform").hideProgress();
+						webix.message({ type: (res.json().status ? "success" : "error"), text: res.json().message, expire: 2500 });
+						if (res.json().status) {
+							$$("myform").clear();
+							genera();
+						}
+					});
+				}
+			})
+		}
+
+		function gene_plan(lcCve) {
+			
+			parent.myTabbar.tabs('a1').progressOn();
+
+			setTimeout(function () {
+				loader = dhx4.ajax.postSync("/<% // Response.Write(config.ruta)%>/op_nplan.fwx", "lcCve=" + lcCve);
+
+				var result1 = loader.xmlDoc.responseXML.getElementsByTagName("mensaje");
+				var result2 = loader.xmlDoc.responseXML.getElementsByTagName("error");
+
+				alert(result1[0].firstChild.nodeValue);
+				if (result2[0].firstChild.nodeValue == ".F.") {
+					parent.myTabbar.tabs('a1').progressOff();
+					window.location.reload();
+				} else {
+					parent.myTabbar.tabs('a1').progressOff();
+				}
+			}
+				, 2000
+			);
+		}
+		
+
+
+
+		function deta_ofic(cve) {
+			webix.ui({
+								view: "window", id: "op_admi",
+								move: true, left: 150, top: 0, width: 800, height: 450, resize: true,
+								head: {
+										view: "toolbar", id:"admi",
+										cols: [
+						{ view: "label", label: "Detalle de la oficialia" },
+											{ view: "icon", icon: 'mdi mdi-close', click: "$$('op_admi').close();" }
+										]
+								},
+								body: {
+										view: "iframe",
+										src: "/<% // Response.Write(config.ruta)%>/op_nadmi.fwx?lcID=" + cve.row
+								}
+						}).show();
+	}
+
+
+		function openWindow(title, url, fullscreen = true){
+			var wid = webix.uid();
+			webix.ui({
+				view: "window", id: wid, fullscreen:fullscreen, resize: true,
+				move: true, left: 0, top: 0, width: 1200, height: 800, 
+				on:{
+					onShow:()=>{
+						$$(wid).config.move = !$$(wid).config.fullscreen;
+					}
+				},
+				head: {
+					view: "toolbar",
+					cols: [
+						{ view: "label", label: title },
+						{
+							view: "icon", icon: 'mdi mdi-arrange-bring-forward', tooltip:"Abre en una nueva ventana",
+							click:()=>{
+								window.open(url);
+							}
+						},
+						{ view: "icon", icon: 'mdi mdi-fullscreen', tooltip:"Maximiza la ventana",
+							click:()=>{
+								var ventana = $$(wid)
+								
+								ventana.config.fullscreen = !ventana.config.fullscreen;
+								ventana.config.move = !ventana.config.fullscreen
+								ventana.setPosition((ventana.config.fullscreen? 0:50),(ventana.config.fullscreen? 0:50))
+								ventana.resize();
+							} 
+						},
+						{ 
+							view: "icon", icon: 'mdi mdi-close', tooltip:"Cierra la ventana", 
+							click: ()=>{
+								
+								$$(wid).close(); 
+								hideToolbarWindow()
+							}
+						}
+					]
+				},
+				body: {
+					view: "iframe",
+					src: url
+				}
+			}).show();
+		}
+
+	</script>
+</body>
+
+
+</html>

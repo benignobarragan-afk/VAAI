@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title></title>
+
+	<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
+		integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous">
+	</script>
+	<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+		integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous">
+	</script>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+		integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+		integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous">
+	</script>
+
+	<script src="/webix/codebase/webix.js"></script>
+	<script src="/js/funciones_webix.js"></script>
+	<script src="/webix/codebase/locale.js"></script>
+	<link rel="stylesheet" type="text/css" href="/webix/codebase/webix.css" />
+	<link rel="stylesheet" href="https://cdn.materialdesignicons.com/2.7.94/css/materialdesignicons.css?v=6.3.5" type="text/css" charset="utf-8">
+
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.0.0/animate.min.css" />
+	<script src="/js/momentjs.js"></script>
+	<%
+    /*
+	LOCAL llError, lcCentro, lcPie, llAplicar, lnOficio, lcOficio, lcPrevio, lnMens_usua
+	LOCAL llNBusca, lcCVE, lcIniciales, lnIden, lcRuta_tabl
+	LOCAL lcDiri_nomb, lnDiri_codi, lcDiri_carg, lcAten_nomb, lnAten_codi, lcAten_carg, llNBusca2, lnCant_ofic
+
+	  
+	lnID = VAL(Request.QueryString("lnID"))
+
+
+
+	lcCve = ALLTRIM(cSoli.cve)
+
+	IF SQLEXEC(lnCone_cgce, "SELECT * FROM gen_op_grupo WHERE id_grupo = ?lnID", "cGrupo") != 1
+		a=Aerror(Mat)
+		?SQLDISCONNECT(0)
+		Response.write(Mat(2) + " Linea: 67")
+		return
+	ENDIF
+
+	IF SQLEXEC(lnCone_cgce, "SELECT * FROM opc_op_config", "op_config") != 1
+		a=Aerror(Mat)
+		SQLDISCONNECT(0)
+		sdsd
+	ENDIF
+
+	lcSQL = "SELECT id_depe,cve, depen, corto FROM ser_depen c WHERE id_depe in (SELECT DISTINCT id_depe FROM ser_pers_serv WHERE user_id = ?pcUser) AND cve = 'CGRH' "
+
+	IF SQLEXEC(lnCone_cgce, lcSQL, "cArea_rh") != 1
+		a=Aerror(Mat)
+		SQLDISCONNECT(0)
+		Response.write(Mat(2))
+		return 
+	ENDIF
+
+	SQLDISCONNECT(0)
+    */
+%>
+
+
+	<style type="text/css">
+		.dhtmlx-error {
+			font-weight: bold;
+			color: white;
+			background-color: #770000;
+		}
+
+		.webix_dtable .webix_ss_header {
+			font-weight: bold;
+		}
+
+		.edited {
+			font-weight: bold;
+		}
+
+		.footer {
+			font-weight: bold;
+
+		}
+
+		.my_style .webix_hcell {
+			background: #2b96cc;
+			color: white;
+		}
+
+		.my_style .webix_column {
+			font-style: italic;
+			background: #d5eefb;
+			opacity: 0.8;
+		}
+
+		.my_style .webix_column>div {
+			border-color: #d5eefb;
+		}
+	</style>
+</head>
+
+<body onLoad="doOnLoad();">
+	<div id="div_atencion" style="background-color: #F4F4F4;"></div>
+	<script>
+		const validaFecha = (text, format)=>{
+			return moment(text, format,true).isValid();
+		}
+		function doOnLoad() {
+
+			webix.ui.datafilter.rowCount = webix.extend({
+				refresh: function (master, node, value) {
+					node.firstChild.innerHTML = "Total: " + master.count();
+				}
+			}, webix.ui.datafilter.summColumn)
+
+
+			var ui = webix.ui({
+				view: "scrollview",
+				id: "verses",
+				scroll: "y",
+				body: {
+					margin: 30, rows: [
+						{
+							rows: [
+								{
+									view: "form", id: "form",
+									rows: [
+										{
+											cols: [
+												{
+													rows: [
+														{
+															cols: [
+																{
+																	view: "combo", id: "cmb_Control", name: "cmb_Control", labelAlign: "left",
+																	label: "Numero Control", minWidth: 550,  labelWidth: 115,
+																	options: {
+																		filter: function (item, value) {
+																			if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+																				return true;
+																			return false;
+																		},
+																		keyPressTimeout: 1000,
+																		body: {
+																			fitMaster: true,
+																			// minidth: 550,
+																			// keyPressTimeout: 300,
+																			template: "#value#",
+																			dataFeed: "/api/op/cmb_controlw?lnClave=<%= rows[0].cve%>"
+																			//dataFeed: "/<% // Response.Write(config.ruta)%>/cmb_controlw.fwx?lnClave=<% // Response.write(pnId_Cent)%>"
+																		}
+																	}
+																},
+																{
+																	view: "button", css: "webix-primary", label: "Ligar oficio", width: 150,
+																	click: genera
+																},
+																{
+																	view: "button", id: "clearTree", css: "webix-primary", label: "Limpiar ligados", width: 150,
+																	click: clearTree, hidden: true
+																}
+															]
+														}
+													]
+												},
+												// { view: "textarea", name: "txtOfic_liga", id: "txtOfic_liga", height: 60 },
+												// { view: "text", id: "txtOfic_refe", name: "txtOfic_refe", hidden: true }
+											]
+										},
+										{
+											cols: [
+												{
+													view: "treetable", id: "tree", drag: "order", select: true, css: "my_style",
+													editable: true, height: 280, scrollX: true, scrollY: true, hidden: true,
+													columns: [
+														{
+															id: "value", header: "Oficio / Archivos",
+															template: "{common.treetable()} #value#", minWidth: 180, fillspace: true
+														},
+														{
+															id: "liga", header: ["Ligar a oficio", { content: "masterCheckbox" }],
+															template: function (obj, common) {
+																if (obj.$level === 1) return "";
+																return common.checkbox.apply(common, arguments);
+															}, width: 120
+														},
+														{
+															id: "adjunto", header: ["Adjunto a correo", { content: "masterCheckbox" }],
+															inputAlign: "center", template: function (obj, common) {
+																if (obj.$level === 1) return "";
+																return common.checkbox.apply(common, arguments);
+															}, width: 150
+														},
+													],
+													template: "{common.icon()} {common.folder()} <span>#value#</span>",
+													ready: function () {
+														webix.ui({
+															view: "contextmenu", id: "cm", data: ["Eliminar"],
+															click: function (id, context) {
+																//this.remove(172)
+																this.remove(this.getSelectedId())
+																this.remove(this.getSelectedId())
+																if (id == "Eliminar") this.remove(this.getSelectedId());
+															}
+														}).attachTo(this);
+													}
+												}
+											]
+										},
+										{ view: "text", id: "txtTree", name: "txtTree", hidden: true },
+										{
+											cols:[{
+												view: "combo", id: "cmbSoli", name: "cmbSoli",
+												//value: "<% // Response.Write(IIF(pnId_cent = 4, 'DG HCG', ALLTRIM(cSoli.cve)))%>",
+												label: "Oficio de", width: 400,
+												value:"<%=rows[0].cve%>",
+												labelPosition:"top",
+												required: true, invalidMessage: "Este campo no puede ir vacio",
+												options: {
+													fitMaster: false,
+													width: 500,
+													body: {
+														data: [
+	                                   				 		<%for (var i = 0; i < rows.length; i++) {%>
+															{ id: "<%= rows[i].cve%>", value: "(<%=rows[i].cve%>) <%=rows[i].depen%>" },
+															<%}%>
+														]
+													}
+												},
+												on: {
+													onChange: ()=>{
+														mues_soli();
+														obtenerSeccion();
+														
+													}
+												}
+											},{
+												maxWidth:40
+											},{
+												view:"checkbox", label:"Adjuntar nombramientos?", id:"nombramiento", name:"nombramiento",  labelWidth:190, hidden: false, 
+											},
+											]
+										},
+										{
+											id:"anteriorSpace",
+											hidden:true,
+											cols:[
+											{
+												view:"checkbox", label:"Registrar un a&ntilde;o anterior (<% // Response.write(YEAR(DATE()) - 1)%>)", labelWidth:250, id:"anterior", name:"anterior",
+												on:{
+													onChange:(newv)=>{
+														newv?$$("fecha").enable():$$("fecha").disable()
+													}
+												}
+											},
+											{
+												view:"text", id:"fecha", name:"fecha", label:"Fecha Oficio", validate:(value)=>{return  validaFecha($$("fecha").getText(), 'DD/MM/YYYY')}, invalidMessage:"Fecha invalida", labelPosition:"top",
+												disabled:true, width:140,
+												pattern:{ mask:"##/##/####", allow:/[0-9]/g},
+												on:{
+													onBlur:()=>{
+														$$("fecha").validate()
+													}
+												}
+											},
+											{}
+											]
+										},
+										{
+											view: "select", label: "Tipo de formato", id: "cmbTipoFormatoRh", name: "cmbTipoFormatoRh", value: 1, width: 400,
+											labelWidth: 120, hidden: true, value: 0,
+											options: [
+
+												<%
+                                                /*
+												SELECT cArea_rh
+												GO TOP
+												SCAN
+                                                */
+												%>
+                                                { id: 0, value: "prueba" },
+												//{ id: <% // Response.Write(cArea_rh.id_depe)%>, value: "(<% // Response.Write(cArea_rh.corto)%>) <% // Response.Write(cArea_rh.depen)%>" },
+												<% // ENDSCAN%>
+											]
+										},
+										{ view: "label", id: "lblSolcitud", label: "<strong>Solicitud de oficio</strong>", align: "center" },
+										{
+											cols: [
+
+												{
+													view: "combo", id: "cmbSoli_ofic", name: "cmbSoli_ofic", labelPosition: "top",
+													label: "Area Solicitante", width: 550, inputWidth: 400, labelWidth: 115,
+													options: {
+														fitMaster: false,
+														width: 550,
+														filter: function (item, value) {
+															if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+																return true;
+															return false;
+														},
+														body: {
+															keyPressTimeout: 300,
+															template: "#value#",			//lo comento hasta saber si se va a utilizar
+															//url: "/<% // Response.Write(config.ruta)%>/cmb_soli_ofic.fwx"
+														}
+													}
+												},
+
+												{
+													view:"richselect", id:"firma", name:"firma",  label:"Persona que firmara",   labelWidth:150, required:true, hidden:true,
+													options:[],
+													on:{
+														"onAfterRender":()=>{
+															$$("firma").getPopup().getList().waitData.then(()=>{
+																$$("firma").setValue($$("firma").getPopup().getList().getFirstId());
+															})
+														}
+													}
+												},
+												{
+													view: "text", id: "txtSoli_moti", name: "txtSoli_moti", labelPosition: "top", hidden:true,
+													label: "Solicitante", width: 400
+												}
+
+											]
+										},
+										{ view: "label", label: "<strong>Dirigido a</strong>", align: "center" },
+										{
+											view: "radio", id: "cmbTipo_depe", name: "cmbTipo_depe", value: 1,
+											inputWidth: 1000, options: [
+												{ id: 1, value: "U. de G." },
+												{ id: 2, value: "Ajena U. de G." },
+											],
+											on: {
+												onChange: function (id) {
+
+													if (id == 1) {
+														$$("cmbServicio").show();
+														$$("cmbAjena").hide();
+														if ($$("cmbServicio").getValue() == 4 || $$("cmbServicio").getValue() == 5 || $$("cmbServicio").getValue() == 874) {
+															$$("txtCorr_ofic").disable()
+														} else {
+															$$("txtCorr_ofic").enable()
+														}
+													} else {
+														$$("cmbServicio").hide();
+														$$("cmbAjena").show();
+														if ($$("cmbServicio").getValue() == 4 || $$("cmbServicio").getValue() == 5 || $$("cmbServicio").getValue() == 874) {
+															$$("txtCorr_ofic").enable()
+														}
+													}
+
+												}
+											}
+										},
+										{
+											cols: [
+												{
+													view: "combo", id: "cmbServicio", name: "cmbServicio", labelPosition: "top", labelAlign: "left",
+													label: "Servicio", width: 300, editable: true,
+													options: {
+														fitMaster: false,
+														keyPressTimeout: 300,
+														width: 550,
+														filter: function (item, value) {
+															if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+																return true;
+															return false;
+														},
+														body: {
+															
+															template: "#value#",
+															dataFeed: "/api/gen/cmb_depew?lnTipo=1"
+														}
+													},
+													 on: {
+														onChange: function (id) {
+														//console.log(id);
+														mues_dato(id);
+															//dirigido(id);
+															obtenerSeccion();
+														}
+													 }
+												},
+												{
+													view: "text", id: "cmbAjena", name: "cmbAjena", labelPosition: "top", labelAlign: "left",
+													label: "Servicio", width: 300, hidden: true, editable: true,
+													suggest: {
+														id:"suggestAjena",
+														fitMaster: false,
+														keyPressTimeout: 1000,
+														width: 550,
+														filter: function (item, value) {
+															if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+																return true;
+															return false;
+														},
+														body: {
+															template: "#value#",
+															dataFeed: "/<% // Response.Write(config.ruta)%>/cmb_depew.fwx?lnTipo=2"
+														},
+														on:{
+															"onValueSuggest": function (obj) {
+																$$("cmbAjena").setValue(obj.value.substr(obj.value.indexOf(')') + 1).trim())
+																$$('id_ajena').setValue(obj.id)
+																dirigido(obj.id, 2);
+															}
+														}
+													},
+													on: {
+														"onKeyPress": function(code, e){
+															$$("id_ajena").setValue()
+														}
+													}
+												},
+												{
+													view:"text", hidden:true, id:"id_ajena", name:"id_ajena", readonly:true
+												},
+												{ maxWidth: 60 },
+												{
+													view: "text", id: "txtCorr_ofic", name: "txtCorr_ofic", labelPosition: "top", labelAlign: "left",
+													label: "Correo de oficial&iacute;a", width: 300, inputWidth: 300,
+													suggest: {
+														fitMaster: false,
+														width: 550,
+														keyPressTimeout: 1000,
+														body: {
+															keyPressTimeout: 500,
+															dataFeed: "/api/op/cmb_correo?lnTipo=2"
+														}
+
+													}
+												},
+												{ maxWidth: 60 },
+												{
+													view: "select", label: "Tipo", id: "cmbTipo", value: 1, width: 100,
+													labelPosition: "top", labelAlign: "left", options: [
+														{ id: 1, value: "Dirigido a" },
+														{ id: 2, value: "Con copia" },
+														{ id: 3, value: "Autoriza" },
+														{ id: 4, value: "Vo. Bo." },
+														{ id: 5, value: "Atenci&oacute;n a" },
+													]
+												},
+												{ maxWidth: 30 },
+												{
+													view:"richselect", id:"precargado", name:"precargado", label:"Personas precargadas (No se guarda el valor)",  width: 300,  labelPosition:"top",  options:[], 
+													on:{
+														onChange:(id)=>{
+															/*				no se bien para que se utiliza por eso lo comente 11/05/2025
+															if(!id)
+																return
+															let element =  $$("precargado").getList().getItem(id)
+															$$("cmbPers").setValue(element["value"].substring(0, element["value"].indexOf('(') > 0? element["value"].indexOf('('):element["value"].length));
+															$$("txtCorr_ofic").setValue(element["corr_ofic"]);
+															$$("txtDiri_carg").setValue(element["cargo"])
+															$$("copias").setValue(element["copias"])
+															*/
+														}
+													}
+												}
+											]
+										},
+										{
+											cols: [
+												{
+													rows: [
+														{ view: "label", id: "lblCopia", hidden: true, label: "<strong>Se a�adira una copia a los siguientes correos:</strong>"},
+														{ view: "label", id: "lblCopia2", hidden: true },
+													]
+												}
+											]
+										},
+										{
+											cols: [
+												{
+													view: "text", id: "cmbPers", name: "cmbPers", labelPosition: "top", labelAlign: "left",
+													label: "Nombre", width: 300, inputWidth: 300,
+													on:{
+														// onFocus:function(){ 
+														// 	if(!$$("nombre:suggestList").isVisible()){
+														// 		$$("nombre:suggestList").show($$("cmbPers").getInputNode());
+														// 	}
+														// },
+														onKeyPress:(code, e)=>{
+															// if(code != 9){
+															// 	$$("copias").setValue('')
+															// 	$$("txtDiri_carg").setValue('')
+															// 	$$("txtCorr_ofic").setValue('')
+															// }
+														}
+													},
+
+													suggest: {
+														id:"nombre:suggestList",
+														view:"suggest", 
+														keyPressTimeout: 1000,
+														data:[],
+														body: {
+															template:"#value#",
+															// keyPressTimeout: 2000,
+															dataFeed: "/<% // Response.Write(config.ruta)%>/cmb_persw.fwx?lnTipo=10",
+															
+														},
+														on: {
+															"onValueSuggest": function (obj) {
+																$$("txtDiri_carg").setValue(obj.cargo)
+																$$("txtCorr_ofic").setValue(obj.corr_ofic)
+																$$("cmbPers").setValue(obj.value);
+																$$("copias").setValue(obj.copias)
+																$$("nombre:suggestList").hide()
+
+
+															}
+														}
+													},
+												},
+												{ maxWidth: 60 },
+												{
+													view: "text", id: "txtDiri_carg", name: "txtDiri_carg", labelPosition: "top", labelAlign: "left",
+													label: "Ocupaci&oacute;n", width: 300, inputWidth: 300,
+												},
+												{ maxWidth: 60 },
+												{
+													view: "text", id: "copias", name: "copias", labelPosition: "top", labelAlign: "left", readonly:true, disabled:true,
+													label: "Copias", width: 300, inputWidth: 300,
+												}
+											]
+										},
+										{
+											cols: [
+												{
+													view: "button", type: "icon", icon: "mdi mdi-plus", label: "Agregar al oficio", width: 170,
+													on: {
+														onItemClick: function () { registro(1); }
+													}
+												},
+												{
+													view: "button", type: "icon", icon: "mdi mdi-plus", label: "Eliminar del oficio", width: 170,
+													on: {
+														onItemClick: function () { registro(2); }
+													}
+												},
+												{
+													view: "button", type: "icon", icon: "mdi mdi-plus", label: "Agregar grupo", width: 170,
+													on: {
+														onItemClick: mues_grupo
+													}
+												},
+											]
+										},
+										{
+											view: "datatable", id: "dtable", select: "row", editaction: "dblclick", rowCss: "#css#", drag:true, 
+											columns: [
+												{ id: "servicio", hidden: true },
+												{ id: "nomb_serv", header: ["Servicio", { content: "textFilter" }], width: 240, sort: "string", css: { 'text-align': 'left' } },
+												{ id: "nombre", header: ["Nombre", { content: "textFilter" }], width: 240, sort: "string", css: { 'text-align': 'left' } },
+												{ id: "correo", header: ["Correo oficial&iacute;a", { content: "textFilter" }], width: 210, sort: "string", css: { 'text-align': 'left' } },
+												{ id: "ocupacion", header: ["Ocupaci�n", { content: "textFilter" }], width: 200, sort: "string", css: { 'text-align': 'left' } },
+												{
+													id: "tipo", header: ["Tipo", { content: "selectFilter" }], width: 120,
+													options: [
+														{ id: 1, value: "Dirigido a" },
+														{ id: 2, value: "Con copia" },
+														{ id: 3, value: "Autoriza" },
+														{ id: 4, value: "Vo. Bo." },
+														{ id: 5, value: "Atenci&oacute;n a" },
+													]
+												},
+												{
+													id: "tipo_depe", header: ["Dependencia", { content: "selectFilter" }], width: 100,
+													options: [
+														{ id: 1, value: "HCG" },
+														{ id: 2, value: "Ajena HCG" }
+													]
+												},
+												{ id: "copias", header: ["Copias", { content: "textFilter" }], width: 210, sort: "string", css: { 'text-align': 'left' } },
+											],
+											footer: true, scrollY: true, scrollX: true, resizeColumn: true, resizeRow: true, navigation: true,
+											editable: true, height: 300,
+											on: {
+												onBeforeLoad: function () { this.showOverlay("Cargando..."); },
+												onAfterLoad: function () {
+													this.hideOverlay();
+													this.adjustRowHeight("nomb_serv", true);
+													this.render();
+												},
+											},
+										},
+										{
+											view:"label", label:"Nota: En el orden que se capturen las personas es como aparecer&aacute; en el oficio"
+										},
+										{ view: "text", id: "txtGrid", name: "txtGrid", hidden: true },
+										{
+											view: "button", type: "icon", icon: "mdi mdi-google-spreadsheet", label: "Plantillas", width: 130,
+											click: plantilla
+
+										},
+										{
+											label: "Concepto", view: "textarea", id: "txtConcepto", name: "txtConcepto", labelWidth: 95, labelPosition:"top",
+											required: true, invalidMessage: "Este campo no puede ir vacio", height: 120,
+										},
+										{
+											view: "combo", id:"seccion", name:"seccion", label: "Secci&oacute;n/Subsecci&oacute;n", labelPosition:"top",
+											labelWidth:300, width:800, options: {
+													filter: function (item, value) {
+														if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+															return true;
+														return false;
+													},
+													keyPressTimeout: 500,
+															body: {
+																fitMaster: false, template: "#value#",
+																dataFeed: "/api/op/cmb_seccw"
+															},
+													// keyPressTimeout: 1000,
+													//data:[]
+												}
+
+										},
+										{ label: "Referencia", view: "textarea", name: "txtRefe", labelWidth: 95, labelPosition:"top", },
+										{ label: "Anexos", view: "textarea", name: "txtAnexo", labelWidth: 95, labelPosition:"top", },
+										
+	 
+										{ label: "Nota Status", view: "textarea", name: "txtStatus", labelWidth: 95, labelPosition:"top", },
+
+										{ view: "button", css: "webix_primary", label: "Generar oficio", click: guardar, width: 120, id: "btnGuardar", align: "right" },
+
+
+
+									]
+								}
+							]
+						}
+					]
+				}
+			});
+			webix.ui({
+				view: "window", id: "mues_plan",
+				move: true, left: 150, top: 0, width: 900, height: 550, resize: true,
+				head: {
+					view: "toolbar", id: "plantilla",
+					cols: [
+						{ view: "label", label: "Plantillas" },
+						{ view: "icon", icon: 'mdi mdi-close', click: "$$('mues_plan').hide();" }
+					]
+				},
+				body: {
+					view: "iframe",
+					src: "/op/op_plan"
+				}
+			});
+
+			mues_soli();
+			obtenerSeccion()
+			var listServicio = $$("cmbServicio").getPopup().getList();
+			listServicio.attachEvent("onAfterSelect", function (id) {
+			  dirigido(id, 9)
+			});
+
+
+		}
+
+		function mues_soli() {
+			var cve = $$("cmbSoli").getValue()
+			if (cve == "DG HCG") {
+				$$("lblSolcitud").show();
+				$$("cmbSoli_ofic").show();
+				$$("cmbTipoFormatoRh").hide();
+				$$("txtSoli_moti").show();
+				
+			} else if (cve == "CGRH") {
+				$$("cmbTipoFormatoRh").show();
+				$$("lblSolcitud").hide();
+				$$("cmbSoli_ofic").hide();
+				$$("txtSoli_moti").hide();
+			} else {
+				$$("lblSolcitud").hide();
+				$$("cmbSoli_ofic").hide();
+				$$("cmbTipoFormatoRh").hide();
+				$$("txtSoli_moti").hide();
+			}
+			if(["SP", "CA"].includes(cve))
+				$$("nombramiento").show();
+			else
+				$$("nombramiento").hide();
+			if(["SP", "CA", "DG HCG"].includes(cve)){
+				$$("anteriorSpace").show()
+			}else{
+				$$("anteriorSpace").hide()
+			}
+
+			//buscaFirma(cve);					//la cancelo por que creo que ya no se necesita en la U. de G.  11/05/2025
+			
+		}
+
+		function mues_dato(id){
+			webix.ajax()
+				.get("/api/op/op_noficx7", {id})
+				.then(function (data) {
+					let res = data.json()[0]
+					
+					//console.log("si entro")
+					//console.log(typeof res)
+					
+					if (typeof res != undefined){
+						$$("txtCorr_ofic").setValue(res.corr_ofic);
+						$$("cmbPers").setValue(res.diri_nomb);
+						$$("txtDiri_carg").setValue(res.diri_carg);
+					//console.log(res.corr_ofic)
+					}
+				})
+
+
+
+		}
+
+		function buscaFirma(cve) {
+			$$("firma").define({
+				options: {
+					filter: function (item, value) {
+						if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+							return true;
+						return false;
+					},
+					body: {
+						fitMaster: false,
+						keyPressTimeout: 300,
+						template: "#value#  (#cargo#)",
+						url: "/<% // Response.write(config.ruta)%>/op_noficx4.fwx?lnTipo=2&cve="+cve
+					}
+				}
+			});
+			$$("firma").render();
+
+		}
+
+		function mues_grupo() {
+			webix.ui({
+				view: "window", id: "mues_grup",
+				move: true, left: 150, top: 0, width: 900, height: 550, resize: true,
+				head: {
+					view: "toolbar", id: "grupo",
+					cols: [
+						{ view: "label", label: "Grupos" },
+						{ view: "icon", icon: 'mdi mdi-close', click: "$$('mues_grup').close();" }
+					]
+				},
+				body: {
+					view: "iframe",
+					src: "/op/op_grup"
+				}
+			}).show();
+		}
+
+		function plantilla() {
+			if(!$$("mues_plan").isVisible())
+				$$("mues_plan").show()
+		}
+
+		function genera() {
+			
+			if (!$$("tree").isVisible()) {
+				$$("tree").show();
+				$$("clearTree").show();
+			}
+
+
+			//
+			$$("tree").load("/<% // Response.write(config.ruta)%>/op_noficx6.fwx?lnSalida=0&lnOfic=" + $$("cmb_Control").getValue())
+
+		}
+
+		function clearTree() {
+			$$("tree").clearAll();
+			$$("tree").hide();
+			$$("clearTree").hide();
+		}
+
+		function guardar() {
+
+			
+
+			if (!$$("form").validate()) {
+				webix.alert("Los campos con * son obligatorios")
+				return false;
+			}
+
+			if ($$("dtable").count() == 0 || countDirigido() == 0) {
+				webix.alert("Tienes que ingresar por lo menos una persona de tipo 'Dirigido a' en la cuadricula")
+				return false;
+			}
+
+			$$("txtGrid").setValue(JSON.stringify($$("dtable").serialize()))
+			$$("txtTree").setValue(JSON.stringify($$("tree").serialize()))
+			let form = $$("form").getValues()
+			if($$("anterior").getValue()){
+				form.fecha = $$("fecha").getText()
+			}
+			//$$("btnGuardar").disable();
+			webix.ajax()
+				.post("/api/op/op_noficx5", form)
+				.then(function (data) {
+					$$("btnGuardar").enable();
+					let res = data.json()
+					console.log(res)
+					Swal.fire({
+						title:res.message, icon:res.status?"success":"error"
+					}).then(()=>{
+						if(res.status)
+							window.location = "/<% // Response.Write(config.ruta)%>/op_ofic.fwx";
+					})
+					// webix.alert({ type: (data.json()[0].status ? "" : "alert-error"), text:  })
+					// if (data.json()[0].status)
+						
+
+				})
+
+		}
+
+		function carg_grupo(aGrupo) {
+			console.log(typeof aGrupo)
+			if (aGrupo != ""){
+				$$("dtable").load("/api/op/op_noficx4?lnTipo=1&laId=" + aGrupo);
+			}
+			else{
+				Swal.fire({
+				icon: "error",
+				title: "Falta seleccionar",
+				text: "Por lo menos selecciona un grupo",
+				timer: 3500
+				});
+			} 
+
+		}
+
+		function carg_plantilla(plantilla) {
+			webix.ajax()
+				.get("/api/op/op_noficx4?lnTipo=3&laId=" + plantilla)
+				.then(function (res) {
+					lcDescrip = res.json()[0].descrip.replace(/\\n/g, '\n')
+					lcDescrip = lcDescrip.replace(/\\n/g, '\n')
+
+					$$("txtConcepto").setValue(res.json()[0].descrip.replace(/\\n/g, '\n'));
+				})
+
+		}
+
+		function obtenerSeccion(){
+			return false;			//lo canselo por que no hay series 
+			try{
+				let id = $$("cmbSoli").getValue();
+				let item = $$("cmbSoli").getPopup().getList().getItem(id);
+				let cve = item && item.value ? item.value : "";
+
+				let resultado = cve.replace(/^\s*\(.*?\)\s*/, "");
+				
+				webix.ajax().post("/<% // Response.write(config.ruta)%>/op_combox.fwx", {
+					cveOfic: resultado
+				}).then(function (response) {
+				 	var data = response.json();
+				 	if (data.status && data.padre) {
+				 		$$("seccion").getPopup().getList().clearAll();
+				 		$$("seccion").getPopup().getList().parse(data.padre);
+					} 
+				 });
+			}catch(error){
+				console.log(error)
+			}
+
+			// let id = $$("cmbSoli").getValue();
+			// let item = $$("cmbSoli").getPopup().getList().getItem(id);
+			// //console.log(id, item);
+			
+			// let cve = item && item.value ? item.value : "";
+
+			// let resultado = cve.replace(/^\s*\(.*?\)\s*/, "");
+
+			// //console.log(resultado);
+			
+			// webix.ajax().post("/<% // Response.write(config.ruta)%>/op_combox.fwx", {
+			// 	cveOfic: resultado
+			// })
+			
+			//  .then(function (response) {
+			// // 	console.log(response);
+				
+			//  	var data = response.json();
+		
+			//  	if (data.status && data.padre) {
+					
+			//  		$$("combHijos").getPopup().getList().clearAll();
+			//  		$$("combHijos").getPopup().getList().parse(data.padre);
+			// 	} 
+			// 	// else {
+			//  	// 	webix.message("No se encontraron opciones");
+			//  	// }
+			//  });
+		}
+
+		function liga_ofic() {
+
+
+			if ($$("cmb_Control").getValue() != "") {
+				if ($$("txtOfic_refe").getValue() == "") lcSepara = "";
+				else lcSepara = ",";
+
+				$$("txtOfic_refe").setValue($$("txtOfic_refe").getValue() + lcSepara + $$("cmb_Control").getValue());
+				$$("txtOfic_liga").setValue($$("txtOfic_liga").getValue() + lcSepara + $$("cmb_Control").getText());
+			}
+			else {
+				alert("Selecciona un oficio para ligarlos");
+				return false;
+			}
+
+		}
+
+		function liga_ofic2() {
+
+			if ($$("cmb_Control").getValue() != "") {
+				if ($$("txtOfic_refe").getValue() == "") lcSepara = "";
+				else lcSepara = ",";
+
+				$$("txtOfic_refe").setValue($$("txtOfic_refe").getValue() + lcSepara + $$("cmb_Control").getValue());
+				$$("txtOfic_liga").setValue($$("txtOfic_liga").getValue() + lcSepara + $$("cmb_Control").getText());
+			}
+			else {
+				alert("Selecciona un oficio para ligarlos");
+				return false;
+			}
+
+		}
+
+		function veri_corr(correo) {
+			var regex = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+
+			return regex.test(correo.trim());
+		}
+
+		function registro(tipo) {
+			if (tipo == 1) {
+				var lnTipo_cont = $$("cmbTipo").getValue();
+				// var lnDepe = (lnTipo_cont > 1 ? 0 : $$("cmbTipo_depe").getValue());
+				var lnDepe = $$("cmbTipo_depe").getValue();
+				var lnServicio = (lnDepe == 1 ? $$("cmbServicio").getValue() : lnDepe == 2 ? $$("id_ajena").getValue() : 0);
+				var lcText_depe = (lnDepe == 1 ? $$("cmbServicio").getText() : lnDepe == 2 ? $$("cmbAjena").getValue() : "");
+				var lcCorreo = substrMail($$("txtCorr_ofic").getValue())
+
+
+				if (lnTipo_cont == 1 && ((lnDepe == 1 && $$("cmbServicio").getValue() == "") || (lnDepe == 2 && $$("cmbAjena").getValue() == "" && $$("id_ajena").getText() == "") || ($$("txtCorr_ofic").getValue() == "" && !['DG HCG', 'SP'].includes($$("cmbSoli").getValue())) || $$("cmbPers").getValue() == "" || $$("txtDiri_carg").getValue() == "")) {
+					webix.alert("Tienes que llenar todos los campos para poder agregar una persona de tipo 'Dirigido a'");
+					return
+				}
+
+				if (lnDepe > 0) {
+					// laId = $$("dtable").find(function (obj) {
+					// 	return obj.id == lnServicio;
+					// });
+					// if (laId.length > 0) {
+					// 	alert("Ya ingresaste este servicio")
+					// 	return false;
+					// }
+				}
+
+				if ((lnTipo_cont == 2 || lnTipo_cont == 3 || lnTipo_cont == 4) && ($$("txtCorr_ofic").getValue() == "" || $$("cmbPers").getValue() == "")) {
+					webix.alert("Tienes que por lo menos el nombre y correo para los tipos de persona 'Con copia', 'Autoriza', 'Vo. Bo.'");
+					return
+				}
+
+				if ((lnTipo_cont == 5) && ($$("txtDiri_carg").getValue() == "" || $$("cmbPers").getValue() == "")) {
+					webix.alert("El nombre y puesto deben ser llenados para el tipo 'Atenci�n a'");
+					return
+				}
+
+				if (!veri_corr(lcCorreo) && !['DG HCG', 'SP'].includes($$("cmbSoli").getValue()) ) {
+					webix.alert("El correo tiene un formato invalido");
+					return
+				}
+
+				$$("dtable").add({
+					// id: lnServicio,
+					servicio: lnServicio,
+					nomb_serv: lcText_depe,
+					correo: lcCorreo,
+					nombre: $$("cmbPers").getValue(),
+					ocupacion: $$("txtDiri_carg").getValue(),
+					tipo: $$("cmbTipo").getValue(),
+					tipo_depe: lnDepe,
+					copias:$$("copias").getValue()
+				});
+				$$("cmbServicio").setValue();
+				$$("txtCorr_ofic").setValue();
+				$$("cmbPers").setValue();
+				$$("copias").setValue();
+				$$("precargado").getList().clearAll();
+				$$("precargado").setValue()
+
+				$$("txtDiri_carg").setValue();
+			} else {
+
+				if ($$("dtable").getSelectedId() == undefined)
+					//webix.message({ type: "debug", text: "Selecciona un registro para eliminar", expire: 2500 })
+					Swal.fire({
+						position: "top-end",
+						icon: "warning",
+						title: "Selecciona un registro para eliminar",
+						showConfirmButton: false,
+						timer: 2500
+						});
+				else
+//					if (confirm("Estas seguro que deseas eliminar el registro?"))
+//						$$("dtable").remove($$("dtable").getSelectedId());
+					Swal.fire({
+					title: "Eliminar",
+					text: "¿Estas seguro que deseas eliminar el registro?",
+					icon: "question",
+					showCancelButton: true,
+					confirmButtonColor: "#b58a3b",
+					cancelButtonColor: "#893935",
+					confirmButtonText: "Si, eliminar!",
+					cancelButtonText: "No",
+					}).then((result) => {
+					if (result.isConfirmed) {
+						$$("dtable").remove($$("dtable").getSelectedId());
+						Swal.fire({
+						title: "Eliminado!",
+						text: "Registro eliminado.",
+						icon: "success"
+						});
+					}
+					});
+			}
+
+		}
+
+		function substrMail(correo) {
+			if (correo.indexOf("-") === -1) return correo;
+
+			return correo.substring(0, correo.indexOf("-") - 1)
+		}
+
+		function dirigido(id, tipo_depe) {
+			var list = $$("precargado").getList(); 
+			list.clearAll()
+			$$("precargado").setValue();
+			$$("cmbPers").setValue();
+			$$("txtCorr_ofic").setValue();
+			$$("txtDiri_carg").setValue()
+			$$("copias").setValue()
+			
+			webix.ajax().post("/<% // Response.write(config.ruta)%>/op_noficx.fwx", {txtTipo:tipo_depe, centro:id, tipo_depe:tipo_depe}).then((res)=>{
+				res = res.json();
+				if(res.status){
+					if (tipo_depe == 9){
+						list.add({id:"0", value:""})
+						// list.parse(res.personas)
+						res.personas.forEach((element, index)=>{
+							list.add(element);
+							if(element["titular"] == 1 || res.personas.length == 1){
+								$$("precargado").setValue(element["id"])
+							}
+						})
+					}else{
+
+						// nombre, cargo, usuario, corr_ofic
+						$$("cmbPers").setValue(res.personas[0].nombre);
+						$$("txtCorr_ofic").setValue(res.personas[0].corr_ofic);
+						$$("txtDiri_carg").setValue(res.personas[0].cargo)
+					}
+					// $$("nombre:suggestList").getList().data = res.personas;
+					// $$("nombre:suggestList").getList().refresh();
+					// console.log($$("nombre:suggestList").getList().data )
+					// $$("nombre:suggestList").getList().show()
+				}
+			})
+			return 
+			// $$("txtCorr_ofic").enable();
+			// var lnDepen = id;
+
+			// if (lnDepen != null && lnDepen != "" && lnDepen != undefined) {
+
+			// 	loader = dhx4.ajax.postSync('/<% // Response.Write(config.ruta)%>/op_noficx.fwx', 'cmbCentro=' + lnDepen);
+			// 	var result1 = loader.xmlDoc.responseXML.getElementsByTagName("mensaje");
+			// 	var result2 = loader.xmlDoc.responseXML.getElementsByTagName("error");
+			// 	var result3 = loader.xmlDoc.responseXML.getElementsByTagName("codigo");
+			// 	var result4 = loader.xmlDoc.responseXML.getElementsByTagName("nombre");
+			// 	var result5 = loader.xmlDoc.responseXML.getElementsByTagName("cargo");
+			// 	var result6 = loader.xmlDoc.responseXML.getElementsByTagName("correo");
+			// 	var result7 = loader.xmlDoc.responseXML.getElementsByTagName("correo_copia");
+			// 	var correo_copia = result7[0].firstChild.nodeValue.trim();
+
+			// 	if (lnDepen == 4 || lnDepen == 5 || lnDepen == 874) {
+			// 		$$("txtCorr_ofic").setValue('dg_oficialia@hcg.gob.mx')
+			// 		$$("txtCorr_ofic").disable();
+			// 	}
+
+			// 	if (result2[0].firstChild.nodeValue != ".T.") {
+
+			// 		//$$("cmbPers").getList().clearAll()
+			// 		//$$("cmbPers").getList().parse('{"id":"' + result3[0].firstChild.nodeValue + '", "value": "' + result4[0].firstChild.nodeValue + '"}');
+			// 		$$("cmbPers").setValue(result4[0].firstChild.nodeValue)
+
+			// 		$$("cmbPers").define({"suggest":[{id:"sadsdadsa", value:"sasaddsaasd"}]})
+			// 		$$("cmbPers").refresh()
+			// 		//$$("txtCorr_ofic").getList().clearAll()
+			// 		//$$("txtCorr_ofic").getList().parse('{"id":"' + result6[0].firstChild.nodeValue + '", "value": "' + result6[0].firstChild.nodeValue + '"}');
+			// 		if (lnDepen != 4 && lnDepen != 5 && lnDepen != 874 && result6[0].firstChild.nodeValue != "jegonzalez@hcg.gob.mx") {
+			// 			$$("txtCorr_ofic").setValue(result6[0].firstChild.nodeValue)
+			// 		}
+
+			// 		$$("txtDiri_carg").setValue(result5[0].firstChild.nodeValue)
+
+			// 		if (correo_copia != "") {
+			// 			$$("lblCopia").show();
+			// 			$$("lblCopia2").show();
+			// 			$$("lblCopia2").define("label", "<strong>" + correo_copia + " </strong>");
+			// 			$$("lblCopia2").render();
+			// 		} else {
+			// 			if ($$("lblCopia").isVisible()){
+			// 				$$("lblCopia").hide()
+			// 				$$("lblCopia2").hide()
+			// 			}
+			// 		}
+			// 	}
+
+			// }
+		}
+
+		function countDirigido() {
+			return $$("dtable").find(function (obj) { return obj.tipo == 1; });
+		}
+	</script>
+</body>
+
+
+</html>

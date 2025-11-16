@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<!--
+	<link rel="stylesheet" href="/style.css" type="text/css" media="screen" />
+	<link rel="stylesheet" type="text/css" href="skins/terrace/dhtmlx.css"/>
+-->
+	<script src="/webix_8.4.0/codebase/webix.js"></script>
+	<script src="/js/funciones_webix.js"></script>
+	<script src="/webix_8.4.0/codebase/locale.js"></script>
+
+	<link rel="stylesheet" type="text/css" href="/webix_8.4.0/codebase/webix.css" />
+
+	<link rel="stylesheet" href="https://cdn.materialdesignicons.com/2.7.94/css/materialdesignicons.css?v=6.3.5" type="text/css" charset="utf-8">
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.0.0/animate.min.css" />
+<!--
+	<link rel="stylesheet" type="text/css" href="skins/web/dhtmlx.css" />
+-->
+	<script src="/codebase/dhtmlx.js"></script>
+
+
+<%
+    /*
+    llOP_total = derechos("OP_TOTA")
+
+	lcQbase_cgce = config.qbase_cgce
+	lnCone_cgce = &lcQbase_cgce
+
+	SQLEXEC(lnCone_cgce, "SELECT CVE FROM GEN_dere_ofic  WHERE user_id = ?pcUser AND (titular = 1 or eliminar = 1)", "cEliminar")
+
+	SQLDISCONNECT(0)
+
+    */
+
+    const llOP_total    = lcDerecho.indexOf(",OP_TOTA,") > 0
+
+ 
+%>
+</head>
+
+<script>	
+
+	var dhxWins;
+	webix.ready(()=>{
+		webix.ui({
+			rows:[
+			{
+				cols:[
+				{
+					cols:[{
+						view:"button", type:"icon", icon:"mdi mdi-sync", width:33, click:()=>{genera()}
+					},
+					{
+						view:"button", type:"icon", icon:"mdi mdi-arrow-expand-all", tooltip:"Expandir cuadricula", width:40,
+						click:()=>{
+							$$(`dtable`).adjustRowHeight();
+						}
+					},
+					<% // IF RECCOUNT("cEliminar") > 0%>
+					{
+						view:"button", label:"Eliminar ultimo oficio", width:200,click:()=>{recupera()}
+					},
+					<% // ENDIF%>
+					]
+				},
+				{
+					view:"label", label:"Oficios generados por tu cuenta de usuario", align:"center"
+				},
+				{
+					cols:[
+					{},
+					//{
+					//	view:"button", label:"Vista antigua", width:150, click:()=>{location.href = '/<% // Response.write(config.ruta)%>/op_ofic_old.fwx'}
+					//}
+					]
+				}
+				]
+			},
+			{
+				view:"datatable", id:"dtable", select:true, footer:true, editable:true, hidden:false, minHeight:500, scroll:true,
+				resizeColumn: true,  navigation: true, resizeRow:true, css:"celda_compacta", 
+				rightSplit:1, leftSplit:3,
+				scheme: {
+					$init: function (obj) {
+						obj.fecha = (obj.fecha ? (obj.fecha == '01/01/1900'?'': convertDate(obj.fecha) ) : '');
+					}
+				},
+
+				columns:[
+				{
+					id: "detalle", width: 40,sort: "int", css: { 'text-align': 'center' }, 
+					header: [{text:"",css:"my_style"}, {text:""}],
+					template:(obj)=>{
+						return `
+							<a href="#" onClick="window.parent.deta_sali('${obj.cve}',${obj.idoficio},${obj.anio},${obj.id_iden},'op_reof0.fwx');">
+								<img alt="Detalle del oficio" src="/imagenes/search.png" width="28" height="28" border="0">
+							</a>`
+					}
+				},
+				{
+					id: "doc", width: 80,sort: "int", css: { 'text-align': 'left' }, hidden:false,
+					header: [{text:"Doc.",css:"my_style"}, {
+						content: "textFilter", placeholder:"Filtrar",
+					}],
+					template:(obj)=>{
+						if(obj.doc != ''){
+							return `<a href="#" onClick="window.open('${obj.doc}');">
+								<img alt="Detalle del oficio" src="/imagenes/word.png" width="28" height="28" border="0">
+							</a>`
+						}else{
+							return `<input type="button" name="btnGenera" id="btnGenera" value="Generar" 
+								onclick="gene_gdoc('${obj.cve.trim()}','${obj.idoficio}','${obj.anio}','${obj.id}' );">`
+						}
+					},
+				},
+				{
+					id: "rank", width: 70,sort: "int", css: { 'text-align': 'center' }, 
+					header: [{text:"#",css:"my_style"}, {
+						content: "textFilter", placeholder:"Filtrar",
+					}],
+				},	
+				{
+					id: "oficio", width: 150,sort: "string", css: { 'text-align': 'left' }, 
+					header: [{text:"Oficio",css:"my_style"}, {
+						content: "textFilter", placeholder:"Filtrar",
+					}],
+				},	
+				{
+					id: "fecha", header: ["Fecha", { content: "textFilter", compare:dateStringFilter }], sort: "date", width: 100, format:webix.Date.dateToStr("%d/%m/%Y")
+				},	
+				{
+					id: "hora", header: ["Hora", { content: "textFilter"}], width: 70,
+				},	
+				{
+					id: "centros", width: 200,sort: "string", css: { 'text-align': 'left' }, 
+					header: [{text:"Centros",css:"my_style"}, {
+						content: "textFilter", placeholder:"Filtrar",
+					}],
+				},		
+				{
+					id: "concepto", 
+					$height:160, 
+					fillspace:true, minWidth:300,sort: "string", css: { 'text-align': 'left' }, 
+					header: [{text:"Concepto",css:"my_style"}, {
+						content: "textFilter", placeholder:"Filtrar",
+						
+					}],
+				},		
+				{
+					id: "referencia", width: 70,sort: "string", css: { 'text-align': 'left' }, 
+					header: [{text:"Ref.",css:"my_style"}, {
+						content: "textFilter", placeholder:"Filtrar",
+					}],
+				},		
+				{
+					id: "anexo", width: 70,sort: "string", css: { 'text-align': 'left' }, 
+					header: [{text:"Anexo",css:"my_style"}, {
+						content: "textFilter", placeholder:"Filtrar",
+					}],
+				},	
+				{
+					id: "solicitado", width: 70,sort: "string", css: { 'text-align': 'left' }, 
+					header: [{text:"Solic.",css:"my_style"}, {
+						content: "textFilter", placeholder:"Filtrar",
+					}],
+				},		
+				{
+					id: "stat_desc", width: 100,sort: "string", css: { 'text-align': 'left' }, 
+					header: [{text:"Status",css:"my_style"}, {
+						content: "selectFilter", placeholder:"Filtrar",
+					}],
+				},
+				],
+			},
+			{
+				height:30
+			}]
+		})
+		webix.extend($$("dtable"), webix.ProgressBar)
+		genera()
+	})
+
+	const genera = ()=>{
+		$$("dtable").clearAll()
+		$$("dtable").load("/api/op/op_oficx5?t=1")
+	}
+
+	async function  gene_gdoc(lcCve,lcIdoficio,lcFecha,lnIden){
+		// console.log("lcCve", lcCve)
+		// console.log("lcIdoficio", lcIdoficio)
+		// console.log("lcFecha", lcFecha)
+		// console.log("lnIden", lnIden)
+		// return 
+
+		$$("dtable").showProgress();
+		try{
+			webix.ajax().post("/api/op/op_gofic", {lcCve, lcIdoficio, lcFecha, lnIden, nuevaVista:1}).then((res)=>{
+				$$("dtable").hideProgress();
+				res = res.json()
+				webix.message(res.message)
+				if(res.status){
+					genera()
+				}
+			})
+		}catch(error){
+			console.log(error)
+			webix.message("Ocurrio un error, intenta mas tarde")
+			$$("dtable").hideProgress();
+		}
+		return 
+
+	// parent.myTabbar.tabs('a1').progressOn();
+
+	setTimeout(function()
+	{
+		loader = dhx4.ajax.postSync("/<% // Response.Write(config.ruta)%>/op_gofic.fwx", "lcCve="+lcCve+"&lcIdoficio="+lcIdoficio+"&lcFecha="+lcFecha+"&lnIden="+lnIden);
+
+		var result1 = loader.xmlDoc.responseXML.getElementsByTagName("mensaje");
+		var result2 = loader.xmlDoc.responseXML.getElementsByTagName("error");
+		
+		if(result1[0].firstChild.nodeValue != "")
+			alert(result1[0].firstChild.nodeValue);
+		 
+		if(result2[0].firstChild.nodeValue == ".F.")
+		{
+			window.location.reload();
+		}else{
+			parent.myTabbar.tabs('a1').progressOff();
+		}
+	}
+		,2000
+	);
+}
+
+function acusar(lnIden){
+	Swal.fire({
+		title: '�Seguro de acusar el documento?',
+		icon: 'warning',showCancelButton: true,confirmButtonColor: '#3085d6',cancelButtonColor: '#d33',confirmButtonText: 'Si',cancelButtonText: 'Cancelar'
+	}).then((result) => {
+		if (result.isConfirmed) {
+			webix.ajax().post("/<% // Response.Write(config.ruta)%>/op_soficx.fwx", {lnTipo:4, lnIDIden:lnIden}).then((res)=>{
+				res = res.json()
+				Swal.fire({text:res.message, icon:res.status?"success":"error"}).then(()=>{
+					if(res.status){
+						window.location.href = '/<% // Response.Write(config.ruta)%>/op_ofic.fwx';
+					}
+				})
+			})
+		}
+	})
+
+
+	// if(confirm("�Marcar en acuse el oficio?")){
+	// 	loader = dhx4.ajax.postSync("/<% // Response.Write(config.ruta)%>/op_soficx.fwx", "lnIDIden="+lnIden+"&lnTipo=4");
+
+	// 	var result1 = loader.xmlDoc.responseXML.getElementsByTagName("mensaje");
+	// 	var result2 = loader.xmlDoc.responseXML.getElementsByTagName("error");
+
+	// 	 alert(result1[0].firstChild.nodeValue);
+	// 	if(result2[0].firstChild.nodeValue == ".F.")
+	// 		window.location.href = '/<% // Response.Write(config.ruta)%>/op_ofic.fwx';
+
+	// }else{
+	// 	return false;
+	// }
+}
+
+function recupera()
+{
+	var wid = webix.uid();
+	webix.ui({
+		view: "window", id: wid, fullscreen:false, resize: true,
+		move: true, left: 200, top:200, width: 400, height: 400, 
+		on:{
+			onShow:()=>{
+				$$(wid).config.move = !$$(wid).config.fullscreen;
+			}
+		},
+		head: {
+			view: "toolbar",
+			cols: [
+				{ view: "label", label: "Eliminar ultimo registro" },
+				{ 
+					view: "icon", icon: 'mdi mdi-close', tooltip:"Cierra la ventana", 
+					click: ()=>{
+						$$(wid).close(); 
+					}
+				}
+			]
+		},
+		body: {
+			view: "iframe",
+			id:`frame${wid}`,
+			src: "/<% // Response.write(config.ruta)%>/op_oficx3.fwx"
+		},
+	}).show();
+
+
+
+	// //alert(Math.min(1000, screen.width));
+	// w1 = dhxWins.createWindow("w1", 20, 20, 400, 400);
+	// w1.setText("Recupera Id");
+	// w1.button("minmax1").hide();
+	// var lcUrl = '/<% // Response.write(config.ruta)%>/op_oficx3.fwx';
+	// w1.attachURL(lcUrl);
+}
+</script>
+<body>
+</body>
+</html>

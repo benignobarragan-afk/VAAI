@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title></title>
+	<link rel="stylesheet" href="/style.css" type="text/css" media="screen" />
+
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+	<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
+		integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous">
+	</script>
+	<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+		integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous">
+	</script>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+		integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+		integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous">
+	</script>
+
+	<script src="/webix/codebase/webix.js"></script>
+	<script src="/js/funciones_webix.js"></script>
+	<script src="/webix/codebase/locale.js"></script>
+	<link rel="stylesheet" type="text/css" href="/webix/codebase/webix.css" />
+	<link rel="stylesheet" href="https://cdn.materialdesignicons.com/2.7.94/css/materialdesignicons.css?v=6.3.5" type="text/css" charset="utf-8">
+
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.0.0/animate.min.css" />
+
+		<link rel="stylesheet" type="text/css" href="/skins/web/dhtmlx.css" />
+	<script src="/codebase/dhtmlx.js"></script>
+
+	<%
+    /*
+	LOCAL llBusca, llError, lcCentro, lcConcepto, llBus_ofi, lnOficio, lcOficio, lcRefe
+	LOCAL lcCadena, lcBusca, lcBusca2, llNBusca, lcCVE, lcAnexo, ldFec_ini, ldFec_fin, lnNoficio, lntot_pag, lcRuta_tabl
+
+
+
+	SET PROCEDURE TO mylib
+		SET TABLEPROMPT off
+	SET DATE DMY
+
+	IF !Derechos("OFICIO")
+		lcRuta = ALLTRIM(config.ruta)
+		SET PROCEDURE TO
+		CLOSE TABLES ALL
+		CLOSE DATABASES ALL
+		response.redirect("/"+lcRuta+"/sin_derechos.fwx")
+	ENDIF
+
+	lcQbase_cgce = config.qbase_cgce
+
+	USE consulta\consulta ORDER user_id		IN 0
+
+		lntot_pag	= 20
+	lnPagina	=  VAL(Request.QueryString("lnPage"))
+	llDesc_exce = !EMPTY(Request.Form("cmdBus_des"))
+	llDescarga = Request.FormCount() > 0
+	lcBusca2 = ""
+
+	llVist_ante = !EMPTY(Request.Form("vistaAnterior"))
+
+	lcJson	= '[]'
+
+	lnSeccion = 0
+	IF llDesc_exce
+
+		SELECT nombre as solicitante, cent_soli as depo_soli, oficio, fecha, centros as centro, concepto, referencia, ;
+				PADR(ICASE(status = 1, "EN FIRMA", status = 2, "FIRMADO", status = 2, "ENVIADO", status = 4, "ACUSE", status = 99, "CANCELADO", "ELABORACION"),15) as estatus ;
+			FROM "consulta/c" + pcUser ;
+			ORDER BY idOficio;
+			INTO CURSOR cOficio
+
+		lcArchivo = SYS(2015)
+		COPY TO "c:\Inetpub\wwwroot\"+ALLTRIM(config.ruta)+"\tmp\" + lcArchivo xl5
+		Response.redirect("/"+ALLTRIM(config.ruta)+"/tmp/" + lcArchivo + ".xls")
+	ENDIF
+
+	IF !EMPTY(lnPagina) AND SEEK(pcUser, "consulta", "user_id")
+		lnNoficio	= VAL(consulta.preg01)
+		lcCentro	= STRCONV(ALLTRIM(consulta.preg02), 11)
+		lcDepen		= STRCONV(ALLTRIM(UPPER(consulta.preg03)), 11)
+		lcConcepto= STRCONV(ALLTRIM(consulta.preg04), 11)
+		lcRefe		= STRCONV(UPPER(ALLTRIM(consulta.preg05)), 11)
+		lcAnexo		= STRCONV(UPPER(ALLTRIM(consulta.preg06)), 11)
+		lcBusca		= ""
+		lcCVE		= UPPER(ALLTRIM(consulta.preg07))
+		ldFec_ini	= CTOD(consulta.preg08)
+		ldFec_fin	= CTOD(consulta.preg09)
+		lnNoficio2	= VAL(consulta.preg10)
+		lcAnio		= ALLTRIM(consulta.preg11)
+		ldFec_fin	= IIF(EMPTY(ldFec_fin), DATE(), ldFec_fin)
+		llDescarga	= .T.
+
+		lcPersona = ''
+		lnTipo_pers = 0
+		lnStatus	= 0
+	 ELSE
+		llBusca		= !EMPTY(Request.Form("cmdBusca"))
+		llNBusca	= !EMPTY(Request.Form("cmdNBusca"))
+		llBus_ofi	= !EMPTY(Request.Form("cmdBus_ofi"))
+		lnNoficio	= VAL(Request.Form("txtNOficio"))
+		lcCentro	= STRCONV(ALLTRIM(Request.Form("cmbCentro")), 11)
+		lcDepen		= STRCONV(ALLTRIM(CHRTRAN(UPPER(Request.Form("txtDepen")), 'ÁÉÍÓÚ', 'AEIOU')), 11)
+		lcConcepto= STRCONV(CHRTRAN(ALLTRIM(Request.Form("txtConcepto")), CHR(10)+CHR(13), "  "), 11)
+		lcRefe		= STRCONV(CHRTRAN(UPPER(ALLTRIM(Request.Form("txtRefe"))), CHR(10)+CHR(13), "  "), 11)
+		lcAnexo		= STRCONV(CHRTRAN(UPPER(ALLTRIM(Request.Form("txtAnexo"))), CHR(10)+CHR(13), "  "), 11)
+		lcPersona	= STRCONV(ALLTRIM(Request.Form("txtPersona")), 11)
+		lnTipo_pers	= VAL(Request.Form("cmbTipo_pers"))
+		lnStatus 	= VAL(Request.Form("cmbStatus"))
+
+		lcBusca		= ""
+		lcCVE		= UPPER(ALLTRIM(Request.Form("cmbSoli")))
+		ldFec_ini	= CTOD(Request.Form("txtFec_ini"))
+		ldFec_fin	= CTOD(Request.Form("txtFec_fin"))
+		ldFec_fin	= IIF(EMPTY(ldFec_fin), DATE(), ldFec_fin)
+		
+		lnNoficio2	= VAL(Request.Form("txtNOficio2"))
+		lcAnio		= ALLTRIM(Request.Form("cmbAnio"))
+
+		lnSeccion = VAL(Request.Form("seccion"))
+		
+	ENDIF
+
+
+	lnCone_cgce = &lcQbase_cgce
+
+	lcSQL = "SELECT cve, depen, clave FROM GEN_TIPO_OFIC WHERE cve in (SELECT DISTINCT cve "
+	lcSQL = lcSQL + "FROM GEN_DERE_OFIC WHERE user_id = ?pcUser) ORDER BY 2"
+
+	IF SQLEXEC(lnCone_cgce, lcSQL, "cSoli") != 1
+		a=Aerror(Mat)
+		SQLDISCONNECT(0)
+		sdsd
+	ENDIF
+
+	IF RECCOUNT("cSoli") = 0
+		lcRuta = ALLTRIM(config.ruta)
+		SET PROCEDURE TO
+		CLOSE TABLES ALL
+		CLOSE DATABASES ALL
+		response.redirect("/"+lcRuta+"/sin_derechos.fwx")
+	ENDIF
+
+	IF SQLEXEC(lnCone_cgce, "SELECT * FROM gen_centros", "centros") != 1
+		a=Aerror(Mat)
+		SQLDISCONNECT(0)
+		sdsd
+	ENDIF
+
+	IF SQLEXEC(lnCone_cgce, "SELECT * FROM gen_ofic_stat", "ofic_stat") != 1
+		a=Aerror(Mat)
+		SQLDISCONNECT(0)
+		sdsd
+	ENDIF
+
+	SQLDISCONNECT(0)
+
+	SELECT ofic_stat
+	INDEX ON status TAG status
+
+	IF llNBusca
+		lcDepen = ""
+	ENDIF
+
+	IF !EMPTY(lcDepen)
+		lcCadena = lcDepen + " "
+		DO WHILE !EMPTY(lcCadena)
+			IF !EMPTY(lcBusca2)
+				lcBusca2 = lcBusca2 + " AND "
+			ENDIF
+			lcBusca2 = lcBusca2 + "UPPER(CHRTRAN(ALLTRIM(s.descrip),'AÉÍÓÚ','AEIOU')) "
+						lcBusca2 = lcBusca2 + "like '%" + LEFT(lcCadena, AT(" ", lcCadena)-1) + "%'"
+			lcCadena = ALLTRIM(SUBSTR(lcCadena, AT(" ", lcCadena)+1)) + " "
+		ENDDO
+		select centros
+		*!*copy to c:\cCentros
+
+		SELECT id_cent, DESCRIP ;
+			FROM centros s;
+			WHERE &lcBusca2 ;
+			ORDER BY 1,2 ;
+			INTO CURSOR cDeps
+		IF RECCOUNT("cDeps") <= 0
+
+    */
+		%>
+	<script language="JavaScript" type="text/JavaScript">
+							alert('No se encontro niguna dependencia con la(s) palabra(s) : <%//Response.Write(lcDepen)%>');
+						</script>
+	<%
+    /*
+		ENDIF
+	ENDIF
+
+	IF !EMPTY(lnNoficio)
+		lcBusca = "o.idOficio BETWEEN " + ALLTRIM(STR(lnNoficio)) + " AND " + ALLTRIM(STR(IIF(EMPTY(lnNoficio2), lnNoficio, lnNoficio2))) + " "
+	*!*	lcCadena = STRTRAN(ALLTRIM(STR(lnNoficio)), CHR(13), " ") + " "
+	*!*	DO WHILE !EMPTY(lcCadena)
+	*!*		IF !EMPTY(lcBusca)
+	*!*			lcBusca = lcBusca + " AND "
+	*!*		ENDIF
+	*!*		lcBusca = lcBusca + "o.oficio like '%" + LEFT(lcCadena, AT(" ", lcCadena)-1) + "%'"
+	*!*		lcCadena = ALLTRIM(SUBSTR(lcCadena, AT(" ", lcCadena)+1)) + " "
+	*!*	ENDDO
+	ENDIF
+
+	IF !EMPTY(lcCVE)
+		IF !EMPTY(lcBusca)
+			lcBusca = lcBusca + " AND "
+		ENDIF
+		lcBusca = lcBusca + IIF(lcAnio = '2022' AND INLIST(lcCve, 'SP', 'CA'), "o.cve IN ('SP', 'CA')",  "o.cve = '" + lcCVE + "'") 
+	ENDIF
+
+
+	***antigua busqueda del input CENTRO O DEPENDENCIA
+	*!*IF !EMPTY(lcCentro)
+	*!*IF !EMPTY(lcBusca)
+	*!*lcBusca = lcBusca + " AND "
+	*!*ENDIF
+	*!*lcBusca = lcBusca + "o.cent_soli = " + lcCentro 
+	*!*ENDIF
+
+
+	IF !EMPTY(lcCentro)
+		IF !EMPTY(lcBusca)
+			lcBusca = lcBusca + " AND "
+		ENDIF
+		lcBusca = lcBusca + lcCentro + " IN (SELECT d2.id_cent FROM gen_doficio d2 WHERE d2.id_iden = o.id_iden and d2.tipo = 1)" 
+	ENDIF
+
+	IF !EMPTY(lnStatus)
+		IF !EMPTY(lcBusca)
+			lcBusca = lcBusca + " AND "
+		ENDIF
+		lcBusca = lcBusca + " o.status = ?lnStatus-1" 
+	ENDIF
+
+		*** buscar por seccion
+		IF !EMPTY(lnSeccion)
+				IF !EMPTY(lcBusca)
+						lcBusca = lcBusca + " AND "
+				ENDIF
+				lcBusca = lcBusca + " ISNULL(o.id_seccion, 0) = ?lnSeccion"
+		ENDIF
+		*****************
+
+		
+	IF !EMPTY(ldFec_ini)
+		IF !EMPTY(lcBusca)
+			lcBusca = lcBusca + " AND "
+		ENDIF
+		lcBusca = lcBusca + "convert(date, o.fecha) BETWEEN ?ldFec_ini AND ?ldFec_fin"
+	ENDIF
+
+	IF !EMPTY(lcConcepto)
+		lcCadena = CHRTRAN(UPPER(lcConcepto),"ÁÉÍÓÚáéíóúÑñ"+CHR(13),"AEIOUAEIOUNN") + " "
+		DO WHILE !EMPTY(lcCadena)
+			IF !EMPTY(lcBusca)
+				lcBusca = lcBusca + " AND "
+			ENDIF
+			lcBusca = lcBusca + "REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(UPPER(o.concepto),'Á','A'),'É','E'),'Í','I'),'Ó', 'O'), 'Ú', 'U'), 'Ñ', 'N') like '%" + LEFT(lcCadena, AT(" ", lcCadena)-1) + "%'"
+			lcCadena = ALLTRIM(SUBSTR(lcCadena, AT(" ", lcCadena)+1)) + " "
+
+		ENDDO
+	ENDIF
+
+	IF !EMPTY(lcRefe)
+		lcCadena = STRTRAN(lcRefe, CHR(13), " ") + " "
+		DO WHILE !EMPTY(lcCadena)
+			IF !EMPTY(lcBusca)
+				lcBusca = lcBusca + " AND "
+			ENDIF
+			lcBusca = lcBusca + "o.referencia like '%" + LEFT(lcCadena, AT(" ", lcCadena)-1) + "%'"
+			lcCadena = ALLTRIM(SUBSTR(lcCadena, AT(" ", lcCadena)+1)) + " "
+		ENDDO
+	ENDIF
+
+	IF !EMPTY(lcAnio)
+		IF !EMPTY(lcBusca)
+			lcBusca = lcBusca + " AND "
+		ENDIF
+		lcBusca = lcBusca + "( (o.oficio  LIKE '%/" + lcAnio + "' OR o.oficio LIKE '%/" + lcAnio + " BIS') OR o.oficio LIKE '%/" + RIGHT(lcAnio,2) +"')"
+	ENDIF
+
+	IF !EMPTY(lcAnexo)
+		lcCadena = STRTRAN(lcAnexo, CHR(13), " ") + " "
+		DO WHILE !EMPTY(lcCadena)
+			IF !EMPTY(lcBusca)
+				lcBusca = lcBusca + " AND "
+			ENDIF
+			lcBusca = lcBusca + "o.anexo like '%" + LEFT(lcCadena, AT(" ", lcCadena)-1) + "%'"
+			lcCadena = ALLTRIM(SUBSTR(lcCadena, AT(" ", lcCadena)+1)) + " "
+		ENDDO
+	ENDIF
+
+	IF !EMPTY(lcPersona)
+		lcCadena = STRTRAN(lcPersona, CHR(13), " ") + " "
+		DO WHILE !EMPTY(lcCadena)
+			IF !EMPTY(lcBusca)
+				lcBusca = lcBusca + " AND "
+			ENDIF
+
+			lcBusca 	= lcBusca + "REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(UPPER(do.diri_nomb), 'Á', 'A'), 'É', 'E'), 'Í', 'I')"
+			lcBusca 	= lcBusca + ", 'Ó', 'O'), 'Ú','U') like '%" + LEFT(lcCadena, AT(" ", lcCadena)-1) + "%'" + IIF(!EMPTY(lnTipo_pers), " AND do.tipo = ?lnTipo_pers","")
+
+			*lcBusca = lcBusca + "do.diri_nomb like '%" + LEFT(lcCadena, AT(" ", lcCadena)-1) + "%'" + IIF(!EMPTY(lnTipo_pers), " AND do.tipo = ?lnTipo_pers","")
+			lcCadena = ALLTRIM(SUBSTR(lcCadena, AT(" ", lcCadena)+1)) + " "
+		ENDDO
+	ENDIF
+
+	IF (llBus_ofi OR !EMPTY(lnPagina)) AND !EMPTY(lcBusca)
+		IF llBus_ofi
+
+			lcSQL = "WITH rec AS ("	+;
+				" 	SELECT a.id_cajon, a.descrip, a.id_padre     , CAST(a.descrip as varchar(max)) + ' / ' as cajones     "	+;
+				" 	FROM  hcg_cgce.dbo.opc_arch_muer a     WHERE ISNULL(id_padre, 0) = 0     "	+;
+				" 	UNION ALL     "	+;
+				" 	SELECT a.id_cajon, a.descrip, a.id_padre, o.cajones + CAST(a.descrip as varchar(max))  + ' / '      "	+;
+				" 	FROM hcg_cgce.dbo.opc_arch_muer a     "	+;
+				" 	INNER JOIN rec o ON o.id_Cajon = a.id_padre "	+;
+				" ) "	+;
+				" SELECT o.idOficio, o.cve, o.oficio, o.fecha, o.clave, o.referencia AS referencia, o.anexo, o.concepto"	+;
+				" , ISNULL(o.soli_ofic,'') as soli_ofic, ISNULL(o.soli_moti,'') as soli_moti"	+;
+				" , STUFF("	+;
+				" 		(SELECT ', ' + ISNULL(c.descrip, oc.DESCRIP)"	+;
+				" 		FROM hcg_cgce.dbo.GEN_DOFICIO d"	+;
+				" 		LEFT JOIN hcg_cgce.dbo.GEN_CENTROS c ON d.id_cent = c.ID_CENT AND ISNULL(d.tipo_depe, 1) = 1"	+;
+				" 		LEFT JOIN hcg_cgce.dbo.gen_otro_cent oc ON d.id_cent = oc.ID_CENT AND ISNULL(d.tipo_depe, 1) = 2"	+;
+				" 		WHERE d.id_iden = o.ID_IDEN  AND d.tipo = 1"	+;
+				" 		GROUP BY c.descrip, d.id_doficio_pk, oc.DESCRIP"	+;
+				" 		ORDER BY d.id_doficio_pk"	+;
+				" 		FOR XML PATH('')),"	+;
+				" 		1, 2, '') As centros"	+;
+				" ,	o.status, os.descrip as stat_desc, p.nombre as usuario, s.descrip AS servicio"	+;
+				" , o.id_iden,  ISNULL(so.servicio,'') as servicio, ISNULL(r.cajones, '') as cajon, ISNULL(r.id_cajon, 0) as id_cajon, RIGHT(CAST(YEAR(o.fecha) as varchar(4)), 2) as anio "	+;
+				" , STUFF( "	+;
+				" (SELECT ', ' + ISNULL(RTRIM(od.diri_nomb) + ' (' + CASE od.tipo WHEN 1 THEN 'Dirigido a.' WHEN 2 THEN 'Con copia' WHEN 3 THEN 'Autoriza' WHEN 4 THEN 'Vo. Bo.' WHEN 5 THEN 'Atención a' ELSE '' END + ')', '')"	+;
+				" FROM hcg_cgce.dbo.GEN_DOFICIO od"	+;
+				" WHERE od.id_iden = o.ID_IDEN"	+;
+				" ORDER BY od.id_doficio_pk"	+;
+				" FOR XML PATH('')), 		1, 2, '') As persona"	+;
+				" , ISNULL('(' + sec.codigo + ') ' + sec.nombre, '' ) as seccion"	+;
+				"  FROM gen_oficio o  "	+;	
+				"  INNER JOIN hcg_cgce.dbo.GEN_OFIC_STAT os ON os.STATUS = o.STATUS"	+;
+				"  left JOIN passfile p ON o.usuario = p.user_id  "	+;
+				"  LEFT JOIN [hcg_cgce].[dbo].[GEN_SOLI_OFIC] so ON so.num_soli = o.soli_ofic "	+;
+				"  INNER JOIN hcg_cgce.dbo.gen_tipo_ofic ti ON ti.cve = o.cve "	+;
+				"  LEFT JOIN gen_centros s ON ti.id_cent = s.id_cent  "	+;
+				"  LEFT JOIN rec r ON r.id_cajon = o.id_cajon "	+;
+				"  LEFT JOIN hcg_cgce.dbo.opc_seccion sec ON sec.id_deta_pk = o.id_seccion"	+;
+				IIF(!EMPTY(lcPersona), " INNER JOIN hcg_cgce.dbo.GEN_DOFICIO do ON do.id_iden = o.id_iden ", "")	+;
+				" WHERE  " + lcBusca 	+;
+				" ORDER BY o.fecha DESC "
+
+			lcSQL = "SELECT o.idOficio, o.cve, o.oficio, o.fecha, o.clave, o.referencia AS referencia, o.anexo, o.concepto, "
+			lcSQL = lcSQL + "   	IFNULL(o.soli_ofic, '') AS soli_ofic, IFNULL(o.soli_moti, '') AS soli_moti, o.status, os.descrip AS stat_desc, "
+			lcSQL = lcSQL + "    	p.nombre AS usuario, s.descrip AS servicio, o.id_iden, IFNULL(so.servicio, '') AS servicio, "
+			lcSQL = lcSQL + "		IFNULL(r.id_cajon, 0) AS id_cajon, RIGHT(CAST(YEAR(o.fecha) AS CHAR(4)), 2) AS anio "
+			lcSQL = lcSQL + "	FROM gen_oficio o "
+			lcSQL = lcSQL + "	INNER JOIN GEN_OFIC_STAT os ON os.STATUS = o.STATUS "
+			lcSQL = lcSQL + "	LEFT JOIN passfile p ON o.usuario = p.user_id "
+			lcSQL = lcSQL + "	LEFT JOIN GEN_SOLI_OFIC so ON so.num_soli = o.soli_ofic "
+			lcSQL = lcSQL + "	INNER JOIN gen_tipo_ofic ti ON ti.cve = o.cve "
+			lcSQL = lcSQL + "	LEFT JOIN gen_centros s ON ti.id_cent = s.id_cent "
+			lcSQL = lcSQL + "	LEFT JOIN opc_arch_muer r ON r.id_cajon = o.id_cajon " 
+			lcSQL = lcSQL + "	WHERE " + lcBusca
+			lcSQL = lcSQL + "	ORDER BY o.fecha DESC "
+
+			lnCone_cgce = &lcQbase_cgce
+
+			strtofile(lcSQL, "C:/dsmnasdkmdaskads.txt")
+
+			IF SQLEXEC(lnCone_cgce, lcSQL, "cOficio") != 1
+				a=Aerror(Mat)
+				SQLDISCONNECT(0)
+				Response.Write(lcSQL)
+				Response.write(mat(2)+ "; Lï¿½nea: 232. op_reof0.fwx")
+				return
+			ENDIF
+
+			strtofile(lcSQL, "c:/coficiasdasd.txt")
+		
+			lcJson = IIF(RECCOUNT("cOficio") = 0, '[]', curs_json("cOficio"))
+		ENDIF
+
+	ENDIF
+
+
+	
+*/
+
+%>
+</head>
+	<style type="text/css">
+		.webix_cell{
+			font-size: 0.8em;
+		}
+	</style>
+	<script>
+		dhtmlXCalendarObject.prototype.langData["es"] = {
+			dateformat: '%d.%m.%Y',
+			monthesFNames: ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"],
+			monthesSNames: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"],
+			daysFNames: ["Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"],
+			daysSNames: ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"],
+			weekstart: 1
+		}
+		var txtFec_ini;
+		var txtFec_fin;
+	
+		function excel() {
+			var d = new Date();
+			webix.toExcel($$("dtable"), {
+				footer:false,
+				heights:false,
+
+				rawValues:true,
+					filename: `Oficios enviados ${document.getElementById("cmbSoli").value}`, 
+			});
+		}
+
+		function dateStringFilter(value, filter){
+			var format = webix.Date.dateToStr("%d/%m/%Y")
+			value = format(value).trim()
+			filter = filter.toString().toLowerCase().trim();
+			return value.indexOf(filter) >= 0;
+		}
+
+
+		webix.ready(()=>{
+
+			myCalendar = new dhtmlXCalendarObject("txtFec_ini");
+			myCalendar.hideTime();
+			myCalendar.loadUserLanguage("es");
+			myCalendar.setDateFormat("%d/%m/%Y");
+			myCalendar2 = new dhtmlXCalendarObject("txtFec_fin");
+			myCalendar2.hideTime();
+			myCalendar2.loadUserLanguage("es");
+			myCalendar2.setDateFormat("%d/%m/%Y");
+
+			webix.ui({
+				container:"seccionSpace",
+				view:"combo", 
+				id:"seccion", name:"Seccion",
+				on:{
+					onChange:(newv)=>{
+						document.getElementById("seccion").value = newv?? ''
+					},
+					onAfterRender:()=>{
+						buscaSeccion(<% // Response.write(lnSeccion)%>)
+					}
+				},
+				options: {
+					filter: function (item, value) {
+						if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+							return true;
+						return false;
+					},
+					// keyPressTimeout: 1000,
+					data:[]
+				}
+			})
+
+			webix.ui({
+				container:"webixContainer",
+				rows:[
+				{
+					view:"datatable", id:"dtable", select:true, footer:true, editable:true, hidden:false, minHeight:500, scroll:true,
+					resizeColumn: true,  navigation: true, resizeRow:true, css:"celda_compacta", 
+					rightSplit:1, leftSplit:3,
+					scheme: {
+						$init: function (obj) {
+							obj.fecha = (obj.fecha ? (obj.fecha == '01/01/1900'?'': convertDate(obj.fecha) ) : '');
+						}
+					},
+
+					columns:[
+					{
+						id: "detalle", width: 40,sort: "int", css: { 'text-align': 'center' }, 
+						header: [{text:"",css:"my_style"}, {text:""}],
+						template:(obj)=>{
+							return `
+								<a href="#" onClick="window.parent.deta_sali('${obj.cve}',${obj.idoficio},${obj.anio},${obj.id_iden},'op_reof0.fwx');">
+									<img alt="Detalle del oficio" src="/<% // Response.Write(config.ruta)%>/imagenes/search.png" width="28" height="28" border="0">
+								</a>`
+						}
+					},
+					{
+						id: "rank", width: 70,sort: "int", css: { 'text-align': 'center' }, 
+						header: [{text:"#",css:"my_style"}, {
+							content: "textFilter", placeholder:"Filtrar",
+						}],
+					},	
+					{
+						id: "oficio", width: 150,sort: "string", css: { 'text-align': 'left' }, 
+						header: [{text:"Oficio",css:"my_style"}, {
+							content: "textFilter", placeholder:"Filtrar",
+						}],
+					},	
+					{
+						id: "usuario", width: 140,sort: "string", css: { 'text-align': 'left' }, 
+						header: [{text:"Usuario",css:"my_style"}, {
+							content: "textFilter", placeholder:"Filtrar",
+						}],
+					},		
+					{
+						id: "servicio", width: 160,sort: "string", css: { 'text-align': 'left' }, 
+						header: [{text:"Servicio",css:"my_style"}, {
+							content: "textFilter", placeholder:"Filtrar",
+						}],
+					},		
+					{
+						id: "fecha", header: ["Fecha", { content: "textFilter", compare:dateStringFilter }], sort: "date", width: 140, format:webix.Date.dateToStr("%d/%m/%Y")
+					},		
+					{
+						id: "concepto", 
+						$height:160, 
+						fillspace:true, minWidth:300,sort: "string", css: { 'text-align': 'left' }, 
+						header: [{text:"Concepto",css:"my_style"}, {
+							content: "textFilter", placeholder:"Filtrar",
+							
+						}],
+					},		
+					{
+						id: "referencia", width: 70,sort: "string", css: { 'text-align': 'left' }, 
+						header: [{text:"Ref.",css:"my_style"}, {
+							content: "textFilter", placeholder:"Filtrar",
+						}],
+					},		
+					{
+						id: "solicitado", width: 70,sort: "string", css: { 'text-align': 'left' }, 
+						header: [{text:"Solic.",css:"my_style"}, {
+							content: "textFilter", placeholder:"Filtrar",
+						}],
+					},		
+					{
+						id: "caja", width: 80,sort: "string", css: { 'text-align': 'left' }, 
+						header: [{text:"Caja",css:"my_style"}, {
+							content: "textFilter", placeholder:"Filtrar",
+						}],
+					},	
+					{
+						id: "centros", width: 200,sort: "string", css: { 'text-align': 'left' }, 
+						header: [{text:"Destinatario",css:"my_style"}, {
+							content: "textFilter", placeholder:"Filtrar",
+						}],
+					},
+					{
+						id: "persona", width: 200,sort: "string", css: { 'text-align': 'left' }, 
+						header: [{text:"Dest. Nombre",css:"my_style"}, {
+							content: "textFilter", placeholder:"Filtrar",
+						}],
+					},
+					{
+						id: "stat_desc", width: 100,sort: "string", css: { 'text-align': 'left' }, 
+						header: [{text:"Status",css:"my_style"}, {
+							content: "selectFilter", placeholder:"Filtrar",
+						}],
+					},
+					{
+						id: "seccion", width: 100,sort: "string", css: { 'text-align': 'left' }, 
+						header: [{text:"Secci&oacute;n",css:"my_style"}, {
+							content: "textFilter", placeholder:"Filtrar",
+						}],
+					},
+					{
+						id: "status", width: 160,sort: "int", css: { 'text-align': 'left' }, hidden:true,
+						header: [{text:"Status",css:"my_style"}, {
+							content: "textFilter", placeholder:"Filtrar",
+						}],
+					},
+					
+					],
+					data:<% // Response.write(lcJson)%>
+				},
+				{
+					maxHeight:40,
+					hidden:false,
+					cols:[
+					{
+						width:40,
+					},
+					{
+						view:"button", label:"Descargar en excel", click:()=>{excel()}, width:160,
+					},
+					{
+						view:"button", type:"icon", icon:"mdi mdi-arrow-expand-all", tooltip:"Expandir cuadricula", width:40,
+						click:()=>{
+							$$(`dtable`).adjustRowHeight();
+						}
+					},
+					{
+
+					}
+					]
+					
+				},
+				
+				]
+			})
+		<% // IF lcJson != '[]'%>
+		// expandTenderSpace(0)
+		<% // ENDIF%>
+// style="display:<% // Response.write(IIF(lcJson != '[]', 'none', 'block'))%>" 
+
+			// $$("dtable").adjustRowHeight("concepto")
+		})
+
+		function buscaSeccion(value){
+			try{
+				$$("seccion").setValue(value)
+				$$("seccion").getPopup().getList().clearAll();
+				const select = document.getElementById("cmbSoli");
+      	const text = select.options[select.selectedIndex].text;
+				// let id = $$("cve").getValue();
+				// let item = $$("cve").getPopup().getList().getItem(id);
+				// let cve = item && item.value ? item.value : "";
+
+				let resultado = text.replace(/^\s*\(.*?\)\s*/, "");
+				
+				webix.ajax().post("/<% // Response.write(config.ruta)%>/op_combox.fwx", {
+					cveOfic: resultado
+				}).then(function (response) {
+				 	var data = response.json();
+				 	if (data.status && data.padre) {
+				 		$$("seccion").getPopup().getList().parse(data.padre);
+					} 
+				 });
+			}catch(error){
+				console.log(error)
+			}
+		}
+
+		const expandTenderSpace = (tipo) => {
+			if(tipo == 0){
+				return 
+			}
+			if (
+				document.getElementById(`colapsedLicitacion`).style.display ==
+				"none"
+			) {
+				document.getElementById(`colapsedLicitacion`).style.display =
+					"block";
+
+				document
+					.getElementById(`expandButtonIcon`)
+					.classList.remove("mdi-arrow-expand-down");
+				document
+					.getElementById(`expandButtonIcon`)
+					.classList.add("mdi-arrow-expand-up");
+			} else {
+				document.getElementById(`colapsedLicitacion`).style.display =
+					"none";
+				document
+					.getElementById(`expandButtonIcon`)
+					.classList.remove("mdi-arrow-expand-up");
+				document
+					.getElementById(`expandButtonIcon`)
+					.classList.add("mdi-arrow-expand-down");
+			}
+			
+		};
+
+		const preventProp =(e) => {
+			e.stopPropagation();
+		}
+
+		const redimensiona = ()=>{
+			$$('dtable').resize();
+		}
+</script>
+
+<body onresize="redimensiona()">
+	<div align="left" class="container">
+		<form name="form1" method="post" action="/<% // Response.Write(config.ruta)%>/op_reof0.fwx" onSubmit="return">
+
+			<div class="card" onClick="expandTenderSpace(1)">
+				<div class="insideElements" style="position:relative">
+					<div style="cursor: pointer;">
+						<div style="width:32px; text-align:center; position:absolute; right:4px; bottom:4px;">
+							<button class="expandButton" type="button" style="width:30px; height:30px; border: transparent; background: #ccc; border-radius:50%;  text-align:center"><i id="expandButtonIcon" class="mdi mdi-arrow-expand-<% // Response.write(IIF(lcJson != '[]', 'down', 'up'))%>"></i></button>
+						</div>
+						<div style="width:120px; text-align:right; position:absolute; right:4px; top:4px;">
+						</div> 
+						<div class="text-center">
+							<h4>Busqueda de oficios</h4>Click aqu&iacute; para expander/contraer los filtros
+						</div>
+					</div>
+					</div>
+					<div class="colapsedLicitacion" id="colapsedLicitacion" onclick="preventProp(event)">
+						<table align="center" width="98%">
+							<tr>
+								<td>
+									<fieldset>
+										<table width="100%" border="0">
+											<tr>
+												<td align="right">N&uacute;mero de Oficio</td>
+												<td colspan="1">
+													<table>
+														<tr>
+															<td><input name="txtNOficio" type="text" id="txtNOficio"
+																	value="<% // Response.Write(IIF(EMPTY(lnNoficio), "", lnNoficio))%>"
+																	tabindex="1"></td>
+															<td>Al</td>
+															<td><input name="txtNOficio2" type="text" id="txtNOficio2"
+																	value="<% // Response.Write(IIF(EMPTY(lnNoficio2), "", lnNoficio2))%>"
+																	tabindex="1"></td>
+														</tr>
+													</table>
+												</td>
+												<td align="right">Oficio de</td>
+												<td colspan="3">
+													<select name="cmbSoli" id="cmbSoli" tabindex="2" onchange="buscaSeccion()">
+														<% // SELECT cSoli
+														//SCAN%>
+														<option value="<% // Response.Write(ALLTRIM(cSoli.cve))%>"
+															<% // Response.Write(IIF(lcCVE == ALLTRIM(cSoli.cve) OR (EMPTY(lcCve) AND pnId_cent = 4 AND ALLTRIM(cSoli.cve) = 'DG HCG'), ' selected', ''))%>>
+															<% // Response.Write("(" + ALLTRIM(cSoli.cve) + ") " + STRCONV(ALLTRIM(cSoli.depen), 9))%>
+														</option>
+														<% // ENDSCAN%>
+													</select>
+												</td>
+											</tr>
+											<tr>
+												<td align="right">Año</td>
+												<td colspan="1">
+													<select name="cmbAnio" id="cmbAnio">
+														<option value="">-----------------------</option> 
+														<% //  FOR xx = YEAR(DATE()) TO 2019 STEP - 1 %>
+														<option value="<% //  Response.Write(xx) %>" <% // Response.Write(IIF(VAL(lcAnio) = xx, " selected", ""))%>><% //  Response.Write(xx) %></option> 
+														<% //  NEXT %>
+													</select>
+												</td>
+											</tr>
+											<tr>
+												<td align="right">Centro o dependencia</td>
+												<td colspan="3">
+													<% // IF EMPTY(lcDepen) OR RECCOUNT("cDeps") <= 0%>
+													<input name="txtDepen" type="text" id="txtDepen"
+														value="<% // Response.Write(STRCONV(lcDepen, 9))%>" size="50"
+														tabindex="3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+													<input type="button" name="btnBusca" id="btnBusca" value="Buscar" onclick="document.getElementById('cmdBusca').click();">
+													<% // ELSE%>
+													<input name="txtDepen" type="hidden" id="txtDepen"
+														value="<% // Response.Write(STRCONV(lcDepen, 9))%>">
+													<select name="cmbCentro" size="1" id="cmbCentro" tabindex="3">
+														<% /* SELECT cDeps
+														SCAN
+																IF EMPTY(lcDepen)
+																		response.write('<option ' + IIF(!EMPTY(lcCentro) AND ALLTRIM(STR(cDeps.id_cent)) = lcCentro, 'selected ','') + ;
+																		'value="' + ALLTRIM(STR(CDeps.id_cent)) + '">'+CDeps.descrip + '</option>' + chr(10))
+																ELSE
+																		response.write('<option ' + IIF(!EMPTY(lcCentro) AND ALLTRIM(STR(cDeps.id_cent)) = lcCentro, 'selected ','') + ;
+																		'value="' + ALLTRIM(STR(CDeps.id_cent)) + '">'+ CDeps.descrip + '</option>' + chr(10))
+																ENDIF
+														ENDSCAN
+														*/%>
+													</select>
+													&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+													<input name="cmdNBusca" type="submit" id="cmdNBusca" tabindex="4"
+														value="Buscar Otra">
+													<% // ENDIF%>
+												</td>
+											</tr>
+											<tr>
+												<td width="11%" align="right">Fecha Inicio</td>
+												<td width="38%">
+													<div style="position:relative;"><input type="text"  name="txtFec_ini" id="txtFec_ini" readonly>
+													</div>
+													<% // IF .F.%>
+													<input name="txtFec_ini" type="text" id="txtFec_ini"
+														value="<% // Response.Write(IIF(EMPTY(ldFec_ini), "", ldFec_ini))%>" size="20"
+														maxlength="10" tabindex="5">
+													<% // ENDIF%>
+												</td>
+												<td width="10%" align="right">Fecha Fin</td>
+												<td width="41%">
+													<div style="position:relative;"><input type="text" name="txtFec_fin" id="txtFec_fin" readonly>
+													</div>
+													<% // IF .F.%>
+													<input name="txtFec_fin" type="text" id="txtFec_fin"
+														value="<% // Response.Write(IIF(EMPTY(ldFec_fin), "", ldFec_fin))%>" size="20"
+														maxlength="10" tabindex="6">
+													<% // ENDIF%>
+												</td>
+											</tr>
+											<tr>
+												<td align="right">
+													Concepto
+												</td>
+												<td colspan="1"><textarea name="txtConcepto" cols="60" rows="3" id="txtConcepto"
+														tabindex="7"><% // Response.Write(STRCONV(lcConcepto, 9))%></textarea></td>
+												<td align="right">Referencia</td>
+												<td colspan="3"><textarea name="txtRefe" cols="60" rows="3" id="txtRefe"
+														tabindex="8"><% // Response.Write(STRCONV(lcRefe, 9))%></textarea></td>
+											</tr>
+											<tr>
+												<td align="right">Anexos</td>
+												<td>
+													<textarea name="txtAnexo" cols="60" rows="3" id="txtAnexo" tabindex="9"><% // Response.Write(STRCONV(lcAnexo, 9))%></textarea></td>
+												<td align="right">Estatus</td>
+												<td>
+													<select id="cmbStatus" name="cmbStatus">
+														<option value="0" <% // Response.write(IIF(lnStatus = 0, 'selected', ''))%> >Todos</option>
+														<option value="1" <% // Response.write(IIF(lnStatus = 1, 'selected', ''))%>>Elaboraci&oacute;n</option>
+														<option value="2" <% // Response.write(IIF(lnStatus = 2, 'selected', ''))%>>Firma</option>
+														<option value="3" <% // Response.write(IIF(lnStatus = 3, 'selected', ''))%>>Firmado</option>
+														<option value="4" <% // Response.write(IIF(lnStatus = 4, 'selected', ''))%>>Enviado</option>
+														<option value="5" <% // Response.write(IIF(lnStatus = 5, 'selected', ''))%>>Acuse</option>
+														<option value="100" <% // Response.write(IIF(lnStatus = 100, 'selected', ''))%>>Cancelado</option>
+													</select>
+												</td>
+											</tr>
+											<tr>
+												<td align="right">Persona</td>
+												<td colspan="1"><input type="text" name="txtPersona" id="txtPersona" style="width: 400px;" value="<% // Response.write(STRCONV(lcPersona, 9))%>"></td>
+												<td align="right">Tipo persona</td>
+												<td>
+													<select id="cmbTipo_pers" name="cmbTipo_pers">
+														<option value="0" <% // Response.write(IIF(lnTipo_pers = 0, 'selected', ''))%>>Todos</option>
+														<option value="1" <% // Response.write(IIF(lnTipo_pers = 1, 'selected', ''))%>>Dirigido a</option>
+														<option value="2" <% // Response.write(IIF(lnTipo_pers = 2, 'selected', ''))%>>Con copia</option>
+														<option value="3" <% // Response.write(IIF(lnTipo_pers = 3, 'selected', ''))%>>Autoriza</option>
+														<option value="4" <% // Response.write(IIF(lnTipo_pers = 4, 'selected', ''))%>>Vo. Bo.</option>
+														<option value="5" <% // Response.write(IIF(lnTipo_pers = 5, 'selected', ''))%>>Atenci&oacute;n a</option>
+													</select>
+												</td>
+											</tr>
+											<tr>
+													<td align="right">Secci&oacute;n/subsecci&oacute;n</td>
+												<td colspan="3">
+													<div id="seccionSpace" style="max-width: 400px"></div>
+													<input type="text" name="seccion" id="seccion" style="display: none">
+												</td>
+											</tr>
+											<tr>
+												<td colspan="2">
+													<input name="cmdBus_ofi" type="submit" id="cmdBus_ofi" value="Buscar en Oficio" style="display: none" tabindex="11">
+													<input type="button" name="btnBuscar" onclick="this.disabled = true; document.getElementById('cmdBus_ofi').click();"  value="Buscar oficios">
+													<!-- <input name="btmBus_des" type="button" id="btnBus_des" value="Descarga en Excel" tabindex="10" onclick="excel()"> -->
+												</td>
+												<td colspan="2" align="right"><label for="vistaAnterior"><input type="checkbox" name="vistaAnterior" id="vistaAnterior" <% // Response.write(IIF(llVist_ante, 'checked', ''))%>>Vista anterior</label></td>
+											</tr>
+										</table>
+									</fieldset>
+								</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+			</div>
+			<div id="webixContainer" style="width: calc(100% - 50px); padding:20px;height: auto; display: <% // Response.write(IIF(llVist_ante, 'none', 'block'))%>"></div>
+			<div style=" display: <% // Response.write(IIF(!llVist_ante, 'none', 'block'))%>">
+			<% // 
+			// IF llVist_ante AND SELECT('cOficio') > 0 AND RECCOUNT("cOficio") > 0
+			%>
+				<table width="98%" border="1" cellpadding="3" cellspacing="2"
+				style="border-collapse: collapse; border:#000;">
+				<tr bgcolor="#F4F4F4">
+					<td colspan="12" align="center"><strong>RESULTADO DE LA BUSQUEDA</strong></td>
+				</tr>
+				<tr bgcolor="#F4F4F4">
+					<td width="1%" align="center"><strong>Detalle</strong></td>
+					<td align="center"><strong>#</strong></td>
+					<td align="center"><strong>Solicitante</strong></td>
+					<td align="center"><strong>Dep. Sol.</strong></td>
+					<td align="center"><strong>Oficio</strong></td>
+					<td align="center"><strong>Fecha</strong></td>
+					<td align="center"><strong>Centro</strong></td>
+					<td align="center"><strong>Concepto</strong></td>
+					<td align="center"><strong>Referencia</strong></td>
+					<td align="center"><strong>Soli.</strong></td>
+					<td align="center"><strong>Caja/Cajon</strong></td>
+					<td align="center"><strong>Estatus</strong></td>
+					
+				</tr>
+				<% // SELECT cOficio
+				//SCAN
+				%>
+				<tr bgcolor="<% // response.write(IIF(MOD(RECNO('cOficio'),2) > 0,'#FFFFFF','#F4F4F4'))%>">
+					<td align="center">
+						<a href="#"
+							onClick="window.parent.deta_sali('<% // Response.Write(ALLTRIM(cOficio.cve))%>',<% // Response.Write(cOficio.idoficio)%>,<% // Response.Write(SUBSTR(DTOS(cOficio.fecha),3,2))%>,<% // response.write(cOficio.id_iden)%>,'op_reof0.fwx');">
+							<img alt="Detalle del oficio" src="/<% // Response.Write(config.ruta)%>/imagenes/search.png"
+								width="28" height="28" border="0"></a>
+					</td>
+					<td align="center">
+						<% // Response.Write(((MAX(lnPagina-1, 0))*consulta.tota_pagi)+RECNO('cOficio'))%>
+					</td>
+					<td>
+						<% // Response.Write(IIF(!EMPTY(cOficio.usuario), cOficio.usuario, "&nbsp;"))%>
+					</td>
+					<td>
+						<% // Response.Write(IIF(!EMPTY(cOficio.servicio), cOficio.servicio, "&nbsp;"))%>
+					</td>
+					<td align="center">
+						<% // Response.Write(IIF(!EMPTY(cOficio.oficio), cOficio.oficio, "&nbsp;"))%>
+					</td>
+					<td align="center">
+						<% // Response.Write(IIF(!EMPTY(cOficio.fecha), cOficio.fecha, "&nbsp;"))%>
+					</td>
+					<td>
+						<% // Response.Write(IIF(!EMPTY(cOficio.centros), cOficio.centros, "&nbsp;"))%>
+					</td>
+					<td>
+						<% // Response.Write(IIF(!EMPTY(cOficio.concepto), STRTRAN(STRTRAN(cOficio.concepto, chr(10), "<br>"),'\n', "<br>"), "&nbsp;"))%>
+					</td>
+					<td align="center">
+						<% // Response.Write(IIF(!EMPTY(cOficio.referencia), STRTRAN(cOficio.referencia, chr(10), "<br>"), "&nbsp;"))%>
+					</td>
+					<td align="center">
+						<% // Response.write(IIF(!EMPTY(cOficio.soli_ofic), "<span " + IIF(!EMPTY(cOficio.servicio),'title="'+cOficio.servicio+'"','')+ ">" +cOficio.soli_ofic + "</span>","&nbsp;"))%>
+					</td>
+					<td align="center">
+						<% // IF !EMPTY(cOficio.cajon)%>
+						 <a
+								href="/<% // Response.Write(config.ruta)%>/opc_arch_dmuer.fwx?id=<% // Response.Write(cOficio.id_cajon)%>">
+								<font color="#000000"><u><% // Response.Write(STRTRAN(cOficio.cajon, CHR(10), "<BR>"))%></u>
+								</font>
+						</a>
+						<% // endif%>
+					</td>
+					<td align="center">
+						<% // Response.Write(IIF(!EMPTY(ofic_stat.descrip), ofic_stat.descrip, "&nbsp;"))%>
+					</td>
+					<% // ENDSCAN%>
+			</table>
+			<% // ENDIF%>
+			</div>
+			<script language="JavaScript">
+				document.form1.txtNOficio.focus();
+			</script>
+			<input name="cmdBus_des" type="submit" id="cmdBus_des" value="Descarga en Excel" tabindex="10" style="display: none;">
+			<input name="cmdBusca" type="submit" id="cmdBusca" tabindex="4" value="Buscar" style="display: none;">
+		</form>
+	</div>
+</body>
+
+</html>
+
+
+<%
+/*
+	FUNCTION curs_json
+		PARAMETERS lcCursor
+		LOCAL lnCampos, lcXML
+		lnCampos = AFIELDS(a, lcCursor)
+		loArr = CreateObject('Chilkat_9_5_0.JsonArray')
+
+		SELECT (lcCursor)
+		lnLinea = -1
+		SCAN
+			lnLinea = lnLinea + 1
+			loArr.AddObjectAt(lnLinea)
+			&&loObj = loArr.ObjectAt(lnLinea)
+			loObj = loArr.ObjectAt(lnLinea)
+
+			loObj.UpdateInt("rank",lnLinea+1)
+			FOR xx = 1 TO lnCampos
+
+				IF LOWER(a(xx, 1)) = "css"
+					IF !EMPTY(&a(xx, 1))
+						loObj.UpdateString("$css",ALLTRIM(&a(xx, 1)))
+					ENDIF
+				ELSE
+					IF !ISNULL(&a(xx,1))
+						DO CASE
+							CASE INLIST(a(xx, 2), "N", "I")
+								loObj.UpdateNumber(LOWER(a(xx,1)),&a(xx,1))
+
+							CASE a(xx, 2) = 'L'		&&PARA LOGICOS 
+								loObj.UpdateNumber(LOWER(a(xx,1)),IIF(&a(xx,1),1,0))
+
+							CASE INLIST(a(xx, 2), "T", "D")
+								LCSAADSDAS = a(xx,1)
+								ADASDSADSD = &a(xx,1)
+								loObj.UpdateString(LOWER(a(xx,1)),STRCONV(ALLTRIM(DTOC(&a(xx,1))),9))
+							OTHERWISE
+								loObj.UpdateString(LOWER(a(xx,1)),STRCONV(ALLTRIM(&a(xx,1)),9))
+						ENDCASE
+					ENDIF
+				ENDIF
+			NEXT
+			RELEASE loObj
+		ENDSCAN
+		loArr.EmitCompact = 0
+		RETURN loArr.Emit()
+	ENDFUNC
+*/
+%>
