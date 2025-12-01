@@ -140,42 +140,71 @@ const op_sofic = (async (req, res) => {
 
 const op_seofic = (async (req, res) => {
 
+    let lcSQL = ''
     console.log(req.query.lnIden)
     if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
-    try {
-            conn = await pool.getConnection();
-            
-            // 3. Ejecutar la consulta
-            //verifica que el usuario tenga derecho al oficio
-            const lcSQL = `
+
+    lcSQL = `
             SELECT COUNT(*) AS total
                 FROM gen_oficio o INNER JOIN gen_dere_ofic d ON o.CVE = d.cve
                 WHERE d.user_id = ${req.userId} AND o.id_iden = ${req.query.lnIden}
             `
-            rows = await conn.query(lcSQL, [1]);
-            console.log(rows);
-
-        } catch (err) {
-            console.log(err)
-            res.json({err})
-            throw err;
-        } finally {
-            // 4. Devolver la conexión al pool (¡Muy Importante!)
-            if (conn) conn.release(); 
-        }
+    const rows = await util.gene_cons(lcSQL)
 
     if (rows[0].total <= 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
-    const laQuery = req.query
-    
-    //console.log(req.query)
 
-    return res.render("op/op_seofic", {laQuery})
+    lcSQL = `
+            SELECT * 
+                FROM gen_oficio 
+                WHERE id_iden = ${req.query.lnIden}
+            `
+    
+    const rows2 = await util.gene_cons(lcSQL)
+
+    console.log(rows2)
+
+    lcSQL = `
+        SELECT STATUS AS id, descrip, titular 
+            FROM gen_ofic_stat 
+            WHERE STATUS = ${rows2[0].STATUS}+1 OR STATUS = 99 
+            ORDER BY status 
+    `
+
+    const rows3 = await util.gene_cons(lcSQL)
+
+    lcSQL = `
+        SELECT os.status as id, os.descrip, s.nota, s.usuario, s.inicio, s.fin, TIMESTAMPDIFF(MINUTE, inicio, fin) AS duracion  
+            FROM gen_stat_ofic s LEFT JOIN gen_ofic_stat os ON IFNULL(s.status,0) = os.status 
+            WHERE id_iden = ${req.query.lnIden}
+            ORDER BY os.status desc
+    `
+
+    const rows4 = await util.gene_cons(lcSQL)
+
+        lcSQL = `
+        SELECT o.*, c.dependen, t.descrip as dtipo_ofic, cl.descrip as dclas_ofic, 1 as tipo  
+            FROM opc_oficio o INNER JOIN gen_centros c ON o.id_cent = c.id_cent 
+            left join opc_TIPO_OFIC t ON o.ID_TIOF = t.ID_TIOF 
+            left join OPC_CLAS_OFIC cl on o.ID_CLOF = cl.ID_CLOF  
+            WHERE o.id_ofic	in (select ofic_in from OPC_LIGA_OFIC where tipo = 1 and ofic_out = ${req.query.lnIden}) 
+            UNION ALL( 
+            SELECT o.*, c.dependen, t.descrip as dtipo_ofic, cl.descrip as dclas_ofic, 3 as tipo 
+            FROM opc_oficio o INNER JOIN gen_centros c ON o.id_cent = c.id_cent 
+            left join opc_TIPO_OFIC t ON o.ID_TIOF = t.ID_TIOF 
+            left join OPC_CLAS_OFIC cl on o.ID_CLOF = cl.ID_CLOF  
+            WHERE o.id_ofic	in (select ofic_out from OPC_LIGA_OFIC where tipo = 3 and ofic_in = ${req.query.lnIden}))
+    `
+    
+    const rows5 = await util.gene_cons(lcSQL)
+    console.log(rows5)
+
+    return res.render("op/op_seofic", {rows2, rows3, rows4, rows5})
 });
 
 const op_plan = ((req, res) => {
@@ -307,6 +336,96 @@ const op_sdofic = (async (req, res) => {
     return res.render("op/op_sdofic", {rows, ldDere, loDatos, rowso, llEditar, llEdit_ofic})
 });
 
+const op_rgraf = (async (req, res) => {
+    
+    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+    
+    return res.render("op/op_rgraf")
+});
+
+const op_hofic = (async (req, res) => {
+    
+    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    const lcSQL = `
+        SELECT id_cent, cve, depen, clave 
+            FROM GEN_TIPO_OFIC 
+            WHERE cve in (SELECT DISTINCT cve FROM GEN_DERE_OFIC WHERE user_id = ${req.userId}) 
+        `
+    
+    const rows = await util.gene_cons(lcSQL)
+
+    
+    return res.render("op/op_hofic", {rows})
+});
+
+const op_pend = (async (req, res) => {
+    
+    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    const lcSQL = `
+        SELECT id_cent, cve, depen, clave 
+            FROM GEN_TIPO_OFIC 
+            WHERE cve in (SELECT DISTINCT cve FROM GEN_DERE_OFIC WHERE user_id = ${req.userId}) 
+        `
+    
+    const rows = await util.gene_cons(lcSQL)
+
+    console.log(req.query)
+
+    
+    return res.render("op/op_pend", {lcCVE:req.query.lcCVE})
+});
+
+const op_ingr = (async (req, res) => {
+    
+    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    const lcSQL = `
+        SELECT id_cent, cve, depen, clave 
+            FROM GEN_TIPO_OFIC 
+            WHERE cve in (SELECT DISTINCT cve FROM GEN_DERE_OFIC WHERE user_id = ${req.userId}) 
+        `
+    
+    const rows = await util.gene_cons(lcSQL)
+    //console.log(req.query)
+    console.log(rows)
+    
+    return res.render("op/op_ingr", {rows})
+});
+
+const op_detalle = (async (req, res) => {
+    
+    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    const lcSQL = `
+        SELECT id_cent, cve, depen, clave 
+            FROM GEN_TIPO_OFIC 
+            WHERE cve in (SELECT DISTINCT cve FROM GEN_DERE_OFIC WHERE user_id = ${req.userId}) 
+        `
+    
+    const rows = await util.gene_cons(lcSQL)
+    //console.log(req.query)
+    console.log(rows)
+    
+    return res.render("op/op_detalle", {rows})
+});
+
 
 module.exports = {
     op_cucs,
@@ -324,5 +443,10 @@ module.exports = {
     op_grup,
     op_bgrup,
     op_ngrup,
-    op_sdofic
+    op_sdofic,
+    op_rgraf,
+    op_hofic,
+    op_pend,
+    op_ingr,
+    op_detalle
 }

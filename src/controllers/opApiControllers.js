@@ -14,8 +14,8 @@ const op_cucsx2 = (async (req, res) => {
 
     const lcSQL = `
     SELECT cve, depen as descrip, clave,
-            (SELECT COUNT(*) as total FROM gen_oficio WHERE cve = t.cve AND status IN(1,2)) as cant,
-            (SELECT COUNT(*) AS MODI FROM gen_oficio WHERE cve = t.cve AND status IN(1,2) AND modificado = 1) AS modificado 
+            (SELECT COUNT(*) as total FROM gen_oficio WHERE cve = t.cve AND IFNULL(status,0) < 3) as cant,
+            (SELECT COUNT(*) AS MODI FROM gen_oficio WHERE cve = t.cve AND IFNULL(status,0) < 3 AND modificado = 1) AS modificado 
         FROM gen_tipo_ofic t
         WHERE cve in (SELECT DISTINCT cve FROM gen_dere_ofic WHERE user_id = ${req.userId})
         ORDER BY cve
@@ -33,9 +33,12 @@ const op_oficx5 = (async (req, res) => {
         return res.render("sin_derecho")
     }
 
-    const lcSQL = `
-    SELECT ROW_NUMBER() OVER (ORDER BY o.fecha desc) AS rank,
-        if(ifnull(o.tipo_depe,1) = 1, c.descrip, oc.descrip) AS centros, 
+    console.log(req.query)
+
+    let lcSQL = ''
+
+    lcSQL = `
+    SELECT ROW_NUMBER() OVER (ORDER BY o.fecha desc) AS rank, o.depe_envi AS centros,
             CASE 
                 WHEN IFNULL(o.gdoc, '') != '' AND INSTR(o.gdoc, 'docs.google.com') > 0 THEN o.gdoc 
                 ELSE '' 
@@ -53,27 +56,31 @@ const op_oficx5 = (async (req, res) => {
             YEAR(o.fecha) AS anio, 
             o.id_iden AS id, 
             o.id_iden 
-        FROM 
-            gen_oficio o 
-        LEFT JOIN 
-            gen_centros c ON o.ID_CENT = c.ID_CENT 
-        LEFT JOIN 
-            gen_otro_cent oc ON o.ID_CENT = oc.ID_CENT 
-        INNER JOIN 
-            gen_ofic_stat g ON IFNULL(o.STATUS,0) = g.STATUS 
-        LEFT JOIN 
-            GEN_SOLI_OFIC so ON so.num_soli = o.soli_ofic 
-        LEFT JOIN 
-            gen_doficio d ON d.id_iden = o.ID_IDEN AND d.tipo = 1 
+        FROM gen_oficio o LEFT JOIN gen_ofic_stat g ON IFNULL(o.STATUS,0) = g.STATUS 
+            LEFT JOIN GEN_SOLI_OFIC so ON so.num_soli = o.soli_ofic 
+    `
+    if (req.query.t === '2'){
+    
+    lcSQL = lcSQL + `
+        WHERE 
+            IFNULL(o.status, 0) < 3 AND o.cve = '${req.query.cve}' 
+    `
+    }
+    else {
+    lcSQL = lcSQL + `
         WHERE 
             o.solicito = ${req.userId} AND IFNULL(o.status, 0) < 4 AND o.cve IN ( 
                 SELECT cve 
                 FROM GEN_DERE_OFIC 
                 WHERE user_id = ${req.userId} 
-            ) 
+            )
+    `
+    }
+    lcSQL = lcSQL + ` 
         ORDER BY 
         o.fecha DESC 
     `
+    //console.log(lcSQL)
     const rows = await util.gene_cons(lcSQL)
     return res.json(rows)
 });
@@ -155,7 +162,7 @@ const op_noficx4 = (async (req, res) => {
         return res.render("sin_derecho")
     }
 
-    console.log(req.query.lnTipo == 1)
+    //console.log(req.query.lnTipo == 1)
     let lcSQL = {}
     if (req.query.laId <= 0){
         return res.json({"error":true, "mensage":"Falto seleccionar un id"})
@@ -184,6 +191,27 @@ const op_noficx4 = (async (req, res) => {
                 WHERE id_plantilla_pk = ${req.query.laId} 
         `
     }
+    const rows = await util.gene_cons(lcSQL)
+    //console.log(rows)
+    return res.json(rows)
+
+});
+
+const op_noficx6 = (async (req, res) => {
+
+    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    
+    lcSQL = `
+        SELECT id_ofic as id, nume_cont as value, 1 as open 
+            from opc_oficio 
+            WHERE id_ofic = ${req.query.lnOfic}  
+            ORDER BY id_ofic DESC LIMIT 1
+        `
+    
     const rows = await util.gene_cons(lcSQL)
     //console.log(rows)
     return res.json(rows)
@@ -244,7 +272,6 @@ const op_noficx5 = (async (req, res) => {
         return res.render("sin_derecho")
     }
 
-    //console.log(req.body)
     //console.log(!req.body.txtConcepto || !req.body.cmbSoli)
     
     if (!req.body.txtConcepto || !req.body.cmbSoli){
@@ -275,14 +302,14 @@ const op_noficx5 = (async (req, res) => {
     //console.log(req.body)
 
     const laDepen = await util.gene_cons("select * from gen_tipo_ofic where cve = '" + req.body.cmbSoli + "'")
-    console.log(laDepen)
+    //console.log(laDepen)
 
     if (!laDepen){
         return res.json({"status" : false, "message": "No se pudo recuperar información de la dependencia"});
     }
 
     //console.log(laDepen[0].CVE)
-    console.log("'" + (!laDepen[0].cve_compartir ?laDepen[0].CVE : laDepen[0].cve_compartir) + "'")
+    //console.log("'" + (!laDepen[0].cve_compartir ?laDepen[0].CVE : laDepen[0].cve_compartir) + "'")
     const laID = await util.gene_cons("CALL SP_NEWID ('" + (!laDepen[0].cve_compartir ?laDepen[0].CVE : laDepen[0].cve_compartir) + "', '')")
 
     if (!laID[0][0].nextid){
@@ -294,12 +321,12 @@ const op_noficx5 = (async (req, res) => {
     lcSQL = `
         INSERT INTO gen_oficio (idOficio, cve, oficio, fecha, clave, concepto, referencia, anexo, 
                 solicito, usuario, clav_soli, lud, tipo_depe, clav_ofic, cent_soli, soli_ofic, soli_moti, area_rh, nombra, pers_firma, id_seccion) 
-            VALUES (${laID[0][0].nextid}, '${laDepen[0].CVE}', '${lcOficio}', NOW(), ${laDepen[0].CLAVE}, '${req.body.txtConcepto}', '${req.body.txtRefe}', '${req.body.txtAnexo}', 
+            VALUES (${laID[0][0].nextid}, '${laDepen[0].CVE}', '${lcOficio}', NOW(), '${laDepen[0].CLAVE}', '${req.body.txtConcepto}', '${req.body.txtRefe}', '${req.body.txtAnexo}', 
             '${req.userId}', '${req.userId}', '${req.centro}', NOW(), ${laDeta[0].tipo_depe}, '${lcclav_ofic}', ${req.id_cent}, '${req.body.cmbSoli_ofic}', '${req.body.txtSoli_moti}', 
             ${!req.body.cmbTipoFormatoRH ? 0 : req.body.cmbTipoFormatoRH}, ${!req.body.nombramiento ? 0 : req.body.nombramiento}, ${!req.body.firma ? 0 : req.body.firma}, 
                 ${!req.body.seccion ? 0 : req.body.seccion})
     `
-
+    console.log(lcSQL)
     const laInsert = await util.gene_cons(lcSQL)            //inserta el oficio
     
     if (!laInsert.insertId){
@@ -311,7 +338,7 @@ const op_noficx5 = (async (req, res) => {
             VALUES (${laID[0][0].nextid}, '${laDepen[0].CVE}', '${req.userId}', NOW(), '${req.body.txtStatus}', Right(Year(NOW()),2), ${laInsert.insertId})
     `
     const laInsertStat = await util.gene_cons(laStatus)
-    console.log(laInsertStat)
+    //console.log(laInsertStat)
 
     for (var i = 0; i < laDeta.length; i++) {                   //inserta el detalle del oficio
         const lcDeta = `
@@ -319,12 +346,47 @@ const op_noficx5 = (async (req, res) => {
             VALUES(${laInsert.insertId}, ${laDeta[i].servicio}, '${laDeta[i].correo}', '${laDeta[i].nombre}', '${laDeta[i].ocupacion}', ${laDeta[i].tipo_depe}, 
             ${laDeta[i].tipo}, '${lcclav_ofic}', 'ALTA|${req.userId}|${new Date().toISOString()}', '${laDeta[i].copias}')
         `
-        console.log(lcDeta)
+        //console.log(lcDeta)
         const laInsertDeta = await util.gene_cons(lcDeta)
-        console.log(laInsertDeta)
+        //console.log(laInsertDeta)
     }
+
+    //actualiza en nombre de las dependencias enviadas
+    lcSQL = `
+    UPDATE gen_oficio SET depe_envi = 
+        (SELECT
+                GROUP_CONCAT(datos.DEPENDEN) AS DEPE_ENVI
+            FROM (
+                SELECT d.id_iden, c.DEPENDEN FROM gen_doficio d 
+                INNER JOIN gen_centros c ON d.id_cent = c.id_cent
+                WHERE d.tipo_depe = 1 AND D.id_iden = ${laInsert.insertId}
+                UNION ALL
+                
+                SELECT d.id_iden, c.DEPENDEN FROM gen_doficio d 
+                INNER JOIN gen_otro_cent c ON d.id_cent = c.id_cent
+                WHERE d.tipo_depe = 2 AND D.id_iden = ${laInsert.insertId}
+            ) datos)
+            WHERE id_iden = ${laInsert.insertId}
+    `
+
+    const laDepe_actu = await util.gene_cons(lcSQL)
+
+    //liga los oficio de ingreso con la nueva salida
+    loTree = JSON.parse(req.body.txtTree);  
+    //console.log(loTree.length)
+    let loLiga
+    
+    for (var i = 0; i < loTree.length; i++){
+        lcSQL = `
+        INSERT INTO opc_liga_ofic (ofic_in, ofic_out, tipo, tipo_docu) VALUES(${loTree[i].id} , ${laInsert.insertId}, 1, 0)
+        `
+        loLiga = await util.gene_cons(lcSQL)
+    }    
+
+    
     
     return res.json({"status" : true, "message": "El oficio se inserto correctamente"});
+
 
 });
 
@@ -373,8 +435,7 @@ const op_gofic = (async (req, res) => {
     lovobo = await util.gene_cons("SELECT diri_nomb AS nombre, diri_carg AS cargo FROM gen_doficio WHERE tipo = 4 AND id_iden = " + req.body.lnIden);
     loatencion = await util.gene_cons("SELECT diri_nomb AS nombre, diri_carg AS cargo FROM gen_doficio WHERE tipo = 5 AND id_iden = " + req.body.lnIden);
     
-    console.log(lodirigido)
-    console.log(!lodirigido)
+    //console.log(!lodirigido)
 
     let loCuerpo = {"folio": rows[0].oficio,
                 "fecha": rows[0].fecha,
@@ -412,7 +473,7 @@ const op_gofic = (async (req, res) => {
     } finally {
     }
 
-    //console.log(googleDoc)
+    console.log(googleDoc)
 
     if (googleDoc.length > 0){
         const lcInserta = `
@@ -499,7 +560,7 @@ const op_admix2 = (async (req, res) => {
             WHERE id_cent = ${req.query.servicio} AND IFNULL(cve_compartir, '') = ''
     `
     }
-    console.log(lcSQL)
+    //console.log(lcSQL)
     const rows = await util.gene_cons(lcSQL)
     //console.log(rows)
     return res.json(rows)
@@ -525,7 +586,7 @@ const op_ningrx2 = (async (req, res) => {
 
 });
 
-const cmb_control2w = (async (req, res) => {
+const cmb_control2W = (async (req, res) => {
 
     if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
     {
@@ -534,13 +595,13 @@ const cmb_control2w = (async (req, res) => {
 
     const lcBusca = req.query['filter[value]']
     
-    const lcWhere = util.construirClausulaBusqueda(lcBusca,3)
+    const lcWhere = util.construirClausulaBusqueda(lcBusca,'3')
 
     let lcWhereT = ''
-    lcWhereT = (!req.query.cve ? '' : "o.cve = '" + req.query.cve + "'") + (!req.query.cve ? '' : ' and ') + (!lcWhere ? '' : lcWhere)
+    lcWhereT = (!req.query.cve ? '' : "o.status < 8 AND o.cve = '" + req.query.cve + "'") + (!req.query.cve ? '' : ' and ') + (!lcWhere ? '' : lcWhere)
     lcWhereT = (!lcWhereT ? '' : 'WHERE ' + lcWhereT)
 
-    console.log(lcWhereT)
+    //console.log(lcWhereT)
 
     lcSQL = `
         SELECT o.id_ofic as id, LEFT(o.descrip,254) as value 
@@ -550,6 +611,37 @@ const cmb_control2w = (async (req, res) => {
             ORDER BY o.id_ofic desc LIMIT 20
     `
     console.log(lcSQL)
+    const rows = await util.gene_cons(lcSQL)
+    //console.log(rows)
+    return res.json(rows)
+    //return res.json({status:true, nume_cont : rows[0].control})
+
+});
+
+const cmb_control3W = (async (req, res) => {
+
+    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    const lcBusca = req.query['filter[value]']
+    
+    const lcWhere = util.construirClausulaBusqueda(lcBusca,'4')
+
+    let lcWhereT = ''
+    lcWhereT = (!req.query.cve ? '' : "o.status < 8 AND o.cve = '" + req.query.cve + "'") + (!req.query.cve ? '' : ' and ') + (!lcWhere ? '' : lcWhere)
+    lcWhereT = (!lcWhereT ? '' : 'WHERE ' + lcWhereT)
+
+    //console.log(lcWhereT)
+
+    lcSQL = `
+        SELECT o.id_iden as id, o.oficio as value 
+            FROM gen_oficio o
+            ${lcWhereT} 
+            ORDER BY o.id_iden desc LIMIT 20
+    `
+    //console.log(lcSQL)
     const rows = await util.gene_cons(lcSQL)
     //console.log(rows)
     return res.json(rows)
@@ -601,7 +693,7 @@ const op_ningrx = (async (req, res) => {
                 ,'${req.body.liga_sali}', '${req.body.liga_entr}', 0, ${req.body.tipo_ingr},  '${req.body.dest_carg}', '', '${req.body.cve}', ${req.id_cent}, 0, 1, 0, ${req.body.info_sens}, 0, ''
                 , ${req.body.tipo_info}, ${req.body.tipo_ingr}, 0, ${req.body.seccion === '' ? 0 : req.body.seccion});
     `
-    console.log(lcSQL)
+    //console.log(lcSQL)
     const rows4 = await util.gene_cons(lcSQL);
 
     lcSQL = `
@@ -609,10 +701,320 @@ const op_ningrx = (async (req, res) => {
     `
     const rows5 = await util.gene_cons(lcSQL);
 
+    if (!!req.body.liga_sali){                       //aplica oficios de salidada ligados
+        lcSQL = `
+        SELECT id_iden as ID
+            FROM gen_oficio 
+            where status < 9 and id_iden in (${req.body.liga_sali})
+        `
+
+        const loLigaS = await util.gene_cons(lcSQL)
+
+        //console.log(loLigaS)
+        let loLigaSa 
+
+
+        for (var i = 0; i < loLigaS.length; i++){
+            lcSQL = `
+            INSERT INTO opc_liga_ofic (ofic_in, ofic_out, tipo, tipo_docu) VALUES(${loLigaS[i].ID}, ${rows4.insertId}, 3, 0)
+            `
+
+            //console.log(lcSQL)
+            loLigaSa = await util.gene_cons(lcSQL)
+            //console.log(loLigaSa)
+        }
+    }
+
+
+    if (!!req.body.liga_entr){                         //aplica oficios de entrada ligados
+        lcSQL = `
+        SELECT id_ofic as ID
+            FROM opc_oficio 
+            where status < 8 and id_ofic in (${req.body.liga_entr})
+        `
+
+        const loLigaI = await util.gene_cons(lcSQL)
+
+        //console.log(loLigaI)
+        let loLigaIa
+
+
+        for (var i = 0; i < loLigaI.length; i++){
+            lcSQL = `
+            INSERT INTO opc_liga_ofic (ofic_in, ofic_out, tipo, tipo_docu) VALUES(${rows4.insertId}, ${loLigaI[i].ID}, 2, 0)
+            `
+
+            //console.log(lcSQL)
+            loLigaIa = await util.gene_cons(lcSQL)
+        
+            //console.log(loLigaIa)
+        }
+    }
+
+
     res.json([{status: true, message:"Se guardo correctamente con el n\u00FAmero: " + lnNume_cont, oficio: lnNume_cont, id: rows4.insertId }]);
-    console.log(rows5)
+    //console.log(rows5)
 
 
+});
+
+const op_admix = (async (req, res) => {
+
+    if (req.groups.indexOf(",OP_TOTA,") <= 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    let lcSQL = ''
+
+    //console.log(req.body)
+
+    if (!req.body.clave || !req.body.cmbServicio || !req.body.correo_area || !req.body.firm_rud || !req.body.firm_nomb || !req.body.firm_carg || !req.body.firm_inic){
+        return res.json({"status": false, "message": "Los campos con un * son obligatorios"})
+    }
+
+    lcSQL = `
+        SELECT CVE 
+            FROM gen_tipo_ofic 
+            WHERE cve = '${req.body.clave}'
+    `
+
+    const rows = await util.gene_cons(lcSQL);
+
+    if (rows.length > 0){
+        return res.json({"status": false, "message": "La clave de la oficialia ya se encuentra registrada"})
+    }
+
+    lcSQL = `
+        SELECT *  
+            FROM gen_id 
+            WHERE \`table\` = '${req.body.clave}'
+    `
+    const rows2 = await util.gene_cons(lcSQL);
+
+    if (rows2.length > 0){
+        return res.json({"status": false, "message": "No se puede usar la clave de oficialia ingresada, intenta con otra"})
+    }
+
+    lcSQL = `
+        SELECT *  
+            FROM gen_id 
+            WHERE \`table\` = 'R_${req.body.clave}'
+    `
+    const rows3 = await util.gene_cons(lcSQL);
+
+    if (rows3.length > 0){
+        return res.json({"status": false, "message": "No se puede usar la clave de oficialia ingresada, intenta con otra"})
+    }
+
+    lcSQL = `
+        SELECT clave, RTRIM(LTRIM(dependen)) as dependen, descrip 
+            FROM gen_centros 
+            WHERE id_cent = ${req.body.cmbServicio}
+    `
+
+    const rows4 = await util.gene_cons(lcSQL);
+
+    if (rows4.length <= 0){
+        return res.json({"status": false, "message": "No se pudo localizar la dependencia"})
+    }
+
+    const lnProximo = (isNaN(parseInt(req.body.folio)) || parseInt(req.body.folio) <= 0 ? 1 : parseInt(req.body.folio))
+
+    lcSQL = `
+        INSERT INTO gen_tipo_ofic (cve, depen, clave, id_cent, previo, iniciales, nomb_firm, carg_firm, plantilla, codigo, correo_area, correo_copia, cve_compartir) 
+            VALUES ('${req.body.clave}', '${rows4[0].dependen}', '${rows4[0].clave}', ${req.body.cmbServicio}, '${req.body.previo}', '${req.body.firm_inic}', '${req.body.firm_nomb}', '${req.body.firm_carg}', '', ${req.body.firm_rud}, '${req.body.correo_area}', '${req.body.correo_copia}', '${req.body.compartir}');
+
+        INSERT INTO GEN_ID (\`table\`, nextid, reset) VALUES ('${req.body.clave}', ${lnProximo}, 1), ('R_${req.body.clave}', 1, 0)
+    `
+
+    const rows5 = await util.gene_cons(lcSQL);
+
+    return res.json({"status": true, "message": "Se guardaron los cambios"})
+});
+
+const op_nplan = ( async (req, res) => {
+
+    if (req.groups.indexOf(",OP_TOTA,") <= 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    lcSQL = `
+        SELECT * 
+            FROM gen_tipo_ofic 
+            WHERE cve = '${req.body.lcCve}'
+    `
+
+    const rows = await util.gene_cons(lcSQL);
+
+    if (rows[0].PLANTILLA != ''){
+        return res.json({"status": "error", "message": "El oficio ya cuenta con una plantilla"})
+    }
+    
+    loJson = {
+        "depe": req.body.lcCve, 
+        "url_plan": config.url_plant,
+        "nomb_carp": config.carp_plan,
+        "url_logger": config.url_logs,
+    }
+
+    //console.log(loJson)
+    //return 
+    let googleDoc
+    try{
+        googleDoc = await util.gene_gogl_plan(config.nuev_plan, loJson);
+    } catch (err) {
+        console.log(err)
+        //res.json({err})
+        //throw err;
+    } finally {
+    }
+    //console.log(googleDoc)
+    
+    if (googleDoc.length > 0){
+        const lcInserta = `
+        UPDATE gen_tipo_ofic SET plantilla = '${googleDoc}' WHERE cve = '${req.body.lcCve}'  ;
+        `
+        //console.log(lcInserta)
+        loFinal = await util.gene_cons(lcInserta);
+        //console.log(loFinal)
+
+        return res.json({"status": true, "message":"La plantilla se creó correctamente"})
+    }
+    else {
+        return res.json({"status": false, "message":"La plantilla no se pudo crea, por favor consultalo con el administrador"})
+    }
+
+
+});
+
+const op_soficx = (async (req, res) => {
+
+    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    //return res.json(req.body)
+    lcSQL = `
+        SELECT * 
+            FROM gen_oficio 
+            WHERE id_iden = ${req.body.lnIDIden}
+    `
+
+    const rows = await util.gene_cons(lcSQL);
+    if (rows.length <= 0){
+        return res.json({"status": false, "message": "No se econtro el oficio"})
+    }
+
+    //console.log(rows)
+
+    if (!rows[0].GDOC && req.body.lnStatus < 99 ){
+        return res.json({"status": false, "message": "Debes de generar el documento antes de cambiar el status"})
+    }
+
+    lcSQL = `
+        SELECT *
+            FROM gen_dere_ofic 
+            WHERE user_id = '${req.userId}' AND cve = '${rows[0].CVE}' AND titular >= (SELECT titular FROM gen_ofic_stat WHERE STATUS = ${req.body.lnStatus})
+    ` 
+    const rows2 = await util.gene_cons(lcSQL);
+    if (rows2.length <= 0 || rows[0].STATUS >= req.body.lnStatus){
+        return res.json({"status": false, "message": "No cuentas con derechos para aplicar el estatus o el status ya fue aplicado"})
+    }
+
+    lcSQL = `
+        UPDATE GEN_STAT_OFIC SET fin = NOW() where id_iden = ${req.body.lnIDIden} and IFNULL(status,0) = ${rows[0].STATUS} ;
+        
+        INSERT INTO GEN_STAT_OFIC (idOficio, cve, usuario, inicio, nota, anio, id_iden, status) 
+            VALUES (${rows[0].IDOFICIO}, '${rows[0].CVE}', '${req.userId}', NOW(), '${req.body.lcStatus}', Right(Year(NOW()),2), ${req.body.lnIDIden}, ${req.body.lnStatus});
+
+        UPDATE gen_oficio SET status = ${req.body.lnStatus}
+            WHERE id_iden = ${req.body.lnIDIden}
+    `
+
+    //console.log(lcSQL)
+    const rows3 = await util.gene_cons(lcSQL);
+
+    return res.json({"status": true, "message": "Se guardaron los cambios"})
+
+});
+
+const op_hoficx = (async (req, res) => {
+
+    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+//    console.log(req.query)
+    const lcSQL = `
+    SELECT ROW_NUMBER() OVER (ORDER BY o.fecha desc) AS rank,
+        if(ifnull(o.tipo_depe,1) = 1, c.descrip, oc.descrip) AS centros, 
+            CASE 
+                WHEN IFNULL(o.gdoc, '') != '' AND INSTR(o.gdoc, 'docs.google.com') > 0 THEN o.gdoc 
+                ELSE '' 
+            END AS doc, 
+            o.oficio, 
+            DATE_FORMAT(o.fecha, '%d/%m/%Y') AS fecha, 
+            DATE_FORMAT(o.fecha, '%H:%i') AS hora, 
+            o.concepto, 
+            g.descrip AS stat_desc, 
+            IFNULL(o.referencia, '') AS referencia, 
+            IFNULL(o.anexo, '') AS anexo, 
+            IFNULL(o.soli_ofic, '') AS solicitado, 
+            o.cve, 
+            o.idoficio, 
+            YEAR(o.fecha) AS anio, 
+            o.id_iden AS id, 
+            o.id_iden 
+        FROM 
+            gen_oficio o 
+        LEFT JOIN 
+            gen_centros c ON o.ID_CENT = c.ID_CENT 
+        LEFT JOIN 
+            gen_otro_cent oc ON o.ID_CENT = oc.ID_CENT 
+        INNER JOIN 
+            gen_ofic_stat g ON IFNULL(o.STATUS,0) = g.STATUS 
+        LEFT JOIN 
+            GEN_SOLI_OFIC so ON so.num_soli = o.soli_ofic 
+        LEFT JOIN 
+            gen_doficio d ON d.id_iden = o.ID_IDEN AND d.tipo = 1 
+        WHERE 
+            o.cve = '${req.query.cve}' AND YEAR(o.fecha) = ${req.query.anio} AND MONTH(o.fecha) BETWEEN ${req.query.mesi} AND ${req.query.mesf}
+        ORDER BY 
+        o.fecha DESC 
+    `
+    const rows = await util.gene_cons(lcSQL)
+    return res.json(rows)
+});
+
+const op_ingrx2 = (async (req, res) => {
+
+        if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    console.log(req.query)
+    const lcSQL = `
+    SELECT ROW_NUMBER() OVER (ORDER BY o.anio DESC, o.nume_cont DESC) AS rank,
+            o.id_ofic as id, o.*, DATE_FORMAT(o.fecha, '%d/%m/%Y') AS fechac, DATE_FORMAT(o.fecha, '%d/%m/%Y') as fech_conv, DATE_FORMAT(o.fecha, '%H:%i') as hora, c.dependen, t.descrip as dtipo_ofic, cl.descrip as dclas_ofic,
+            CONCAT(LEFT(o.asunto,254), CASE WHEN LENGTH(o.asunto) > 255 THEN '...' ELSE '' END) as asunto2, td.descrip as tipo_docu, 
+        (SELECT group_concat(depen) FROM ser_depen sd WHERE FIND_IN_SET(sd.ID_DEPE, ss.ID_DEPE) > 0) AS depe_asig 
+            FROM opc_oficio o INNER JOIN gen_centros c ON o.id_cent = c.id_cent 
+            LEFT JOIN opc_TIPO_OFIC t ON o.ID_TIOF = t.ID_TIOF 
+            LEFT JOIN OPC_CLAS_OFIC cl on o.ID_CLOF = cl.ID_CLOF 
+        LEFT JOIN OPC_TIPO_DOCU td ON td.id_pk = IFNULL(o.tipo, 0) 
+        LEFT JOIN ser_soli_serv ss ON o.id_ofic = ss.id_oficio 
+        WHERE o.cve = '${req.query.cve}' AND asignado = 0 AND o.status NOT IN(8,9) 
+        ORDER BY o.anio DESC, o.nume_cont DESC   
+    `
+
+    console.log(lcSQL)
+    const rows = await util.gene_cons(lcSQL)
+    return res.json(rows)
 });
 
 module.exports = {
@@ -621,6 +1023,7 @@ module.exports = {
     cmb_controlw,
     op_bplanx,
     op_nplantix,
+    op_noficx6,
     op_noficx7,
     op_noficx4,
     op_bgrupx,
@@ -629,6 +1032,12 @@ module.exports = {
     op_sdoficx,
     op_admix2,
     op_ningrx2,
-    cmb_control2w,
-    op_ningrx
+    cmb_control2W,
+    cmb_control3W,
+    op_ningrx,
+    op_admix,
+    op_nplan,
+    op_soficx,
+    op_hoficx,
+    op_ingrx2
 }

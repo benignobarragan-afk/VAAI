@@ -14,8 +14,8 @@
 
 	<link rel="stylesheet" type="text/css" href="/webix_8.4.0/codebase/webix.css" />
 
-	<link rel="stylesheet" href="https://cdn.materialdesignicons.com/2.7.94/css/materialdesignicons.css?v=6.0.7" type="text/css" charset="utf-8">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
+	<link rel="stylesheet" href="https://cdn.materialdesignicons.com/2.7.94/css/materialdesignicons.css?v=6.3.5" type="text/css" charset="utf-8">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.2/css/all.css">
 	<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 
 
@@ -27,24 +27,6 @@
 -->
 	<script src="/codebase/dhtmlx.js"></script>
 
-
-<%
-    /*
-    llOP_total = derechos("OP_TOTA")
-
-	lcQbase_cgce = config.qbase_cgce
-	lnCone_cgce = &lcQbase_cgce
-
-	SQLEXEC(lnCone_cgce, "SELECT CVE FROM GEN_dere_ofic  WHERE user_id = ?pcUser AND (titular = 1 or eliminar = 1)", "cEliminar")
-
-	SQLDISCONNECT(0)
-
-    */
-
-    const llOP_total    = lcDerecho.indexOf(",OP_TOTA,") > 0
-
- 
-%>
 </head>
 
 <script>	
@@ -53,36 +35,98 @@
 	webix.ready(()=>{
 		webix.ui({
 			rows:[
-			{
-				cols:[
 				{
-					cols:[{
-						view:"button", type:"icon", icon:"mdi mdi-sync", width:33, click:()=>{genera()}
-					},
-					{
-						view:"button", type:"icon", icon:"mdi mdi-arrow-expand-all", tooltip:"Expandir cuadricula", width:40,
-						click:()=>{
-							$$(`dtable`).adjustRowHeight();
-						}
-					},
-					<% // IF RECCOUNT("cEliminar") > 0%>
-					{
-						view:"button", label:"Eliminar ultimo oficio", width:200,click:()=>{recupera()}
-					},
-					<% // ENDIF%>
-					]
-				},
-				{
-					view:"label", label:"Oficios generados por tu cuenta de usuario", align:"center"
-				},
-				{
-					cols:[
-					{},
-					//{
-					//	view:"button", label:"Vista antigua", width:150, click:()=>{location.href = '/<% // Response.write(config.ruta)%>/op_ofic_old.fwx'}
-					//}
-					]
-				}
+                cols:[
+                    {
+                        view: "combo", id: "cmbSoli", name: "cmbSoli",
+                        label: "Oficio de", width: 500,
+                        value:"<%=rows[0].cve%>",
+                        labelPosition:"top",
+                        required: true, invalidMessage: "Este campo no puede ir vacio",
+                        options: {
+                            fitMaster: false,
+                            width: 600,
+                            body: {
+                                data: [
+                                    <%for (var i = 0; i < rows.length; i++) {%>
+                                    { id: "<%= rows[i].cve%>", value: "(<%=rows[i].cve%>) <%=rows[i].depen%>" },
+                                    <%}%>
+                                ]
+                            }
+                        },
+                        on: {
+                            onChange: ()=>{
+                               genera()
+                            }
+                        }
+                    },
+                    {},
+                    {
+                        view: "select", label: "Año", id: "cmbAnio", name: "cmbAnio", value: <%=new Date().getFullYear()%>, width: 100,
+                        labelPosition: "top", labelAlign: "left", options: [
+                            <%
+                            for (var i = new Date().getFullYear(); i >= 2025; i--){%>
+                                { id: <%=i%>, value: "<%=i%>" },
+                            <%
+                            }
+                            %>
+                        ],
+                        on: {
+                            onChange: ()=>{
+                               genera()
+                            }
+                        }
+                    },
+                    {},
+                    {
+                        view: "select", label: "Inicio", id: "cmbMesi", name: "cmbMesi", value: 1, width: 200,
+                        labelPosition: "top", labelAlign: "left", options: [
+                                { id: 1, value: "Enero" },
+                                { id: 2, value: "Febrero" },
+                                { id: 3, value: "Marzo" },
+                                { id: 4, value: "Abril" },
+                                { id: 5, value: "Mayo" },
+                                { id: 6, value: "Junio" },
+                                { id: 7, value: "Julio" },
+                                { id: 8, value: "Agosto" },
+                                { id: 9, value: "Septiembre" },
+                                { id: 10, value: "Octubre" },
+                                { id: 11, value: "Noviembre" },
+                                { id: 12, value: "Diciembre" },
+                        ],
+                        on: {
+                            onChange: ()=>{
+                               genera()
+                            }
+                        }
+                    },
+                    {},
+                    {
+                        view: "select", label: "Inicio", id: "cmbMesf", name: "cmbMesf", value: 12, width: 200,
+                        labelPosition: "top", labelAlign: "left", options: [
+                                { id: 1, value: "Enero" },
+                                { id: 2, value: "Febrero" },
+                                { id: 3, value: "Marzo" },
+                                { id: 4, value: "Abril" },
+                                { id: 5, value: "Mayo" },
+                                { id: 6, value: "Junio" },
+                                { id: 7, value: "Julio" },
+                                { id: 8, value: "Agosto" },
+                                { id: 9, value: "Septiembre" },
+                                { id: 10, value: "Octubre" },
+                                { id: 11, value: "Noviembre" },
+                                { id: 12, value: "Diciembre" },
+                        ],
+                        on: {
+                            onChange: ()=>{
+                               genera()
+                            }
+                        }
+                    },
+                    {},
+                    {
+                        view:"button", width:120, label:"Consultar", click:()=>{genera();}
+                    }
 				]
 			},
 			{
@@ -102,7 +146,7 @@
 					template:(obj)=>{
 						return `
 							<a href="#" onClick="window.parent.deta_sali('${obj.cve}',${obj.idoficio},${obj.anio},${obj.id_iden},'op_reof0.fwx');">
-								<i style='font-size:26px;color:#2b96cc;' class='fa-solid fa-magnifying-glass'></i>
+								<img alt="Detalle del oficio" src="/imagenes/search.png" width="28" height="28" border="0">
 							</a>`
 					}
 				},
@@ -142,7 +186,7 @@
 					id: "hora", header: ["Hora", { content: "textFilter"}], width: 70,
 				},	
 				{
-					id: "centros", width: 300,sort: "string", css: { 'text-align': 'left' }, 
+					id: "centros", width: 200,sort: "string", css: { 'text-align': 'left' }, 
 					header: [{text:"Centros",css:"my_style"}, {
 						content: "textFilter", placeholder:"Filtrar",
 					}],
@@ -192,7 +236,7 @@
 
 	const genera = ()=>{
 		$$("dtable").clearAll()
-		$$("dtable").load("/api/op/op_oficx5?t=1")
+		$$("dtable").load("/api/op/op_hoficx?cve=" + $$("cmbSoli").getValue() + "&anio=" + $$("cmbAnio").getValue() + "&mesi=" + $$("cmbMesi").getValue() + "&mesf=" + $$("cmbMesf").getValue())
 	}
 
 	async function  gene_gdoc(lcCve,lcIdoficio,lcFecha,lnIden){

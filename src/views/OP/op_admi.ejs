@@ -168,7 +168,7 @@
 										]
 									},
 									{
-										view:"fieldset", label:"Jefe del servicio", 
+										view:"fieldset", label:"Jefe del servicio",  
 										body:{
 											id:"sub5",
 											rows:[{
@@ -182,10 +182,11 @@
 																return true;
 															return false;
 														},
+														keyPressTimeout: 500,
 														body: {
 															fitMaster: false,
 															template: "#value#",
-															dataFeed: "/<% // Response.Write(config.ruta)%>/cmb_persW.fwx?lnTipo=1"
+															dataFeed: "/api/gen/cmb_persW?lnTipo=1"
 														},
 													},
 												},{
@@ -382,7 +383,7 @@
 				confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Aceptar',
 			}).then((result) => {
 				if(result.isConfirmed){
-					webix.ajax().post("/<% // Response.Write(config.ruta)%>/op_admix.fwx", formula).then(function (res) {
+					webix.ajax().post("/api/op/op_admix", formula).then(function (res) {
 						$$("myform").enable();
 						$$("myform").hideProgress();
 						webix.message({ type: (res.json().status ? "success" : "error"), text: res.json().message, expire: 2500 });
@@ -397,10 +398,11 @@
 
 		function gene_plan(lcCve) {
 			
-			parent.myTabbar.tabs('a1').progressOn();
+			//parent.myTabbar.tabs('a1').progressOn();
 
+			/*					Lo cambie por webix ya que este es dhtmlx
 			setTimeout(function () {
-				loader = dhx4.ajax.postSync("/<% // Response.Write(config.ruta)%>/op_nplan.fwx", "lcCve=" + lcCve);
+				loader = dhx4.ajax.postSync("/api/op/op_nplan", "lcCve=" + lcCve);
 
 				var result1 = loader.xmlDoc.responseXML.getElementsByTagName("mensaje");
 				var result2 = loader.xmlDoc.responseXML.getElementsByTagName("error");
@@ -415,6 +417,24 @@
 			}
 				, 2000
 			);
+			*/
+			Swal.fire({
+				title: 'Seguro de generar la plantilla?', icon: 'warning', showCancelButton: true,
+				confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Aceptar',
+			}).then((result) => {
+				if(result.isConfirmed){
+					parent.myTabbar.tabs('a1').progressOn();
+					webix.ajax().post("/api/op/op_nplan", "lcCve=" + lcCve).then(function (res) {
+						parent.myTabbar.tabs('a1').progressOff();
+						webix.message({ type: (res.json().status ? "success" : "error"), text: res.json().message, expire: 2500 });
+						if (res.json().status) {
+							$$("myform").clear();
+							genera();
+						}
+					});
+				}
+			})
+
 		}
 		
 

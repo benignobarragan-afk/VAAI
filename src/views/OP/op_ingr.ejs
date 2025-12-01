@@ -1,0 +1,335 @@
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<script src="/webix_8.4.0/codebase/webix.js"></script>
+	<script src="/webix/codebase/locale.js"></script>
+	<link rel="stylesheet" type="text/css" href="/webix_8.4.0/codebase/webix.css" />
+	<link rel="stylesheet" href="https://cdn.materialdesignicons.com/2.7.94/css/materialdesignicons.css?v=6.3.5" type="text/css" charset="utf-8">
+	<script src="/js/funciones_webix.js"></script>
+
+	<%
+    /*
+	SET PROCEDURE TO myLib
+	SET EXCLUSIVE OFF
+	SET NEAR OFF
+	SET DATE DMY
+	SET EXACT ON
+
+	IF !Derechos("ASIG_OFIC")
+		lcRuta = ALLTRIM(config.ruta)
+		SET PROCEDURE TO
+		CLOSE TABLES ALL
+		CLOSE DATABASES ALL
+		response.redirect("/"+lcRuta+"/sin_derechos.fwx")
+	ENDIF
+
+  lcQbase_cgce = config.qbase_cgce
+  lnCone_cgce = &lcQbase_cgce
+
+  IF SQLEXEC(lnCone_cgce, "SELECT cve FROM GEN_DERE_OFIC WHERE user_id = ?PCUSER ORDER BY cve ASC","cCve") = -1
+    a=Aerror(Mat)
+    SQLDISCONNECT(0)
+    Response.write(Mat(2) + "; linea 94")
+    return
+  ENDIF
+
+
+  lcCVE = ''
+  lcCVE = ALLTRIM(cCve.cve)
+  */
+	%>
+	<style type="text/css">
+		.webix_alt_row {
+			background-color: #174f77; 
+		}
+	</style>
+	<script>
+
+	webix.i18n.setLocale("es-ES")
+		
+		webix.i18n.filter = {
+            less: "menor",
+            lessOrEqual: "menor o igual",
+            greater: "mayor",
+            greaterOrEqual: "mayor o igual",
+            contains: "contiene",
+            notContains: "no contiene",
+            equal: "igual a",
+            notEqual: "no igual",
+            beginsWith: "empieza con",
+            notBeginsWith: "no empieza con",
+            endsWith: "termina con",
+            notEndsWith: "no termina con",
+            between: "entre",
+            notBetween: "no esta entre",
+            
+        };
+
+		//variables
+
+		//webix
+		webix.ready(function(){
+			parent.myTabbar.tabs('a1').progressOff();
+			webix.ui({
+				view:"layout",
+				rows:[
+				{
+					id:"toolbarVentanas", hidden:true,
+					view:"toolbar",
+					height:40,
+					cols:[]
+				},
+				{
+					view:"toolbar",
+					elements:[{
+						view: "button", id: "refresh", type: "icon", icon: "mdi mdi-sync", label: "", width: 32, align: "left", click:genera
+					},{
+						view:"select", 
+						label:"A&ntilde;o", 
+						id:"anio",
+						on:{
+							"onChange":()=>{genera()}
+						},
+						width:160,
+						value:"<% //Response.write(YEAR(DATE()))%>", 
+						options:[
+                            <%
+                            for (var i = new Date().getFullYear(); i >= 2025; i--){%>
+                                { id: <%=i%>, value: "<%=i%>" },
+                            <%
+                            }
+                            %>
+						]
+					},
+
+					{
+						view:"combo", id:"cve", name:"cve",  width:600, label:"Oficialia", labelPosition:"upper", value:"<%=rows[0].cve%>",
+						options:{
+							data:[
+                            <%for (var i = 0; i < rows.length; i++) {%>
+                                { id: "<%= rows[i].cve%>", value: "(<%=rows[i].cve%>) <%=rows[i].depen%>" },
+                            <%}%>
+							]
+						},
+						on:{
+							onChange:()=>{
+								genera()
+							}
+						}
+					},
+					{
+						view: 'button',
+						type: 'icon',
+						icon: 'mdi mdi-arrow-expand-all',
+						width: 33,
+						tooltip: 'Expando informacion de cuadricula',
+						click: () => {
+							$$('dtable').adjustRowHeight()
+						},
+					},
+					{},
+					{
+						view:"button", type:"icon", icon:"mdi mdi-file-excel", label:"Descarga excel",  width:150, click:()=>{webix.toExcel($$(`dtable`))}
+					},
+
+					]
+				},{
+					view:"datatable", id:"dtable", select:true, footer:true, editable:true, hidden:false, minHeight:500, scroll:true,
+					resizeColumn: true,  navigation: true, resizeRow:true, css:"celda_compacta",  tooltip:true,
+					// rightSplit:1, leftSplit:3,
+					scheme: {
+						$init: function (obj) {
+							if (obj.rank % 2 === 0) obj.$css = "webix_alt_row";
+							obj.fech_conv = (obj.fech_conv && obj.fech_conv.trim() != '' ? (obj.fech_conv == '01/01/1900'?'': convertDate(obj.fech_conv) ) : '');
+						}
+					},
+					columns: [
+					{ 
+						id: "rank", width: 100, sort: "int", css: { 'text-align': 'center' },
+						header: [{text:"#",css: { 'text-align': 'center' }}, {content: "excelFilter", placeholder:"Filtrar",}],
+						footer: { colspan: "3", content: "rowCount", css: "footer" }
+					},
+					{ 
+						id: "NUME_CONT", width: 100, sort: "int", css: { 'text-align': 'center' },
+						header: [{text:"N. control",css: { 'text-align': 'center' }}, {content: "excelFilter", placeholder:"Filtrar",}],
+					},
+					{ 
+						id: "tipo_docu", sort: "int", css: { 'text-align': 'center' },
+						header: [{text:"Tipo docu.",css: { 'text-align': 'center' }}, {content: "excelFilter", placeholder:"Filtrar",}],
+						width:120
+					},
+					{ 
+						id: "DESCRIP", width: 180, sort: "string", css: { 'text-align': 'center' },
+						header: [{text:"Oficio",css: { 'text-align': 'center' }}, {content: "excelFilter", placeholder:"Filtrar",}],
+					},
+					{ 
+						id: "fechac", width:120, sort: "date", css: { 'text-align': 'center' },
+						header: [{text:"Fecha",css: { 'text-align': 'center' }}, {content: "excelFilter", placeholder:"Filtrar", compare:dateStringFilter}],
+						format:webix.Date.dateToStr("%d/%m/%Y"), exportType:"date",
+						exportFormat:"dd-mm-yyyy"
+					},
+					{ 
+						id: "hora", width:80, sort: "string", css: { 'text-align': 'center' },
+						header: [{text:"Hora",css: { 'text-align': 'center' }}, {content: "excelFilter", placeholder:"Filtrar", compare:dateStringFilter}],
+					},
+					{ 
+						id: "NOMB_PROC", width: 250, sort: "string", css: { 'text-align': 'left' },
+						header: [{text:"Servicio",css: { 'text-align': 'center' }}, {content: "excelFilter", placeholder:"Filtrar",}],
+					},
+					{ 
+						id: "depe_asig", width: 250, sort: "string", css: { 'text-align': 'left' },
+						header: [{text:"Servicio asignado",css: { 'text-align': 'center' }}, {content: "excelFilter", placeholder:"Filtrar",}],
+					},
+					{ 
+						id: "NOMB_REMI", width: 250, sort: "string", css: { 'text-align': 'left' },
+						header: [{text:"Remitente",css: { 'text-align': 'center' }}, {content: "excelFilter", placeholder:"Filtrar",}],
+					},
+					{ 
+						id: "NOMB_DEST", width: 250, sort: "string", css: { 'text-align': 'left' },
+						header: [{text:"Dirigido",css: { 'text-align': 'center' }}, {content: "excelFilter", placeholder:"Filtrar",}],
+					},
+					{ 
+						id: "dtipo_ofic", width: 120, sort: "string", css: { 'text-align': 'left' },
+						header: [{text:"Tipo",css: { 'text-align': 'center' }}, {content: "excelFilter", placeholder:"Filtrar",}],
+					},
+					{ 
+						id: "dclas_ofic", width: 250, sort: "int", css: { 'text-align': 'left' },
+						header: [{text:"Clase",css: { 'text-align': 'center' }}, {content: "excelFilter", placeholder:"Filtrar",}],
+					},
+					{ 
+						id: "asunto2", width: 400, sort: "string", css: { 'text-align': 'left' },
+						header: [{text:"Asunto",css: { 'text-align': 'center' }}, {content: "excelFilter", placeholder:"Filtrar",}],
+					},
+					{ 
+						id: "NOTA", width: 400, sort: "string", css: { 'text-align': 'left' },
+						header: [{text:"Nota",css: { 'text-align': 'center' }}, {content: "excelFilter", placeholder:"Filtrar",}],
+					},
+					],
+					on:{
+						"onItemDblClick":function(id, e, node){
+							var item = $$("dtable").getItem(id)
+
+							openWindow("Oficio " + item.DESCRIP, "/op/op_detalle?lnOficio=" + item.id + "&lnAsignado=" + 0)
+						},
+						onBeforeLoad:()=>{
+							$$("dtable").showProgress();
+						},
+						onAfterLoad:()=>{
+							$$("dtable").hideProgress();
+							// $$("dtable").adjustRowHeight();
+						},
+					}
+				},
+				{
+					height:30
+				}]
+			})
+
+			webix.extend($$("dtable"), webix.ProgressBar)
+			genera();
+		});
+
+		//functions
+
+		function openWindow(title, url){
+			var wid = webix.uid();
+			webix.ui({
+				view: "window", id: wid, fullscreen:true, resize: true,
+				move: true, left: 0, top: 0, width: 1200, height: 800, 
+				on:{
+					onShow:()=>{
+						$$(wid).config.move = !$$(wid).config.fullscreen;
+					}
+				},
+				head: {
+					view: "toolbar",
+					cols: [
+						{ view: "label", label: title },
+						{
+							view: "icon", icon: 'mdi mdi-arrange-bring-forward', tooltip:"Abre en una nueva ventana",
+							click:()=>{
+								window.open(url);
+							}
+						},
+						{ view: "icon", icon: 'mdi mdi-window-minimize', tooltip:"Minimiza la ventana",
+							click:()=>{
+								$$(wid).hide();
+								$$("toolbarVentanas").show()
+								$$("toolbarVentanas").addView({
+									width:200, 
+									id:"sub"+wid,
+									css:"item_window",
+									cols:[
+									{
+										label:title.substr(0, 15), view:"label", css:{"padding":"0 0 0 10px"},
+										click:()=>{ 
+											$$("toolbarVentanas").removeView("sub"+wid)
+											$$(wid).show();
+										}
+									},
+									{
+										view:"button", type:"icon", icon:"mdi mdi-window-maximize", borderless:true, width:32, 
+										click:()=>{ 
+											$$("toolbarVentanas").removeView("sub"+wid)
+											$$(wid).show();
+										}
+									},
+									{
+										view:"button", type:"icon", icon:"mdi mdi-window-close", borderless:true, width:32, click:()=>{
+											$$(wid).close();
+
+											$$("toolbarVentanas").removeView("sub"+wid);
+											hideToolbarWindow()
+										}
+									}
+									]
+								})
+							} 
+						},
+						{ view: "icon", icon: 'mdi mdi-fullscreen', tooltip:"Maximiza la ventana",
+							click:()=>{
+								var ventana = $$(wid)
+								
+								ventana.config.fullscreen = !ventana.config.fullscreen;
+								ventana.config.move = !ventana.config.fullscreen
+								ventana.setPosition((ventana.config.fullscreen? 0:50),(ventana.config.fullscreen? 0:50))
+								ventana.resize();
+							} 
+						},
+						{ 
+							view: "icon", icon: 'mdi mdi-close', tooltip:"Cierra la ventana", 
+							click: ()=>{
+								
+								$$(wid).close(); 
+								hideToolbarWindow()
+							}
+						}
+					]
+				},
+				body: {
+					view: "iframe",
+					src: url
+				}
+			}).show();
+		}
+
+		const hideToolbarWindow = ()=>{
+			if($$("toolbarVentanas").getChildViews().length === 0){
+				$$("toolbarVentanas").hide();
+			}
+		}
+		
+		function genera() {
+			$$("dtable").clearAll();
+			$$("dtable").load("/api/op/op_ingrx2?cve="+$$("cve").getValue()+ "&anio=" + $$("anio").getValue())
+		}
+	</script>
+
+
+</head>
+<body>
+	
+</body>
+</html>

@@ -16,13 +16,13 @@ const cmb_depew = (async (req, res) => {
     const lcWhere = util.construirClausulaBusqueda(lcBusca,lnTipo)
     //console.log(lcWhere)
 
-
     const lcSQL = `
-        SELECT  id_cent as id, clave, descrip, concat('(', IFNULL(${lnTipo ===2 ? 'clave': 'IFNULL(campus, clave)'},''), ') ',  dependen) as value, IFNULL(unid_consu, 0) as unid_consu 
-            FROM gen_centros 
+        SELECT  id_cent as id, clave, descrip, concat('(', IFNULL(${lnTipo ==='2' ? 'clave': 'IFNULL(campus, clave)'},''), ') ',  dependen) as value, IFNULL(unid_consu, 0) as unid_consu 
+            FROM ${lnTipo ==='2' ? 'gen_otro_cent': 'gen_centros'} 
             WHERE activo = 1 and ${lcWhere}
             LIMIT 20
-    `
+    ` 
+    console.log(lcSQL)   
     const rows = await util.gene_cons(lcSQL)
     //console.log(rows)
     res.json(rows)

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title></title>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <link rel="stylesheet" href="/style.css" type="text/css" media="screen" />
+
+  <link rel="stylesheet" type="text/css" href="/webix/codebase/webix.css" />
+  <link rel="stylesheet" href="https://cdn.materialdesignicons.com/2.7.94/css/materialdesignicons.css?v=6.3.5"
+    type="text/css" charset="utf-8">
+
+  <script src="/webix/codebase/webix.js"></script>
+
+  <!-- webix hint -->
+  <link rel="stylesheet" type="text/css" href="/webix-hint/codebase/hint.css" />
+  <script src="/webix-hint/codebase/hint.js"></script>
+
+  <%
+  /*
+LOCAL lcCVE, lnOfic, lcAnio, lcAnexo, lcStatus, llAplicar, ldFec_sta, lnStatus, llAqui, llModi
+LOCAL lldere, lctram, lltram, llasig, lcRuta_tabl, llImagen
+
+SET PROCEDURE TO mylib
+SET DATE DMY
+SET DELETE ON
+
+lnAsignado = VAL(Request.QueryString("lnAsignado"))
+llDere_ofic = Derechos("OFICIO")
+
+IF !llDere_ofic AND EMPTY(lnAsignado)
+    lcRuta = ALLTRIM(config.ruta)
+    SET PROCEDURE TO
+    CLOSE TABLES ALL
+    CLOSE DATABASES ALL
+    response.redirect("/"+lcRuta+"/sin_derechos.fwx")
+ENDIF
+
+lnXX  = VAL(Request.QueryString("xx"))
+lcCVE	= PADR(ALLTRIM(Request.QueryString("lcCVE")),6)
+lnOfic	= VAL(Request.QueryString("lnOficio"))
+
+lcAnio	= ALLTRIM(Request.QueryString("lnAnio"))
+lnIden  = VAL(Request.QueryString("lnIden"))
+
+lcQbase_cgce = config.qbase_cgce
+lnCone_cgce = &lcQbase_cgce
+
+IF SQLEXEC(lnCone_cgce, "SELECT tipo, id_ofic, IFNULL(segu_pra, 0) AS segu_pra, IFNULL(letra, '') as letra FROM opc_oficio WHERE id_ofic = ?lnOfic", "cOficio") = -1
+  AERROR(laError)
+  SQLDISCONNECT(0)
+  ERROR AL CONSULTAR EL OFICIO
+ENDIF
+
+IF RECCOUNT("cOficio") = 0
+  SQLDISCONNECT(0)
+  lcRuta = ALLTRIM(config.ruta)
+  SET PROCEDURE TO
+  CLOSE TABLES ALL
+  CLOSE DATABASES ALL
+  response.redirect("/"+lcRuta+"/sin_derechos.fwx")
+ENDIF
+
+llMostrar = .F.
+
+IF EMPTY(cOficio.segu_pra)
+  IF SQLEXEC(lnCone_cgce, "SELECT * FROM opc_oficio WHERE segu_pra = ?lnOfic", "cSegu") = -1
+    AERROR(laError)
+    SQLDISCONNECT(0)
+    ERROR AL CONSULTAR EL OFICIO
+  ENDIF
+
+  IF RECCOUNT("cSegu") > 0
+    llMostrar = .T.
+  ENDIF
+ELSE
+  llMostrar = .F.
+ENDIF
+*/
+%>  
+
+</head>
+
+<body>
+  <form id="form2" name="form2" method="post" action="">
+    <div id="principal" style="position: relative; border: #B5CDE4 1px solid;"></div>
+    <script>
+      var cells = [
+
+        {
+          header: "<span class='webix_icon mdi mdi-file-document-outline'></span>Detalle del oficio.",
+          body: {
+            view: "scrollview",
+            scroll: "y",
+            body: {
+              rows: [{
+                view: "iframe",
+                src: "/<% //Response.Write(config.ruta)%>/detalle_ofic_No.fwx?xx=<% //Response.write(lnXX)%>&lcCVE=<% //Response.Write(ALLTRIM(lcCVE))%>&lnOficio=<% //Response.Write(lnOfic)%>&lnAnio=<% //Response.Write(lcAnio) %>&lnIden=<% //Response.Write(lnIden)%>&lnAsignado=<% //Response.Write(lnAsignado)%> ",
+                type: {
+                  height: 60
+                },
+                select: true,
+              }]
+            }
+          }
+        },
+        <% //IF llDere_ofic%>
+         {
+           header: "<span class='webix_icon mdi mdi-file-document-outline'></span>Asignar oficio",
+           body: {
+             view: "scrollview",
+             scroll: "y",
+             body: {
+               rows: [{
+                 view: "iframe",
+                 src: "/<% //Response.Write(config.ruta)%>/new_ord__serv.fwx?lnOficio=<% //Response.Write(lnOfic)%>",
+                 type: {
+                   height: 60
+                 },
+                 select: true,
+               }]
+             }
+           }
+         },
+
+        {
+          header: "<span class='webix_icon mdi mdi-file-document-outline'></span>Seguimiento",
+          body: {
+            view: "scrollview",
+            scroll: "y",
+            id:"segu_ofic",
+            body: {
+              rows: [{
+                view: "iframe",
+                src: "/<% //Response.Write(config.ruta)%>/seg_ofic.fwx?lcCVE=<% //Response.Write(ALLTRIM(lcCVE))%>&lnOficio=<% //Response.Write(lnOfic)%>&lnAnio=<% //Response.Write(lcAnio)%>&lnIden=<% //Response.Write(lnIden)%>",
+                type: {
+                  height: 60
+                },
+                select: true,
+              }]
+            }
+          }
+        }
+        <%//ENDIF%>
+      ];
+
+      webix.i18n.setLocale("en-US");
+
+      webix.i18n.hint = {
+        next: "Siguiente",
+        prev: "Anterior",
+        last: "Terminar"
+      }
+
+      webix.ready(function () {
+        webix.ui({
+          rows: [
+            {
+              view: "tabview",
+              id: "tbView",
+              tabbar: {
+                tabMinWidth: 150,
+                tabMoreWidth: 80,
+                padding: 3,
+                moreTemplate: "<span class='webix_icon mdi mdi-dots-vertical'></span>",
+                //or moreTemplate:function(){ return "Show more" },
+                popupWidth: 250,
+                //popupTemplate: "#value#",
+                yCount: 10,
+              },
+              cells: cells
+            }
+          ]
+        });
+
+        webix.ui({
+          view: "hint",
+          id: "hint1",
+          top:10,
+          steps: [
+            {
+              el: "div[button_id='segu_ofic']",
+              title: "Atenci&oacute;n",
+              text: 'El oficio tiene seguimientos',
+              event:"click",
+              left: 10
+            },
+            
+          ],
+          on:{
+            onEnd: function(step) {
+              llMostrar = false;
+            }
+          }
+        })
+
+        <%// IF llMostrar%>
+        //$$("hint1").start();
+        <%// ENDIF%>
+      });
+    </script>
+  </form>
+</body>
+
+</html>

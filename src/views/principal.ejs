@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Captura de Calificaciones</title>
+  <link rel="stylesheet" href="https://cdn.webix.com/edge/webix.css" type="text/css">
+  
+
+  <style>
+  .details_placeholder {
+    padding: 20px;
+    color: #888;
+    font-style: italic;
+  }
+  .details_container {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+  }
+  .details_container .avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin-right: 20px;
+  }
+  .details_container .details_name {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+  }
+  .details_container .details_info {
+    font-size: 14px;
+    color: #555;
+    line-height: 1.6;
+  }
+
+</style>
+
+<style>
+  .container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 220px;
+    height: 100px;
+    margin: auto;
+    padding: 10px;
+    border: 1px solid #ccc;
+    font-family: sans-serif;
+  }
+
+  .text-content {
+    flex: 1;
+    padding-right: 10px;
+    /* Eliminamos el overflow: hidden y el white-space: nowrap de aqu� */
+  }
+
+  .text-content h1 {
+    font-size: 0.9em; /* Reducimos el tama�o de la fuente para que quepa mejor */
+    margin: 0 0 5px 0;
+    line-height: 1.2;
+    /* Quitamos:
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    Ahora el texto se ajustar� a una nueva l�nea si es necesario. */
+  }
+
+  .text-content p {
+    font-size: 0.8em;
+    margin: 0;
+    line-height: 1.2;
+    white-space: normal; /* Aseguramos que el texto de la carrera tambi�n pueda ajustarse */
+    overflow: hidden;
+  }
+
+  .image-container {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+</style>
+
+<style> 
+  .mark{
+    width:100px;
+    text-align: center;
+    font-weight:bold;
+    float:right;
+    background-color:#444;
+    color:white;
+    border-radius:3px;
+  }
+  .newtime{
+  	background-color:#628224;
+  }
+  .oldtime{
+  	background-color:#e63946;
+  }	
+</style>
+
+</head>
+
+<body>
+  <div id="app_container" style="width:100%; height:100vh;"></div>
+
+<link rel="stylesheet" href="/style.css" type="text/css" media="screen" />
+<link rel="icon" href="/imagenes/ico_udg.gif" type="image/gif">
+
+<link rel="stylesheet" type="text/css" href="/webix_8.4.0/codebase/webix.css" />
+
+<script src="/webix_8.4.0/codebase/webix.js"></script>
+<script src="/js/funciones_webix.js"></script>
+<script src="//docs.webix.com/samples/common/testdata.js" type="text/javascript" charset="utf-8"></script>
+
+  <script type="text/javascript">
+    webix.ready(function(){
+
+        var budget = [
+	{ id:1, name:"United States",  rev: "2092000", exp: "3397000", dif:"=2092000 - 3397000", dif_math:"=[:0,:2]-[:0,:3]", date: "2010"},
+	{ id:2, name:"Japan",		   rev: "1839000", exp: "2252000", dif:"=1839000 - 2252000", dif_math:"=[:1,:2] - [:1,:3]", date: "2009"},
+	{ id:3, name:"Germany",		   rev: "1398000", exp: "1540000", dif:"=1398000 - 1540000", dif_math:"=[:2,:2] - [:2,:3]", date: "2009"},
+	{ id:4, name:"France ",		   rev: "1229000", exp: "1445000", dif:"=1229000 - 1445000", dif_math:"=[:3,:2] - [:3,:3]", date: "2009"},
+	{ id:5, name:"China",		   rev: "1149000", exp: "1270000", dif:"=1149000 - 1270000", dif_math:"=[:4,:2] - [:4,:3]", date: "2009"},
+	{ id:6, name:"Italy",		   rev: "960100",  exp: "1068000", dif:"=960100 - 1068000",  dif_math:"=[:5,:2] - [:5,:3]", date: "2009"},
+	{ id:7, name:"United Kingdom", rev: "926700",  exp: "1154000", dif:"=926700 - 1154000",  dif_math:"=[:6,:2] - [:6,:3]", date: "2009"},
+	{ id:8, name:"Canada",		   rev: "605700",  exp: "677700",  dif:"=605700 - 677700",   dif_math:"=[:7,:2] - [:7,:3]", date: "2009"},
+	{ id:9, name:"Spain",		   rev: "503100",  exp: "633300",  dif:"=503100 - 633300",   dif_math:"=[:8,:2] - [:8,:3]", date: "2009"},
+	{ id:10, name:"Brazil",		   rev: "464400",  exp: "552600",  dif:"=464400 - 552600",   dif_math:"=[:9,:2] - [:9,:3]", date: "2009"}
+];
+      const pending_students_data = [
+        { id: 1, name: "Dra. Ana L�pez Garc�a", specialty: "Cardiolog�a", avatar: "https://escolar.udg.mx/sites/default/files/images/Fabi%C3%A1n_0.directorio.JPG", semester: "R3"},
+        { id: 2, name: "Dr. Carlos S�nchez Romero", specialty: "Pediatr�a", avatar: "https://escolar.udg.mx/sites/default/files/images/DSCN0011.directorio.JPG", semester: "R2"},
+        { id: 3, name: "Dra. Sof�a Torres", specialty: "Dermatolog�a", avatar: "https://escolar.udg.mx/sites/default/files/images/german2.png", semester: "R3"},
+        { id: 4, name: "Dra. Sof�a Torres", specialty: "Dermatolog�a", avatar: "https://escolar.udg.mx/sites/default/files/images/edith37.jpg", semester: "R3"},
+        { id: 5, name: "Dra. Sof�a Torres", specialty: "Dermatolog�a", avatar: "https://escolar.udg.mx/sites/default/files/images/Fabi%C3%A1n_0.directorio.JPG", semester: "R3"},
+        { id: 6, name: "Dra. Sof�a Torres", specialty: "Dermatolog�a", avatar: "https://escolar.udg.mx/sites/default/files/images/DSCN0011.directorio.JPG", semester: "R3"},
+        { id: 7, name: "Dra. Sof�a Torres", specialty: "Dermatolog�a", avatar: "https://escolar.udg.mx/sites/default/files/images/german2.png", semester: "R3"},
+        { id: 8, name: "Dra. Sof�a Torres", specialty: "Dermatolog�a", avatar: "https://escolar.udg.mx/sites/default/files/images/edith37.jpg", semester: "R3"},
+        { id: 9, name: "Dra. Sof�a Torres", specialty: "Dermatolog�a", avatar: "https://docs.webix.com/samples/60_pro/img/avatar3.png", semester: "R3"},
+        { id: 10, name: "Dra. Sof�a Torres", specialty: "Dermatolog�a", avatar: "https://docs.webix.com/samples/60_pro/img/avatar3.png", semester: "R3"}
+
+      ];
+
+      var multiple_dataset = [
+	{ sales:"20", sales2:"35", sales3:"55", year:"02" },
+	{ sales:"40", sales2:"24", sales3:"40", year:"03" },
+	{ sales:"44", sales2:"20", sales3:"27", year:"04" },
+	{ sales:"23", sales2:"50", sales3:"43", year:"05" },
+	{ sales:"21", sales2:"36", sales3:"31", year:"06" },
+	{ sales:"50", sales2:"40", sales3:"56", year:"07" },
+	{ sales:"30", sales2:"65", sales3:"75", year:"08" },
+	{ sales:"90", sales2:"62", sales3:"55", year:"09" },
+	{ sales:"55", sales2:"40", sales3:"60", year:"10" },
+	{ sales:"72", sales2:"45", sales3:"54", year:"11" }
+];
+
+      const groups_data = [
+        { id: 1, value: "TODOS" },
+        { id: 2, value: "M�dulo de Farmacolog�a Cl�nica" },
+        { id: 3, value: "Rotaci�n de Urgencias" }
+      ];
+
+      webix.ui({
+        // PASO 3: La propiedad 'container' apunta al id del div de arriba
+        container: "app_container",
+
+	cols: [
+		{
+			"width": 300,
+			"rows": [
+				{ "padding": { "left": 10 },
+					"cols": [
+						{ "view": "label", "label": "Users" },
+						{ "view": "icon", "icon": "wxi-search" }
+					]
+				},
+				{
+  view:"list",   
+  scheme:{
+    $init:function(obj){
+      if (obj.year>=2000) obj.$css = "newtime";
+      if (obj.year<=1970) obj.$css = "oldtime";
+    }
+  },  
+  template:"<div class='mark'>#votes# </div> #rank#. #title#",
+  type:{
+    height:62
+  },
+  select:true,     
+  data:webix.copy(big_film_set)
+},
+			]
+		},
+		{
+			"rows": [
+				{
+  view:"chart",
+  type:"bar",
+  barWidth:60,
+  radius:2,
+  gradient:"rising",
+  xAxis:{
+    template:"'#year#"
+  },
+  yAxis:{
+    start:0,
+    step:10,
+    end:100
+  },
+  legend:{
+    values:[{text:"Type A",color:"#58dccd"},{text:"Type B",color:"#a7ee70"},{text:"Type C",color:"#36abee"}],
+    valign:"middle",
+    align:"right",
+    width:90,
+    layout:"y"
+  },
+  series:[
+    {
+      value:"#sales#",
+      color: "#58dccd",
+      tooltip:{
+        template:"#sales#"
+      }
+    },
+    {
+      value:"#sales2#",
+      color:"#a7ee70",
+      tooltip:{
+        template:"#sales2#"
+      }
+    },
+    {
+      value:"#sales3#",
+      color:"#36abee",
+      tooltip:{
+        template:"#sales3#"
+      }
+    }
+  ],
+  data:multiple_dataset
+},
+				{
+					"cols": [
+{
+      view:"datatable",
+      columns:[
+        { id:"id",	 header:"",   width:50},
+        { id:"name", header:"Country",  width:200},
+        { id:"rev",	 header:"Revenue",  width:180},
+        { id:"exp",	 header:"Expenditures",  width:180},
+        { id:"dif",  header: "Deficit/surplus", width: 180},
+        { id:"date", header: "Date", width: 80}
+      ],
+      autoheight:true,
+      autowidth:true,
+      math: true,
+      data: budget
+   	},
+    {
+  view:"chart",
+  type:"area",
+  xAxis:{
+    template:"'#year#"
+  },
+  yAxis:{
+    start:0,
+    step:10,
+    end:100
+  },
+  legend:{
+    values:[{text:"Type A",color:"#58dccd"},{text:"Type B",color:"#914ad8"},{text:"Type C",color:"#36abee"}],
+    valign:"middle",
+    align:"right",
+    width:90,
+    layout:"y"
+  },
+  eventRadius: 5,
+  series:[
+    {
+      alpha:0.7,
+      value:"#sales#",
+      color: "#58dccd",
+      tooltip:{
+        template:"type: A<br/>value: #sales#"
+      }
+    },
+    {
+      alpha:0.5,
+      value:"#sales2#",
+      color:"#914ad8",
+      tooltip:{
+        template:"type: B<br/>value: #sales2#"
+      }
+    },
+    {
+      alpha:0.5,
+      value:"#sales3#",
+      color:"#36abee",
+      tooltip:{
+        template:"type: C<br/>value: #sales3#"
+      }
+    }
+  ],
+  data:multiple_dataset
+
+  
+}
+					]
+				}
+			]
+		}
+	]
+      });
+    });
+
+
+    function genera2(folio){
+// Se filtra el dataview
+    $$("students_dataview").filter(function (item) {
+    // Busca si el nombre o la descripci�n contienen el texto del filtro
+    return (
+        item.name.toLowerCase().indexOf(folio) !== -1 ||
+        item.specialty.toLowerCase().indexOf(folio) !== -1
+        );
+    });
+    //console.log(folio);
+    }
+  </script>
+</body>
+</html>

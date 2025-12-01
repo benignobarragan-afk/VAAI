@@ -718,7 +718,7 @@
 							keyPressTimeout: 500,
 							body: {
 								fitMaster: false, template: "#value#",
-								dataFeed: "/api/op/cmb_control2w"
+								dataFeed: "/api/op/cmb_control3W?cve=<%=rows[0].cve%>" 
 							},
 						},
 					}, {
@@ -728,7 +728,6 @@
 					cols: [{
 						view: "multiselect", placeholder: "Ofic. salida ligados", id: "liga_sali", name: "liga_sali", labelPosition: "top", label: "Ofic. salida ligados", options: [
 							<% //  IF USED("ofic_sali") %>
-                            { "id":0, "value": "0" }
 							//{ "id":<% //  Response.write(ofic_sali.id_iden) %> , "value": "<% // Response.write(ofic_sali.oficio)%>" }
 							<% //  ENDIF %>
 						],
@@ -886,6 +885,8 @@
 		function ligar() {
 			var id = $$("cmbLiga_ofic").getValue();
 			var texto = $$("cmbLiga_ofic").getText();
+			console.log(id)
+			console.log(texto)
 
 			if (id == '' || id == null || typeof (id) == 'undefined' || id== 0) {
 				webix.message({ text: "Debes seleccionar un registro" });
@@ -905,7 +906,7 @@
 				}
 
 				if (!lista.exists(id)) {
-					texto = texto.substring(0, texto.indexOf(')') + 1)
+					//texto = texto.substring(0, texto.indexOf(')') + 1)
 					var valor = $$(lista_nombre).getValue()
 					$$(lista_nombre).setValue(valor + (valor != '' && typeof (valor) != 'undefined' && valor != null ? ',' : '') + id)
 
@@ -961,6 +962,7 @@
 			switch (combo) {
 				case "liga":
 					valor = $$("rbLiga").getValue();
+					console.log(valor)
 					if (valor == '' || valor == null || typeof (valor) == 'undefined' || valor == 0) {
 						$$("rbLiga").setValue(1)
 						valor = 1

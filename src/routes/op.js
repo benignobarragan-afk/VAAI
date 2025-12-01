@@ -23,5 +23,11 @@ router.get("/op_grup", midd.verifyToken, opCtrl.op_grup);
 router.get("/op_bgrup", midd.verifyToken, opCtrl.op_bgrup);
 router.get("/op_ngrup", midd.verifyToken, opCtrl.op_ngrup);
 router.get("/op_sdofic", midd.verifyToken, opCtrl.op_sdofic);
+router.get("/op_rgraf", midd.verifyToken, opCtrl.op_rgraf);
+router.get("/op_hofic", midd.verifyToken, opCtrl.op_hofic);
+router.get("/op_pend", midd.verifyToken, opCtrl.op_pend);
+router.get("/op_ingr", midd.verifyToken, opCtrl.op_ingr);
+router.get("/op_detalle", midd.verifyToken, opCtrl.op_detalle);
+
 
 module.exports = router

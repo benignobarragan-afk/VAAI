@@ -42,7 +42,7 @@ const construirClausulaBusqueda = (lcDepe, lnTipo) => {
     let lcCadena = lcDepe.trim() + ' '; 
 
     // 💡 DETERMINAR COLUMNA CLAVE (Equivalente a IIF(lnTipo=2,"descrip","dependen"))
-    const columnaPrincipal = (lnTipo === 2 ? 'descrip' : (lnTipo === 3 ? 'o.descrip' : 'dependen'));
+    const columnaPrincipal = (lnTipo === '2' ? 'descrip' : (lnTipo === '3' ? 'o.descrip' : (lnTipo === '4' ? 'o.oficio' : 'dependen')));
     
     // Equivalente a DO WHILE !EMPTY(lcCadena)
     while (lcCadena.trim() !== '') {
@@ -299,6 +299,51 @@ const BuscaOficio = (lcDepe) => {
     return `SELECT ${lcCampo} FROM ${lcTabla} WHERE ${lcBusca} LIMIT 20`;
 }
 
+const gene_gogl_plan = async (urlScript, loJson) => { 
+
+    try {
+        // 1. Convertir el objeto JavaScript a la cadena JSON requerida
+        const lcJson = JSON.stringify(loJson);
+
+        // 2. Realizar la solicitud POST asíncrona
+        const response = await fetch(urlScript, {
+            method: 'POST',
+            // 3. Establecer la cabecera Content-Type
+            headers: {
+                'Content-Type': 'application/json' 
+            },
+            // 4. Adjuntar la cadena JSON al cuerpo de la solicitud
+            body: lcJson 
+        });
+
+        //console.log(response);
+        // Verificar si la respuesta fue exitosa (código 200-299)
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Fallo en la solicitud: ${response.status} ${response.statusText}. Respuesta: ${errorText}`);
+        }
+
+        // 5. Devolver la respuesta parseada como JSON
+        //const resultadoJson = await response.json();
+        //return resultadoJson;
+        //console.log(response.text())
+        const textoCompleto = await response.text();
+        //console.log(textoCompleto)
+        const lnfirst = textoCompleto.indexOf("*");
+        const lnSecond = textoCompleto.indexOf("*", lnfirst+1);
+        let googleDoc = ''
+        if (lnfirst > 0 && lnfirst > 0){
+            googleDoc = textoCompleto.substring(lnfirst+1, lnSecond);
+        }
+        
+        return googleDoc;
+
+    } catch (error) {
+        console.error("Error al enviar datos al script de Google:", error.message);
+        throw error;
+    }
+}
+
 module.exports = {
     construirClausulaBusqueda,
     gene_cons,
@@ -306,6 +351,7 @@ module.exports = {
     generarQrBase64,
     gene_gogl_doc,
     construirClausulaBusquedaP,
-    BuscaOficio
+    BuscaOficio,
+    gene_gogl_plan
 
 }

@@ -176,7 +176,7 @@
 										{
 											cols: [
 												{
-													view: "treetable", id: "tree", drag: "order", select: true, css: "my_style",
+													view: "treetable", id: "tree", drag: "order", select: true, 
 													editable: true, height: 280, scrollX: true, scrollY: true, hidden: true,
 													columns: [
 														{
@@ -403,7 +403,7 @@
 														},
 														body: {
 															template: "#value#",
-															dataFeed: "/<% // Response.Write(config.ruta)%>/cmb_depew.fwx?lnTipo=2"
+															dataFeed: "/api/gen/cmb_depew?lnTipo=2"
 														},
 														on:{
 															"onValueSuggest": function (obj) {
@@ -443,9 +443,12 @@
 													labelPosition: "top", labelAlign: "left", options: [
 														{ id: 1, value: "Dirigido a" },
 														{ id: 2, value: "Con copia" },
+														/*
 														{ id: 3, value: "Autoriza" },
 														{ id: 4, value: "Vo. Bo." },
+														*/
 														{ id: 5, value: "Atenci&oacute;n a" },
+														
 													]
 												},
 												{ maxWidth: 30 },
@@ -771,9 +774,7 @@
 				$$("clearTree").show();
 			}
 
-
-			//
-			$$("tree").load("/<% // Response.write(config.ruta)%>/op_noficx6.fwx?lnSalida=0&lnOfic=" + $$("cmb_Control").getValue())
+			$$("tree").load("/api/op/op_noficx6?lnSalida=0&lnOfic=" + $$("cmb_Control").getValue())
 
 		}
 
@@ -814,7 +815,7 @@
 						title:res.message, icon:res.status?"success":"error"
 					}).then(()=>{
 						if(res.status)
-							window.location = "/<% // Response.Write(config.ruta)%>/op_ofic.fwx";
+							window.location = "/op/op_ofic";
 					})
 					// webix.alert({ type: (data.json()[0].status ? "" : "alert-error"), text:  })
 					// if (data.json()[0].status)

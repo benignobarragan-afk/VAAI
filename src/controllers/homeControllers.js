@@ -62,9 +62,14 @@ const sin_derecho = ((req, res) => {
     res.render("sin_derecho")
 });
 
+const principal = ((req, res) => {
+    res.render("principal")
+});
+
 
 module.exports = {
     logout: logout,
     intro: intro,
-    sin_derecho
+    sin_derecho,
+    principal
 }

@@ -2,12 +2,23 @@
 <html>
 
 <head>
-<title></title>
-	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-	<link rel="stylesheet" href="/style.css" type="text/css" media="screen" />
-<!--
-	<link rel="stylesheet" type="text/css" href="skins/terrace/dhtmlx.css"/>
--->
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title></title>
+
+	<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
+		integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous">
+	</script>
+	<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+		integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous">
+	</script>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+		integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+		integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous">
+	</script>
+
 	<script src="/webix/codebase/webix.js"></script>
 	<script src="/js/funciones_webix.js"></script>
 	<script src="/webix/codebase/locale.js"></script>
@@ -16,1282 +27,767 @@
 
 	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.0.0/animate.min.css" />
-<!--
-	<link rel="stylesheet" type="text/css" href="skins/web/dhtmlx.css" /> 
--->
-	<script src="/codebase/dhtmlx.js"></script>
+	<script src="/js/momentjs.js"></script>
+	<%
+    /*
+	LOCAL llError, lcCentro, lcPie, llAplicar, lnOficio, lcOficio, lcPrevio, lnMens_usua
+	LOCAL llNBusca, lcCVE, lcIniciales, lnIden, lcRuta_tabl
+	LOCAL lcDiri_nomb, lnDiri_codi, lcDiri_carg, lcAten_nomb, lnAten_codi, lcAten_carg, llNBusca2, lnCant_ofic
 
+	  
+	lnID = VAL(Request.QueryString("lnID"))
 
-		<% // 
-        /*
-LOCAL lcCVE, lnOfic, lcAnio, lcAnexo, lcStatus, llAplicar, ldFec_sta, lnStatus, llAqui, llModi
-LOCAL lldere, lctram, lltram, llasig, lcRuta_tabl, llImagen
 
-SET PROCEDURE TO mylib
-SET DATE DMY
-SET DELETE ON
 
-IF !Derechos("OFICIO")
-		lcRuta = ALLTRIM(config.ruta)
-		SET PROCEDURE TO
-		CLOSE TABLES ALL
-		CLOSE DATABASES ALL
-		response.redirect("/"+lcRuta+"/sin_derechos.fwx")
-ENDIF
+	lcCve = ALLTRIM(cSoli.cve)
 
-Server.AddScriptTimeout(10*60, .T.)
+	IF SQLEXEC(lnCone_cgce, "SELECT * FROM gen_op_grupo WHERE id_grupo = ?lnID", "cGrupo") != 1
+		a=Aerror(Mat)
+		?SQLDISCONNECT(0)
+		Response.write(Mat(2) + " Linea: 67")
+		return
+	ENDIF
 
-lcParent = ALLTRIM(Request.QueryString("pd"))
-lcParent = IIF(EMPTY(lcParent), ALLTRIM(Request.Form("txtPadre")), lcParent)
+	IF SQLEXEC(lnCone_cgce, "SELECT * FROM opc_op_config", "op_config") != 1
+		a=Aerror(Mat)
+		SQLDISCONNECT(0)
+		sdsd
+	ENDIF
 
-lcCVE	    = PADR(ALLTRIM(Request.QueryString("lcCVE")),10)
-lnOfic	    = VAL(Request.QueryString("lnOfic"))
-lcAnio	    = ALLTRIM(Request.QueryString("lnAnio"))
-lnIden      = VAL(Request.QueryString("lnIden"))
-lcConcepto	= ALLTRIM(Request.Form("txtConcepto"))
-lcReferencia= ALLTRIM(Request.Form("txtReferencia"))
-lcAnexo		= UPPER(ALLTRIM(Request.Form("txtAnexo")))
-lcStatus	= UPPER(ALLTRIM(Request.Form("txtStatus")))
-llAplicar	= !EMPTY(Request.Form("cmdAplicar"))
-lnStatus	= VAL(Request.Form("cmbStatus"))
-llAqui		= !EMPTY(Request.Form("chkAqui"))
-llImagen	= !EMPTY(Request.Form('cmdImagen'))
-lnBorra	    = VAL(Request.QueryString("lnBorra"))
-lnArchivo	= VAL(Request.QueryString("lnArchivo"))
-lnControl	= VAL(Request.Form("cmb_Control"))
-llLigar		= !EMPTY(Request.Form("cmdLigar"))
+	lcSQL = "SELECT id_depe,cve, depen, corto FROM ser_depen c WHERE id_depe in (SELECT DISTINCT id_depe FROM ser_pers_serv WHERE user_id = ?pcUser) AND cve = 'CGRH' "
 
-llAdjunta   = IIF(!EMPTY(Request.Form("chkAdju_arch")), 1, 0)
-llDesvincular = !EMPTY(Request.Form("cmdDesvincular"))
-
-****************************************
-
-lcRuta_AR_OP = config.arch_serv + "OPCUCS\OFICIO\"
-
-lcQbase_cgce = config.qbase_cgce
-
-*****************
-
-llEdita         = Derechos("OP_EDITA", .T.)
-lldere          = Derechos("liga_tram", .T.)
-llEdit_ofic     = Derechos("TOT_DIRE", .T.)
-lltram          = .F.
-
-llasig      = !EMPTY(Request.Form("asignar"))
-llAcuse     = !EMPTY(Request.Form("cmdAcuse"))
-lnTipo_depe = VAL(Request.Form("opcTipo_depe"))
-lnId_Cent   = IIF(lnTipo_depe = 1, VAL(Request.Form("cmb_Centro")), VAL(Request.Form("cmb_Centro2")))
-lnDiri_codi = VAL(ALLTRIM(Request.Form("txtDiri_codi")))
-lcDiri_nomb = ALLTRIM(Request.Form("txtDiri_nomb"))
-lcCentro    = ALLTRIM(Request.Form("cmb_Centro2"))
-lcClav_ofic = ""
-
-llRegenerar = .F.
-*****************
-
-
-lnCone_cgce = &lcQbase_cgce
-
-lcSQL = "SELECT o.*, c.clave as cclave, c.descrip as cdescrip, oc.clave as oclave, oc.descrip as odescrip, IFNULL(o.soli_ofic,'') as solicitado, IFNULL(o.soli_moti,'') as soli_pers, IFNULL(o.id_seccion, 0) as seccion"
-lcSQL = lcSQL + " , gt.descrip as servicio"
-lcSQL = lcSQL + " FROM gen_oficio o"
-lcSQL = lcSQL + " INNER JOIN gen_tipo_ofic t ON t.cve = o.cve"
-lcSQL = lcSQL + " INNER JOIN gen_centros gt ON gt.id_cent = t.id_cent"
-lcSQL = lcSQL + " LEFT JOIN gen_centros c ON o.id_cent = c.id_cent "
-lcSQL = lcSQL + " LEFT JOIN gen_otro_cent oc ON o.id_cent = oc.id_cent "
-lcSQL = lcSQL + " LEFT JOIN GEN_SOLI_OFIC so ON so.num_soli = o.soli_ofic"
-lcSQL = lcSQL + " WHERE o.id_iden = ?lnIden "
-
-IF SQLEXEC(lnCone_cgce, lcSQL, "cOficio") != 1
-	a=Aerror(Mat)
-	SQLDISCONNECT(0)
-	Response.write(Mat(2))
-	return 
-ENDIF
-
-UPDATE cOficio SET servicio = STRTRAN(STRTRAN(servicio, '"',''), "'", "")
-
-IF SQLEXEC(lnCone_cgce, "SELECT * FROM gen_dere_ofic WHERE user_id = ?pcUser AND cve = ?lcCVE", "dere_ofic") != 1
-	a=Aerror(Mat)
-	SQLDISCONNECT(0)
-	sdsd
-ENDIF
-
-SQLEXEC(lnCone_cgce, "SELECT * FROM GEN_SOLI_OFIC", "cSolicitado")
-
-
-IF SQLEXEC(lnCone_cgce, "SELECT * FROM gen_ofic_stat", "ofic_stat") != 1
-	a=Aerror(Mat)
-	SQLDISCONNECT(0)
-	sdsd
-ENDIF
-
-IF SQLEXEC(lnCone_cgce, "SELECT * FROM opc_op_config", "op_config") != 1
-	a=Aerror(Mat)
-	SQLDISCONNECT(0)
-	sdsd
-ENDIF
-
-*!* SQLDISCONNECT(0)
-
-SELECT ofic_stat
-INDEX ON status TAG status
-
-
-IF RECCOUNT("cOficio") <= 0 OR RECCOUNT("dere_ofic") <= 0
-		lcRuta = ALLTRIM(config.ruta)
-		SET PROCEDURE TO
-		CLOSE TABLES ALL
-		CLOSE DATABASES ALL
-		response.redirect("/"+lcRuta+"/sin_derechos.fwx")
-ENDIF
-
-
-IF llLigar
-
-		IF SQLEXEC(lnCone_cgce, "SELECT * FROM opc_oficio WHERE id_ofic = ?lnControl", "cSeek") != 1
-				a=Aerror(Mat)
-				SQLDISCONNECT(0)
-				sdsd
-		ENDIF
-
-		IF SQLEXEC(lnCone_cgce, "SELECT * FROM opc_liga_ofic WHERE ofic_in = ?lnControl AND ofic_out = ?cOficio.id_iden AND tipo = 1 AND TIPO_DOCU = ?cSeek.tipo", "cSeek2") != 1
-				a=Aerror(Mat)
-				SQLDISCONNECT(0)
-				sdsd
-		ENDIF
-
-		IF RECCOUNT("cSeek") > 0 AND RECCOUNT("cSeek2") <= 0
-				lcSQL = "INSERT INTO  opc_liga_ofic (ofic_in, ofic_out, usuario, lud, tipo, tipo_docu) VALUES (?lnControl, ?cOficio.id_iden, "
-				lcSQL = lcSQL + "?pcUser, GETDATE(), 1, ?cSeek.tipo)"
-
-				IF SQLEXEC(lnCone_cgce, lcSQL) != 1
-						a=Aerror(Mat)
-						SQLDISCONNECT(0)
-						sdsd
-				ENDIF
-		ENDIF
-
-*!*     SQLDISCONNECT(0)
-
-ENDIF
-
-IF llDesvincular
-		lnId_ofic = VAL(Request.Form("txtId_ofic"))
-		lcWhere = "WHERE ofic_in = ?lnId_ofic AND ofic_out = ?lnIden AND tipo = 1 AND TIPO_DOCU = ?cSeek.tipo"
-		lcSQL = "UPDATE opc_liga_ofic SET cambios =  cambios+CHAR(13)+CHAR(10)+'DELETE|'+?pcUser+'|'"
-		lcSQL = lcSQL + "+convert(varchar, GETDATE(), 20) " + lcWhere + "; DELETE FROM opc_liga_ofic "
-		lcSQL = lcSQL + lcWhere
-
-		IF SQLEXEC(lnCone_cgce, "SELECT * FROM opc_oficio WHERE id_ofic = ?lnId_ofic", "cSeek") != 1
-				a=Aerror(Mat)
-				SQLDISCONNECT(0)
-				sdsd
-		ENDIF
-
-		IF SQLEXEC(lnCone_cgce, "SELECT * FROM opc_liga_ofic " + lcWhere, "cSeek2") != 1
-				a=Aerror(Mat)
-				SQLDISCONNECT(0)
-				sdsd
-		ENDIF
-		IF RECCOUNT("cSeek2") > 0
-				IF SQLEXEC(lnCone_cgce, lcSQL) != 1
-						a=Aerror(Mat)
-						SQLDISCONNECT(0)
-						sdsd
-				ENDIF
-		ENDIF
-*!*     SQLDISCONNECT(0)
-ENDIF
-
-lnIdiden = cOficio.id_iden
-lcnombre = ALLTRIM(cOficio.diri_nomb)
-lcClav_ofic = cOficio.clav_ofic
-lcAten_a = ALLTRIM(cOficio.aten_nomb)
-lcReferencia = cOficio.referencia
-
-
-
-IF llAcuse
-		
-		ldFec_sta = DATETIME()
-		lnStatus = 4
-		lcWhere = "WHERE cve = ?cOficio.cve AND idoficio = ?cOficio.idOficio AND anio = RIGHT(YEAR(?cOficio.fecha),2)"
-
-		IF SQLEXEC(lnCone_cgce, "SELECT TOP(1) * FROM gen_stat_ofic " + lcWhere + " ORDER BY status DESC","cSeek") != 1
-				a=Aerror(Mat)
-				SQLDISCONNECT(0)
-				sdsd
-		ENDIF
-
-		IF RECCOUNT("cSeek") > 0
-				IF SQLEXEC(lnCone_cgce, "UPDATE gen_stat_ofic SET fin = ?ldFec_sta " + lcWhere + " AND status = ?cSeek.status ") != 1
-						a=Aerror(Mat)
-						SQLDISCONNECT(0)
-						sdsd
-				ENDIF
-		ENDIF
-
-		lcSQL = "INSERT INTO gen_stat_ofic (idOficio, cve, anio, status, inicio, nota, usuario) VALUES("
-		lcSQL = lcSQL + "?cOficio.idOficio, ?cOficio.cve, RIGHT(YEAR(?cOficio.fecha),2), ?lnStatus, ?ldFec_sta, ?lcStatus, ?pcUser)"
-
-		IF SQLEXEC(lnCone_cgce, lcSQL) != 1
-				a=Aerror(Mat)
-				SQLDISCONNECT(0)
-				sdsd
-		ENDIF
-
-		IF SQLEXEC(lnCone_cgce, "UPDATE gen_oficio SET status = ?lnStatus, lud = GETDATE() WHERE id_iden = ?lnIden") != 1
-				a=Aerror(Mat)
-				SQLDISCONNECT(0)
-				sdsd
-		ENDIF
-
-*!*     SQLDISCONNECT(0)
-	*/
-	%>
-		<script type="text/javascript">
-				window.parent.myTabbar.tabs('a1').attachURL('/<% //  // Response.Write(config.ruta)%>/<% //  // Response.write(lcParent)%>');
-				window.parent.cierra_ventana("4")
-		</script>
-		<% // 
-        /*
-ENDIF
-
-IF llImagen
-		loObjeto = Request.FormFieldObject("txtImagen")
-		IF !INLIST(UPPER(JUSTEXT(loObjeto.FileName)), "PNG", "JPG", "JPEG", "GIF", "BMP", "PDF", "XLS", "CSV", "XLSX", "XML", "CFDI", "RAR", "ZIP", "DOC", "DOCX", 'PPT', 'PPTX')
-    */
-				%>
-		<script language="JavaScript" type="text/JavaScript">
-								alert('Sólo se pueden subir archivos con las siguientes extensiones "PNG", "JPG", "JPEG", "GIF", "BMP", "PDF", "XLS", "CSV", "XLSX", "XML", "CFDI", "DOC", "DOCX"');
-						</script>
-		<% // 
-        */
-		ELSE
-			IF loObjeto.ContentLength > 0
-
-				lcSQL = "INSERT INTO opc_archivo (id_ofic, descrip, fecha, usuario, ofic_out, adjunto) "
-				lcSQL = lcSQL + "VALUES (?lnididen, ?loObjeto.FileName, GETDATE(), ?pcUser, 1, ?llAdjunta); SELECT @@IDENTITY;"
-
-				IF SQLEXEC(lnCone_cgce, lcSQL, "cNuevo") != 1
-						a=Aerror(Mat)
-						SQLDISCONNECT(0)
-						sdsd
-				ENDIF
-			 
-				lnidArchivo = cNuevo.exp
-
-				lnSuccess = STRTOFILE(loObjeto.Value(), lcRuta_AR_OP + ALLTRIM(STR(lnidArchivo)) + "." + JUSTEXT(loObjeto.FileName))
-				IF lnSuccess = 0 
-					lcSQL_del =	"UPDATE opc_archivo SET LUD = GETDATE(), usua_lud = 'SISTEMA' WHERE id_arch = ?lnidArchivo; DELETE FROM opc_archivo WHERE id_arch = ?lnidArchivo" 
-					IF SQLEXEC(lnCone_cgce, lcSQL_del)	=	-1
-						AERROR(laError)
-						SQLDISCONNECT(0)
-						ERROR AL ELIMINAR EL REGISTRO DEL ARCHIVO
-					ENDIF
-            /*
-					%>
-					<script type="text/javascript">
-						alert("Ocurrio un error al subir el archivo, intenta de nuevo.")
-					</script>
-					<% // 
-            /*
-				ENDIF
-
-				IF SQLEXEC(lnCone_cgce, "SELECT adjunto FROM opc_archivo WHERE id_ofic = ?lnididen AND ofic_out = 1", "cArch") != 1
-						a=Aerror(Mat)
-						SQLDISCONNECT(0)
-						sdsd
-				ENDIF
-
-				llSiAdjunta = 0
-				SELECT cArch
-				SCAN
-					IF cArch.adjunto = 1
-						llSiAdjunta = 1
-						EXIT
-					ENDIF
-				ENDSCAN
-
-				IF SQLEXEC(lnCone_cgce, "UPDATE gen_oficio SET adjunto = ?llSiAdjunta WHERE id_iden = ?lnididen") != 1
-						a=Aerror(Mat)
-						SQLDISCONNECT(0)
-						sdsd
-				ENDIF
-*!*         SQLDISCONNECT(0)
-			ENDIF
-		ENDIF
-ENDIF
-
-llModi  = (dere_ofic.titular = .T. AND (cOficio.status < 4))
-*!*llModi = !(cOficio.status >= 4 OR ((dere_ofic.titular = .F. OR cOficio.status != 1)))
-llModi = IIF(!llModi, llEdit_ofic, llModi )
-
-IF llModi AND llAplicar AND lnStatus > cOficio.status
-
-		ldFec_sta = DATETIME()
-
-		lcWhere = "WHERE cve = ?cOficio.cve AND idoficio = ?cOficio.idOficio AND anio = RIGHT(YEAR(?cOficio.fecha),2)"
-
-		IF SQLEXEC(lnCone_cgce, "SELECT TOP(1) * FROM gen_stat_ofic " + lcWhere + " ORDER BY status DESC","cSeek") != 1
-				a=Aerror(Mat)
-				SQLDISCONNECT(0)
-				sdsd
-		ENDIF
-
-		IF RECCOUNT("cSeek") > 0
-				IF SQLEXEC(lnCone_cgce, "UPDATE gen_stat_ofic SET fin = ?ldFec_sta " + lcWhere + " AND status = ?cSeek.status") != 1
-						a=Aerror(Mat)
-						SQLDISCONNECT(0)
-						sdsd
-				ENDIF
-		ENDIF
-
-		lcSQL = "INSERT INTO gen_stat_ofic (idOficio, cve, anio, status, inicio, nota, usuario) "
-		lcSQL = lcSQL  + "VALUES (?cOficio.idOficio, ?cOficio.cve, RIGHT(YEAR(?cOficio.fecha),2), lnStatus, ?ldFec_sta, ?lcStatus, ?pcUser)"
-
-		IF SQLEXEC(lnCone_cgce, lcSQL) != 1
-				a=Aerror(Mat)
-				SQLDISCONNECT(0)
-				sdsd
-		ENDIF
-
-		IF SQLEXEC(lnCone_cgce, "UPDATE gen_oficio SET status = ?lnStatus, lud = GETDATE() WHERE id_iden = ?lnIden") != 1
-				a=Aerror(Mat)
-				SQLDISCONNECT(0)
-				sdsd
-		ENDIF
-
-*!*     SQLDISCONNECT(0)
-ELSE
-		lcAnexo	 = cOficio.anexo
-		lcConcepto	= ALLTRIM(cOficio.concepto)
-ENDIF
-
-*!*lcSQL = "SELECT s.*, o.descrip FROM gen_stat_ofic s INNER JOIN gen_ofic_stat o ON s.status = o.status "
-*!*lcSQL = lcSQL + "WHERE s.idOficio = ?cOficio.idoficio AND s.cve = ?lcCVE AND anio = ?lcAnio ORDER BY s.status"
-
-
-lcSQL = " SELECT s.cve, s.IDOFICIO, s.STATUS, s.INICIO, s.fin, s.nota, s.ANIO "   +;
-		" , o.descrip, CASE WHEN s.nota = CAST(s.USUARIO as char) THEN d.diri_nomb ELSE s.USUARIO END as usuario" +;
-		" FROM gen_stat_ofic s" +;
-		" INNER JOIN gen_ofic_stat o ON s.status = o.status "   +;
-		" LEFT JOIN GEN_DOFICIO d ON CAST(d.id_doficio_pk as char) = s.USUARIO"   +;
-		" WHERE s.idOficio = ?cOficio.idoficio AND s.cve = ?lcCVE AND s.anio = " + RIGHT(lcAnio,2)    +;
-		" ORDER BY s.status"
-
-IF SQLEXEC(lnCone_cgce, lcSQL, "cStat") != 1
+	IF SQLEXEC(lnCone_cgce, lcSQL, "cArea_rh") != 1
 		a=Aerror(Mat)
 		SQLDISCONNECT(0)
 		Response.write(Mat(2))
 		return 
-ENDIF
+	ENDIF
 
-SELECT cStat
-
-*!* SQLDISCONNECT(0)
-=SEEK(cOficio.status, "ofic_stat", "status")
-SKIP IN ofic_stat
-
-IF !EMPTY(lnBorra) AND !EMPTY(lnArchivo)
-
-		IF SQLEXEC(lnCone_cgce, "SELECT * FROM opc_archivo WHERE id_arch = ?lnArchivo", "cSeek") != 1
-				a=Aerror(Mat)
-				SQLDISCONNECT(0)
-				sdsd
-		ENDIF
-
-		IF RECCOUNT("cSeek") > 0
-				IF SQLEXEC(lnCone_cgce, "UPDATE opc_archivo SET usua_lud = ?PCUSER, lud = GETDATE(), ip_lud = '" + ALLTRIM(Request.ServerVariables("REMOTE_ADDR")) + "'; DELETE FROM opc_archivo WHERE id_arch = ?lnArchivo", "cSeek") != 1
-						a=Aerror(Mat)
-						SQLDISCONNECT(0)
-						sdsd
-				ENDIF
-
-				&&Comprueba que no tenga archivos adjuntos al correo del de salida
-				IF SQLEXEC(lnCone_cgce, "SELECT adjunto FROM opc_archivo where id_ofic = ?lnIDIden AND ofic_out = 1", "cArch") != 1
-						a=Aerror(Mat)
-						SQLDISCONNECT(0)
-						sdsd
-				ENDIF
-
-				llSiAdjunta = 0
-
-				SELECT cArch
-				GO TOP
-				SCAN
-						IF cArch.adjunto = 1
-								llSiAdjunta = 1
-								EXIT
-						ENDIF
-				ENDSCAN
-
-				IF llSiAdjunta = 0
-						&&Comprueba que no tenga oficios ligados con archivos adjuntos
-						IF SQLEXEC(lnCone_cgce, "SELECT adjunto FROM opc_liga_ofic WHERE ofic_out = ?lnIDIden", "cLigados") != 1
-								a=Aerror(Mat)
-								SQLDISCONNECT(0)
-								sdsd
-						ENDIF
-
-						SELECT cLigados
-						GO TOP
-						SCAN
-								IF cLigados.adjunto
-										llSiAdjunta = 1
-										EXIT
-								ENDIF
-						ENDSCAN
-				ENDIF
-
-				IF SQLEXEC(lnCone_cgce, "UPDATE gen_oficio SET adjunto = ?llSiAdjunta WHERE id_iden = ?lnIDIden") != 1
-						a=Aerror(Mat)
-						SQLDISCONNECT(0)
-						sdsd
-				ENDIF
-
-		ENDIF
-
-*!*     SQLDISCONNECT(0)
-ENDIF
-*/
+	SQLDISCONNECT(0)
+    */
 %>
 
+
+	<style type="text/css">
+		.dhtmlx-error {
+			font-weight: bold;
+			color: white;
+			background-color: #770000;
+		}
+
+		.webix_dtable .webix_ss_header {
+			font-weight: bold;
+		}
+
+		.edited {
+			font-weight: bold;
+		}
+
+		.footer {
+			font-weight: bold;
+
+		}
+
+		.my_style .webix_hcell {
+			background: #2b96cc;
+			color: white;
+		}
+
+		.my_style .webix_column {
+			font-style: italic;
+			background: #d5eefb;
+			opacity: 0.8;
+		}
+
+		.my_style .webix_column>div {
+			border-color: #d5eefb;
+		}
+	</style>
 </head>
-<style>
-    .spinner {
-      border: 4px solid rgba(0, 0, 0, 0.1);
-      border-left-color: #4caf50;
-      border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-  </style>
-<script>
 
-		function habi(valor){
-				<% //  // IF(ofic_stat.titular = .T. AND dere_ofic.titular = .F.) OR cOficio.status >= 3 AND cOficio.status != 99%>
-				if(valor == 99){
-						document.getElementById("btnAplicar").disabled = false;
-				}else{
-						document.getElementById("btnAplicar").disabled = true;
+<body onLoad="doOnLoad();">
+	<div id="div_atencion" style="background-color: #F4F4F4;"></div>
+	<script>
+		const validaFecha = (text, format)=>{
+			return moment(text, format,true).isValid();
+		}
+		function doOnLoad() {
+
+			webix.ui.datafilter.rowCount = webix.extend({
+				refresh: function (master, node, value) {
+					node.firstChild.innerHTML = "Total: " + master.count();
 				}
-				<% //  // ENDIF%>
-
-		}
-
-		function desvincular(tipo, lnOficio) {
-				document.getElementById("txtId_ofic").value = lnOficio;
-				document.getElementById("cmdDesvincular").click();
-		}
-
-	  const enviaCorreo = async(lnStatus)=>{
-
-			return webix.ajax().post("/<% //  // Response.Write(config.ruta)%>/op_oficx.fwx", {lnID_Iden:<% //  // Response.write(lnIDIden)%>, lnStatus} ).then(async (res)=>{
-				res = res.json()
-				
-				return await Swal.fire({text:res.message, icon:res.status?"success":"error"}).then(()=>{
-					return res.status
-				})
-			})
-		}
-
-		function acusar(){
-			Swal.fire({
-				title: '¿Seguro de acusar el documento?',
-				icon: 'warning',showCancelButton: true,confirmButtonColor: '#3085d6',cancelButtonColor: '#d33',confirmButtonText: 'Si',cancelButtonText: 'Cancelar'
-			}).then((result) => {
-				if (result.isConfirmed) {
-					webix.ajax().post("/<% //  // Response.Write(config.ruta)%>/op_soficx.fwx", {lnTipo:4, lnIDIden:<% //  // Response.write(lnIDIden)%>}).then((res)=>{
-						res = res.json()
-						Swal.fire({text:res.message, icon:res.status?"success":"error"}).then(()=>{
-							if(res.status){
-								location.href = "/<% //  // Response.write(config.ruta)%>/op_seofic.fwx?lcCVE=<% //  // Response.Write(ALLTRIM(lcCVE))%>&lnOfic=<% //  // Response.Write(lnOfic)%>&lnAnio=<% //  // Response.Write(lcAnio)%>&lnIden=<% //  // Response.Write(lnIden)%>&pd=<% //  // Response.write(lcParent)%>"
-							}
-						})
-					})
-				}
-			})
-		}
+			}, webix.ui.datafilter.summColumn)
 
 
+			var ui = webix.ui({
+				view: "scrollview",
+				id: "verses",
+				scroll: "y",
+				body: {
+					margin: 30, rows: [
+						{
+							rows: [
+								{
+									view: "form", id: "form",
+									rows: [
+										{
+											label: "Concepto", view: "textarea", id: "txtConcepto", name: "txtConcepto", labelWidth: 95, labelPosition:"top", height: 120, value:`<%=rows2[0].CONCEPTO%>`, 
+										},
+										{
+										cols: [
+											{
+											view: "combo", id:"seccion", name:"seccion", label: "Secci&oacute;n/Subsecci&oacute;n", labelPosition:"top",
+											labelWidth:300, width:800, options: {
+													filter: function (item, value) {
+														if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+															return true;
+														return false;
+													},
+													keyPressTimeout: 500,
+															body: {
+																fitMaster: false, template: "#value#",
+																dataFeed: "/api/op/cmb_seccw"
+															},
+													// keyPressTimeout: 1000,
+													//data:[]
+												},
+											},
+											{},
+											<%if(!!rows2[0].GDOC){%>
+											{
+												view: "button",
+												type: "icon", 
+												label: "Ver GoogleDocs", // El texto del botón
+												css: "webix_primary",      // Clase para darle un estilo primario (opcional)
+												icon: "mdi mdi-file-word-box",      // Ícono de PDF de la librería Webix
+												width: 180,
+												// icon: "fa fa-file-pdf-o", // Alternativa si usas Font Awesome
+												
+												// Manejador de eventos onClick
+												click: function() {
+													// La URL del PDF que quieres abrir
+													const pdfUrl = "<%=rows2[0].GDOC%>"; 
+													
+													// Abrir la liga en una nueva pestaña
+													window.open(pdfUrl, '_blank');
+												}
+											},
+											<%}%>
+										]
+										},
+										{
+											cols: [
+												{ label: "Referencia", view: "textarea", name: "txtRefe", labelWidth: 95, labelPosition:"top", value:`<%=rows2[0].REFERENCIA%>`},
+												{ label: "Anexos", view: "textarea", name: "txtAnexo", labelWidth: 95, labelPosition:"top", value:`<%=rows2[0].ANEXO%>`},
+											]
+										},
+										{
+											view:"label", 
+											label: "Oficios de entrada respondidos con este oficio", 
+											align:"center"
+										},
+										{
+											view: "datatable", id: "oligado", select: "row", editaction: "dblclick", rowCss: "#css#", drag:true, 
+											columns: [
+												{ id: "nume_cont", header: ["No. control", { content: "textFilter" }], width: 100, sort: "string", css: { 'text-align': 'left' } },
+												{ id: "descrip", header: ["Oficio", { content: "textFilter" }], width: 200, sort: "string", css: { 'text-align': 'left' } },
+												{ id: "fecha", header: ["Fecha", { content: "textFilter" }], width: 200, sort: "string", css: { 'text-align': 'center' } },
+												{ id: "nomb_proc", header: ["Dependencia", { content: "textFilter" }], width: 280, sort: "string", css: { 'text-align': 'left' } },
+                                                { id: "nomb_remi", header: ["Remitente", { content: "textFilter" }], width: 280, sort: "string", css: { 'text-align': 'left' } },
+												{ id: "nomb_dest", header: ["Dirigido", { content: "textFilter" }], width: 280, sort: "string", css: { 'text-align': 'left' } },
+												{ id: "dtipo_ofic", header: ["Tipo", { content: "textFilter" }], width: 120, sort: "string", css: { 'text-align': 'center' } },
+												{ id: "dclas_ofic", header: ["Clase", { content: "textFilter" }], width: 120, sort: "string", css: { 'text-align': 'center' } },
+											],
+											footer: true, scrollY: true, scrollX: true, resizeColumn: true, resizeRow: true, navigation: true,
+											editable: true, height: 250,
+											data:[
+												<%for (var i = 0; i < rows5.length; i++) {%>
+												{ nume_cont: "<%= rows5[i].NUME_CONT%>", 
+												descrip: `<%=rows5[i].DESCRIP%>`,
+												fecha: `<%=rows5[i].FECHA.toISOString().substring(0, 19)%>`,
+												nomb_proc: `<%=rows5[i].NOMB_PROC%>`,
+												nomb_remi: `<%=rows5[i].NOMB_REMI%>`,
+												nomb_dest: `<%=rows5[i].NOMB_DEST%>`,
+												dtipo_ofic: "<%=rows5[i].dtipo_ofic%>",
+												dclas_ofic: "<%=rows5[i].dclas_ofic%>",
+												},
+												<%}%>
+											],
+											/*
+											on: {
+												onBeforeLoad: function () { this.showOverlay("Cargando..."); },
+												onAfterLoad: function () {
+													this.hideOverlay();
+													//this.adjustRowHeight("nota", true);
+													this.render();
+												},
+											},
+											*/
+										},
+										
+	 
+										{
+											cols: [
+												{
+													view: "combo", id: "cmbStatus", name: "cmbStatus",
+													//value: "<% // Response.Write(IIF(pnId_cent = 4, 'DG HCG', ALLTRIM(cSoli.cve)))%>",
+													label: "Próximo status", width: 200,
+													value:"<%=rows3[0].id%>",
+													labelPosition:"top",
+													required: true, invalidMessage: "Este campo no puede ir vacio",
+													options: {
+														fitMaster: false,
+														body: {
+															data: [
+																<%for (var i = 0; i < rows3.length; i++) {%>
+																{ id: "<%= rows3[i].id%>", value: "<%=rows3[i].descrip%>" },
+																<%}%>
+															]
+														}
+													},
+													on: {
+														onChange: ()=>{
+															//mues_soli();
+															//obtenerSeccion();
+															
+														}
+													}
+												},
+												{width: 80},
+												{label: "Nota estatus", view: "textarea", id: "txtStatus", name: "txtStatus", labelWidth: 95, labelPosition:"left", },
+												{ view: "button", css: "webix_primary", label: "Cambio de estatus", click: camb_stat, width: 120, id: "btncamb_stat", align: "right" },
+											] 
+											
+										},
+                                        {
+											view: "datatable", id: "dtable", select: "row", editaction: "dblclick", rowCss: "#css#", drag:true, 
+											columns: [
+												{ id: "descrip", header: ["Estatus", { content: "textFilter" }], width: 140, sort: "string", css: { 'text-align': 'left' } },
+												{ id: "nota", header: ["Nota", { content: "textFilter" }], width: 340, sort: "string", css: { 'text-align': 'left' } },
+												{ id: "usuario", header: ["Usuario", { content: "textFilter" }], width: 110, sort: "string", css: { 'text-align': 'left' } },
+												{ id: "inicio", header: ["Inicio", { content: "textFilter" }], width: 180, sort: "string", css: { 'text-align': 'center' } },
+                                                { id: "fin", header: ["Fin", { content: "textFilter" }], width: 180, sort: "string", css: { 'text-align': 'center' } },
+												{ id: "duracion", header: ["Duración (minutos)", { content: "textFilter" }], width: 180, sort: "string", css: { 'text-align': 'center' } },
+											],
+											footer: true, scrollY: true, scrollX: true, resizeColumn: true, resizeRow: true, navigation: true,
+											editable: true, height: 250,
+											data:[
+												<%for (var i = 0; i < rows4.length; i++) {%>
+												{ id: "<%= rows4[i].id%>", 
+												descrip: `<%=rows4[i].descrip%>`,
+												nota: `<%=rows4[i].nota%>`,
+												usuario: "<%=rows4[i].usuario%>",
+												inicio: "<%=(!rows4[i].inicio ? '' : rows4[i].inicio.toISOString().substring(0, 19))%>",
+												fin: "<%=(!rows4[i].fin ? '' : rows4[i].fin.toISOString().substring(0, 19))%>",
+												duracion: "<%=rows4[i].duracion%>",
+												},
+												<%}%>
+											],
+											/*
+											on: {
+												onBeforeLoad: function () { this.showOverlay("Cargando..."); },
+												onAfterLoad: function () {
+													this.hideOverlay();
+													//this.adjustRowHeight("nota", true);
+													this.render();
+												},
+											},
+											*/
+										},
 
-		const cambio_status = async(button) => {
-			let correcto = false, enviado = false
-			button.disabled = true
-			var lnStatus = document.getElementById("cmbStatus").value;
-			var lcStatus = document.getElementById("txtStatus").value;
-			console.log(lnStatus)
-			if(lnStatus == 2 || lnStatus == 4 ||  lnStatus == 99){
-				 await webix.ajax().post(`/<% //  // Response.write(config.ruta)%>/op_soficx.fwx`, {lnIDIden:<% //  // Response.write(lnIDIden)%>, lnTipo:1, lnStatus}).then((res)=>{
-					res = res.json();
-					correcto =  res.status
-			
-					Swal.fire({text:res.message, icon:res.status?"success":"error"}).then(()=>{
-					})
-				})
-			}
 
-			if((lnStatus == 2 && correcto) || lnStatus == 3){
-				Swal.fire({"title":"Se intentará enviar el oficio", 
-					html: `
-				    <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100" fill="none">
-				      <circle cx="50" cy="50" r="45" stroke="#4caf50" stroke-width="10" stroke-dasharray="283" stroke-dashoffset="75" stroke-linecap="round">
-				        <animateTransform attributeName="transform" type="rotate" repeatCount="indefinite" dur="1s" from="0 50 50" to="360 50 50" />
-				      </circle>
-				    </svg>
-				  `,
-				 text:"Por favor espere", showConfirmButton:false, allowOutsideClick :false, allowEscapeKey:false, icon:"info"})
-			 	enviado = await enviaCorreo(lnStatus)
-				// if(!enviado && lnStatus ==3){
-				// 	button.disabled = false
-				// }
-			}
-
-			if(correcto || enviado){
-				location.href = "/<% //  // Response.write(config.ruta)%>/op_seofic.fwx?lcCVE=<% // Response.Write(ALLTRIM(lcCVE))%>&lnOfic=<% // Response.Write(lnOfic)%>&lnAnio=<% // Response.Write(lcAnio)%>&lnIden=<% // Response.Write(lnIden)%>&pd=<% // Response.write(lcParent)%>"
-
-			}
-
-			button.disabled = false
-
-
-
-			// if(lnStatus != 99){
-			// 	let res = 
-			// 	if(!res)
-			// 		return false
-			// 	console.log("qwewqeweqewqewq")
-			// }
-
-			return 
-				 
-
-			
-
-
-			//Cambio de status
-			// loader = dhx4.ajax.postSync("/<% // Response.Write(config.ruta)%>/op_soficx.fwx", "lnIDIden=<% // Response.write(lnIDIden)%>&lcStatus=" + lcStatus + "&lnStatus=" + lnStatus + "&lnTipo=1");
-
-			// var result1 = loader.xmlDoc.responseXML.getElementsByTagName("mensaje");
-			// var result2 = loader.xmlDoc.responseXML.getElementsByTagName("error");
-
-			// if (result2[0].firstChild.nodeValue == ".T.") {
-			// 	alert(result1[0].firstChild.nodeValue);
-			// 	document.getElementById("btnAplicar").disabled = false;
-			// 	return false;
-			// } else {
-			// 	if (lnStatus == 1) {
-			// 			//window.parent.myTabbar.tabs('a1').attachURL('/<% // Response.Write(config.ruta)%>/<% // Response.write(lcParent)%>');
-			// 			//window.parent.dhxWins.window('w1').close();
-			// 	} else if (lnStatus == 99) {
-			// 			alert("Se cancelo el oficio correctamente")
-			// 			//window.parent.myTabbar.tabs('a1').attachURL('/<% // Response.Write(config.ruta)%>/<% // Response.write(lcParent)%>');
-			// 			//window.parent.dhxWins.window('w1').close();
-			// 	}
-			// }
-			//Envio de correo
-			// if (lnStatus == 2 || lnStatus == 3) {
-				
-			// 	loader = dhx4.ajax.postSync("/<% // Response.Write(config.ruta)%>/op_oficx.fwx", "lnID_Iden=<% // Response.write(lnIDIden)%>&lnStatus=" + lnStatus);
-
-			// 	var result1 = loader.xmlDoc.responseXML.getElementsByTagName("mensaje");
-			// 	var result2 = loader.xmlDoc.responseXML.getElementsByTagName("error");
-
-			// 	alert(result1[0].firstChild.nodeValue);
-			// 	if (result2[0].firstChild.nodeValue == ".F.") {
-			// 			//window.parent.myTabbar.tabs('a1').attachURL('/<% // Response.Write(config.ruta)%>/<% // Response.write(lcParent)%>');
-			// 		 // window.parent.dhxWins.window('w1').close();
-			// 	}
-			// }
-
-		}
-
-		// function camb_corr() {
-		// 		var lcCorreo = document.getElementById("txtCorreo").value;
-		// 		loader = dhx4.ajax.postSync("/<% // Response.Write(config.ruta)%>/op_soficx.fwx", "lnIDIden=<% // Response.write(lnIDIden)%>&lcCorreo=" + lcCorreo + "&lnTipo=2");
-
-		// 		var result1 = loader.xmlDoc.responseXML.getElementsByTagName("mensaje");
-		// 		var result2 = loader.xmlDoc.responseXML.getElementsByTagName("error");
-
-		// 		alert(result1[0].firstChild.nodeValue);
-
-		// }
-
-		function adjunta(lnEntrada, lnSalida, check) {
-			let marcado = check.checked ? 1 : 0;
-			webix.ajax().post("/<% // Response.Write(config.ruta)%>/op_soficx.fwx", {lnTipo:3, lnIDIden: lnSalida, lnEntrada, marcado}).then((res)=>{
-				res = res.json()
-				Swal.fire({text:res.message, icon:res.status?"success":"error"}).then(() =>{
-
-				})
-			})
-				// loader = dhx4.ajax.postSync("/<% // Response.Write(config.ruta)%>/op_soficx.fwx", "lnTipo=3&lnIDIden=" + lnSalida + "&lnEntrada=" + lnEntrada + "&marcado=" + marcado);
-				// var result1 = loader.xmlDoc.responseXML.getElementsByTagName("mensaje");
-				// var result2 = loader.xmlDoc.responseXML.getElementsByTagName("error");
-		}
-
-		// function reenvio(correo, tipo) {
-
-		// 		loader = dhx4.ajax.postSync("/<% // Response.Write(config.ruta)%>/op_oficx2.fwx", "lcClav_ofic=<% // Response.Write(lcClav_ofic)%>&lcCorreo=" + correo + '&lnTipo=' + tipo);
-		// 		var result1 = loader.xmlDoc.responseXML.getElementsByTagName("mensaje");
-		// 		var result2 = loader.xmlDoc.responseXML.getElementsByTagName("error");
-
-		// 		alert(result1[0].firstChild.nodeValue);
-		// 		if (result2[0].firstChild.nodeValue == ".F.")
-		// 				genera();
-
-		// }
-
-		function showLoading(fl, lcTexto) {
-				var span = document.getElementById("recfound");
-				if (!span) return;
-
-				span.style.color = "red";
-
-				if (fl === true) span.innerHTML = lcTexto;
-				else span.innerHTML = "";
-
-		}
-
-
-		function dirigido() {
-
-				var loRadio = document.getElementsByName('opcTipo_depe');
-
-				if (loRadio[0].checked) lnDepen = cmbCentro.getActualValue();
-				else lnDepen = cmbCentro2.getActualValue();
-
-
-				if (lnDepen != null) {
-						loader = dhx4.ajax.postSync('/<% // Response.Write(config.ruta)%>/op_noficx.fwx', 'cmbCentro=' + lnDepen);
-
-						var result1 = loader.xmlDoc.responseXML.getElementsByTagName("mensaje");
-						var result2 = loader.xmlDoc.responseXML.getElementsByTagName("error");
-						var result3 = loader.xmlDoc.responseXML.getElementsByTagName("codigo");
-						var result4 = loader.xmlDoc.responseXML.getElementsByTagName("nombre");
-
-						if (result2[0].firstChild.nodeValue != ".T.") {
-								loPerson.setDefaultImage("/intranet/imagenes/activo.png");
-								loPerson.clearAll();
-								loPerson.addOption(result3[0].firstChild.nodeValue, result4[0].firstChild.nodeValue);
-								loPerson.setComboText(result4[0].firstChild.nodeValue);
-								loPerson.setComboValue(result3[0].firstChild.nodeValue);
-								document.getElementById("txtDiri_codi").value = result3[0].firstChild.nodeValue;
-								document.getElementById("txtDiri_nomb").value = result4[0].firstChild.nodeValue;
-						}
-						else {
-								if (loRadio[0].checked)
-										dhtmlx.message({ expire: 10000, type: "error", text: "No se encontro el responsable<br>Si no es dependencia <% // Response.write(op_config.nobr_inst)%> <br>Utiliza Ajena <% // Response.write(op_config.nobr_inst)%>" });
-						}
-				}
-		}
-
-		function guardar() {
-				if(!confirm('¿Estas seguro que seas actualizar los datos?'))
-						return;
-
-				webix.ajax()
-						.post("/<% // Response.Write(config.ruta)%>/op_seoficx.fwx?lnIden=<% // Response.Write(lnIden)%>", enviarFormulario("form1"))
-						.then(function (res){
-								
-								if(res.json()[0].status){
-										webix.message({text:res.json()[0].message, expire:3000, type:"success"})
-								}else{
-										webix.message({text:res.json()[0].message, expire:3000, type:"error"})
+									]
 								}
-						})
+							]
+						}
+					]
+				}
+			});
+			webix.ui({
+				view: "window", id: "mues_plan",
+				move: true, left: 150, top: 0, width: 900, height: 550, resize: true,
+				head: {
+					view: "toolbar", id: "plantilla",
+					cols: [
+						{ view: "label", label: "Plantillas" },
+						{ view: "icon", icon: 'mdi mdi-close', click: "$$('mues_plan').hide();" }
+					]
+				},
+				body: {
+					view: "iframe",
+					src: "/op/op_plan"
+				}
+			});
+			/*
+			mues_soli();
+			obtenerSeccion()
+			var listServicio = $$("cmbServicio").getPopup().getList();
+			listServicio.attachEvent("onAfterSelect", function (id) {
+			  dirigido(id, 9)
+			});
+			*/
 		}
 
-		function modificado(tipo) {
-			webix.ajax().post("/<% // Response.Write(config.ruta)%>/op_soficx.fwx", {lnTipo:tipo, lnIDIden:<% // Response.write(lnIDIden)%>}).then((res)=>{
-				res = res.json()
-				Swal.fire({text:res.message, icon:res.status?"success":"error"}).then(()=>{
-					if(res.status){
-						window.parent.parent.myTabbar.tabs("a1").attachURL("/<% // Response.write(Config.ruta)%>/<% // Response.write(lcParent)%>");
-						location.href = "/<% // Response.write(config.ruta)%>/op_seofic.fwx?lcCVE=<% // Response.Write(ALLTRIM(lcCVE))%>&lnOfic=<% // Response.Write(lnOfic)%>&lnAnio=<% // Response.Write(lcAnio)%>&lnIden=<% // Response.Write(lnIden)%>&pd=<% // Response.write(lcParent)%>"
+		function mues_soli() {
+			var cve = $$("cmbStatus").getValue()
+			if (cve == "DG HCG") {
+				$$("lblSolcitud").show();
+				$$("cmbSoli_ofic").show();
+				$$("cmbTipoFormatoRh").hide();
+				$$("txtSoli_moti").show();
+				
+			} else if (cve == "CGRH") {
+				$$("cmbTipoFormatoRh").show();
+				$$("lblSolcitud").hide();
+				$$("cmbSoli_ofic").hide();
+				$$("txtSoli_moti").hide();
+			} else {
+				$$("lblSolcitud").hide();
+				$$("cmbSoli_ofic").hide();
+				$$("cmbTipoFormatoRh").hide();
+				$$("txtSoli_moti").hide();
+			}
+			if(["SP", "CA"].includes(cve))
+				$$("nombramiento").show();
+			else
+				$$("nombramiento").hide();
+			if(["SP", "CA", "DG HCG"].includes(cve)){
+				$$("anteriorSpace").show()
+			}else{
+				$$("anteriorSpace").hide()
+			}
+
+			//buscaFirma(cve);					//la cancelo por que creo que ya no se necesita en la U. de G.  11/05/2025
+			
+		}
+
+		function mues_dato(id){
+			webix.ajax()
+				.get("/api/op/op_noficx7", {id})
+				.then(function (data) {
+					let res = data.json()[0]
+					
+					//console.log("si entro")
+					//console.log(typeof res)
+					
+					if (typeof res != undefined){
+						$$("txtCorr_ofic").setValue(res.corr_ofic);
+						$$("cmbPers").setValue(res.diri_nomb);
+						$$("txtDiri_carg").setValue(res.diri_carg);
+					//console.log(res.corr_ofic)
 					}
 				})
-			})
+
+
+
 		}
 
-		const regenerar = ()=>{
-			Swal.fire({
-				title: '¿Seguro de regenerar el documento?',text: "Se eliminará el actual y se generará uno nuevo con la información guardada",
-				icon: 'warning',showCancelButton: true,confirmButtonColor: '#3085d6',cancelButtonColor: '#d33',confirmButtonText: 'Si',cancelButtonText: 'Cancelar'
-			}).then((result) => {
-				if (result.isConfirmed) {
-
-					//ELIMINA EL DOCUMENTO
-					webix.ajax().post("/<% // Response.write(config.ruta)%>/op_seoficx3.fwx").then((res)=>{
-						res = res.json();
-						if(res.status ){
-							//CREA DE NUEVO EL DOCUMENTO
-							loader = dhx4.ajax.postSync("/<% // Response.Write(config.ruta)%>/op_gofic.fwx", "lcCve="+lcCve+"&lcIdoficio="+lcIdoficio+"&lcFecha="+lcFecha+"&lnIden="+lnIden);
-
-							var result1 = loader.xmlDoc.responseXML.getElementsByTagName("mensaje");
-							var result2 = loader.xmlDoc.responseXML.getElementsByTagName("error");
-
-							if(result1[0].firstChild.nodeValue != "")
-							alert(result1[0].firstChild.nodeValue);
-
-							if(result2[0].firstChild.nodeValue == ".F.")
-							{
-								window.location.reload();
-							}else{
-								parent.myTabbar.tabs('a1').progressOff();
-							}
-						}
-					})
-				}
-			})
-		}
-
-		function enviarFormulario(formid)
-		{
-			 var Formulario = document.getElementById(formid);
-			 var longitudFormulario = Formulario.elements.length;
-			 var cadenaFormulario = ""
-			 var sepCampos
-			 sepCampos = ""
-			 for (var i=0; i <= Formulario.elements.length-1;i++)
-			 {
-				if(Formulario.elements[i].type == "radio")
-				{
-					if(Formulario.elements[i].checked)
-					{
-						cadenaFormulario += sepCampos+Formulario.elements[i].name+'='+encodeURI(Formulario.elements[i].value);
-						sepCampos="&";
-					}
-				}
-				else
-				{
-					cadenaFormulario += sepCampos+Formulario.elements[i].name+'='+encodeURI(Formulario.elements[i].value);
-					sepCampos="&";
-				}
-			 }
-			 return cadenaFormulario;
-		}
-
-		<% // IF cOficio.status = 1%>
-		function cambiarPermisos(){
-			webix.ajax().post("/<% // Response.write(config.ruta)%>/op_seoficx3.fwx?id_iden=<% // Response.Write(lnIden)%>")
-			.then(res => res.json())
-			.then(res=>{
-				Swal.fire({text:res.message, icon:res.status ? "success":"error"})
-				document.getElementById("btnCambiarPermisos").disabled = false
-			})
-			.catch(()=>{
-				alert("Ocurrio un error al procesar tu solicitud")
-				document.getElementById("btnCambiarPermisos").disabled = false
-			})
-		}
-		<% // ENDIF%>
-
-		function buscaSeccion(value){
-			try{
-				$$("seccion").setValue(value)
-				$$("seccion").getPopup().getList().clearAll();
-				// const select = document.getElementById("cmbSoli");
-      	// const text = select.options[select.selectedIndex].text;
-				// let id = $$("cve").getValue();
-				// let item = $$("cve").getPopup().getList().getItem(id);
-				// let cve = item && item.value ? item.value : "";
-
-				let resultado = "<% // Response.write(cOficio.servicio)%>"
-				
-				webix.ajax().post("/<% // Response.write(config.ruta)%>/op_combox.fwx", {
-					cveOfic: resultado
-				}).then(function (response) {
-				 	var data = response.json();
-				 	if (data.status && data.padre) {
-				 		$$("seccion").getPopup().getList().parse(data.padre);
-					} 
-				 });
-			}catch(error){
-				console.log(error)
-			}
-		}
-
-
-		webix.ready(()=>{
-			webix.ui({
-				container:"seccionSpace",
-				view:"combo", 
-				id:"seccion", name:"Seccion",
-				on:{
-					onChange:(newv)=>{
-						document.getElementById("seccion").value = newv?? ''
-					},
-					onAfterRender:()=>{
-						buscaSeccion(<% // Response.write(cOficio.seccion)%>)
-					}
-				},
+		function buscaFirma(cve) {
+			$$("firma").define({
 				options: {
 					filter: function (item, value) {
 						if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
 							return true;
 						return false;
 					},
-					// keyPressTimeout: 1000,
-					data:[]
+					body: {
+						fitMaster: false,
+						keyPressTimeout: 300,
+						template: "#value#  (#cargo#)",
+						url: "/<% // Response.write(config.ruta)%>/op_noficx4.fwx?lnTipo=2&cve="+cve
+					}
+				}
+			});
+			$$("firma").render();
+
+		}
+
+		function mues_grupo() {
+			webix.ui({
+				view: "window", id: "mues_grup",
+				move: true, left: 150, top: 0, width: 900, height: 550, resize: true,
+				head: {
+					view: "toolbar", id: "grupo",
+					cols: [
+						{ view: "label", label: "Grupos" },
+						{ view: "icon", icon: 'mdi mdi-close', click: "$$('mues_grup').close();" }
+					]
+				},
+				body: {
+					view: "iframe",
+					src: "/op/op_grup"
+				}
+			}).show();
+		}
+
+		function plantilla() {
+			if(!$$("mues_plan").isVisible())
+				$$("mues_plan").show()
+		}
+
+		function genera() {
+			
+			if (!$$("tree").isVisible()) {
+				$$("tree").show();
+				$$("clearTree").show();
+			}
+
+
+			//
+			$$("tree").load("/<% // Response.write(config.ruta)%>/op_noficx6.fwx?lnSalida=0&lnOfic=" + $$("cmb_Control").getValue())
+
+		}
+
+		function clearTree() {
+			$$("tree").clearAll();
+			$$("tree").hide();
+			$$("clearTree").hide();
+		}
+
+		function camb_stat() {
+
+			
+
+			if (!$$("form").validate()) {
+				webix.alert("Los campos con * son obligatorios")
+				return false;
+			}
+
+			//console.log($$("cmbStatus").getValue());
+			webix.ajax()
+				.post("/api/op/op_soficx", {lnIDIden:<%=rows2[0].ID_IDEN%>, lnTipo:1, lnStatus:$$("cmbStatus").getValue(), lcStatus:$$("txtStatus").getValue()})
+				.then(function (data) {
+					$$("btncamb_stat").enable();
+					let res = data.json()
+					console.log(res)
+					Swal.fire({
+						title:res.message, icon:res.status?"success":"error"
+					}).then(()=>{
+						if(res.status)
+							window.location.reload();
+					})
+					// webix.alert({ type: (data.json()[0].status ? "" : "alert-error"), text:  })
+					// if (data.json()[0].status)
+						
+
+				})
+
+		}
+
+		function carg_grupo(aGrupo) {
+			console.log(typeof aGrupo)
+			if (aGrupo != ""){
+				$$("dtable").load("/api/op/op_noficx4?lnTipo=1&laId=" + aGrupo);
+			}
+			else{
+				Swal.fire({
+				icon: "error",
+				title: "Falta seleccionar",
+				text: "Por lo menos selecciona un grupo",
+				timer: 3500
+				});
+			} 
+
+		}
+
+		function carg_plantilla(plantilla) {
+			webix.ajax()
+				.get("/api/op/op_noficx4?lnTipo=3&laId=" + plantilla)
+				.then(function (res) {
+					lcDescrip = res.json()[0].descrip.replace(/\\n/g, '\n')
+					lcDescrip = lcDescrip.replace(/\\n/g, '\n')
+
+					$$("txtConcepto").setValue(res.json()[0].descrip.replace(/\\n/g, '\n'));
+				})
+
+		}
+
+		function obtenerSeccion(){
+			return false;			//lo canselo por que no hay series 
+			try{
+				let id = $$("cmbStatus").getValue();
+				let item = $$("cmbStatus").getPopup().getList().getItem(id);
+				let cve = item && item.value ? item.value : "";
+
+				let resultado = cve.replace(/^\s*\(.*?\)\s*/, "");
+				
+				webix.ajax().post("/<% // Response.write(config.ruta)%>/op_combox.fwx", {
+					cveOfic: resultado
+				}).then(function (response) {
+				 	var data = response.json();
+				 	if (data.status && data.padre) {
+				 		$$("seccion").getPopup().getList().clearAll();
+				 		$$("seccion").getPopup().getList().parse(data.padre);
+					} 
+				 });
+			}catch(error){
+				console.log(error)
+			}
+
+			// let id = $$("cmbStatus").getValue();
+			// let item = $$("cmbStatus").getPopup().getList().getItem(id);
+			// //console.log(id, item);
+			
+			// let cve = item && item.value ? item.value : "";
+
+			// let resultado = cve.replace(/^\s*\(.*?\)\s*/, "");
+
+			// //console.log(resultado);
+			
+			// webix.ajax().post("/<% // Response.write(config.ruta)%>/op_combox.fwx", {
+			// 	cveOfic: resultado
+			// })
+			
+			//  .then(function (response) {
+			// // 	console.log(response);
+				
+			//  	var data = response.json();
+		
+			//  	if (data.status && data.padre) {
+					
+			//  		$$("combHijos").getPopup().getList().clearAll();
+			//  		$$("combHijos").getPopup().getList().parse(data.padre);
+			// 	} 
+			// 	// else {
+			//  	// 	webix.message("No se encontraron opciones");
+			//  	// }
+			//  });
+		}
+
+		function liga_ofic() {
+
+
+			if ($$("cmb_Control").getValue() != "") {
+				if ($$("txtOfic_refe").getValue() == "") lcSepara = "";
+				else lcSepara = ",";
+
+				$$("txtOfic_refe").setValue($$("txtOfic_refe").getValue() + lcSepara + $$("cmb_Control").getValue());
+				$$("txtOfic_liga").setValue($$("txtOfic_liga").getValue() + lcSepara + $$("cmb_Control").getText());
+			}
+			else {
+				alert("Selecciona un oficio para ligarlos");
+				return false;
+			}
+
+		}
+
+		function liga_ofic2() {
+
+			if ($$("cmb_Control").getValue() != "") {
+				if ($$("txtOfic_refe").getValue() == "") lcSepara = "";
+				else lcSepara = ",";
+
+				$$("txtOfic_refe").setValue($$("txtOfic_refe").getValue() + lcSepara + $$("cmb_Control").getValue());
+				$$("txtOfic_liga").setValue($$("txtOfic_liga").getValue() + lcSepara + $$("cmb_Control").getText());
+			}
+			else {
+				alert("Selecciona un oficio para ligarlos");
+				return false;
+			}
+
+		}
+
+		function veri_corr(correo) {
+			var regex = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+
+			return regex.test(correo.trim());
+		}
+
+		function registro(tipo) {
+			if (tipo == 1) {
+				var lnTipo_cont = $$("cmbTipo").getValue();
+				// var lnDepe = (lnTipo_cont > 1 ? 0 : $$("cmbTipo_depe").getValue());
+				var lnDepe = $$("cmbTipo_depe").getValue();
+				var lnServicio = (lnDepe == 1 ? $$("cmbServicio").getValue() : lnDepe == 2 ? $$("id_ajena").getValue() : 0);
+				var lcText_depe = (lnDepe == 1 ? $$("cmbServicio").getText() : lnDepe == 2 ? $$("cmbAjena").getValue() : "");
+				var lcCorreo = substrMail($$("txtCorr_ofic").getValue())
+
+
+				if (lnTipo_cont == 1 && ((lnDepe == 1 && $$("cmbServicio").getValue() == "") || (lnDepe == 2 && $$("cmbAjena").getValue() == "" && $$("id_ajena").getText() == "") || ($$("txtCorr_ofic").getValue() == "" && !['DG HCG', 'SP'].includes($$("cmbStatus").getValue())) || $$("cmbPers").getValue() == "" || $$("txtDiri_carg").getValue() == "")) {
+					webix.alert("Tienes que llenar todos los campos para poder agregar una persona de tipo 'Dirigido a'");
+					return
+				}
+
+				if (lnDepe > 0) {
+					// laId = $$("dtable").find(function (obj) {
+					// 	return obj.id == lnServicio;
+					// });
+					// if (laId.length > 0) {
+					// 	alert("Ya ingresaste este servicio")
+					// 	return false;
+					// }
+				}
+
+				if ((lnTipo_cont == 2 || lnTipo_cont == 3 || lnTipo_cont == 4) && ($$("txtCorr_ofic").getValue() == "" || $$("cmbPers").getValue() == "")) {
+					webix.alert("Tienes que por lo menos el nombre y correo para los tipos de persona 'Con copia', 'Autoriza', 'Vo. Bo.'");
+					return
+				}
+
+				if ((lnTipo_cont == 5) && ($$("txtDiri_carg").getValue() == "" || $$("cmbPers").getValue() == "")) {
+					webix.alert("El nombre y puesto deben ser llenados para el tipo 'Atenci�n a'");
+					return
+				}
+
+				if (!veri_corr(lcCorreo) && !['DG HCG', 'SP'].includes($$("cmbStatus").getValue()) ) {
+					webix.alert("El correo tiene un formato invalido");
+					return
+				}
+
+				$$("dtable").add({
+					// id: lnServicio,
+					servicio: lnServicio,
+					nomb_serv: lcText_depe,
+					correo: lcCorreo,
+					nombre: $$("cmbPers").getValue(),
+					ocupacion: $$("txtDiri_carg").getValue(),
+					tipo: $$("cmbTipo").getValue(),
+					tipo_depe: lnDepe,
+					copias:$$("copias").getValue()
+				});
+				$$("cmbServicio").setValue();
+				$$("txtCorr_ofic").setValue();
+				$$("cmbPers").setValue();
+				$$("copias").setValue();
+				$$("precargado").getList().clearAll();
+				$$("precargado").setValue()
+
+				$$("txtDiri_carg").setValue();
+			} else {
+
+				if ($$("dtable").getSelectedId() == undefined)
+					//webix.message({ type: "debug", text: "Selecciona un registro para eliminar", expire: 2500 })
+					Swal.fire({
+						position: "top-end",
+						icon: "warning",
+						title: "Selecciona un registro para eliminar",
+						showConfirmButton: false,
+						timer: 2500
+						});
+				else
+//					if (confirm("Estas seguro que deseas eliminar el registro?"))
+//						$$("dtable").remove($$("dtable").getSelectedId());
+					Swal.fire({
+					title: "Eliminar",
+					text: "¿Estas seguro que deseas eliminar el registro?",
+					icon: "question",
+					showCancelButton: true,
+					confirmButtonColor: "#b58a3b",
+					cancelButtonColor: "#893935",
+					confirmButtonText: "Si, eliminar!",
+					cancelButtonText: "No",
+					}).then((result) => {
+					if (result.isConfirmed) {
+						$$("dtable").remove($$("dtable").getSelectedId());
+						Swal.fire({
+						title: "Eliminado!",
+						text: "Registro eliminado.",
+						icon: "success"
+						});
+					}
+					});
+			}
+
+		}
+
+		function substrMail(correo) {
+			if (correo.indexOf("-") === -1) return correo;
+
+			return correo.substring(0, correo.indexOf("-") - 1)
+		}
+
+		function dirigido(id, tipo_depe) {
+			var list = $$("precargado").getList(); 
+			list.clearAll()
+			$$("precargado").setValue();
+			$$("cmbPers").setValue();
+			$$("txtCorr_ofic").setValue();
+			$$("txtDiri_carg").setValue()
+			$$("copias").setValue()
+			
+			webix.ajax().post("/<% // Response.write(config.ruta)%>/op_noficx.fwx", {txtTipo:tipo_depe, centro:id, tipo_depe:tipo_depe}).then((res)=>{
+				res = res.json();
+				if(res.status){
+					if (tipo_depe == 9){
+						list.add({id:"0", value:""})
+						// list.parse(res.personas)
+						res.personas.forEach((element, index)=>{
+							list.add(element);
+							if(element["titular"] == 1 || res.personas.length == 1){
+								$$("precargado").setValue(element["id"])
+							}
+						})
+					}else{
+
+						// nombre, cargo, usuario, corr_ofic
+						$$("cmbPers").setValue(res.personas[0].nombre);
+						$$("txtCorr_ofic").setValue(res.personas[0].corr_ofic);
+						$$("txtDiri_carg").setValue(res.personas[0].cargo)
+					}
+					// $$("nombre:suggestList").getList().data = res.personas;
+					// $$("nombre:suggestList").getList().refresh();
+					// console.log($$("nombre:suggestList").getList().data )
+					// $$("nombre:suggestList").getList().show()
 				}
 			})
-		})
+			return 
+			// $$("txtCorr_ofic").enable();
+			// var lnDepen = id;
 
+			// if (lnDepen != null && lnDepen != "" && lnDepen != undefined) {
 
+			// 	loader = dhx4.ajax.postSync('/<% // Response.Write(config.ruta)%>/op_noficx.fwx', 'cmbCentro=' + lnDepen);
+			// 	var result1 = loader.xmlDoc.responseXML.getElementsByTagName("mensaje");
+			// 	var result2 = loader.xmlDoc.responseXML.getElementsByTagName("error");
+			// 	var result3 = loader.xmlDoc.responseXML.getElementsByTagName("codigo");
+			// 	var result4 = loader.xmlDoc.responseXML.getElementsByTagName("nombre");
+			// 	var result5 = loader.xmlDoc.responseXML.getElementsByTagName("cargo");
+			// 	var result6 = loader.xmlDoc.responseXML.getElementsByTagName("correo");
+			// 	var result7 = loader.xmlDoc.responseXML.getElementsByTagName("correo_copia");
+			// 	var correo_copia = result7[0].firstChild.nodeValue.trim();
 
-</script>
+			// 	if (lnDepen == 4 || lnDepen == 5 || lnDepen == 874) {
+			// 		$$("txtCorr_ofic").setValue('dg_oficialia@hcg.gob.mx')
+			// 		$$("txtCorr_ofic").disable();
+			// 	}
 
-<body>
-		<div align="center">
-				<form name="form1" method="post" id="form1"
-						action="/<% // Response.Write(config.ruta)%>/op_seofic.fwx?lcCVE=<% // Response.Write(ALLTRIM(lcCVE))%>&lnOfic=<% // Response.Write(lnOfic)%>&lnAnio=<% // Response.Write(lcAnio)%>&lnIden=<% // Response.Write(lnIden)%>"
-						enctype="multipart/form-data">
-						<br>
-						<table width="98%" border="0" cellpadding="4" cellspacing="0">
-								<tr align="CENTER" bgcolor="#F4F4F4">
-										<td colspan="3" valign="top">
-												<table width="95%" border="0" cellspacing="0" cellpadding="0">
-														<tr>
+			// 	if (result2[0].firstChild.nodeValue != ".T.") {
 
-																<td>
-																		<div align="center"><b>ESTATUS DEL OFICIO
-																						<% // Response.Write(cOficio.oficio)%>&nbsp;</b>
-																				<% // IF !EMPTY(cOficio.gdoc)
-							lnPos =  AT('?id=',cOficio.gdoc)
-							lcURL = IIF(lnPos=0, cOficio.gdoc, 'https://docs.google.com/document/d/'+SUBSTR(cOficio.gdoc, lnPos+4))%>
-																				<a href="<% // Response.write(lcURL)%>" target="_blank"><img
-																								src="/<% // Response.Write(config.ruta)%>/imagenes/word.png"
-																								alt="Descargar Archivo DOC" width="20" height="20" border="0"
-																								align="absmiddle">
-																				</a>
+			// 		//$$("cmbPers").getList().clearAll()
+			// 		//$$("cmbPers").getList().parse('{"id":"' + result3[0].firstChild.nodeValue + '", "value": "' + result4[0].firstChild.nodeValue + '"}');
+			// 		$$("cmbPers").setValue(result4[0].firstChild.nodeValue)
 
-																						<% // IF llRegenerar%>
-																						<button type="button" onclick="regenerar()">Regenerar documento</button>
-																						<% // ENDI%>
-																				<% // ELSE%>
-																				<a href="/<% // Response.write(config.ruta)%>/op_sprevio.fwx?lnOfic=<% // Response.Write(cOficio.id_iden)%>&lcCVE=<% // Response.Write(lcCVE)%>" target="_blank">Previo</a>
-																				<% // ENDIF%>
-																		</div>
+			// 		$$("cmbPers").define({"suggest":[{id:"sadsdadsa", value:"sasaddsaasd"}]})
+			// 		$$("cmbPers").refresh()
+			// 		//$$("txtCorr_ofic").getList().clearAll()
+			// 		//$$("txtCorr_ofic").getList().parse('{"id":"' + result6[0].firstChild.nodeValue + '", "value": "' + result6[0].firstChild.nodeValue + '"}');
+			// 		if (lnDepen != 4 && lnDepen != 5 && lnDepen != 874 && result6[0].firstChild.nodeValue != "jegonzalez@hcg.gob.mx") {
+			// 			$$("txtCorr_ofic").setValue(result6[0].firstChild.nodeValue)
+			// 		}
 
-																</td>
-																<td align="right">
-																	<% // IF cOficio.status = 1%>
-																	<span>¿Te solicita permisos para editar el documento?<input type="button" value="Da click aquí" id="btnCambiarPermisos" onclick="this.disabled = true; cambiarPermisos()"></span>
-																	<% // ENDIF%>
-																</td>
-														</tr>
-												</table>
-										</td>
-								</tr>
-								<tr>
-										<td bgcolor="#F4F4F4" align="right">N&uacute;mero Control</td>
-										<td width="62%">
-												<div id="combo_zone2" style="width:350px; height:20px;"></div>
-												<script>
-														var cmbControl = new dhtmlXCombo("combo_zone2", "cmb_Control", 350);
-														cmbControl.enableFilteringMode('between', "/<% // Response.Write(config.ruta)%>/cmb_control.fwx?lnClave=<% // Response.write(pcCentro)%>", false, false);
-														cmbControl.unSelectOption();
-												</script>
-										</td>
-										<td align="right">
-												<input type="submit" name="cmdLigar" id="cmdLigar" value="Ligar oficio">
-										</td>
-								</tr>
-								<% // IF ALLTRIM(lcCVE) == "CGRH"%>
-								<tr>
-										<td bgcolor="#F4F4F4" align="right">Area</td>
-										<td><strong><% */ Response.Write(ICASE(cOficio.area_rh = 1, "Plantillas", cOficio.area_rh = 2, "Sistemas",;
-																										cOficio.area_rh = 3, "Control Presupuestal",cOficio.area_rh = 4, "Relaciones laborales",;
-																										cOficio.area_rh = 5, "Prestaciones y servicios",cOficio.area_rh = 6, "Capacitación y becas",;
-																										cOficio.area_rh = 7, "Salud en el trabajo",cOficio.area_rh = 8, "Desarrollo organizacional","&nbsp;"))
-													/*%>
-												</strong>
-										</td>
-								</tr>
-								<% // ENDIF%>
-								<tr>
-										<td bgcolor="#F4F4F4" align="right">Fecha</td>
-										<td ><% // Response.Write(IIF(!EMPTY(cOficio.fecha), cOficio.fecha, "&nbsp;"))%></td>
-										<td  align="right">
-												<% // IF cOficio.status < 2 OR llEdit_ofic %>
-												<input type="button" name="cmdCamb_aten" id="cmdCamb_aten" value="Guardar cambios"
-														onclick="guardar();"
-														<% // *Response.Write(IIF(ofic_stat.titular = .T. AND dere_ofic.titular = .F., " disabled", ""))%>>
-												<% // ENDIF%>
-										</td>
-								</tr>
-								<% // IF !EMPTY(cOficio.solicitado) OR cOficio.cve = 'DG HCG'%>
-								<tr>
-										<td bgcolor="#F4F4F4" align="right">Solicitado</td>
-										<td colspan="2">
-												<select id="cmbSoli_ofic" name="cmbSoli_ofic">
-														<option value= ""></option>
-														<% // SELECT cSolicitado
-														//SCAN%>
-														<option value="<% // Response.write(ALLTRIM(cSolicitado.num_soli))%>" <% // Response.write(IIF(ALLTRIM(cSolicitado.num_soli) == ALLTRIM(cOficio.solicitado),'selected',''))%>><% // Response.write('('+ALLTRIM(cSolicitado.num_soli)+') '+ALLTRIM(cSolicitado.servicio))%></option>
-														<% // ENDSCAN%>
-												</select>
-												<input type="text" name="txtSoli_pers" id="txtSoli_pers" value="<% // Response.write(ALLTRIM(cOficio.soli_pers))%>" style="width: 300px">
-										</td>
-								</tr>
-								<% // ENDIF%>
-								<tr>
-										<td bgcolor="#F4F4F4" align="right">
-												Concepto<br>
-												
-										</td>
-										<td colspan="2">
-												<% // IF cOficio.status >= 2 AND !llEdit_ofic
-												//		Response.Write(IIF(!EMPTY(cOficio.concepto), STRTRAN(cOficio.concepto, chr(10), "<br>"), "&nbsp;"))
-												//ELSE
-												%>
-												<textarea name="txtConcepto" cols="70" rows="3" id="txtConcepto"
-														tabindex="3"><% // Response.Write(lcConcepto)%></textarea>
-												<% // ENDIF%>
-										</td>
+			// 		$$("txtDiri_carg").setValue(result5[0].firstChild.nodeValue)
 
-								</tr>
+			// 		if (correo_copia != "") {
+			// 			$$("lblCopia").show();
+			// 			$$("lblCopia2").show();
+			// 			$$("lblCopia2").define("label", "<strong>" + correo_copia + " </strong>");
+			// 			$$("lblCopia2").render();
+			// 		} else {
+			// 			if ($$("lblCopia").isVisible()){
+			// 				$$("lblCopia").hide()
+			// 				$$("lblCopia2").hide()
+			// 			}
+			// 		}
+			// 	}
 
-								<tr>
-										<td bgcolor="#F4F4F4" align="right">Referencia</td>
-										<td colspan="2">
-												<% // IF cOficio.status >= 2 AND !llEdit_ofic
-												//		Response.Write(IIF(!EMPTY(cOficio.referencia), cOficio.referencia, "&nbsp;"))
-												//ELSE
-												%>
-												<textarea name="txtReferencia" cols="70" rows="3" id="txtReferencia"
-														tabindex="3"><% // Response.Write(lcReferencia)%></textarea>
-												<% // ENDIF%>
-										</td>
-								</tr>
-								<% // *!*IF llModi%>
-								<tr>
-										<td height="75" bgcolor="#F4F4F4" align="right">Anexo</td>
-										<td >
-												<textarea name="txtAnexo" cols="70" rows="3" id="txtAnexo"><% // Response.Write(lcAnexo)%></textarea>
-										</td>
-										<td></td>
-								</tr>
-								<tr>
-										<td bgcolor="#F4F4F4" align="right">Proximo Estatus</td>
-										<td colspan="1">
-												<select name="cmbStatus" id="cmbStatus" onchange="habi(this.value)">
-														<option value="<% // Response.Write(ofic_stat.status)%>"><% // Response.Write(ofic_stat.descrip)%>
-														</option>
-														<option value="99">CANCELADO</option>
-												</select>
-												<div style="width: 40px; display: inline-block;"></div>
-												<input type="button" name="btnAplicar" id="btnAplicar"
-														onclick="cambio_status(this);"
-														value="Aplicar Cambio de Estatus"
-														<% // Response.Write(IIF((ofic_stat.titular = .T. AND dere_ofic.titular = .F.) OR cOficio.status >= 3, " disabled", ""))%>>
-										</td>
-										<td colspan="1" width="23%" align="right">
-												<% // IF cOficio.solicito != pcUser%>
-												<% // response.write("&nbsp;")%>
-												<% // ELSE%>
-												<strong>Permanecer en el oficio</strong>
-												<input name="chkAqui" type="checkbox" id="chkAqui" value=".T."
-														<% // Response.Write(IIF(llAqui, " checked", ""))%>>
-												<% // ENDIF%>
-										</td>
-								</tr>
-								<tr>
-										<td bgcolor="#F4F4F4" align="right">Nota Estatus</td>
-										<td colspan="1"><textarea name="txtStatus" cols="30" rows="3"
-														id="txtStatus"><% // Response.Write(lcStatus)%></textarea></td>
-										<td colspan="1" width="23%" align="right" valign="bottom">
+			// }
+		}
 
-												
-										</td>
-								</tr>
-								<tr>
-										<td bgcolor="#F4F4F4" align="right">Secci&oacute;n/subsecci&oacute;n</td>
-										<td width="62%">
-												<div id="seccionSpace" style="width:350px; height:20px;"></div>
-												<input type="text" name="seccion" id="seccion" style="display: none">
-										</td>
-										<td align="right">
-												<input type="submit" name="cmdLigar" id="cmdLigar" value="Ligar oficio">
-										</td>
-								</tr>
-								<% // *!*ELSE%>
-								<!-- <tr>
-										<td bgcolor="#F4F4F4" align="right">Anexo</td>
-										<td colspan="2">
-												<% // Response.Write(IIF(!EMPTY(cOficio.anexo), STRTRAN(cOficio.anexo, CHR(10), "<BR>"), "&nbsp;"))%>
-										</td>
-								</tr> -->
-								<% // *!*ENDIF%>
-								<tr>
-										<td bgcolor="#F4F4F4" align="right">Subir Imagen</td>
-										<td colspan="1">
-												<input name="txtImagen" type="file" size="60" id="txtImagen" tabindex="5" accesskey="I">
-												<label for="chkAdju_arch"><input type="checkbox" name="chkAdju_arch" id="chkAdju_arch">Adjuntar
-														al mail</label>
-												<input name="cmdImagen" type="submit" id="cmdImagen" value="Subir Archivo">
-
-										</td>
-										<td align="center" bgcolor="#F4F4F4">
-												<a href="#inicio" onClick="window.parent.digitaliza(<% // Response.Write(lnididen)%>,'.T.','',2);">
-														<img src="/<% // Response.Write(config.ruta)%>/imagenes/scanner.png" width="50" height="33"></a>
-										</td>
-								</tr>
-								<tr>
-										<td colspan="2">
-												<% // IF !cOficio.modificado or ISNULL(cOficio.MODIFICADO)%>
-
-												<input type="button" name="btnModificado" id="btnModificado" onclick="modificado('5');" value=" Requiere modificaci&oacute;n el GDOC">
-												<% // ELSE%>
-												<input type="button" name="btnModificado" id="btnModificado" onclick="modificado('6');" value="Marcar como atendida la modificaci&oacute;n">
-												<% // ENDIF%>
-										</td>
-										</td>
-										
-										<td colspan="1" align="right">
-												<input type="button" name="cmdAcuse" id="cmdAcuse"
-														onclick="acusar();" value="Acusar oficio">
-										</td>
-								</tr>
-								<% */ 
-								IF SQLEXEC(lnCone_cgce, "SELECT * FROM opc_archivo WHERE id_ofic = ?lnIdiden AND ofic_out = 1", "cArchivo") != 1
-										a=Aerror(Mat)
-										SQLDISCONNECT(0)
-										Response.write(Mat(2))
-										return 
-								ENDIF
-
-*!*         SQLDISCONNECT(0)
-
-				IF RECCOUNT("cArchivo") > 0
-						SELECT cArchivo
-						GO TOP
-					SCAN
-	*/%>
-								<tr>
-									<td width="15%" height="0" bgcolor="#F4F4F4" align="right">
-										<% // Response.write(IIF(cArchivo.adjunto = 1, '[Adjunto] ',''))%>Archivo
-									</td>
-									<td colspan="1" valign="middle">
-										<a href="/<% // Response.Write(config.ruta)%>/op_descarga2.fwx?lnArchivo=<% // response.write(cArchivo.id_arch)%>"; target="_blank">
-											<font color="#004364">
-												<strong>
-													<% // Response.Write(IIF(EMPTY(cArchivo.descrip),'&nbsp;','<img src="/'+config.ruta+'/imagenes/'+IIF(JUSTEXT(cArchivo.descrip)='pdf','application-pdf.png','imagen.png')+'" width="18" height="18"> ' +LOWER(cArchivo.descrip)))%>
-												</strong>
-											</font>
-										</a>
-									</td>
-									<td width="23%" align="center">
-										<a href="/<% // Response.Write(config.ruta)%>/op_seofic.fwx?lcCVE=<% // Response.Write(lcCVE)%>&lnOfic=<% // Response.Write(lnOfic)%>&lnAnio=<% // Response.Write(lcAnio)%>&lnBorra=1&lnArchivo=<% // response.write(cArchivo.id_arch)%>&lnIden=<% // Response.Write(lnIden)%>"
-												onclick="return confirm('¿Estas seguro de quitar el archivo');">
-												<font color="#006699">[Eliminar]</font>
-										</a>
-									</td>
-								</tr>
-								<% // 
-							ENDSCAN
-						ENDIF
-						%>
-								
-						</table>
-						<br>
-						<table  width="98%">
-								<tr>
-										<td align="right">
-												<a href="/<% // Response.Write(config.ruta)%>/op_seoficx2.fwx?lnIden=<% // Response.Write(lnIdiden)%>" style="font-size: 24px;" target="_blank">
-														Reporte de acusados
-												</a>
-										</td>
-								</tr>
-						</table>
-						<% */
-						*****obtiene los oficios ligados este oficio
-
-						lcSQL = "SELECT o.*, c.dependen, t.descrip as dtipo_ofic, cl.descrip as dclas_ofic, 1 as tipo " 
-						lcSQL = lcSQL + "FROM opc_oficio o INNER JOIN gen_centros c ON o.id_cent = c.id_cent " 
-						lcSQL = lcSQL + "left join opc_TIPO_OFIC t ON o.ID_TIOF = t.ID_TIOF " 
-						lcSQL = lcSQL + "left join OPC_CLAS_OFIC cl on o.ID_CLOF = cl.ID_CLOF " 
-						lcSQL = lcSQL + "WHERE o.id_ofic	in (select ofic_in from OPC_LIGA_OFIC where tipo = 1 and ofic_out = ?cOficio.id_iden) "
-						lcSQL = lcSQL + "UNION ALL( "
-						lcSQL = lcSQL + "SELECT o.*, c.dependen, t.descrip as dtipo_ofic, cl.descrip as dclas_ofic, 3 as tipo "
-						lcSQL = lcSQL + "FROM opc_oficio o INNER JOIN gen_centros c ON o.id_cent = c.id_cent " 
-						lcSQL = lcSQL + "left join opc_TIPO_OFIC t ON o.ID_TIOF = t.ID_TIOF " 
-						lcSQL = lcSQL + "left join OPC_CLAS_OFIC cl on o.ID_CLOF = cl.ID_CLOF " 
-						lcSQL = lcSQL + "WHERE o.id_ofic	in (select ofic_out from OPC_LIGA_OFIC where tipo = 3 and ofic_in = ?cOficio.id_iden) ) "
-		
-						IF SQLEXEC(lnCone_cgce, lcSQL, "cEntr_sali") != 1
-								a=Aerror(Mat)
-								SQLDISCONNECT(0)
-								Response.write(Mat(2))
-								return 
-						ENDIF
-
-
-						***************
-						IF RECCOUNT("cEntr_sali") > 0 
-						*/%>
-						<br>
-						<table width="98%" border="1" cellpadding="3" cellspacing="2"
-								style="border-collapse: collapse; border:#000;">
-								<tr bgcolor="#F4F4F4">
-										<td colspan="13" align="center"><strong>OFICIOS DE ENTRADA RESPONDIDOS CON ESTE OFICIO</strong></td>
-								</tr>
-								<tr bgcolor="#F4F4F4">
-										<td align="center"><strong>#</strong></td>
-										<td align="center"><strong>No. Control</strong></td>
-										<td align="center"><strong>Oficio</strong></td>
-										<td align="center"><strong>Fecha</strong></td>
-										<td align="center"><strong>Dependencia</strong></td>
-										<td align="center"><strong>Remitente</strong></td>
-										<td align="center"><strong>Dirigido</strong></td>
-										<td align="center"><strong>Tipo</strong></td>
-										<td align="center"><strong>Clase</strong></td>
-										<td align="center"><strong>Nota</strong></td>
-										<td align="center"><strong>Detalle</strong></td>
-										<td align="center"><strong>Adjuntar<br />Archivos</strong></td>
-										<td align="center"><strong>Desvincular</strong></td>
-								</tr>
-								<% */
-			SELECT cEntr_sali
-				GO TOP
-			xx = 1
-			DO WHILE !EOF('cEntr_sali')
-		/*%>
-								<tr bgcolor="<% // response.write(IIF(MOD(xx,2) > 0,'#FFFFFF','#F4F4F4'))%>">
-										<td align="center"><% // Response.Write(xx)%></td>
-										<td align="center">
-												<% // Response.Write(IIF(!EMPTY(cEntr_sali.nume_cont), cEntr_sali.nume_cont, "&nbsp;"))%></td>
-										<td align="center"><% // Response.Write(IIF(!EMPTY(cEntr_sali.descrip), cEntr_sali.descrip, "&nbsp;"))%>
-										</td>
-										<td align="center"><% // Response.Write(IIF(!EMPTY(cEntr_sali.fecha), cEntr_sali.fecha, "&nbsp;"))%>
-										</td>
-										<td>
-												<% */ 
-								IF !EMPTY(cEntr_sali.clv_proc)
-										lcProce = "(" + ALLTRIM(cEntr_sali.clv_proc) + ") "
-								ELSE
-										lcProce = ""
-								ENDIF
-								lcProce = lcProce + ALLTRIM(cEntr_sali.nomb_proc)
-								Response.Write(lcProce)
-						/*%>
-										</td>
-										<td>
-												<% */ 
-								IF !EMPTY(cEntr_sali.codi_remi)
-										lcNombre = "(" + ALLTRIM(STR(cEntr_sali.codi_remi)) + ") "
-								ELSE
-										lcNombre = ""
-								ENDIF
-								lcNombre = lcNombre + ALLTRIM(cEntr_sali.nomb_remi)
-								Response.Write(lcNombre)
-						*/%>
-										</td>
-										<td>
-												<% /* 
-								IF !EMPTY(cEntr_sali.codi_dest)
-										lcNombre = "(" + ALLTRIM(STR(cEntr_sali.codi_dest)) + ") "
-								ELSE
-										lcNombre = ""
-								ENDIF
-								lcNombre = lcNombre + ALLTRIM(cEntr_sali.nomb_dest)
-								Response.Write(lcNombre)
-						*/%>
-										</td>
-										<td align="center">
-												<% // Response.Write(IIF(!EMPTY(cEntr_sali.dtipo_ofic), cEntr_sali.dtipo_ofic, "&nbsp;"))%>
-										</td>
-										<td align="center">
-												<% // Response.Write(IIF(!EMPTY(cEntr_sali.dclas_ofic), cEntr_sali.dclas_ofic, "&nbsp;"))%>
-										</td>
-										<td>
-												<% // Response.Write(IIF(!EMPTY(cEntr_sali.nota), cEntr_sali.nota, "&nbsp;"))%>
-										</td>
-										<td align="center">
-												<a
-														href="/<% // Response.Write(config.ruta)%>/op_detalle.fwx?lnOficio=<% // Response.Write(cEntr_sali.id_ofic)%>">
-														<img alt="Detalle del oficio" src="/<% // Response.Write(config.ruta)%>/imagenes/search.png"
-																width="28" height="28" border="0"></a>
-										</td>
-										<td align="center">
-												<input type="checkbox" value="1" name="chkAdjunta" id="chkAdjunta"
-														onchange="adjunta(<% // Response.write(cEntr_sali.id_ofic)%>,<% // Response.write(cOficio.id_iden)%>, this)"
-														<% // **Response.write(IIF( SEEK(STR(cEntr_sali.id_ofic,10)+STR(cOficio.id_iden)+STR(1,1)+STR(cEntr_sali.tipo,1), "liga_ofic", "oficio3")  AND liga_ofic.adjunto, "checked", ""))%>>
-										</td>
-										<td align="center">
-												<img src="/<% // Response.Write(config.ruta)%>/imagenes/boton/cross.png"
-														onClick="desvincular(<% // Response.Write(cEntr_sali.tipo)%>,<% // Response.write(cEntr_sali.id_ofic)%>);" alt="Desvincular oficios"
-														width="26" height="26" border="0" align="absmiddle">
-										</td>
-								</tr>
-								<input type="submit" id="cmdDesvincular" name="cmdDesvincular" style="visibility:hidden" />
-								<input type="hidden" id="txtId_ofic" name="txtId_ofic" />
-								<% // 
-								xx = xx + 1
-								SKIP IN cEntr_sali
-								ENDDO
-						%>
-						</table>
-						<BR>
-						
-						<% // ENDIF%>
-						<% /*  SELECT cStat
- 						GO TOP 
-						IF !EOF('cStat')
-						*/%>
-						
-						<table width="98%" border="1" cellpadding="3" cellspacing="2"
-								style="border-collapse: collapse; border:#000;">
-								<tr bgcolor="#F4F4F4">
-										<td colspan="7" align="center"><strong>ESTATUS DEL OFICIO</strong></td>
-								</tr>
-								<tr bgcolor="#F4F4F4">
-										<td align="center"><strong>#</strong></td>
-										<td align="center"><strong>Estatus</strong></td>
-										<td align="center"><strong>Nota</strong></td>
-										<td align="center"><strong>Usuario</strong></td>
-										<td align="center"><strong>Inicio</strong></td>
-										<td align="center"><strong>Fin</strong></td>
-										<td align="center"><strong>Duraci&oacute;n</strong><strong> (minutos) </strong></td>
-								</tr>
-								<% /*
-				xx = 1
-				DO WHILE !EOF('cStat')
-		*/%>
-								<tr bgcolor="<% // response.write(IIF(MOD(xx,2) > 0,'#FFFFFF','#F4F4F4'))%>">
-										<td align="center"><% // Response.Write(xx)%></td>
-										<td><% // Response.Write(IIF(!EMPTY(cStat.descrip), cStat.descrip, "&nbsp;"))%></td>
-										<td><% // Response.Write(IIF(!EMPTY(cStat.nota), cStat.nota, "&nbsp;"))%></td>
-										<td align="center"><% // Response.Write(IIF(!EMPTY(cStat.usuario), cStat.usuario, "&nbsp;"))%></td>
-										<td align="center"><% // Response.Write(IIF(!EMPTY(cStat.inicio), cStat.inicio, "&nbsp;"))%></td>
-										<td align="center"><% // Response.Write(IIF(!EMPTY(cStat.fin), cStat.fin, "&nbsp;"))%></td>
-										<td align="right"><% // Response.Write(horas(cStat.fin-cStat.inicio))%></td>
-								</tr>
-								<% /*
-				xx = xx + 1
-				SKIP IN cStat
-				ENDD
-		*/%>
-						</table>
-						<% // ENDIF%>
-						<br />
-						<br>
-						<input type="hidden" name="txtPadre" id="txtPadre" value="<% // Response.write(lcParent)%>">
-				</form>
-				<% /*
-		SQLDISCONNECT(0)
-		CLOSE TABLES ALL
-		CLOSE DATABASES ALL
-*/%>
-		</div>
+		function countDirigido() {
+			return $$("dtable").find(function (obj) { return obj.tipo == 1; });
+		}
+	</script>
 </body>
+
 
 </html>
