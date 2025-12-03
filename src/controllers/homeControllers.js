@@ -66,10 +66,30 @@ const principal = ((req, res) => {
     res.render("principal")
 });
 
+const usuarios = ((req, res) => {
+    if (req.groups.indexOf(",USUARIO,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    res.render("usuarios")
+});
+
+const usua_nuev = ((req, res) => {
+    if (req.groups.indexOf(",USUARIO,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    res.render("usua_nuev")
+});
+
 
 module.exports = {
-    logout: logout,
-    intro: intro,
+    logout,
+    intro,
     sin_derecho,
-    principal
+    principal,
+    usuarios,
+    usua_nuev
 }

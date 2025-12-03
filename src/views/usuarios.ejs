@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link rel="stylesheet" href="/style.css" type="text/css" media="screen" />
+<%
+/*
+	LOCAL lcCentro, lcBusca, llCons, lcCadena, lcRuta_tabl, loMailman
+	LOCAL lnReg, lcUser_corr, lcQuien, lcEmail, lcSubject, lcTextBody, lcHTMLBody, lcAttachment
+	SET PROCEDURE TO myLib
+	SET NEAR OFF
+
+	SET DATE DMY
+	llPermisos =  Derechos("PERMISOS")
+
+	IF !Derechos("USUARIO")
+		lcRuta = ALLTRIM(config.ruta)
+		SET PROCEDURE TO
+		CLOSE TABLES ALL
+		CLOSE DATABASES ALL
+		response.redirect("/"+lcRuta+"/sin_derechos.fwx")
+	ENDIF
+
+	lcQbase_cgce = config.qbase_cgce
+
+	lcBusca = ""
+	lnCodigo	= 0
+	lcNombre	= ""
+	lcCentro 	= ""
+
+	llCons = Request.FormCount() > 0
+
+	IF llCons
+		lnCodigo	= VAL(Request.Form("txtCodigo"))
+		lcNombre	= ALLTRIM(CHRTRAN(UPPER(Request.Form("txtNombre")),'�����', 'AEIOU'))
+		lcCentro 	= ALLTRIM(UPPER(Request.Form("txtCentro")))
+		llCorreo	= !EMPTY(Request.Form("cmdCorreo"))
+
+		IF !EMPTY(lnCodigo)
+			lcBusca = "codigo = " + ALLTRIM(STR(lnCodigo))
+		ENDIF
+
+		IF !EMPTY(lcNombre)
+			lcCadena = lcNombre + " "
+			DO WHILE !EMPTY(lcCadena)
+				IF !EMPTY(lcBusca)
+				lcBusca = lcBusca + " AND "
+				ENDIF
+				lcBusca 	= lcBusca + "nombre like '%" + LEFT(lcCadena, AT(" ", lcCadena)-1) + "%'"
+				lcCadena 	= ALLTRIM(SUBSTR(lcCadena, AT(" ", lcCadena)+1)) + " "
+			ENDDO
+		ENDIF
+
+		IF !EMPTY(lcCentro)
+			IF !EMPTY(lcBusca)
+				lcBusca = lcBusca + " AND "
+			ENDIF
+			lcCadena = ALLTRIM(lcCentro) + " "
+			xx = 1
+			DO WHILE !EMPTY(lcCadena)
+				IF xx > 1
+					lcBusca = lcBusca + " OR "
+				ENDIF
+				lcBusca 	= lcBusca + "centro+nom_cen like '%" + LEFT(lcCadena, AT(" ", lcCadena)-1) + "%'"
+				lcCadena 	= ALLTRIM(SUBSTR(lcCadena, AT(" ", lcCadena)+1)) + " "
+				xx = xx + 1
+			ENDDO
+		ENDIF
+
+		lnCone_cgce = &lcQbase_cgce
+
+		IF SQLEXEC(lnCone_cgce, "SELECT * FROM passfile WHERE user_id = ?pcUser","cSeek") != 1
+			a=Aerror(Mat)
+			?SQLDISCONNECT(0)
+			hgg
+		ENDIF
+		**SQLDISCONNECT(0)
+
+
+		IF !EMPTY(nvl(cSeek.claves, ''))					&&Si no se encuntra bacio passfile.clave no tiene derechos totales
+			IF !EMPTY(lcBusca)
+				lcBusca = lcBusca + " AND ("
+			ELSE
+			 	lcBusca = "("
+			ENDIF
+			lcCadena = ALLTRIM(STRTRAN(passfile.claves, ",", " ")) + " "
+			xx = 1
+			DO WHILE !EMPTY(lcCadena)
+				IF xx > 1
+					lcBusca = lcBusca + " OR "
+				ENDIF
+				lcBusca 	= lcBusca + "groups like '%" + LEFT(lcCadena, AT(" ", lcCadena)-1) + "%'"
+				lcCadena 	= ALLTRIM(SUBSTR(lcCadena, AT(" ", lcCadena)+1)) + " "
+				xx = xx + 1
+			ENDDO
+			lcBusca = lcBusca + ")"
+		ENDIF
+
+
+		IF EMPTY(lcBusca)
+			lcBusca = "1 = 1"
+		ENDIF
+
+		lcSQL = "SELECT user_id, codigo, nombre, centro, nom_cen, telefono, envi_corr, bloqueada, correo as corr_elec, password, "
+		lcSQL = lcSQL + "0 as correo, 0 as envio "
+		lcSQL = lcSQL + " FROM passfile WHERE "
+		lcSQL = lcSQL + lcBusca 
+		lcSQL = lcSQL + " ORDER BY 3 "
+
+		lnCone_cgce = &lcQbase_cgce
+
+		IF SQLEXEC(lnCone_cgce, lcSQL,"cUsuarioQ") != 1
+			a=Aerror(Mat)
+			?SQLDISCONNECT(0)
+			hgg
+		ENDIF
+		SQLDISCONNECT(0)
+
+		select * from cUsuarioQ INTO CURSOR cUsuario READWRITE
+		SELECT cUsuario
+
+		INDEX on user_id TAG user_id
+
+		IF llCorreo
+			lcError = ""
+			*!*	 loH2t = CreateObject('Chilkat.HtmlToText')
+			*!*	 loMailman = CreateObject('Chilkat.MailMan2')
+
+			*!*	 lnSuccess = loMailman.UnlockComponent("SEMUDGMAILQ_Vns0VzSH6Hoi")
+			*!*	 IF (lnSuccess <> 1) THEN
+			*!*	     =MESSAGEBOX("Component unlock failed")
+			*!*	     RETURN
+			*!*	 ENDIF
+
+			*!*	 loMailman.SmtpHost = config.serv_corr
+			*!*	 loMailman.SmtpUsername = config.usua_corr
+			*!*	 loMailman.SmtpPassword = config.clav_corr
+			lnCone_cgce = &lcQbase_cgce
+			=SQLEXEC(lnCone_cgce, "SELECT * FROM config", "cConfig")
+
+			lnReg	= Request.FormCount("chkCorreo")
+			xx = 1
+			DO WHILE lnReg >= xx
+				lcUser_corr	= ALLTRIM(Request.Form("chkCorreo", xx))
+
+				IF SQLEXEC(lnCone_cgce, "SELECT * FROM dbo.passfile WHERE user_id = ?lcUser_corr AND ISNULL(correo,'') != ''","cUser") != 1
+					a=Aerror(Mat)
+					?SQLDISCONNECT(0)
+					hgg
+				ENDIF
+				
+				IF RECCOUNT("cUser") > 0
+					
+					replace correo WITH 1 IN cUsuario
+
+			    	llNuevo     = Empty(cUser.Envi_Corr)
+					lcNomb_usua	= ALLTRIM(cUser.nombre)
+					lcUsuario	= ALLTRIM(cUser.user_id)
+					lcPassword	= ALLTRIM(cUser.password)
+					lcEmail  	= ALLTRIM(cUser.correo)
+					lcError 	= ""
+
+					loGlob = CreateObject('Chilkat_9_5_0.Global')
+					lnSuccess = loGlob.UnlockBundle("RDFSCH.CB1012019_BmTJtkzi5CpJ")
+					IF (lnSuccess <> 1) THEN
+						? loGlob.LastErrorText
+						RELEASE loGlob
+						CANCEL
+					ENDIF
+
+
+					loReq = CreateObject('Chilkat_9_5_0.HttpRequest')
+					loHttp = CreateObject('Chilkat_9_5_0.Http')
+
+
+					loHttp.AcceptCharset = ""
+					loHttp.UserAgent = ""
+					loHttp.AcceptLanguage = ""
+
+					loHttp.AllowGzip = 0
+
+					lcJsonText = '{"id_corr": 160, "to": "' + ALLTRIM(lcEmail) + '", "campos": "' + lcUsuario + "|" 
+					lcJsonText = lcJsonText + lcPassword + "|" + lcNomb_usua + '"}'
+
+
+					loResp = loHttp.PostJson(cConfig.ruta_correo_node,lcJsonText)
+					IF (loHttp.LastMethodSuccess <> 1) THEN
+						lcError = loHttp.LastErrorText
+						lnSuccess =  0
+					ELSE
+						* Display the JSON response.
+			
+						loJson= CreateObject('Chilkat_9_5_0.JsonObject')
+						lnSuccess = loJson.Load(loResp.BodyStr)
+						lnNumMembers = loJson.Size
+						lnSuccess = IIF(loJson.IntOf("status") = 200, 1, 0)
+
+						RELEASE loResp
+						RELEASE loJson
+					ENDIF
+
+					RELEASE loReq
+					RELEASE loHttp
+
+					*!*	 loEmail = CreateObject('Chilkat.Email2')
+                    *!*	 lcForm_html = FILETOSTR(IIF(llNuevo, "correo_new_html.html", "correo_html.html"))
+
+					*!*	 lcHtmlBody = STRTRAN(STRTRAN(STRTRAN(STRTRAN(lcForm_html, "[NOMB_USUA]", lcNomb_usua), "[USUARIO]", lcUsuario), "[PASSWORD]", lcPassword), "[IP]", ALLTRIM(config.ip) )
+					*!*	 lcTxtbody	= loH2t.ToText(lcHtmlBody)
+
+					*!*	 loEmail.AddRelatedFile2(FULLPATH("escudo_udg.gif"),"escudo_udg.gif")
+					*!*	 loEmail.Subject = "Cuenta de usuario HCG"
+					*!*	 loEmail.Body = lcTxtbody
+					*!*	 loEmail.SetHtmlBody(lcHtmlBody)
+					*!*	 loEmail.From = config.correo
+					*!*	 loEmail.AddTo(lcNomb_usua,lcEmail)
+					
+
+
+					*!*	 lnSuccess = loMailman.SendEmail(loEmail)
+		
+				ENDIF
+
+				xx = xx + 1
+
+				IF lnSuccess = 1
+					IF SEEK(lcUser_corr, "cUsuario", "user_id")
+						replace envi_corr	WITH DATETIME(), ;
+								envio 		WITH 1 		IN cUsuarioQ
+					ENDIF
+
+					IF SQLEXEC(lnCone_cgce,"UPDATE passfile set envi_corr = GETDATE(), cambios = ISNULL(cambios, '') + CHAR(13)+CHAR(10) + 'ENVIA_CORREO|' + ?pcUser + '|' + CONVERT(varchar, GETDATE(), 120) WHERE user_id = ?cUsuario.user_id") != 1
+						a=Aerror(Mat)
+						?SQLDISCONNECT(0)
+						Response.write(Mat(2))
+						return
+					ENDIF
+				ELSE
+					STRTOFILE(lcError, "c:\error_envia_correo.txt")
+				ENDIF
+			ENDDO
+
+			SQLDISCONNECT(0)
+		ENDIF
+	ENDIF
+    */
+%>
+
+	<script type="text/javascript">
+		<% //IF llCons
+		//	IF RECCOUNT("cUsuario") = 1%>
+			window.addEventListener("keydown", function (event) {
+			if(event.code == 'Backquote'){
+				location.href = '/<% //Response.Write(config.ruta)%>/deta_usua.fwx<% //Response.Write("?lcUser=" + cUsuario.user_id)%>'
+			}
+		},false);
+		<% //ENDIF
+		//ENDIF%>
+
+	</script>
+</head>
+<body>
+<div align="center">
+	<form name="form1" method="post" action="/<% //Response.Write(config.ruta)%>/usuarios.fwx">
+		<% //*Response.write(llen_menu("MAIN",8))%>
+		<br />
+		<table align="center" width="96%">
+			<tr>
+				<td>
+					<fieldset><legend>BUSQUEDA DE USUARIOS</legend>
+						<table width="100%" border="0">
+							<tr>
+								<td width="20%" height="50" valign="TOP">
+									<u>C</u>&oacute;digo<br>
+									<input name="txtCodigo" type="text" value="<% //Response.Write(IIF(EMPTY(lnCodigo), '', lnCodigo))%>" size="20" maxlength="7" tabindex="1" id="txtCodigo" accesskey="C">                		</td>
+								<script language="JavaScript" >
+									document.form1.txtCodigo.focus();
+								</script>
+								<td width="40%" valign="TOP">
+									<u>N</u>ombre<br>
+									<input name="txtNombre" type="text" value="<% //Response.Write(IIF(EMPTY(lcNombre), '', lcNombre))%>" size="50" tabindex="2" id="txtNombre7" accesskey="N">
+							</td>
+								<td width="40%" valign="TOP">
+								Servicio<br>
+									<input name="txtCentro" type="text" id="txtCentro" value="<% //Response.Write(IIF(!EMPTY(lcCentro), lcCentro, ""))%>" size="50" tabindex="3">
+							</td>
+							</tr>
+							<tr>
+								<td valign="TOP" colspan="3" align="right">
+									<input name="cmdCon" type="submit" value="Seleccionar" id="cmdCon7" accesskey="S" tabindex="4">
+								</td>
+							</tr>
+					</table>
+					</fieldset>
+				</td>
+			</tr>
+		</table>
+		<br />
+  <% /*
+	IF llCons
+		IF RECCOUNT("cUsuario") > 0
+  */%>
+  <table width="95%" border="1" cellpadding="3" cellspacing="2" style="border-collapse: collapse; border:#000000;">
+    <tr bgcolor="#F4F4F4">
+      <td width="1%" align="center"><strong>#</strong></td>
+      <td align="center"><strong>User Name </strong></td>
+      <td align="center"><strong>C&oacute;digo</strong></td>
+      <td align="center"><strong>Nombre</strong></td>
+	  <td align="CENTER"><strong>Clave</strong></td>
+      <td align="CENTER"><strong>Servicio</strong></td>
+	  <td align="CENTER"><strong>Tel&eacute;fono</strong></td>
+      <td align="CENTER"><strong>Envi&oacute; Correo</strong></td>
+      <td align="CENTER" width="1%"><strong>Enviar Correo </strong></td>
+      <td align="CENTER" width="1%">SIH</td>
+      <td align="CENTER" width="1%">Expediente</td>
+    </tr>
+    <%/*
+			xx = 1
+			GO TOP IN cUsuario
+			DO WHILE !EOF('cUsuario')
+				IF cUsuario.bloqueada = 0
+	*/%>
+    <tr bgcolor="<% //response.write(IIF(MOD(xx,2) > 0,'#FFFFFF','#F4F4F4'))%>">
+      <td align="CENTER"><% //Response.write(xx)%></td>
+      <td><% //Response.Write(cUsuario.user_id)%></td>
+      <td align="CENTER"><% //Response.Write(cUsuario.codigo)%></td>
+      <td><% //Response.Write(cUsuario.nombre)%></td>
+      <td><% //Response.Write(cUsuario.nom_cen)%></td>
+      <td align="center"><% //Response.Write(cUsuario.envi_corr)%></td>
+      <% //IF !llCorreo%>
+          <td align="CENTER">
+                <input name="chkCorreo" type="checkbox" value="<% //Response.Write(cUsuario.user_id)%>" id="chkCorreo"<% //Response.Write(IIF(EMPTY(cUsuario.envi_corr) AND !EMPTY(cUsuario.corr_elec), " checked", ""))%>>
+          </td>
+	  <% //ELSE%>
+	  <td align="CENTER">
+          <% //IF cUsuario.Correo = 1%>
+            <img src="/<% //Response.Write(config.ruta)%>/imagenes/<% //Response.Write(IIF(cUsuario.envio = 1, "email.gif", "emailno.gif"))%>" width="16" height="16">
+          <% //ELSE%>
+            &nbsp;
+          <% //ENDIF%>
+	  </td>
+	  <% //ENDIF%>
+      <td align="CENTER">
+      <% //IF !llPermisos%>
+	      <a href="/<% //Response.Write(config.ruta)%>/deta_usua.fwx<% //Response.Write("?lcUser=" + cUsuario.user_id)%>" onMouseOver="window.status='Ver detalle de la Cuenta del Usuario';return true;" onMouseOut="window.status='<% //Response.Write(config.title)%>';return true;"><img alt="Detalle del oficio" src="/<% //Response.Write(config.ruta)%>/imagenes/search.png" width="28" height="28" border="0"></a>
+      </td>
+	  <td align="center"> 
+		  <a href="/<% //Response.Write(config.ruta)%>/dere_eserv.fwx<% //Response.Write("?lcUser=" + cUsuario.user_id)%>" onMouseOver="window.status='Ver detalle de la Cuenta del Usuario';return true;" onMouseOut="window.status='<% //Response.Write(config.title)%>';return true;"><img alt="Detalle del oficio" src="/<% //Response.Write(config.ruta)%>/imagenes/search.png" width="28" height="28" border="0"></a>
+      </td>
+	  <% //ELSE%>
+	      <a href="/<% //Response.Write(config.ruta)%>/modi_perm.fwx<% //Response.Write("?lcUser=" + cUsuario.user_id)%>" onMouseOver="window.status='Ver detalle de la Cuenta del Usuario';return true;" onMouseOut="window.status='<% //Response.Write(config.title)%>';return true;"><img alt="Detalle del oficio" src="/<% //Response.Write(config.ruta)%>/imagenes/search.png" width="28" height="28" border="0"></a>
+      </td>
+	  <td></td>
+	  <% //ENDIF%>
+	  
+	<% //ELSE%>
+	<tr bgcolor="#008FD5">
+      <td align="CENTER"><% //Response.write(xx)%></td>
+      <td><% //Response.Write(cUsuario.user_id)%></td>
+      <td align="CENTER"><% //Response.Write(cUsuario.codigo)%></td>
+      <td><% //Response.Write(cUsuario.nombre)%></td>
+      <td align="CENTER"><% //Response.Write(cUsuario.centro)%></td>
+      <td><% //Response.Write(cUsuario.nom_cen)%></td>
+	  <td align="center"><% //Response.Write(IIF(!EMPTY(cUsuario.telefono), cUsuario.telefono, "&nbsp;"))%></td>
+	  <td align="center"><% //Response.Write(!ISNULL(cUsuario.envi_corr))%></td>
+      <% //IF !llCorreo%>
+	  <td align="CENTER"><input name="chkCorreo" type="checkbox" id="chkCorreo" value="<% //Response.Write(cUsuario.user_id)%>"></td>
+  	  <% //ELSE%>
+	  <td align="CENTER">
+	  <% //IF cUsuario.Correo = 1%>
+	  	<img src="/<% //Response.Write(config.ruta)%>/imagenes/<% //Response.Write(IIF(cUsuario.envio = 1, "email.gif", "emailno.gif"))%>" width="16" height="16">
+	  <% //ELSE%>
+	  	&nbsp;
+	  <% //ENDIF%>
+	  </td>
+	  <% //ENDIF%>
+	  <% //IF !llPermisos%>
+      <td align="CENTER">
+      	<a href="/<% //Response.Write(config.ruta)%>/deta_usua.fwx<% //Response.Write("?lcUser=" + cUsuario.user_id)%>" onMouseOver="window.status='Ver detalle de la Cuenta del Usuario';return true;" onMouseOut="window.status='<% //Response.Write(config.title)%>';return true;"><img alt="Detalle del oficio" src="/<% //Response.Write(config.ruta)%>/imagenes/search.png" width="28" height="28" border="0"></a>
+      </td>
+	  <% //ELSE%>
+	      <a href="/<% //Response.Write(config.ruta)%>/modi_perm.fwx<% //Response.Write("?lcUser=" + cUsuario.user_id)%>" onMouseOver="window.status='Ver detalle de la Cuenta del Usuario';return true;" onMouseOut="window.status='<% //Response.Write(config.title)%>';return true;"><img alt="Detalle del oficio" src="/<% //Response.Write(config.ruta)%>/imagenes/search.png" width="28" height="28" border="0"></a>
+      </td>
+	  <% //ENDIF%>
+	  <td align="center"> 
+			<a href="/<% //Response.Write(config.ruta)%>/dere_eserv.fwx<% //Response.Write("?lcUsuario=" + cUsuario.user_id)%>" onMouseOver="window.status='Ver detalle de la Cuenta del Usuario';return true;" onMouseOut="window.status='<% //Response.Write(config.title)%>';return true;"><img alt="Detalle del oficio" src="/<% //Response.Write(config.ruta)%>/imagenes/search.png" width="28" height="28" border="0"></a>
+		</td>
+      <% /*
+				ENDIF
+		 	SKIP IN cUsuario
+			xx = xx + 1
+     		ENDDO
+      */%>
+    </tr>
+	<% //IF !llCorreo%>
+	<tr>
+	  <td colspan="11" align="right" bgcolor="#f4f4f4">
+      		<input name="cmdCorreo" type="submit" id="cmdCorreo" value="Enviar Correo"></td>
+	  </tr>
+	<% //ENDIF%>
+  </table>
+  <% //
+	//	ELSE
+  %>
+  <table width="95%" border="1" cellpadding="3" cellspacing="2" style="border-collapse: collapse; border:#000;">
+    <tr align="CENTER" bgcolor="#f4f4f4">
+      <td colspan="10"><strong>No se encontraron Usuarios con los datos subministrados</strong></td>
+    </tr>
+  </table>
+  /*
+  		ENDIF
+	ENDIF
+    */%>
+  </form>
+</div>
+</body>
+</html>
