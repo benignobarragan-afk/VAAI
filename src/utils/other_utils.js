@@ -1,5 +1,6 @@
 const {spawn} = require("child_process")
 const path = require('path');
+const crypto = require('crypto');
 
 
 const ejecutarPython = (async (pythonScriptPath, args) => {
@@ -60,9 +61,64 @@ const form_fechSQL = ( (fechaDDMMYYYY) => {
 
 });
 
+const gene_cont = ( (nomb_usua, codigo) => {
+
+    function generarSegmentoAleatorio(length) {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        let result = '';
+        for (let i = 0; i < length; i++) {
+            // Usa crypto.randomInt para obtener un índice seguro
+            result += chars[crypto.randomInt(chars.length)];
+        }
+        return result;
+    }
+
+
+    // Obtener una longitud aleatoria para el segmento aleatorio (entre 3 y 5)
+    // Longitud total será: 2 + (3 a 5) + 1 + 2 = 8 a 10
+    const randomLength = crypto.randomInt(3, 6); // Genera 3, 4, o 5
+    
+    const anioCorto = new Date().getFullYear().toString().slice(-2); // Obtener '25'
+    const simbolos = '!@#$%&*';
+    
+    // --- 1. Extraer Iniciales (Parte Memorable) ---
+    const partesNombre = nomb_usua.trim().split(/\s+/).slice(0, 2);
+    let iniciales = 'Ua'; // Valor seguro por defecto
+    
+    if (partesNombre.length >= 1) {
+        iniciales = partesNombre[0].charAt(0).toUpperCase(); // Mayúscula
+        
+        if (partesNombre.length >= 2) {
+            iniciales += partesNombre[1].charAt(0).toLowerCase(); // Minúscula
+        } else if (partesNombre[0].length >= 2) {
+            iniciales += partesNombre[0].charAt(1).toLowerCase();
+        } else {
+            iniciales += 'a';
+        }
+    }
+    
+    // --- 2. Elementos Aleatorios (Parte Impredecible) ---
+    
+    // Segmento alfanumérico aleatorio (3, 4, o 5 caracteres)
+    const segmentoAleatorio = generarSegmentoAleatorio(randomLength); 
+    
+    // Símbolo aleatorio
+    const simboloAleatorio = simbolos[crypto.randomInt(simbolos.length)];
+    
+    // --- 3. Ensamblar la Contraseña ---
+    
+    // Longitud final: 8, 9 o 10 caracteres
+    const contrasena = `${iniciales}${segmentoAleatorio}${simboloAleatorio}${anioCorto}`;
+    
+    return contrasena;
+
+
+});
+
 
 module.exports = {
     ejecutarPython,
-    form_fechSQL
+    form_fechSQL,
+    gene_cont
 
 }

@@ -29,6 +29,7 @@ router.get("/op_pend", midd.verifyToken, opCtrl.op_pend);
 router.get("/op_ingr", midd.verifyToken, opCtrl.op_ingr);
 router.get("/op_detalle", midd.verifyToken, opCtrl.op_detalle);
 router.get("/detalle_ofic_No", midd.verifyToken, opCtrl.detalle_ofic_No);
+router.get("/op_reof0", midd.verifyToken, opCtrl.op_reof0);
 
 
 module.exports = router

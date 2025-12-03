@@ -14,6 +14,7 @@ const app = express();
 
 const AuthRoutes = require("./routes/auth")
 const HomeRoutes = require("./routes/home")
+const HomeApiRoutes = require("./routes/home_api")
 const GenApiRoutes = require("./routes/gen_api")
 const OpRoutes = require("./routes/op")
 const ToolsRoutes = require("./routes/tools")
@@ -37,8 +38,9 @@ app.use(async (req, res, next) => {
 });
 
 //routes
-app.use(HomeRoutes)
 app.use("/api/auth", AuthRoutes)
+app.use(HomeRoutes)
+app.use("/api/", HomeApiRoutes)
 app.use("/op", OpRoutes)
 app.use("/tools", ToolsRoutes)
 app.use("/api/op", OpApiRoutes)

@@ -3,333 +3,205 @@
 
 <head>
 	<title></title>
-	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+	<script src="/webix/codebase/webix.js"></script>
+	<script src="/webix/codebase/locale.js"></script>
+	<link rel="stylesheet" type="text/css" href="/webix/codebase/webix.css" />
+	<link rel="stylesheet" href="https://cdn.materialdesignicons.com/2.7.94/css/materialdesignicons.css?v=6.3.5"
+		type="text/css" charset="utf-8">
 
-	<link rel="stylesheet" href="/style.css" type="text/css" media="screen" />
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.0.0/animate.min.css" />
 
-	<link rel="stylesheet" type="text/css" href="/skins/web/dhtmlx.css" />
-	<link rel="stylesheet" type="text/css" href="/skins/terrace/dhtmlx.css" />
+	<style type="text/css">
+		.add {
+			font-weight: bold;
+		}
 
-	<script src="/codebase/dhtmlx.js"></script>
+		.obligatorio {
+			color: red;
+		}
 
-	<%
-    /*
-	LOCAL lnCodigo, lcUser_id, lcPassword, lcApellidos, lcNombre, llPassword, llAgregar, lcError, llError, lcRuta_tabl
-	
-	SET PROCEDURE TO myLib 
-	SET EXCLUSIVE OFF 	
-	SET NEAR OFF
-	SET DATE DMY 
+	</style>
+
+	<script language="JavaScript">
+
+
+		//variables
+		let today = new Date()
+
+		// let hour = today.toLocaleString('en-US', {
+		// 	hour12: false,
+		// });
+
+
+		let hour = String(today.getHours()).padStart(2, '0') + ':' + String(today.getMinutes()).padStart(2, '0');
+
+
+
+
+
+		// hour = hour.substr(12, 5)
+
+		//webix-components
+
+		var form_elements = [{
+			view: "label", class: { "font-weight": "bold", "font-size": 14, "text-align": "center" }, align: "center", label: "GENERAR USUARIO NUEVO"
+		},
+		{
+			cols: [
+			{
+				view: "text", id: "txtCodigo", name: "txtCodigo", labelPosition: "top", label: "C&oacute;digo", value: "", 
+				 pattern:{ mask:"#######", allow:/[0-9]/g}
+			},
+			{
+				view: "text", id: "txtUser_id", name: "txtUser_id", labelPosition: "top", label: "Nombre de usuario", value: ""
+			},
+			{
+				view: "text", id: "txtPassword", name: "txtPassword", labelPosition: "top", label: "Password", value: ""
+			},
+			]
+		},
+		{
+			cols: [
+			{
+				view: "text", id: "txtApellidos", name: "txtApellidos", labelPosition: "top", label: "Apellidos", value: ""
+			},
+			{
+				view: "text", id: "txtNombre", name: "txtNombre", labelPosition: "top", label: "Nombre", value: ""
+			},
+			]
+		},
+		{
+			view: "combo", id: "cmbServicio", name: "cmbServicio", labelPosition: "top", labelAlign: "left",
+			label: "Servicio", editable: true,
+			options: {
+				fitMaster: false,
+				keyPressTimeout: 500,
+				width: 650,
+				filter: function (item, value) {
+					if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+						return true;
+					return false;
+				},
+				body: {
+					
+					template: "#value#",
+					dataFeed: "/api/gen/cmb_depew?lnTipo=1"
+				}
+			},
+		},
+		{cols: [
+			{
+			view: "button", label: "Genera password", click: gene_pass, id:"btnPassword", name:"btnPassword", align: "right", width: 150
+			},{},
+			{
+				view: "button", label: "Alta de usuario", click: guardar, id:"btnGuardar", align: "right", width: 150
+			}
+		]},
+	]
+
+		webix.ready(function () {
+			webix.ui({
+				view: "layout",
+				responsive: true,
+				rows: [{
+					view: "scrollview",
+					body: {
+						rows: [{
+							view: "form", id: "form_usua", name: "form_usua",
+							elements: form_elements,
+							rules: {
+								"txtCodigo": webix.rules.isNotEmpty,
+								"txtUser_id": webix.rules.isNotEmpty,
+								"txtPassword": webix.rules.isNotEmpty,
+								"txtApellidos": webix.rules.isNotEmpty,
+								"txtNombre": webix.rules.isNotEmpty,
+							},
+						}]
+					}
+				}]
+			});
+
+		});
+
+
+
+
+		//functions
+
+		function gene_pass(){
 			
-	IF !Derechos("ALTA_USUA")
-		lcRuta = ALLTRIM(config.ruta)
-		SET PROCEDURE TO 
-		CLOSE TABLES ALL 
-		CLOSE DATABASES ALL 
-		response.redirect("/"+lcRuta+"/sin_derechos.fwx")
-	ENDIF 	
-	
-    lcRuta_tabl = config.file_serv + "tablas\"
-	
-	lcQbase_cgce = config.qbase_cgce
+			let form = $$("form_usua").getValues()
+
+			if (!form.txtCodigo){
+				Swal.fire("Por lo menos tienes que agregara el código del usuario");
+				return false;
+			}
+			console.log(form);
+			webix.ajax()
+			.post("/api/usua_nuevx", form)
+			.then(function (data) {
+				$$("btnGuardar").enable();
+				let res = data.json()
+				//console.log(res)
+				webix.message(res.mensage);
+				/*
+				Swal.fire({
+					title:res.mensage, icon:res.error?"error":"success"
+				}).then(()=>{
+					if(!res.error){
+						$$("form_usua").setValues(res.form);
+					}
+						
+				})
+				*/
+				if(!res.error){
+					$$("form_usua").setValues(res.form);
+				}
+
+			})
+
+		}
+
+		function guardar() {
 		
-	lnCodigo	= VAL(Request.Form("txtCodigo"))
-	lcUser_id	= UPPER(ALLTRIM(Request.Form("txtUser_id")))
-	lcPassword	= ALLTRIM(Request.Form("txtPassword"))
-	lcApellidos	= UPPER(ALLTRIM(Request.Form("txtApellidos")))
-	lcNombre	= UPPER(ALLTRIM(Request.Form("txtNombre")))
-	llPassword	= !EMPTY(Request.Form("cmdPassword"))
-	llAgregar	= !EMPTY(Request.Form("cmdAgregar"))	
-	lcError 	= ""
-	
-	IF llPassword
-		lnCone_cgce = &lcQbase_cgce
-				
-		IF SQLEXEC(lnCone_cgce, "SELECT * FROM gen_personas WHERE codigo = ?lnCodigo","personas") != 1
-			a=Aerror(Mat)
-			?SQLDISCONNECT(0)
-			Response.write(Mat(2))
-			return
-		ENDIF
-		SQLDISCONNECT(0)
+			if (! $$("form_usua").validate()) {
+				webix.message({ text: "Los campos que se marcan en rojo son obligatorios", type: "error", expire: 3000 })
+				return 
+			}
 
-		IF !EMPTY(lnCodigo) AND RECCOUNT("personas") > 0
-			lcUser_id	= IIF(EMPTY(lcUser_id), ALLTRIM(STR(lnCodigo)), lcUser_id)
-			lcApellidos	= IIF(EMPTY(lcApellidos), ALLTRIM(personas.apepat)+" "+ALLTRIM(personas.apemat), lcApellidos)
-			lcNombre	= IIF(EMPTY(lcNombre), ALLTRIM(personas.nombre), lcNombre)
-		ENDIF 
-		llError = EMPTY(lcApellidos) or EMPTY(lcApellidos)
-		IF !llError
-			lcPassword	= password(lcApellidos+lcNombre + ALLTRIM(config.cshort), lnCodigo)
-		ELSE
-			lcError = "Los campos con * estan mal o son requeridos"
-		ENDIF 
-	ENDIF 
-	
-	IF llAgregar
+			Swal.fire({
+				text: "", title: 'Seguro de agregar el usuario?', icon: 'question', showCancelButton: true,  confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Si', cancelButtonText:"No",
+			}).then((result) => {
+				if(result.isConfirmed){
+
+					let form = $$("form_usua").getValues();
+					
+					webix.ajax().post("/api/op/op_ningrx", form).then(function (response) {
+						$$("btnGuardar").enable();
+						try{
+							var respuesta = response.json()[0];
+							Swal.fire({text:respuesta.message, icon:respuesta.status ? "success":"error"}).then(()=>{
+								if (respuesta.status) {
+									window.location.href = '/op/op_ningr?lnNum_ofi=' + response.oficio + '&lnOficio='+ respuesta.id;
+								}
+							})
+
+						}catch(err){
+							Swal.fire({text:"Ocurrio un error, intenta mas tarde", icon:"error"}).then(()=>{
+							})
+						}
+					})
+				}
+			})
+		}
+
 		
-		llError = EMPTY(lnCodigo) or EMPTY(lcApellidos) or ;
-				EMPTY(lcNombre) or EMPTY(lcPassword) or EMPTY(lcUser_id)
-		IF !llError
-			lnCone_cgce = &lcQbase_cgce
-			IF SQLEXEC(lnCone_cgce, "SELECT * FROM passfile WHERE user_id = ?lcUser_id","passfile") != 1
-				a=Aerror(Mat)
-				?SQLDISCONNECT(0)
-				Response.write(Mat(2))
-				return
-			ENDIF
-			SQLDISCONNECT(0)
-
-			IF RECCOUNT("passfile") <= 0
-
-				lcNomb_pass = lcApellidos + ' ' + lcNombre
-				lcNNomb_pass = lcNombre + ' ' + lcApellidos
-
-				
-				WshShell  = CreateObject("WScript.Shell")
-				lcComando = 'dsadd user "cn='+ALLTRIM(lcApellidos+" "+lcNombre)+;
-					ALLTRIM(config.dc_serv) + '" -samid '+;
-					ALLTRIM(lcUser_id)+' -pwd '+ALLTRIM(lcPassword)+;
-					' -fn "'+ALLTRIM(lcNombre)+'" '+ ;
-					 IIF(!EMPTY(lcApellidos), ' -ln "'+ALLTRIM(lcApellidos)+'"', '')+;
-					' -desc "CUENTA INTRANET CGCE"'+;
-					' -display "'+ALLTRIM(lcApellidos+" "+lcNombre)+'"'+;
-					' -pwdneverexpires yes -canchpwd no -acctexpires never '+;
-					'-memberof "cn=WebTotal' + ALLTRIM(config.dc_serv) + '"'
-				
-               
-                
-                x = WshShell.Run(lcComando, 0, 1)
-                
-				IF x = 0
-
-					lcSQL = "INSERT INTO passfile (user_id, password, codigo, nombre, dn, nnombre, usua_alta, fech_alta) "
-					lcSQL = lcSQL + "VALUES (?lcUser_id, ?lcPassword, ?lnCodigo, ?lcNomb_pass, ?lcNomb_pass, " 
-					lcSQL = lcSQL + "?lcNNomb_pass, ?pcUser, NOW())"
-
-
-					lnCone_cgce = &lcQbase_cgce
-				
-					IF SQLEXEC(lnCone_cgce, lcSQL) != 1
-						a=Aerror(Mat)
-						?SQLDISCONNECT(0)
-						Response.write(Mat(2))
-						return
-					ENDIF
-					SQLDISCONNECT(0)
-	*/						
-					%>
-	<script language="JavaScript" type="text/JavaScript">
-	//					window.location = "/<% //Response.Write(config.ruta)%>/modi_usua.fwx?lcUser=<% //Response.Write(lcUser_id)%>";
-						</script>
-	<%/*
-				ELSE
-                    llError = .T.
-					lcError = "No se pudo dar de alta el usuario en el servidor, prueba con otro password" 
-				ENDIF 
-			ELSE
-                llError = .T. 
-				lcError = "Ya se encuentra registrado el usuario: " + ALLTRIM(lcUser_id)
-			ENDIF 
-		ELSE 
-            llError = .T.
-			lcError = "Los campos con * estan mal o son requeridos"
-		ENDIF 
-	ENDIF
-    */ 	
-%>
-
-<script>
-	function generaCodigo(){
-		dhx4.ajax.postSync("/<% //Response.Write(config.ruta)%>/usua_nuevx.fwx")
-	}
-</script>
+	</script>
 </head>
 
 <body>
-	<div align="center">
-		<form name="form1" method="post" action="/<% //Response.Write(config.ruta)%>/usua_nuev.fwx">
-			<% //*Response.write(llen_menu("MAIN",17))%>
-			<br>
-			<table align="center" width="96%">
-				<tr>
-					<td>
-						<fieldset>
-							<legend>ALTA DE USUARIO</legend>
-							<table width="100%" border="0" cellpadding="3" cellspacing="2"
-								style="border-collapse: collapse; border:#000;">
-								<% //IF llError%>
-								<script>
-									dhtmlx.message({ expire: 10000, type: "mensaje", text: "<% //Response.write(lcError)%>" });
-								</script>
-								<% //ENDIF%>
-								<tr>
-									<td width="25%" align="CENTER">
-										C&oacute;digo
-									</td>
-									<td width="25%" align="CENTER">
-										User Name
-									</td>
-									<td width="50%" align="CENTER">
-										Password
-									</td>
-								</tr>
-								<tr>
-									<td align="CENTER">
-										<input name="txtCodigo" type="text" id="txtCodigo"
-											value="<% //Response.Write(IIF(!EMPTY(lnCodigo), lnCodigo, ""))%>" size="20" maxlength="7"
-											<% //Response.Write(IIF(llError AND llAgregar AND EMPTY(lnCodigo), 'class="error_text"', ''))%>>
-									</td>
-									<td align="CENTER">
-										<input name="txtUser_id" type="text" id="txtUser_id"
-											value="<% //Response.Write(IIF(!EMPTY(lcUser_id), lcUser_id, ""))%>" size="20" maxlength="12"
-											<% //Response.Write(IIF(llError AND llAgregar AND EMPTY(lcUser_id), 'class="error_text"', ''))%>>
-									</td>
-									<td align="CENTER">
-										<input name="txtPassword" type="text" id="txtPassword"
-											value="<% //Response.Write(IIF(!EMPTY(lcPassword), lcPassword, ""))%>" size="20" maxlength="12"
-											<% //Response.Write(IIF(llError AND llAgregar AND EMPTY(lcPassword), 'class="error_text"', ''))%>>
-									</td>
-								</tr>
-								<tr>
-									<td colspan="2" align="center">
-										Apellidos
-									</td>
-									<td align="center">
-										Nombre
-									</td>
-								</tr>
-								<tr>
-									<td colspan="2" align="CENTER">
-										<input name="txtApellidos" type="text" id="txtApellidos"
-											value="<% //Response.Write(IIF(!EMPTY(lcApellidos), lcApellidos, ""))%>" size="50" maxlength="250"
-											<% //Response.Write(IIF(llError AND EMPTY(lcApellidos), 'class="error_text"', ''))%>>
-									</td>
-									<td align="CENTER">
-										<input name="txtNombre" type="text" id="txtNombre"
-											value="<% //Response.Write(IIF(!EMPTY(lcNombre), lcNombre, ""))%>" size="50" maxlength="50"
-											<% //Response.Write(IIF(llError AND EMPTY(lcNombre), 'class="error_text"', ''))%>>
-									</td>
-								</tr>
-								<tr>
-									<td colspan="3" align="right">
-										<!--
-										<input type="button" name="cmdGeneraCodigo" id="cmdGeneraCodigo" onclick="generaCodigo();" value="No tiene RUD? Generar RUD">
-										&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-										-->
-										<input name="cmdPassword" type="submit" id="cmdPassword" value="Genera Password">
-											&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-										<input name="cmdAgregar" type="submit" id="cmdAgregar" value="Agrega Usuario">
-									</td>
-								</tr>
-							</table>
-						</fieldset>
-					</td>
-				</tr>
-			</table>
-			<script language="JavaScript">
-
-				document.form1.txtCodigo.focus();
-
-			</script>
-		</form>
-	</div>
 </body>
 
 </html>
-<%
-/*
-FUNCTION password
-	PARAMETERS lcNombre, lnCodigo
 
-	LOCAL ldTiempo
-
-	ldTiempo = DATETIME()
-	lcReturn = ""
-	lcBase   = ""
-	FOR xx = 1 TO LEN(lcNombre)
-		lcCaracter = SUBSTR(lcNombre, xx, 1)
-		IF ISALPHA(lcCaracter) AND lcCaracter != "�"
-			lcBase = lcBase + lcCaracter
-		ENDIF 
-	NEXT 	
-	lnLong   = LEN(lcBase)
-	lcLetra  = LEFT(lcBase, 1)
-	lcReturn = lcLetra
-	llVocal  = (lcLetra $ "AEIOU")
-	xPos     = lnLong
-	DIMENSION aPar(3)
-	aPar  = SPACE(2)
-	lnPos = 1
-	DO WHILE LEN(lcReturn) < 7
-*!*			xPos = MAX(1, INT(RAND()*lnLong))
-*!*			DO WHILE xPos > lnLong
-*!*				xPos = INT(xPos / 2)
-*!*			ENDDO 
-*!*			xPos = MIN(MAX(xPos,2), INT(lnLong/2))
-		xPos = MAX(1, INT(xPos/2))
-		IF xPos <=  1
-			xPos = INT(lnLong/2)
-		ENDIF 
-		llEsta = .F.
-		xx = xPos	&& Adelante
-		DO WHILE xx < lnLong
-			lcLetra = SUBSTR(lcBase, xx, 1)
-			llConso = !(lcLetra $ "AEIOU")
-			IF (llVocal AND llConso) OR (!llVocal AND ! llConso)
-				llEsta = .T.	&& Lo encontro y nos vamos a Volar
-				EXIT
-			ELSE
-				xx = xx + 1 
-			ENDIF 			
-		ENDDO 
-		IF !llEsta		&& No lo Encontro
-			xx = xPos	&& Reversa
-			DO WHILE xx < 0
-				lcLetra = SUBSTR(lcBase, xx, 1)
-				llConso = !(lcLetra $ "AEIOU")
-				IF (llVocal AND llConso) OR (!llVocal AND ! llConso)
-					llEsta = .T.
-					EXIT
-				ELSE
-					xx = xx - 1 	
-				ENDIF 			
-			ENDDO 
-		ENDIF 
-		lcReturn = lcReturn + lcLetra
-		llPar    = MOD(LEN(lcReturn), 2) = 0
-		IF llPar
-			lnPar   = LEN(lcReturn)/2
-			lcPar   = SUBSTR(lcReturn, (lnPar*2)-1, 2)
-			IF !EMPTY(lcpar) 
-				IF ASCAN(aPar, lcPar) > 0	&& Suprimir este par
-					IF lnPar = 1
-						lcReturn = SUBSTR(lcReturn, 3)
-					ELSE 
-						lcReturn = LEFT(lcReturn, LEN(lcReturn)-2)
-					ENDIF 
-					lcLetra = RIGHT(lcReturn, 1)
-				ELSE 
-					aPar(lnPos) = lcPar
-					lnPos = lnPos + 1 
-				ENDIF 
-			ENDIF 
-		ENDIF 
-		llVocal = (lcLetra $ "AEIOU")
-		IF DATETIME() > ldTiempo + 5
-			RETURN .F.
-		ENDIF 
-	ENDDO 
-	lcCodigo = STR(lnCodigo, 7)+'11'
-	lnTotal  = 0
-	FOR xx = 1 TO 9
-		lnVal = VAL(SUBSTR(lcCodigo, xx, 1)) * IIF(MOD(xx,2) = 0, 2,1)
-		lnTotal = lnTotal + IIF(lnVal > 9, lnVal-9, lnVal)
-	NEXT 
-	lnDig = 10 - MOD(lnTotal, 10)
-	lcReturn = UPPER(LEFT(lcReturn,1))+LOWER(SUBSTR(lcReturn,2)) + RIGHT(lcCodigo, 1) + STR(MOD(lnDig,10),1)
-	RETURN lcReturn
-ENDFUNC 
-***************
-*/
-%>

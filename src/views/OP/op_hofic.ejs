@@ -15,7 +15,7 @@
 	<link rel="stylesheet" type="text/css" href="/webix_8.4.0/codebase/webix.css" />
 
 	<link rel="stylesheet" href="https://cdn.materialdesignicons.com/2.7.94/css/materialdesignicons.css?v=6.3.5" type="text/css" charset="utf-8">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.2/css/all.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
 	<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 
 
@@ -65,7 +65,7 @@
                         view: "select", label: "Año", id: "cmbAnio", name: "cmbAnio", value: <%=new Date().getFullYear()%>, width: 100,
                         labelPosition: "top", labelAlign: "left", options: [
                             <%
-                            for (var i = new Date().getFullYear(); i >= 2025; i--){%>
+                            for (var i = new Date().getFullYear(); i >= 2021; i--){%>
                                 { id: <%=i%>, value: "<%=i%>" },
                             <%
                             }
@@ -146,7 +146,7 @@
 					template:(obj)=>{
 						return `
 							<a href="#" onClick="window.parent.deta_sali('${obj.cve}',${obj.idoficio},${obj.anio},${obj.id_iden},'op_reof0.fwx');">
-								<img alt="Detalle del oficio" src="/imagenes/search.png" width="28" height="28" border="0">
+								<i style='font-size:26px;color:#2b96cc;' class='fa-solid fa-magnifying-glass'></i>
 							</a>`
 					}
 				},

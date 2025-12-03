@@ -7,7 +7,7 @@ const outil = require(path.join(__dirname, "..", "utils/other_utils"));
 
 const op_cucsx2 = (async (req, res) => {
 
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -28,7 +28,7 @@ const op_cucsx2 = (async (req, res) => {
 
 const op_oficx5 = (async (req, res) => {
 
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -129,7 +129,7 @@ const op_bplanx = (async (req, res) => {
 
 const op_nplantix = (async (req, res) => {
 
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -157,7 +157,7 @@ const op_nplantix = (async (req, res) => {
 
 const op_noficx4 = (async (req, res) => {
 
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -199,7 +199,7 @@ const op_noficx4 = (async (req, res) => {
 
 const op_noficx6 = (async (req, res) => {
 
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -220,7 +220,7 @@ const op_noficx6 = (async (req, res) => {
 
 const op_noficx7 = (async (req, res) => {
 
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -234,14 +234,14 @@ const op_noficx7 = (async (req, res) => {
         `
     
     const rows = await util.gene_cons(lcSQL)
-    //console.log(rows)
+    console.log(rows)
     return res.json(rows)
 
 });
 
 const op_bgrupx = (async (req, res) =>{
 
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -267,7 +267,7 @@ const op_bgrupx = (async (req, res) =>{
 
 const op_noficx5 = (async (req, res) => {
 
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -287,7 +287,8 @@ const op_noficx5 = (async (req, res) => {
             llError = true;
             break;
         }
-        lnDirigido = lnDirigido + (laDeta[i].tipo === 1 ? 1 : 0)
+        console.log(laDeta[i].tipo)
+        lnDirigido = lnDirigido + (laDeta[i].tipo == 1 ? 1 : 0)
     }
     //console.log(lnDirigido)
 
@@ -295,6 +296,7 @@ const op_noficx5 = (async (req, res) => {
         return res.json({"status" : false, "message": "Faltan datos en las dependencia"});
     }
     
+    console.log(lnDirigido)
     if (lnDirigido <= 0){
         return res.json({"status" : false, "message": "Debes ingresar por lo menos un tipo Dirigido a"});
     }
@@ -392,20 +394,12 @@ const op_noficx5 = (async (req, res) => {
 
 const op_gofic = (async (req, res) => {
 
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
 
     const loUsuario = await util.gene_cons("SELECT IFNULL(apepat, '') as apepat, IFNULL(apemat, '') as apemat, IFNULL(nombre, '') as nombre FROM gen_personas WHERE codigo = " + req.codigo);
-
-
-    lcSQL = `
-        SELECT t.iniciales, t.plantilla, t.nomb_firm, t.carg_firm, c.dependen 
-            FROM gen_tipo_ofic t left join gen_centros c on t.ID_CENT = c.id_cent 
-            WHERE cve = 'CG'
-    `
-    const loFirma = await util.gene_cons(lcSQL)
 
     lcSQL = `
         SELECT o.cve, o.idoficio, o.fecha, o.oficio, o.concepto as oConcepto, IFNULL(o.Diri_nomb, space(70)) as Pnombre, IFNULL(d.corto, '') as area_rh
@@ -417,6 +411,14 @@ const op_gofic = (async (req, res) => {
         ORDER BY o.fecha DESC
     `
     const rows = await util.gene_cons(lcSQL)
+
+    lcSQL = `
+        SELECT t.iniciales, t.plantilla, t.nomb_firm, t.carg_firm, c.dependen 
+            FROM gen_tipo_ofic t left join gen_centros c on t.ID_CENT = c.id_cent 
+            WHERE cve = '${rows[0].cve}'
+    `
+    const loFirma = await util.gene_cons(lcSQL)
+
     const loQR = await util.generarQrBase64("https://www.ejemplo.com")
     
     let lnQR = loQR
@@ -511,7 +513,7 @@ const op_gofic = (async (req, res) => {
 
 const op_sdoficx = (async (req, res) =>{
 
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -545,7 +547,7 @@ const op_sdoficx = (async (req, res) =>{
 
 const op_admix2 = (async (req, res) => {
 
-    if (req.groups.indexOf(",OP_TOTA,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OP_TOTA,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -569,7 +571,7 @@ const op_admix2 = (async (req, res) => {
 
 const op_ningrx2 = (async (req, res) => {
 
-    if (req.groups.indexOf(",OP_TOTA,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OP_TOTA,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -588,7 +590,7 @@ const op_ningrx2 = (async (req, res) => {
 
 const cmb_control2W = (async (req, res) => {
 
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -620,7 +622,7 @@ const cmb_control2W = (async (req, res) => {
 
 const cmb_control3W = (async (req, res) => {
 
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -651,7 +653,7 @@ const cmb_control3W = (async (req, res) => {
 
 const op_ningrx = (async (req, res) => {
 
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -760,7 +762,7 @@ const op_ningrx = (async (req, res) => {
 
 const op_admix = (async (req, res) => {
 
-    if (req.groups.indexOf(",OP_TOTA,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OP_TOTA,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -829,13 +831,13 @@ const op_admix = (async (req, res) => {
     `
 
     const rows5 = await util.gene_cons(lcSQL);
-
+    
     return res.json({"status": true, "message": "Se guardaron los cambios"})
 });
 
 const op_nplan = ( async (req, res) => {
 
-    if (req.groups.indexOf(",OP_TOTA,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OP_TOTA,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -891,7 +893,7 @@ const op_nplan = ( async (req, res) => {
 
 const op_soficx = (async (req, res) => {
 
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -943,7 +945,7 @@ const op_soficx = (async (req, res) => {
 
 const op_hoficx = (async (req, res) => {
 
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -992,7 +994,7 @@ const op_hoficx = (async (req, res) => {
 
 const op_ingrx2 = (async (req, res) => {
 
-        if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -1013,6 +1015,119 @@ const op_ingrx2 = (async (req, res) => {
     `
 
     console.log(lcSQL)
+    const rows = await util.gene_cons(lcSQL)
+    return res.json(rows)
+});
+
+const cmb_correo = (async (req, res) => {
+if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    console.log(req.query)
+    const lcSQL = `
+    `
+
+    //const rows = await util.gene_cons(lcSQL)
+    return res.json([])
+});
+
+const op_ngrupx = (async (req, res) => {
+    
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    console.log(req.body)
+
+    if (!req.body.nombre_grupo){
+        return res.json({"status": false, "message": "Falta el nombre del grupo"})
+    }
+
+    loDeta = JSON.parse(req.body.grupo);
+
+    if (!loDeta){
+        return res.json({"status": false, "message": "Falta el detalle del grupo"})
+    }
+
+    console.log(loDeta)
+    const lcSQL = `
+    INSERT INTO gen_op_grupo (nombre_grupo, id_cent, cambios)
+        values ('${req.body.nombre_grupo}', ${req.id_cent}, CONCAT('ALTA|${req.userId}|',DATE_FORMAT(NOW(), '%m/%d/%Y %H:%I')))
+    `
+    console.log(lcSQL)
+    const laInsert = await util.gene_cons(lcSQL)
+
+    //console.log(laInsert)
+
+    for (var i = 0; i < loDeta.length; i++) {                   //inserta el detalle del oficio
+        const lcDeta = `
+        INSERT INTO gen_op_grup_deta(id_grupo, id_Cent, nombre, cargo, correo, tipo, tipo_depe, copias) 
+            VALUES(${laInsert.insertId}, ${loDeta[i].servicio}, '${loDeta[i].nombre}', '${loDeta[i].ocupacion}', '${loDeta[i].correo}', 
+                ${loDeta[i].tipo}, ${loDeta[i].tipo_depe}, '${loDeta[i].copias}')        
+        `
+        const laInsertDeta = await util.gene_cons(lcDeta)
+        console.log(laInsertDeta)
+    }
+
+    return res.json({"status": true, "message": "El grupo se creo exitosamente"})
+
+});
+
+const op_reof0x = (async (req, res) => {
+
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    //console.log(req.query)
+    const form = JSON.parse(req.query.loForm)
+    console.log(form)
+
+    lcWhere = " o.cve = '" + form.cmbSoli + "'" + " AND YEAR(o.fecha) = " + form.cmbAnio
+
+
+    
+    const lcSQL = `
+    SELECT ROW_NUMBER() OVER (ORDER BY o.fecha desc) AS rank,
+        o.depe_envi AS centros, 
+            CASE 
+                WHEN IFNULL(o.gdoc, '') != '' AND INSTR(o.gdoc, 'docs.google.com') > 0 THEN o.gdoc 
+                ELSE '' 
+            END AS doc, 
+            o.oficio, 
+            DATE_FORMAT(o.fecha, '%d/%m/%Y') AS fecha, 
+            DATE_FORMAT(o.fecha, '%H:%i') AS hora, 
+            o.concepto, 
+            g.descrip AS stat_desc, 
+            IFNULL(o.referencia, '') AS referencia, 
+            IFNULL(o.anexo, '') AS anexo, 
+            IFNULL(o.soli_ofic, '') AS solicitado, 
+            o.cve, 
+            o.idoficio, 
+            YEAR(o.fecha) AS anio, 
+            o.id_iden AS id, 
+            o.id_iden 
+        FROM 
+            gen_oficio o 
+        LEFT JOIN 
+            gen_centros c ON o.ID_CENT = c.ID_CENT 
+        LEFT JOIN 
+            gen_otro_cent oc ON o.ID_CENT = oc.ID_CENT 
+        INNER JOIN 
+            gen_ofic_stat g ON IFNULL(o.STATUS,0) = g.STATUS 
+        LEFT JOIN 
+            GEN_SOLI_OFIC so ON so.num_soli = o.soli_ofic 
+        LEFT JOIN 
+            gen_doficio d ON d.id_iden = o.ID_IDEN AND d.tipo = 1 
+        WHERE 
+            ${lcWhere}
+        ORDER BY 
+        o.fecha DESC 
+    `
     const rows = await util.gene_cons(lcSQL)
     return res.json(rows)
 });
@@ -1039,5 +1154,8 @@ module.exports = {
     op_nplan,
     op_soficx,
     op_hoficx,
-    op_ingrx2
+    op_ingrx2,
+    cmb_correo,
+    op_ngrupx,
+    op_reof0x
 }

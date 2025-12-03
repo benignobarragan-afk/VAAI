@@ -190,6 +190,11 @@ const construirClausulaBusquedaP = (lcDepe, lnTipo) => {
     console.log(lnTipo)
 
     switch (lnTipo) {
+        case '10':
+            lcCampo = " max(id_doficio_pk) as id, diri_nomb as value, diri_carg as cargo"
+            columnaPrincipal = "CONCAT(TRIM(diri_nomb), IFNULL(diri_carg,''))"
+            lcTabla = "gen_doficio"
+            break;
         case '11':
             lcCampo = " id, nombre as value, cargo"
             columnaPrincipal = "CONCAT(TRIM(nombre), IFNULL(cargo,''))"
@@ -240,7 +245,7 @@ const construirClausulaBusquedaP = (lcDepe, lnTipo) => {
     }
 
     // Devolver la cadena de búsqueda SQL
-    return `SELECT ${lcCampo} FROM ${lcTabla} WHERE ${lcBusca} LIMIT 20`;
+    return `SELECT ${lcCampo} FROM ${lcTabla} WHERE ${lcBusca} ${(lnTipo == 10 ? 'GROUP BY 2,3' : '')} LIMIT 20`;
 }
 
 const BuscaOficio = (lcDepe) => {

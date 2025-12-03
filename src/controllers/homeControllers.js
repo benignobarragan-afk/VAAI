@@ -76,13 +76,14 @@ const usuarios = ((req, res) => {
 });
 
 const usua_nuev = ((req, res) => {
-    if (req.groups.indexOf(",USUARIO,") < 0)        //si no tiene derechos
+    if (req.groups.indexOf(",ALTA_USUA,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
 
     res.render("usua_nuev")
 });
+
 
 
 module.exports = {

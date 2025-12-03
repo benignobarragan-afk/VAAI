@@ -22,7 +22,7 @@ const cmb_depew = (async (req, res) => {
             WHERE activo = 1 and ${lcWhere}
             LIMIT 20
     ` 
-    console.log(lcSQL)   
+    //console.log(lcSQL)   
     const rows = await util.gene_cons(lcSQL)
     //console.log(rows)
     res.json(rows)
@@ -41,8 +41,8 @@ const cmb_persw = (async (req, res) => {
     }
 
     const lcSQL = util.construirClausulaBusquedaP(lcBusca,lnTipo)
-    //console.log(lcWhere)
     
+    //console.log(lcSQL)
     const rows = await util.gene_cons(lcSQL)
     //console.log(rows)
     return res.json(rows)

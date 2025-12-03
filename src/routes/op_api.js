@@ -29,6 +29,9 @@ router.post("/op_nplan", midd.verifyToken, opCtrl.op_nplan);
 router.post("/op_soficx", midd.verifyToken, opCtrl.op_soficx);
 router.get("/op_hoficx", midd.verifyToken, opCtrl.op_hoficx);
 router.get("/op_ingrx2", midd.verifyToken, opCtrl.op_ingrx2);
+router.get("/cmb_correo", midd.verifyToken, opCtrl.cmb_correo);
+router.post("/op_ngrupx", midd.verifyToken, opCtrl.op_ngrupx);
+router.get("/op_reof0x", midd.verifyToken, opCtrl.op_reof0x);
 
 
 module.exports = router

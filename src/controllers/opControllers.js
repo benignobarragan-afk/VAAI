@@ -4,7 +4,7 @@ const config = require(path.join(__dirname, "..", "config"));
 const util = require(path.join(__dirname, "..", "utils/busquedaUtils"));
 
 const op_cucs = ((req, res) => {
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -14,7 +14,7 @@ const op_cucs = ((req, res) => {
 });
 
 const op_ofic = ((req, res) => {
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -26,7 +26,7 @@ const op_ofic = ((req, res) => {
 
 const op_aingr = (async (req, res) => {
 
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -45,7 +45,7 @@ const op_aingr = (async (req, res) => {
 
 const op_nofic = (async (req, res) => {
 
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -62,9 +62,9 @@ const op_nofic = (async (req, res) => {
 
 const op_ningr = (async (req, res) => {
 
-    const llDirectorio = (req.groups.indexOf(",DIRE_RECT,") <= 0 ? true : false)
+    const llDirectorio = (req.groups.indexOf(",DIRE_RECT,") < 0 ? true : false)
     const laQuery = req.query
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -83,25 +83,44 @@ const op_ningr = (async (req, res) => {
 });
 
 const op_admi = ((req, res) => {
-    if (req.groups.indexOf(",OP_TOTA,") <= 0)
+    if (req.groups.indexOf(",OP_TOTA,") < 0)
     {
         return res.render("sin_derecho")
     }
     return res.render("op/op_admi")
 });
 
-const op_reof0 = ((req, res) => {
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+const op_reof0 = (async (req, res) => {
+    
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
-    return res.render("op/op_reof0")
+
+    let lcSQL = `
+        SELECT id_cent, cve, depen, clave 
+            FROM GEN_TIPO_OFIC 
+            WHERE cve in (SELECT DISTINCT cve FROM GEN_DERE_OFIC WHERE user_id = ${req.userId}) 
+        `
+    
+    const rows = await util.gene_cons(lcSQL)
+    //console.log(req.query)
+    //console.log(rows)
+    lcSQL = `
+        SELECT * 
+            FROM gen_ofic_stat
+            ORDER BY status
+        `
+    
+    const rows2 = await util.gene_cons(lcSQL)
+    
+    return res.render("op/op_reof0", {rows, rows2})
 });
 
 const op_sofic = (async (req, res) => {
 
     console.log(req.query.lnIden)
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -142,7 +161,7 @@ const op_seofic = (async (req, res) => {
 
     let lcSQL = ''
     console.log(req.query.lnIden)
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -208,7 +227,7 @@ const op_seofic = (async (req, res) => {
 });
 
 const op_plan = ((req, res) => {
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -217,7 +236,7 @@ const op_plan = ((req, res) => {
 
 const op_bplan = (async (req, res) => {
     
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -235,7 +254,7 @@ const op_bplan = (async (req, res) => {
 const op_nplanti = (async (req, res) => {
  
     let rows2 = {}
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -263,7 +282,7 @@ const op_nplanti = (async (req, res) => {
 
 const op_grup = (async (req, res) => {
     
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -273,7 +292,7 @@ const op_grup = (async (req, res) => {
 
 const op_bgrup = (async (req, res) => {
     
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -290,7 +309,7 @@ const op_bgrup = (async (req, res) => {
 
 const op_ngrup = (async (req, res) => {
     
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -307,9 +326,9 @@ const op_ngrup = (async (req, res) => {
 
 const op_sdofic = (async (req, res) => {
     
-    const llEditar = (req.groups.indexOf(",OP_EDITA,") <= 0 ? true : false) 
-    const llEdit_ofic = (req.groups.indexOf(",TOT_DIRE,") <= 0 ? true : false) 
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    const llEditar = (req.groups.indexOf(",OP_EDITA,") < 0 ? true : false) 
+    const llEdit_ofic = (req.groups.indexOf(",TOT_DIRE,") < 0 ? true : false) 
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -338,7 +357,7 @@ const op_sdofic = (async (req, res) => {
 
 const op_rgraf = (async (req, res) => {
     
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -348,7 +367,7 @@ const op_rgraf = (async (req, res) => {
 
 const op_hofic = (async (req, res) => {
     
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -367,7 +386,7 @@ const op_hofic = (async (req, res) => {
 
 const op_pend = (async (req, res) => {
     
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -388,7 +407,7 @@ const op_pend = (async (req, res) => {
 
 const op_ingr = (async (req, res) => {
     
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -408,7 +427,7 @@ const op_ingr = (async (req, res) => {
 
 const op_detalle = (async (req, res) => {
     
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -428,9 +447,9 @@ const op_detalle = (async (req, res) => {
 
 const detalle_ofic_No = (async (req, res) => {
 
-    const llDirectorio = (req.groups.indexOf(",DIRE_RECT,") <= 0 ? true : false)
+    const llDirectorio = (req.groups.indexOf(",DIRE_RECT,") < 0 ? true : false)
     const laQuery = req.query
-    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -448,6 +467,9 @@ const detalle_ofic_No = (async (req, res) => {
     return res.render("op/detalle_ofic_No", {rows, laQuery, llDirectorio, loTipo, loClas})
 
 });
+
+
+
 module.exports = {
     op_cucs,
     op_ofic,
@@ -470,5 +492,6 @@ module.exports = {
     op_pend,
     op_ingr,
     op_detalle,
-    detalle_ofic_No
+    detalle_ofic_No,
+    op_reof0
 }

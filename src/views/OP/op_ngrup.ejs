@@ -98,6 +98,7 @@
 		var section = [
 		{
 			rows: [
+			/*
 			{
 				view: "combo", id: "cmbOficio", value: 0<% //  Response.Write(IIF(!EMPTY(cGrupo.id_cent), cGrupo.id_cent, cSoli.id_cent)) %>, width: 300,
 				options: {
@@ -117,6 +118,33 @@
 					}
 				}
 			},
+			*/
+			{
+				view: "combo", id: "cmbOficio", name: "cmbOficio",
+				//value: "<% // Response.Write(IIF(pnId_cent = 4, 'DG HCG', ALLTRIM(cSoli.cve)))%>",
+				label: "Grupo para la Oficio de", width: 400,
+				value:"<%=rows[0].cve%>",
+				labelPosition:"top",
+				required: true, invalidMessage: "Este campo no puede ir vacio",
+				options: {
+					fitMaster: false,
+					width: 500,
+					body: {
+						data: [
+							<%for (var i = 0; i < rows.length; i++) {%>
+							{ id: "<%= rows[i].cve%>", value: "(<%=rows[i].cve%>) <%=rows[i].depen%>" },
+							<%}%>
+						]
+					}
+				},
+				on: {
+					onChange: ()=>{
+						mues_soli();
+						obtenerSeccion();
+						
+					}
+				}
+			},
 			{
 				view: "text", id: "nomb_grup", name: "nomb_grup", labelPosition: "top", labelAlign: "left",
 				value: "<% //  Response.Write(IIF(!EMPTY(cGrupo.nombre_grupo), ALLTRIM(cGrupo.nombre_grupo), '')) %>",
@@ -126,7 +154,7 @@
 			{
 				view: "radio", id: "cmbTipo_depe", name: "cmbTipo_depe", value: 1, inputWidth: 1000, 
 				options: [
-					{ id: 1, value: "<% // Response.write(op_config.nobr_inst)%>" },
+					{ id: 1, value: "U. de G." },
 					{ id: 2, value: "Ajena <% // Response.write(op_config.nobr_inst)%>" },
 				],
 				on: {
@@ -156,7 +184,7 @@
 						keyPressTimeout: 1000,
 						body: {
 							fitMaster: false, width: 550, template: "#value#", dataFeed: "/api/gen/cmb_depew"
-						}
+						},
 					},
 				},
 				{
@@ -180,7 +208,7 @@
 							"onValueSuggest": function (obj) {
 								$$("cmbAjena").setValue(obj.value.substr(obj.value.indexOf(')') + 1).trim())
 								$$('id_ajena').setValue(obj.id)
-								dirigido(obj.id, 2);
+								//dirigido(obj.id, 2);
 							}
 						}
 					},
@@ -229,8 +257,13 @@
 					suggest: {
 						keyPressTimeout: 1000,
 						body: {
-							dataFeed: "/<% // Response.Write(config.ruta)%>/cmb_persw.fwx?lnTipo=10"
-						}
+							dataFeed: "/api/gen/cmb_persw?lnTipo=10"
+						},
+						on: {
+								"onValueSuggest": function (obj) {
+									$$("cargo").setValue(obj.cargo)
+								}
+							}
 				}
 				},
 				{ maxWidth: 60 },
@@ -339,7 +372,8 @@
 
 			var listServicio = $$("cmbServicio").getPopup().getList();
 			listServicio.attachEvent("onAfterSelect", function (id) {
-				dirigido(id, 9)
+				//dirigido(id, 9)
+				mues_dato(id)
 			});
 
 			<% //  IF !EMPTY(lnID) %>
@@ -351,7 +385,7 @@
 
 		function genera() {
 			$$("dtable").clearAll();
-			$$("dtable").load('/<% // Response.Write(config.ruta)%>/op_ngrupx2.fwx?lnID=<% // Response.Write(lnID)%>')
+			//$$("dtable").load('/<% // Response.Write(config.ruta)%>/op_ngrupx2.fwx?lnID=<% // Response.Write(lnID)%>')
 		}
 
 		function veri_corr(correo) {
@@ -474,7 +508,7 @@
 				confirmButtonText: 'Aceptar', cancelButtonText:'Cancelar',
 			}).then((result) => {
 				if(result.isConfirmed){
-					webix.ajax().post("/<% // Response.Write(config.ruta)%>/op_ngrupx.fwx",
+					webix.ajax().post("/api/op/op_ngrupx",
 					{
 						id: 0<% //  Response.Write(lnID) %>, nombre_grupo: $$("nomb_grup").getValue(),
 						grupo: JSON.stringify($$("dtable").serialize()), id_cent: $$("cmbOficio").getValue()
@@ -490,6 +524,27 @@
 			})
 
 					
+		}
+
+		function mues_dato(id){
+			webix.ajax()
+				.get("/api/op/op_noficx7", {id})
+				.then(function (data) {
+					let res = data.json()[0]
+					
+					//console.log("si entro")
+					//console.log(typeof res)
+					
+					if (typeof res != undefined){
+						$$("corr_ofic").setValue(res.corr_ofic);
+						$$("cmbPers").setValue(res.diri_nomb);
+						$$("cargo").setValue(res.diri_carg);
+					//console.log(res.corr_ofic)
+					}
+				})
+
+
+
 		}
 
 	</script>

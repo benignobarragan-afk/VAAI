@@ -508,7 +508,7 @@
 														body: {
 															template:"#value#",
 															// keyPressTimeout: 2000,
-															dataFeed: "/<% // Response.Write(config.ruta)%>/cmb_persw.fwx?lnTipo=10",
+															dataFeed: "/api/gen/cmb_persw?lnTipo=10",
 															
 														},
 														on: {
@@ -579,8 +579,8 @@
 												{
 													id: "tipo_depe", header: ["Dependencia", { content: "selectFilter" }], width: 100,
 													options: [
-														{ id: 1, value: "HCG" },
-														{ id: 2, value: "Ajena HCG" }
+														{ id: 1, value: "U. de G." },
+														{ id: 2, value: "Ajena U. de G." }
 													]
 												},
 												{ id: "copias", header: ["Copias", { content: "textFilter" }], width: 210, sort: "string", css: { 'text-align': 'left' } },
