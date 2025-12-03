@@ -426,7 +426,28 @@ const op_detalle = (async (req, res) => {
     return res.render("op/op_detalle", {rows})
 });
 
+const detalle_ofic_No = (async (req, res) => {
 
+    const llDirectorio = (req.groups.indexOf(",DIRE_RECT,") <= 0 ? true : false)
+    const laQuery = req.query
+    if (req.groups.indexOf(",OFICIO,") <= 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    const lcSQL = `
+        SELECT id_cent, cve, depen, clave 
+            FROM GEN_TIPO_OFIC 
+            WHERE cve in (SELECT DISTINCT cve FROM GEN_DERE_OFIC WHERE user_id = ${req.userId}) 
+        `
+    
+    const rows = await util.gene_cons(lcSQL)
+    loTipo = await util.gene_cons("SELECT id_tiof, descrip FROM OPC_TIPO_OFIC")
+    loClas = await util.gene_cons("SELECT id_clof, descrip FROM OPC_CLAS_OFIC WHERE activo = 1")
+
+    return res.render("op/detalle_ofic_No", {rows, laQuery, llDirectorio, loTipo, loClas})
+
+});
 module.exports = {
     op_cucs,
     op_ofic,
@@ -448,5 +469,6 @@ module.exports = {
     op_hofic,
     op_pend,
     op_ingr,
-    op_detalle
+    op_detalle,
+    detalle_ofic_No
 }
