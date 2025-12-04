@@ -39,6 +39,34 @@ const usua_nuevx = (async (req, res) => {
     return res.json({"error":false, "mensage":"El password se generó correctamente", form:req.body})
 });
 
+const usua_nuevx2 = (async (req, res) => {
+
+    let lcSQL = `
+        SELECT *
+            FROM passfile 
+            WHERE user_id = ${req.body.txtUser_id} 
+        `    
+        const rows = await util.gene_cons(lcSQL)
+        
+    if(rows.length > 0){
+        return res.json({"error":true, "mensage":"El usuario ya se encuentra registrado"})
+    }
+
+    console.log(req.body)
+
+     lcSQL = `
+        INSERT INTO passfile (user_id, password, codigo, id_cent, nombre, dn, \`groups\`)
+            VALUES ('${req.body.txtUser_id}', '${req.body.txtPassword}', ${req.body.txtCodigo}, ${(!req.body.txtServicio ? '0' : req.body.txtServicio)},
+            '${req.body.txtApellidos + ' ' + req.body.txtNombre}', '"DN "${req.body.txtApellidos + ' "DN "' + req.body.txtNombre}',
+            '${(!req.body.txtDerecho ? '' : req.body.txtDerecho)}')
+        `    
+
+    //console.log(lcSQL)
+    const insert = await util.gene_cons(lcSQL)
+    return res.json({"error":false, "mensage":"El usuario se registro exitomente"})
+});
+
 module.exports = {
-    usua_nuevx
+    usua_nuevx,
+    usua_nuevx2
 }

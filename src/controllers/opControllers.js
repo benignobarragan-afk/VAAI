@@ -92,7 +92,7 @@ const op_admi = ((req, res) => {
 
 const op_reof0 = (async (req, res) => {
     
-    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
+    if (req.groups.indexOf(",BUSC_OFIC,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }

@@ -84,6 +84,49 @@ const construirClausulaBusqueda = (lcDepe, lnTipo) => {
     return lcBusca;
 }
 
+const cade_busc = (lcCampo, lcCade_busq) => {
+    
+    // Equivalente a IF !EMPTY(lcDepe)
+    if ((!lcCampo || lcCampo.trim() === '') || (!lcCade_busq || lcCade_busq.trim() === '')) {
+        // Equivalente a Response.write("[]") y return
+        return false; 
+    }
+    
+    let lcBusca = ''
+    let lcCadena = lcCade_busq.trim() + ' '; 
+
+    while (lcCadena.trim() !== '') {
+        
+        // 1. ENCONTRAR EL ESPACIO (Equivalente a AT(" ", lcCadena))
+        const posEspacio = lcCadena.indexOf(' ');
+        
+        let palabra;
+        
+        if (posEspacio === -1) {
+            // Esto no debería suceder si la última palabra tiene un espacio final.
+            // Si sucede, tomamos el resto de la cadena.
+            palabra = lcCadena.trim();
+        } else {
+            // 2. EXTRAER PALABRA (Equivalente a LEFT(lcCadena, AT(" ", lcCadena)-1))
+            palabra = lcCadena.substring(0, posEspacio);
+        }
+        
+        // Solo procesamos si hay una palabra válida
+        if (palabra.length > 0) {
+            
+            // Equivalente a IF !EMPTY(lcBusca) ... lcBusca = lcBusca + " AND " ENDIF
+            if (lcBusca.length > 0) {
+                lcBusca += " AND ";
+            }
+
+            lcBusca += `CONCAT(${lcCampo}) LIKE '%${palabra}%'`;
+        }
+        lcCadena = lcCadena.substring(posEspacio + 1).trimStart() + ' ';
+    }
+
+    // Devolver la cadena de búsqueda SQL
+    return lcBusca;
+}
 
 
 const gene_id_11 = () => {
@@ -357,6 +400,7 @@ module.exports = {
     gene_gogl_doc,
     construirClausulaBusquedaP,
     BuscaOficio,
-    gene_gogl_plan
+    gene_gogl_plan,
+    cade_busc
 
 }

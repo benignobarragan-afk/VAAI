@@ -1,6 +1,9 @@
 const {spawn} = require("child_process")
 const path = require('path');
 const crypto = require('crypto');
+const pool = require(path.join(__dirname, "..", "db"))
+const nodemailer = require('nodemailer');
+const config = require(path.join(__dirname, "..", "config"));
 
 
 const ejecutarPython = (async (pythonScriptPath, args) => {
@@ -115,10 +118,81 @@ const gene_cont = ( (nomb_usua, codigo) => {
 
 });
 
+const registrarVisita = (async (logData) => {
+    const sql = `
+        INSERT INTO log_visitas 
+        (metodo, url, status_code, ip_cliente, usuario_id, tiempo_respuesta_ms, fecha_visita)
+        VALUES (?, ?, ?, ?, ?, ?, NOW())
+    `;
+    
+    const params = [
+        logData.method,
+        logData.url,
+        logData.status,
+        logData.ip,
+        logData.userId || 'GUEST', // Si el usuario no está autenticado, registrar como GUEST
+        logData.responseTime
+    ];
+
+    let conn;
+    try {
+        conn = await pool.getConnection();
+        await conn.query(sql, params);
+    } catch (error) {
+        // MUY IMPORTANTE: Si el log falla, no queremos que la aplicación se caiga.
+        console.error("Error al registrar la bitácora:", error.message);
+    } finally {
+        if (conn) conn.release();
+    }
+
+});
+
+const envi_corr = (async (lcCorreo, lnTipo) => {
+    
+    let transporter = nodemailer.createTransport({
+        service: 'gmail', // Usar el servicio predefinido de Gmail
+        auth: {
+            user: config.EMAIL_USER, 
+            pass: config.EMAIL_PASS, 
+        },
+        // Opcional: Ignorar errores de certificado (solo en desarrollo)
+        // tls: { rejectUnauthorized: false } 
+    });
+
+    // 2. Definir los detalles del correo
+    let mailOptions = {
+        from: `Soporte de la UdeG <${EMAIL_USER}>`, 
+        to: to, 
+        subject: subject, 
+        html: htmlBody, 
+        // Si quieres adjuntar archivos, usa la propiedad 'attachments':
+        /* attachments: [
+            {
+                filename: 'documento.pdf',
+                path: '/ruta/local/al/archivo.pdf' 
+            }
+        ]
+        */
+    };
+
+    // 3. Enviar el correo y esperar el resultado
+    try {
+        let info = await transporter.sendMail(mailOptions);
+        console.log("Mensaje enviado: %s", info.messageId);
+        return { success: true, messageId: info.messageId };
+    } catch (error) {
+        console.error("Error al enviar el correo:", error);
+        // Devolver el error específico (p. ej., error de autenticación)
+        return { success: false, error: error.message }; 
+    }
+
+});
 
 module.exports = {
     ejecutarPython,
     form_fechSQL,
-    gene_cont
+    gene_cont,
+    registrarVisita,
+    envi_corr
 
 }

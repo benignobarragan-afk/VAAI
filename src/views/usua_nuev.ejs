@@ -3,9 +3,9 @@
 
 <head>
 	<title></title>
-	<script src="/webix/codebase/webix.js"></script>
-	<script src="/webix/codebase/locale.js"></script>
-	<link rel="stylesheet" type="text/css" href="/webix/codebase/webix.css" />
+	<script src="/webix_8.4.0/codebase/webix.js"></script>
+	<script src="/webix_8.4.0/codebase/locale.js"></script>
+	<link rel="stylesheet" type="text/css" href="/webix_8.4.0/codebase/webix.css" />
 	<link rel="stylesheet" href="https://cdn.materialdesignicons.com/2.7.94/css/materialdesignicons.css?v=6.3.5"
 		type="text/css" charset="utf-8">
 
@@ -28,6 +28,19 @@
 
 		//variables
 		let today = new Date()
+
+		const loDere = [
+			<%for (var i = 0; i < rows.length; i++) {%>
+			{ 
+				ID: 0,
+				ORDEN: "<%=rows[i].ORDEN%>",
+				SISTEMA: "<%=rows[i].SISTEMA%>",
+				APARTADO: "<%=rows[i].APARTADO%>",
+				GROUP: "<%=rows[i].GROUP%>",
+				DESCRIP: `<%=rows[i].DESCRIP%>`,
+			 },
+			<%}%>
+		]
 
 		// let hour = today.toLocaleString('en-US', {
 		// 	hour12: false,
@@ -53,9 +66,11 @@
 				view: "text", id: "txtCodigo", name: "txtCodigo", labelPosition: "top", label: "C&oacute;digo", value: "", 
 				 pattern:{ mask:"#######", allow:/[0-9]/g}
 			},
+			{ maxWidth: 15 },
 			{
 				view: "text", id: "txtUser_id", name: "txtUser_id", labelPosition: "top", label: "Nombre de usuario", value: ""
 			},
+			{ maxWidth: 15 },
 			{
 				view: "text", id: "txtPassword", name: "txtPassword", labelPosition: "top", label: "Password", value: ""
 			},
@@ -66,6 +81,7 @@
 			{
 				view: "text", id: "txtApellidos", name: "txtApellidos", labelPosition: "top", label: "Apellidos", value: ""
 			},
+			{ maxWidth: 15 },
 			{
 				view: "text", id: "txtNombre", name: "txtNombre", labelPosition: "top", label: "Nombre", value: ""
 			},
@@ -90,6 +106,12 @@
 				}
 			},
 		},
+		{
+			view: "text", id: "txtCorreo", name: "txtCorreo", labelPosition: "top", label: "Correo", value: "", 
+		},
+		{
+			view: "text", id: "txtDerecho", name: "txtDerecho", value: "", hidden:true,
+		},
 		{cols: [
 			{
 			view: "button", label: "Genera password", click: gene_pass, id:"btnPassword", name:"btnPassword", align: "right", width: 150
@@ -98,6 +120,26 @@
 				view: "button", label: "Alta de usuario", click: guardar, id:"btnGuardar", align: "right", width: 150
 			}
 		]},
+		{
+			view: "datatable", id: "dtable", name: "dtable", select: "row", editaction: "dblclick", rowCss: "#css#", drag:true, 
+			columns: [
+				{ id: "ID", template:"{common.checkbox()}", header: ["Selec."], css: { 'text-align': 'center' }  },
+				{ id: "APARTADO", header: ["Apartado", { content: "selectFilter" }], width: 240, sort: "string", css: { 'text-align': 'left' } },
+				{ id: "GROUP", header: ["Groups", { content: "textFilter" }], width: 240, sort: "string", css: { 'text-align': 'left' } },
+				{ id: "DESCRIP", header: ["Descripción", { content: "textFilter" }], width: 800, sort: "string", css: { 'text-align': 'left' } },
+			],
+			footer: true, scrollY: true, scrollX: true, resizeColumn: true, resizeRow: true, navigation: true,
+			editable: true, 
+			data:loDere,
+			on: {
+				onBeforeLoad: function () { this.showOverlay("Cargando..."); },
+				onAfterLoad: function () {
+					this.hideOverlay();
+					//this.adjustRowHeight("nomb_serv", true);
+					this.render();
+				},
+			},
+		},
 	]
 
 		webix.ready(function () {
@@ -132,7 +174,7 @@
 		function gene_pass(){
 			
 			let form = $$("form_usua").getValues()
-
+			
 			if (!form.txtCodigo){
 				Swal.fire("Por lo menos tienes que agregara el código del usuario");
 				return false;
@@ -170,29 +212,45 @@
 				return 
 			}
 
-			Swal.fire({
-				text: "", title: 'Seguro de agregar el usuario?', icon: 'question', showCancelButton: true,  confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Si', cancelButtonText:"No",
-			}).then((result) => {
-				if(result.isConfirmed){
+			let form = $$("form_usua").getValues()
 
-					let form = $$("form_usua").getValues();
-					
-					webix.ajax().post("/api/op/op_ningrx", form).then(function (response) {
-						$$("btnGuardar").enable();
-						try{
-							var respuesta = response.json()[0];
-							Swal.fire({text:respuesta.message, icon:respuesta.status ? "success":"error"}).then(()=>{
-								if (respuesta.status) {
-									window.location.href = '/op/op_ningr?lnNum_ofi=' + response.oficio + '&lnOficio='+ respuesta.id;
-								}
-							})
+			//const loFiltro = $$("dtable").getFilter();
+			$$('dtable').filter();
+			const tabla = $$("dtable");
+			//$$("dtable").filter(loFiltro, "ID")
 
-						}catch(err){
-							Swal.fire({text:"Ocurrio un error, intenta mas tarde", icon:"error"}).then(()=>{
-							})
-						}
-					})
+			let lcDere = ''
+			tabla.data.each(function(obj) {
+				console.log(obj.ID == 1)
+				if (obj.ID == 1) {
+					lcDere = lcDere + (lcDere.length == 0 ? '' : ',') + obj.GROUP
 				}
+			});
+			console.log(form.txtDerecho);
+			form.txtDerecho = lcDere;
+			console.log(form.txtDerecho);
+			
+			webix.ajax()
+			.post("/api/usua_nuevx2", form)
+			.then(function (data) {
+				$$("btnGuardar").enable();
+				let res = data.json()
+				//console.log(res)
+				webix.message(res.mensage);
+				/*
+				Swal.fire({
+					title:res.mensage, icon:res.error?"error":"success"
+				}).then(()=>{
+					if(!res.error){
+						$$("form_usua").setValues(res.form);
+					}
+						
+				})
+				*/
+				if(!res.error){
+					$$("form_usua").setValues(res.form);
+				}
+
 			})
 		}
 

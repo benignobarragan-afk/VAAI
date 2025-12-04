@@ -33,9 +33,23 @@ const op_oficx5 = (async (req, res) => {
         return res.render("sin_derecho")
     }
 
-    console.log(req.query)
-
     let lcSQL = ''
+    //console.log(req.query)
+
+    if (req.query.t != 1){
+        lcSQL = `SELECT cve 
+            FROM gen_dere_ofic 
+            WHERE user_id = '${req.userId}' AND cve = '${req.query.cve}'
+        `
+        const llDere = await util.gene_cons(lcSQL)
+
+        if (!llDere || llDere.length <= 0)        //si no tiene derechos
+        {
+            return res.render("sin_derecho")
+        }
+
+    }
+    
 
     lcSQL = `
     SELECT ROW_NUMBER() OVER (ORDER BY o.fecha desc) AS rank, o.depe_envi AS centros,
@@ -950,10 +964,21 @@ const op_hoficx = (async (req, res) => {
         return res.render("sin_derecho")
     }
 
+    let lcSQL = `SELECT cve 
+        FROM gen_dere_ofic 
+        WHERE user_id = '${req.userId}' AND cve = '${req.query.cve}'
+    `
+    
+    const llDere = await util.gene_cons(lcSQL)
+
+    if (!llDere || llDere.length <= 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
 //    console.log(req.query)
-    const lcSQL = `
-    SELECT ROW_NUMBER() OVER (ORDER BY o.fecha desc) AS rank,
-        if(ifnull(o.tipo_depe,1) = 1, c.descrip, oc.descrip) AS centros, 
+    lcSQL = `
+    SELECT ROW_NUMBER() OVER (ORDER BY o.fecha desc) AS rank, o.depe_envi AS centros,
             CASE 
                 WHEN IFNULL(o.gdoc, '') != '' AND INSTR(o.gdoc, 'docs.google.com') > 0 THEN o.gdoc 
                 ELSE '' 
@@ -1078,22 +1103,80 @@ const op_ngrupx = (async (req, res) => {
 
 const op_reof0x = (async (req, res) => {
 
-    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
+    if (req.groups.indexOf(",BUSC_OFIC,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
 
     //console.log(req.query)
     const form = JSON.parse(req.query.loForm)
-    console.log(form)
+    //console.log(form)
+
+    let lcSQL = `SELECT cve 
+        FROM gen_dere_ofic 
+        WHERE user_id = '${req.userId}' AND cve = '${form.cmbSoli}'
+    `
+    
+    const llDere = await util.gene_cons(lcSQL)
+
+    //console.log(llDere)
+
+    if (!llDere || llDere.length <= 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
 
     lcWhere = " o.cve = '" + form.cmbSoli + "'" + " AND YEAR(o.fecha) = " + form.cmbAnio
 
+    if (form.txtNOficio > 0){
+        lcWhere = lcWhere + " AND o.idoficio >= " + form.txtNOficio
+    }
 
+    if (form.txtNOficio2 > 0){
+        lcWhere = lcWhere + " AND o.idoficio <= " + form.txtNOficio2
+    }
+
+    if (!!form.txtFec_ini){
+        lcWhere = lcWhere + " AND o.fecha >= '" + form.txtFec_ini.substring(0, 10) + "'"
+    }
+
+    if (!!form.txtFec_fin){
+        lcWhere = lcWhere + " AND o.fecha <= '" + form.txtFec_fin.substring(0, 10) + "'"
+    }
+
+    if (form.txtDepen.length > 0){
+        lcWhere = lcWhere + " AND " + util.cade_busc("o.depe_envi", form.txtDepen)
+    }
+
+    if (form.txtConcepto.length > 0){
+        lcWhere = lcWhere + " AND " + util.cade_busc("o.concepto", form.txtConcepto)
+    }
+
+    if (form.txtRefe.length > 0){
+        lcWhere = lcWhere + " AND " + util.cade_busc("o.referencia", form.txtRefe)
+    }
+
+    if (form.txtAnexo.length > 0){
+        lcWhere = lcWhere + " AND " + util.cade_busc("o.anexo", form.txtAnexo)
+    }
+
+    if (form.txtPersona.length > 0){
+        lcWhere = lcWhere + " AND o.id_iden in (SELECT id_iden FROM gen_doficio WHERE " + util.cade_busc("diri_nomb, diri_carg", form.txtPersona) 
+        if (form.cmbTipo > 0){
+            lcWhere = lcWhere + " AND tipo = " + form.cmbTipo 
+        }
+        lcWhere = lcWhere + ") " 
+    }
+
+    if (form.cmbStatus > -1){
+        lcWhere = lcWhere + " AND o.status = " + form.cmbStatus
+    }
+
+
+    //console.log(lcWhere)
     
-    const lcSQL = `
-    SELECT ROW_NUMBER() OVER (ORDER BY o.fecha desc) AS rank,
-        o.depe_envi AS centros, 
+    lcSQL = `
+    SELECT ROW_NUMBER() OVER (ORDER BY o.fecha desc) AS rank, o.depe_envi AS centros, 
             CASE 
                 WHEN IFNULL(o.gdoc, '') != '' AND INSTR(o.gdoc, 'docs.google.com') > 0 THEN o.gdoc 
                 ELSE '' 

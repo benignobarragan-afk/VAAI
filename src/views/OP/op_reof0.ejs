@@ -92,12 +92,14 @@
 						{
 							rows: [
 								{
-									view: "form", id: "form_busc", name: "form_busc",
+									view: "form", id: "form_busc", name: "form_busc", 
 									rows: [
 										{
 											cols: [
-												{ view: "text", id: "txtNOficio", name: "txtNOficio", label:"Número de incio", labelPosition:"top", width: 200},
-												{ view: "text", id: "txtNOficio2", name: "txtNOficio2", label:"Número de fin", labelPosition:"top", width: 200},
+												{ view: "text", id: "txtNOficio", name: "txtNOficio", label:"Número de incio", labelPosition:"top", width: 200, pattern:{ mask:"#######", allow:/[0-9]/g}},
+												{ maxWidth: 15 },
+												{ view: "text", id: "txtNOficio2", name: "txtNOficio2", label:"Número de fin", labelPosition:"top", width: 200, pattern:{ mask:"#######", allow:/[0-9]/g}},
+												{ maxWidth: 15 },
                                                 { view: "combo", id: "cmbSoli", name: "cmbSoli",
                                                     //value: "<% // Response.Write(IIF(pnId_cent = 4, 'DG HCG', ALLTRIM(cSoli.cve)))%>",
                                                     label: "Oficio de",
@@ -116,6 +118,7 @@
                                                         }
                                                     },
                                                 },
+												{ maxWidth: 15 },
                                                 {view: "select", label: "Año", id: "cmbAnio", name: "cmbAnio", value: <%=new Date().getFullYear()%>, width: 100,
                                                     labelPosition: "top", labelAlign: "left", options: [
                                                         <%
@@ -131,14 +134,18 @@
                                         {
 											cols: [
 												{ view: "datepicker", id: "txtFec_ini", name: "txtFec_ini", label:"Fecha incio", labelPosition:"top", width: 200},
+												{ maxWidth: 15 },
 												{ view: "datepicker", id: "txtFec_fin", name: "txtFec_fin", label:"Fecha fin", labelPosition:"top", width: 200},
+												{ maxWidth: 15 },
                                                 { view: "text", id: "txtDepen", name: "txtDepen", label:"Dependencia", labelPosition:"top"},
 											]
 										},
                                         {
 											cols: [
 												{ view: "textarea", id: "txtConcepto", name: "txtConcepto", label:"Concepto", labelPosition:"top", height:100},
+												{ maxWidth: 15 },
 												{ view: "textarea", id: "txtRefe", name: "txtRefe", label:"Referencia", labelPosition:"top", height:100},
+												{ maxWidth: 15 },
                                                 { view: "textarea", id: "txtAnexo", name: "txtAnexo", label:"Anexo", labelPosition:"top", height:100},
                                                 
 											]
@@ -148,7 +155,7 @@
                                                 { view: "text", id: "txtPersona", name: "txtPersona", label:"Persona", labelPosition:"top"},
                                                 { maxWidth: 15 },
 												{
-													view: "select", label: "Tipo", id: "cmbTipo", value: 0, width: 120,
+													view: "select", label: "Tipo", id: "cmbTipo", name: "cmbTipo", value: 0, width: 120,
 													labelPosition: "top", labelAlign: "left", options: [
 													    { id: 0, value: "TODOS" },	
                                                         { id: 1, value: "Dirigido a" },
@@ -163,7 +170,7 @@
 												},
                                                 { maxWidth: 15 },
                                                 {
-													view: "select", label: "Tipo", id: "cmbStatus", value: -1, width: 200,
+													view: "select", label: "Estatus", id: "cmbStatus", name: "cmbStatus", value: -1, width: 200,
 													labelPosition: "top", labelAlign: "left", options: [
                                                         { id:-1, value: "TODOS" },
 														<%for (var i = 0; i < rows2.length; i++) {%>
@@ -185,7 +192,7 @@
 											]
 										},
 										{
-                                            view:"datatable", id:"dtable", select:true, footer:true, editable:true, hidden:false, minHeight:500, scroll:true,
+                                            view:"datatable", id:"dtable", select:true, footer:true, editable:true, hidden:false, minHeight:500, scroll:true, tooltip: true,
                                             resizeColumn: true,  navigation: true, resizeRow:true, css:"celda_compacta", 
                                             rightSplit:1, leftSplit:3,
                                             scheme: {
@@ -318,7 +325,7 @@
             let form = $$("form_busc").getValues()
 
             console.log(form)
-
+			webix.extend($$("dtable"), webix.ProgressBar)
             $$("dtable").clearAll()
             $$("dtable").load("/api/op/op_reof0x?loForm=" + JSON.stringify(form))
 		}

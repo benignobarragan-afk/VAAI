@@ -1,7 +1,7 @@
 const path = require("path")
 const pool = require(path.join(__dirname, "..", "db"))
 const config = require(path.join(__dirname, "..", "config"));
-
+const util = require(path.join(__dirname, "..", "utils/busquedaUtils"));
 
 const intro = (async (req, res) => {
     const lcNombre = req.nom_usu;
@@ -75,13 +75,18 @@ const usuarios = ((req, res) => {
     res.render("usuarios")
 });
 
-const usua_nuev = ((req, res) => {
+const usua_nuev = (async(req, res) => {
     if (req.groups.indexOf(",ALTA_USUA,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
+    
+    const lcSQL = "SELECT * FROM `group`" 
+    
+    const rows = await util.gene_cons(lcSQL)
 
-    res.render("usua_nuev")
+    console.log(rows)
+    res.render("usua_nuev", {rows})
 });
 
 
