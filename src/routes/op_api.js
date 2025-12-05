@@ -32,6 +32,10 @@ router.get("/op_ingrx2", midd.verifyToken, opCtrl.op_ingrx2);
 router.get("/cmb_correo", midd.verifyToken, opCtrl.cmb_correo);
 router.post("/op_ngrupx", midd.verifyToken, opCtrl.op_ngrupx);
 router.get("/op_reof0x", midd.verifyToken, opCtrl.op_reof0x);
+router.get("/op_rgrafx", midd.verifyToken, opCtrl.op_rgrafx);
+router.get("/op_rgrafx2", midd.verifyToken, opCtrl.op_rgrafx2);
+router.get("/op_rgrafx3", midd.verifyToken, opCtrl.op_rgrafx3);
+router.get("/op_rgrafx4", midd.verifyToken, opCtrl.op_rgrafx4);
 
 
 module.exports = router

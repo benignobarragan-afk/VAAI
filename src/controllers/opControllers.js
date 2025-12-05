@@ -357,12 +357,20 @@ const op_sdofic = (async (req, res) => {
 
 const op_rgraf = (async (req, res) => {
     
-    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
+    if (req.groups.indexOf(",BUSC_OFIC,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
+
+    const lcSQL = `
+    SELECT id_cent, cve, depen, clave 
+        FROM GEN_TIPO_OFIC 
+        WHERE cve in (SELECT DISTINCT cve FROM GEN_DERE_OFIC WHERE user_id = ${req.userId}) 
+    `
+
+    const rows = await util.gene_cons(lcSQL);
     
-    return res.render("op/op_rgraf")
+    return res.render("op/op_rgraf", {rows})
 });
 
 const op_hofic = (async (req, res) => {

@@ -27,48 +27,12 @@
 
 <script>
 
-var multiple_dataset = [
-	{ sales:"10", sales2:"25", sales3:"55", year:"Ene" },	
-	{ sales:"20", sales2:"35", sales3:"55", year:"Feb" },
-	{ sales:"40", sales2:"24", sales3:"40", year:"Mar" },
-	{ sales:"44", sales2:"20", sales3:"27", year:"Abr" },
-	{ sales:"23", sales2:"50", sales3:"43", year:"May" },
-	{ sales:"21", sales2:"36", sales3:"31", year:"Jun" },
-	{ sales:"50", sales2:"40", sales3:"56", year:"Jul" },
-	{ sales:"30", sales2:"65", sales3:"75", year:"Ago" },
-	{ sales:"90", sales2:"62", sales3:"55", year:"Sep" },
-	{ sales:"55", sales2:"40", sales3:"60", year:"Oct" },
-	{ sales:"72", sales2:"45", sales3:"54", year:"Nov" },
-	{ sales:"60", sales2:"40", sales3:"54", year:"Dic" }	
-];
-
-var month_dataset = [
-  { sales:"20", month:"Jan", color: "#ee3639" },
-  { sales:"30", month:"Feb", color: "#ee9e36" },
-  { sales:"50", month:"Mar", color: "#eeea36" },
-  { sales:"40", month:"Apr", color: "#a9ee36" },
-  { sales:"70", month:"May", color: "#36d3ee" },
-  { sales:"80", month:"Jun", color: "#367fee" },
-  { sales:"60", month:"Jul", color: "#9b36ee" }
-];
 
 var data = [
   { val:"70", color1: "#2ECC71", color2:"#AAB7B8" },
   { val:"30", color1: "#AAB7B8", color2:"#E74C3C" },
 ];     
 
-var dataset = [
-	{ id:1, sales:20, year:"02"},
-	{ id:2, sales:55, year:"03"},
-	{ id:3, sales:40, year:"04"},
-	{ id:4, sales:78, year:"05"},
-	{ id:5, sales:61, year:"06"},
-	{ id:6, sales:35, year:"07"},
-	{ id:7, sales:80, year:"08"},
-	{ id:8, sales:50, year:"09"},
-	{ id:9, sales:65, year:"10"},
-	{ id:10, sales:59, year:"11"}
-];
 </script>
 
 <body>
@@ -93,8 +57,49 @@ var dataset = [
 					rows: [
 						{
 							cols:[
-								  { view:"select", label:"A&ntilde;o", options:["1.0", "1.5", "2.0"] },
-								  { view:"select", label:"Servicio", options:["1.0", "1.5", "2.0"] },
+									{
+										view: "select", label: "Año", id: "cmbAnio", name: "cmbAnio", value: <%=new Date().getFullYear()%>, width: 150,
+										labelPosition: "left", labelAlign: "left", options: [
+											<%
+											for (var i = new Date().getFullYear(); i >= 2021; i--){%>
+												{ id: <%=i%>, value: "<%=i%>" },
+											<%
+											}
+											%>
+										],
+										on: {
+											onChange: ()=>{
+											genera();
+											}
+										}
+									},
+								  	{
+										view: "combo", id: "cmbSoli", name: "cmbSoli",
+										//value: "<% // Response.Write(IIF(pnId_cent = 4, 'DG HCG', ALLTRIM(cSoli.cve)))%>",
+										label: "Oficio de", 
+										value:"<%=rows[0].cve%>",
+										labelPosition:"left",
+										//required: true, invalidMessage: "Este campo no puede ir vacio",
+										options: {
+											fitMaster: false,
+											width: 600,
+											body: {
+												data: [
+													<%for (var i = 0; i < rows.length; i++) {%>
+													{ id: "<%= rows[i].cve%>", value: "(<%=rows[i].cve%>) <%=rows[i].depen%>" },
+													<%}%>
+												]
+											}
+										},
+										on: {
+											onChange: ()=>{
+												//mues_soli();
+												//obtenerSeccion();
+												genera();
+												
+											}
+										}
+									},
 							]
 						},
 						{
@@ -102,16 +107,18 @@ var dataset = [
 							{	
 							view:"chart",
 							type:"bar",
+							id:"chaConce",
+							name:"chaConce",
 							barWidth:60,
 							radius:2,
 							gradient:"rising",
 							xAxis:{
-								template:"#year#"
+								template:"#mes#"
 							},
 							yAxis:{
-								start:0,
-								step:10,
-								end:100
+								// start:0,
+								// step:10,
+								// end:100
 							},
 							legend:{
 								values:[{text:"Ingreso",color:"#58dccd"},{text:"Egreso",color:"#a7ee70"},{text:"No asignados",color:"#36abee"}],
@@ -122,28 +129,28 @@ var dataset = [
 							},
 							series:[
 								{
-								value:"#sales#",
+								value:"#ingreso#",
 								color: "#58dccd",
 								tooltip:{
-									template:"#sales#"
+									template:"#ingreso#"
 								}
 								},
 								{
-								value:"#sales2#",
+								value:"#egreso#",
+								label:"#egreso#",
 								color:"#a7ee70",
 								tooltip:{
-									template:"#sales2#"
+									template:"#egreso#"
 								}
 								},
 								{
-								value:"#sales3#",
+								value:"#no_asignado#",
 								color:"#36abee",
 								tooltip:{
-									template:"#sales3#"
+									template:"#no_asignado#"
 								}
 								}
 							],
-							data:multiple_dataset
 							},
 							{
 								rows: [
@@ -154,6 +161,8 @@ var dataset = [
                                     },
 									{
 										view: "chart",
+										id:"chaEgreF",
+										name:"chaEgreF",
 										donutInnerText: function(data, total) {
 										return "<span style='font-size:20px; color: black;'>Fin:<br>"+data[0].val+"%</span>";
 										},
@@ -166,6 +175,8 @@ var dataset = [
 									},
 									{
 										view: "chart",
+										id:"chaEgreP",
+										name:"chaEgreP",
 										donutInnerText: function(data, total) {
 										return "<span style='font-size:20px; color: black;'>Pen:<br>"+data[1].val+"%</span>";
 										},
@@ -186,6 +197,8 @@ var dataset = [
                                     },
 									{
 										view: "chart",
+										id:"chaIngreF",
+										name:"chaIngreF",
 										donutInnerText: function(data, total) {
 										return "<span style='font-size:20px; color: black;'>Fin:<br>"+data[0].val+"%</span>";
 										},
@@ -198,6 +211,8 @@ var dataset = [
 									},
 									{
 										view: "chart",
+										id:"chaIngreP",
+										name:"chaIngreP",
 										donutInnerText: function(data, total) {
 										return "<span style='font-size:20px; color: black;'>Pen:<br>"+data[1].val+"%</span>";
 										},
@@ -208,7 +223,97 @@ var dataset = [
 										data
 									}
 								]
-							}
+							},
+							{ maxWidth: 5 },
+							{ 
+								rows: [
+								{view:"fieldset", label:"Total de egreso", body:{
+									rows:[
+										{ view:"label", align:"right", label:"", id:"lblDato01", name:"lblDato01", width:150, height: 50, 
+											template: "<div style='font-size: 30px; color: #FFFFFF;'>#label#</div>",
+										},
+									]
+									}
+								},
+								{view:"fieldset", label:"Oficio en proceso", body:{
+									rows:[
+										{ view:"label", align:"right", label:"", id:"lblDato02", name:"lblDato02", width:150, height: 50, 
+											template: "<div style='font-size: 30px; color: #FFFFFF;'>#label#</div>",
+										},
+									]
+									}
+								},
+								{view:"fieldset", label:"Oficio finalizados", body:{
+									rows:[
+										{ view:"label", align:"right", label:"", id:"lblDato03", name:"lblDato03", width:150, height: 50, 
+											template: "<div style='font-size: 30px; color: #FFFFFF;'>#label#</div>",
+										},
+									]
+									}
+								},
+								{view:"fieldset", label:"Total de cancelados", body:{
+									rows:[
+										{ view:"label", align:"right", label:"", id:"lblDato04", name:"lblDato04", width:150, height: 50, 
+											template: "<div style='font-size: 30px; color: #FFFFFF;'>#label#</div>",
+										},
+									]
+									}
+								},
+								{view:"fieldset", label:"Total de oficio", body:{
+									rows:[
+										{ view:"label", align:"right", label:"", id:"lblDato05", name:"lblDato05", width:150, height: 50, 
+											template: "<div style='font-size: 30px; color: #FFFFFF;'>#label#</div>",
+										},
+									]
+									}
+								},
+								]
+							},
+							{ maxWidth: 5 },
+							{ 
+								rows: [
+								{view:"fieldset", label:"Total de ingreso", body:{
+									rows:[
+										{ view:"label", align:"right", label:"", id:"lblDato11", name:"lblDato11", width:150, height: 50, 
+											template: "<div style='font-size: 30px; color: #FFFFFF;'>#label#</div>",
+										},
+									]
+									}
+								},
+								{view:"fieldset", label:"Asignados", body:{
+									rows:[
+										{ view:"label", align:"right", label:"", id:"lblDato12", name:"lblDato12", width:150, height: 50, 
+											template: "<div style='font-size: 30px; color: #FFFFFF;'>#label#</div>",
+										},
+									]
+									}
+								},
+								{view:"fieldset", label:"Sin asignar", body:{
+									rows:[
+										{ view:"label", align:"right", label:"", id:"lblDato13", name:"lblDato13", width:150, height: 50, 
+											template: "<div style='font-size: 30px; color: #FFFFFF;'>#label#</div>",
+										},
+									]
+									}
+								},
+								{view:"fieldset", label:"Cancelados", body:{
+									rows:[
+										{ view:"label", align:"right", label:"", id:"lblDato14", name:"lblDato14", width:150, height: 50, 
+											template: "<div style='font-size: 30px; color: #FFFFFF;'>#label#</div>",
+										},
+									]
+									}
+								},
+								{view:"fieldset", label:"Total de oficio", body:{
+									rows:[
+										{ view:"label", align:"right", label:"", id:"lblDato15", name:"lblDato15", width:150, height: 50, 
+											template: "<div style='font-size: 30px; color: #FFFFFF;'>#label#</div>",
+										},
+									]
+									}
+								},
+								]
+							},
 						]},
 						{
 							cols:[
@@ -216,46 +321,161 @@ var dataset = [
 
 								view: "chart",
 								type:"donut",
+								id:"chaTotal",
+								naem:"chaTotal",
 								width:500,
-								value:"#sales#",
-								color:"#color#",
+								value:"#oficio#",
+								//color:"#color#",
 								legend:{
 									width: 75,
 									align:"right",
 									valign:"middle",
-									template:"#month#"
+									template:"#mes#"
 								},
-								pieInnerText:"#sales#",
+								pieInnerText:"#oficio#",
 								shadow:0,
 								gradient:true,
-								data:month_dataset
+								//data:month_dataset
 							},
 							{
-								view:"chart",
-								type:"splineArea",
-								value:"#sales#",
-								color:"#36abee",
-								alpha:0.6,
-								xAxis:{
-									template:"'#year#"
-								},
-								yAxis:{
-									start:0,
-									end:100,
-									step:25
-								},
-								tooltip:{
-									template: "#sales#"
-								},
-								data: dataset
+							view:"treemap",
+							select: true,
+							id:"chaDeman",
+							name:"chaDeman",
+							template: function(item){
+								return item.label||"";
+							},
+							type:{
+								cssClass: getCss
+							},
+							value: "#value#",
+							// data: [
+							// 	{ id:"1", label: "Technology", data:[
+							// 	{ id:"1.1", value:"50", tipo:1},
+							// 	{ id:"1.2", value:"30", tipo:2 },
+							// 	{ id:"1.3", value:"20", tipo:2 }
+							// 	]},
+							// 	{ id:"2", label: "Healthcare", data:[
+							// 	{ id:"2.1", value:"80" },
+							// 	{ id:"2.2", value:"10" },
+							// 	{ id:"2.3", value:"60" },
+							// 	{ id:"2.4", value:"5" },
+							// 	{ id:"2.5", value:"8" }
+							// 	]},
+							// 	{ id:"3", label: "Basic Materials", data:[
+							// 	{ id:"3.1", value:"5" },
+							// 	{ id:"3.2", value:"7" },
+							// 	{ id:"3.3", value:"10" }
+							// 	]},
+							// 	{ id:"4", label: "Financial", data:[
+							// 	{ id:"4.1", value:"100" },
+							// 	{ id:"4.2", value:"15" },
+							// 	{ id:"4.3", value:"20" }
+							// 	]},
+							// 	{ id:"5", label: "Consumer Goods", data:[
+							// 	{ id:"5.1", value:"4" },
+							// 	{ id:"5.2", value:"10" },
+							// 	{ id:"5.3", value:"5" }
+							// 	]},
+							// 	{ id:"6", label: "Industrial Goods", data:[
+							// 	{ id:"6.1", value:"20" },
+							// 	{ id:"6.2", value:"5" },
+							// 	{ id:"6.3", value:"9" }
+							// 	]}
+							// ]
 							}
 							
 							]
 						},
 
 					]
-				});
+				})
+				genera();
 			});
+
+			function genera(){
+
+				$$("chaConce").clearAll();
+				$$("chaConce").load("/api/op/op_rgrafx?lnAnio=" + $$("cmbAnio").getValue() + "&lcCVE=" + $$("cmbSoli").getValue() );
+
+				$$("chaTotal").clearAll();
+				$$("chaTotal").load("/api/op/op_rgrafx2?lnAnio=" + $$("cmbAnio").getValue() + "&lcCVE=" + $$("cmbSoli").getValue() );
+
+				$$("chaDeman").clearAll();
+				$$("chaDeman").load("/api/op/op_rgrafx3?lnAnio=" + $$("cmbAnio").getValue() + "&lcCVE=" + $$("cmbSoli").getValue() );
+
+				webix.ajax().get("/api/op/op_rgrafx4?lnAnio=" + $$("cmbAnio").getValue() + "&lcCVE=" + $$("cmbSoli").getValue() ).then((res)=>{
+				res = res.json()
+					//console.log(res);
+					//console.log(res[0].value)
+
+					const formatterMXN = new Intl.NumberFormat('es-MX', {
+						style: 'decimal',
+						currency: 'MXN',
+					});
+					$$("lblDato01").define("label", formatterMXN.format(res[0].etotal));
+					$$("lblDato01").refresh();
+					$$("lblDato02").define("label", formatterMXN.format(res[0].ependiente));
+					$$("lblDato02").refresh();
+					$$("lblDato03").define("label", formatterMXN.format(res[0].efinalizado));
+					$$("lblDato03").refresh();
+					$$("lblDato04").define("label", formatterMXN.format(res[0].ecancelado));
+					$$("lblDato04").refresh();
+					$$("lblDato11").define("label", formatterMXN.format(res[0].itotal));
+					$$("lblDato11").refresh();
+					$$("lblDato12").define("label", formatterMXN.format(res[0].ipendiente));
+					$$("lblDato12").refresh();
+					$$("lblDato13").define("label", formatterMXN.format(res[0].ifinalizado));
+					$$("lblDato13").refresh();
+					$$("lblDato14").define("label", formatterMXN.format(res[0].icancelado));
+					$$("lblDato14").refresh();
+
+					
+					//$$("chaEgreF").setValue(res[0].etotal);
+					//$$("chaEgreF").refresh();
+					$$("chaEgreF").clearAll()
+					$$("chaEgreP").clearAll()
+					$$("chaIngreF").clearAll()
+					$$("chaIngreP").clearAll()
+					
+					const loNewDatoE = [
+						{ val:res[0].etotal, color1: "#2ECC71", color2:"#AAB7B8" },
+						{ val:res[0].ependiente, color1: "#AAB7B8", color2:"#E74C3C" },
+						];
+					$$("chaEgreF").parse(loNewDatoE)
+					$$("chaEgreP").parse(loNewDatoE)
+					const loNewDatoI = [
+						{ val:res[0].itotal, color1: "#2ECC71", color2:"#AAB7B8" },
+						{ val:res[0].ipendiente, color1: "#AAB7B8", color2:"#E74C3C" },
+						];
+					$$("chaIngreF").parse(loNewDatoI)
+					$$("chaIngreP").parse(loNewDatoI)
+					
+					
+				})
+			}
+
+			function getCss(item){
+				var color = "",
+					id = item.id,
+					comments = item.tipo;
+				
+				if(!this.isBranch(id)){
+					if(comments == 0)
+					color ="#26a69a";
+					else if(comments == 1)
+					color ="#4db6ac";
+					else if(comments == 2)
+					color ="#80cbc4";
+					else if(comments == 3)
+					color ="#b2dfdb";
+					else if(comments == 4)
+					color ="#42a5f5";
+					else 
+					color ="#f08080";
+				}
+				return { background: color};
+			}
 		</script>
 	</form>
 </body>
