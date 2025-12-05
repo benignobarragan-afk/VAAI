@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const pool = require(path.join(__dirname, "..", "db"))
 const nodemailer = require('nodemailer');
 const config = require(path.join(__dirname, "..", "config"));
+const util = require(path.join(__dirname, "..", "utils/busquedaUtils"));
 
 
 const ejecutarPython = (async (pythonScriptPath, args) => {
@@ -147,7 +148,7 @@ const registrarVisita = (async (logData) => {
 
 });
 
-const envi_corr = (async (lcCorreo, lnTipo) => {
+const envi_corr = (async (lnTipo, lcCorreo, laArreglo) => {
     
     let transporter = nodemailer.createTransport({
         service: 'gmail', // Usar el servicio predefinido de Gmail
@@ -159,12 +160,36 @@ const envi_corr = (async (lcCorreo, lnTipo) => {
         // tls: { rejectUnauthorized: false } 
     });
 
+    const lcSQL = `
+        SELECT * 
+            FROM gen_correo
+            where id_corr = ${lnTipo}
+        `    
+
+    //console.log(lcSQL)
+    const rows = await util.gene_cons(lcSQL)
+
+    const miArreglo = rows[0].CAMPO.split(',');
+
+    let lcText_corr = rows[0].CORREO;
+    
+    console.log(miArreglo)
+
+    for (i = 0; i < miArreglo.length; i++ ){
+        lcText_corr = lcText_corr.replace(miArreglo[i], laArreglo[i])
+        console.log(miArreglo[i])
+        console.log(laArreglo[i])
+    }
+
+    console.log(lcText_corr)
+    //console.log(rows)
+
     // 2. Definir los detalles del correo
     let mailOptions = {
-        from: `Soporte de la UdeG <${EMAIL_USER}>`, 
-        to: to, 
-        subject: subject, 
-        html: htmlBody, 
+        from: `SIVA <${config.EMAIL_USER}>`, 
+        to: lcCorreo, 
+        subject: rows[0].ASUNTO, 
+        html: lcText_corr, 
         // Si quieres adjuntar archivos, usa la propiedad 'attachments':
         /* attachments: [
             {

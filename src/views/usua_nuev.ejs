@@ -88,30 +88,33 @@
 			]
 		},
 		{
-			view: "combo", id: "cmbServicio", name: "cmbServicio", labelPosition: "top", labelAlign: "left",
-			label: "Servicio", editable: true,
-			options: {
-				fitMaster: false,
-				keyPressTimeout: 500,
-				width: 650,
-				filter: function (item, value) {
-					if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
-						return true;
-					return false;
+			cols: [
+			{view: "combo", id: "cmbServicio", name: "cmbServicio", labelPosition: "top", labelAlign: "left",
+				label: "Servicio", editable: true,
+				options: {
+					fitMaster: false,
+					keyPressTimeout: 500,
+					width: 650,
+					filter: function (item, value) {
+						if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+							return true;
+						return false;
+					},
+					body: {
+						
+						template: "#value#",
+						dataFeed: "/api/gen/cmb_depew?lnTipo=1"
+					}
 				},
-				body: {
-					
-					template: "#value#",
-					dataFeed: "/api/gen/cmb_depew?lnTipo=1"
-				}
 			},
-		},
-		{
-			view: "text", id: "txtCorreo", name: "txtCorreo", labelPosition: "top", label: "Correo", value: "", 
-		},
-		{
-			view: "text", id: "txtDerecho", name: "txtDerecho", value: "", hidden:true,
-		},
+			{ maxWidth: 15 },
+			{
+				view: "text", id: "txtCorreo", name: "txtCorreo", labelPosition: "top", label: "Correo", value: "", 
+			},
+			{
+				view: "text", id: "txtDerecho", name: "txtDerecho", value: "", hidden:true,
+			},
+		]},
 		{cols: [
 			{
 			view: "button", label: "Genera password", click: gene_pass, id:"btnPassword", name:"btnPassword", align: "right", width: 150
@@ -158,6 +161,7 @@
 								"txtPassword": webix.rules.isNotEmpty,
 								"txtApellidos": webix.rules.isNotEmpty,
 								"txtNombre": webix.rules.isNotEmpty,
+								"txtCorreo": webix.rules.isEmail,
 							},
 						}]
 					}

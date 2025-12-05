@@ -52,17 +52,26 @@ const usua_nuevx2 = (async (req, res) => {
         return res.json({"error":true, "mensage":"El usuario ya se encuentra registrado"})
     }
 
-    console.log(req.body)
+    //console.log(req.body)
 
      lcSQL = `
-        INSERT INTO passfile (user_id, password, codigo, id_cent, nombre, dn, \`groups\`)
+        INSERT INTO passfile (user_id, password, codigo, id_cent, nombre, dn, \`groups\`, correo)
             VALUES ('${req.body.txtUser_id}', '${req.body.txtPassword}', ${req.body.txtCodigo}, ${(!req.body.txtServicio ? '0' : req.body.txtServicio)},
             '${req.body.txtApellidos + ' ' + req.body.txtNombre}', '"DN "${req.body.txtApellidos + ' "DN "' + req.body.txtNombre}',
-            '${(!req.body.txtDerecho ? '' : req.body.txtDerecho)}')
+            '${(!req.body.txtDerecho ? '' : req.body.txtDerecho)}', '${(!req.body.txtCorreo ? '' : req.body.txtCorreo)}')
         `    
 
     //console.log(lcSQL)
     const insert = await util.gene_cons(lcSQL)
+    
+    if (req.body.txtCorreo.length > 0){
+
+    const lcTexto = req.body.txtNombre + ' ' + req.body.txtApellidos + ',' + req.body.txtUser_id + ',' + req.body.txtPassword
+    const laCampos = lcTexto.split(',');
+
+        lcResp = outil.envi_corr(2, req.body.txtCorreo, laCampos);
+    }
+    
     return res.json({"error":false, "mensage":"El usuario se registro exitomente"})
 });
 
