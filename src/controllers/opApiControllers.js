@@ -1299,16 +1299,16 @@ const op_rgrafx3 = (async (req, res) => {
     let loDatos = []
     for (i = 0; i < rows.length; i++){
         
-        const lcDeta = [{id:i+'.0', value: rows[i].s0, tipo:0},
-        {id:i+'.1', value: rows[i].s1, tipo:1},
-        {id:i+'.2', value: rows[i].s2, tipo:2},
-        {id:i+'.3', value: rows[i].s3, tipo:3},
-        {id:i+'.4', value: rows[i].s4, tipo:4},
-        {id:i+'.99', value: rows[i].s99, tipo:99}
+        const lcDeta = [{id:i+'.0', value: rows[i].s0, tipo:0, label:'<br><br>ELABORACION (' + rows[i].s0 + ')'},
+        {id:i+'.1', value: rows[i].s1, tipo:1, label:'<br><br>EN FIRMA (' + rows[i].s1 + ')'},
+        {id:i+'.2', value: rows[i].s2, tipo:2, label:'<br><br>FIRMADO (' + rows[i].s2 + ')'},
+        {id:i+'.3', value: rows[i].s3, tipo:3, label:'<br><br>ENVIADO (' + rows[i].s3 + ')'},
+        {id:i+'.4', value: rows[i].s4, tipo:4, label:'<br><br>ACUSE (' + rows[i].s4 + ')'},
+        {id:i+'.99', value: rows[i].s99, tipo:99, label:'<br><br>CANCELADO (' + rows[i].s99 + ')'}
         ]
 
         const lcGrupo = 
-            {id:i, label: rows[i].centro, value:rows[i].total, data:lcDeta}
+            {id:i, label: rows[i].centro + ' (' + rows[i].total + ')', value:rows[i].total, data:lcDeta}
 
         //console.log(lcGrupo)
         loDatos.push(lcGrupo)
@@ -1332,12 +1332,13 @@ const op_rgrafx4 = (async (req, res) => {
     lcSQL = `
     SELECT SUM(ependiente+efinalizado+ecancelado) AS etotal, SUM(ependiente) AS ependiente, SUM(efinalizado) AS efinalizado, SUM(ecancelado) AS ecancelado, 
         SUM(ipendiente+ifinalizado+icancelado) AS itotal, SUM(ipendiente) AS ipendiente, SUM(ifinalizado) AS ifinalizado, SUM(icancelado) AS icancelado
-	FROM (SELECT ifnull(SUM(if(IFNULL(status,0) < 4, 1, 0)),0) AS ependiente, ifnull(SUM(if(IFNULL(status,0) = 4, 1, 0)),0) AS efinalizado, ifnull(SUM(if(IFNULL(status,0) > 4, 1, 0)),0) AS ecancelado,
-				0 as ipendiente, 0 AS ifinalizado, 0 AS icancelado
+	FROM (SELECT ifnull(SUM(if(IFNULL(status,0) < 4, 1, 0)),0) AS ependiente, ifnull(SUM(if(IFNULL(status,0) = 4 and IFNULL(status,0) < 8, 1, 0)),0) AS efinalizado, 
+                ifnull(SUM(if(IFNULL(status,0) > 8, 1, 0)),0) AS ecancelado, 0 as ipendiente, 0 AS ifinalizado, 0 AS icancelado
 				FROM gen_oficio
 				WHERE cve = '${req.query.lcCVE}' AND YEAR(fecha) = ${req.query.lnAnio}
 				UNION ALL 
-				(SELECT 0,0,0, ifnull(SUM(if(IFNULL(status,0) < 4, 1, 0)),0), ifnull(SUM(if(IFNULL(status,0) = 4, 1, 0)),0), ifnull(SUM(if(IFNULL(status,0) > 4, 1, 0)),0)
+				(SELECT 0,0,0, ifnull(SUM(if(IFNULL(asignado,0) = 0 and IFNULL(status,0) < 8, 1, 0)),0), ifnull(SUM(if(IFNULL(asignado,0) = 1 and IFNULL(status,0) < 8, 1, 0)),0), 
+                    ifnull(SUM(if(IFNULL(status,0) > 8, 1, 0)),0)
 					FROM opc_oficio 
 					WHERE cve = '${req.query.lcCVE}' AND ANIO = ${req.query.lnAnio})
 					) datos
