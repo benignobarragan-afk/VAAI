@@ -440,7 +440,9 @@ const op_detalle = (async (req, res) => {
         return res.render("sin_derecho")
     }
 
-    const lcSQL = `
+    //console.log(req.query)
+
+    let lcSQL = `
         SELECT id_cent, cve, depen, clave 
             FROM GEN_TIPO_OFIC 
             WHERE cve in (SELECT DISTINCT cve FROM GEN_DERE_OFIC WHERE user_id = ${req.userId}) 
@@ -448,35 +450,84 @@ const op_detalle = (async (req, res) => {
     
     const rows = await util.gene_cons(lcSQL)
     //console.log(req.query)
-    console.log(rows)
+    //console.log(rows)
+    lcSQL = `   
+    SELECT o.cve, s.id_depe, s.descrip  
+        FROM opc_oficio o LEFT JOIN ser_soli_serv s ON o.ID_OFIC = s.id_oficio 
+        WHERE o.id_ofic = ${req.query.lnOficio}
+    `
+    const loSeek = await util.gene_cons(lcSQL)
     
-    return res.render("op/op_detalle", {rows})
+    loCVE = loSeek[0].cve
+    loDepe = loSeek[0].id_depe
+    loTexto = loSeek[0].descrip
+
+
+    return res.render("op/op_detalle", {rows,lnXX:req.query.xx,lnOfic:req.query.lnOficio, loCVE, loDepe, loTexto})
 });
 
 const detalle_ofic_No = (async (req, res) => {
 
     const llDirectorio = (req.groups.indexOf(",DIRE_RECT,") < 0 ? true : false)
     const laQuery = req.query
+    let lcSQL
     if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
 
-    const lcSQL = `
+    console.log(req.query)
+    lcSQL = `
+        SELECT id_cent, cve, depen, clave 
+            FROM GEN_TIPO_OFIC 
+            WHERE cve in (SELECT DISTINCT cve FROM GEN_DERE_OFIC WHERE user_id = ${req.userId}) 
+        `
+    loOficio = (!req.query.lnOficio, 0, req.query.lnOficio)
+    const rows = await util.gene_cons(lcSQL)
+    loTipo = await util.gene_cons("SELECT id_tiof, descrip FROM OPC_TIPO_OFIC")
+    loClas = await util.gene_cons("SELECT id_clof, descrip FROM OPC_CLAS_OFIC WHERE activo = 1")
+
+    return res.render("op/detalle_ofic_No", {rows, laQuery, llDirectorio, loTipo, loClas, loOficio})
+
+});
+
+const busc_ofic = (async (req, res) => {
+    
+    if (req.groups.indexOf(",BUSC_OFIC,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    let lcSQL = `
         SELECT id_cent, cve, depen, clave 
             FROM GEN_TIPO_OFIC 
             WHERE cve in (SELECT DISTINCT cve FROM GEN_DERE_OFIC WHERE user_id = ${req.userId}) 
         `
     
     const rows = await util.gene_cons(lcSQL)
-    loTipo = await util.gene_cons("SELECT id_tiof, descrip FROM OPC_TIPO_OFIC")
-    loClas = await util.gene_cons("SELECT id_clof, descrip FROM OPC_CLAS_OFIC WHERE activo = 1")
-
-    return res.render("op/detalle_ofic_No", {rows, laQuery, llDirectorio, loTipo, loClas})
-
+    //console.log(req.query)
+    //console.log(rows)
+    
+    return res.render("op/busc_ofic", {rows})
 });
 
+const new_ord__serv = (async (req, res) => {
 
+    if (req.groups.indexOf(",ASIG_OFIC,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    lnOficio = req.query.lnOficio
+    loClave = req.query.loClave
+    loDepe = req.query.loDepe
+    loTexto = req.query.loTexto
+
+    console.log(req.query)
+    //console.log(lnOficio)
+
+    return res.render("op/new_ord__serv", {lnOficio})
+})
 
 module.exports = {
     op_cucs,
@@ -501,5 +552,7 @@ module.exports = {
     op_ingr,
     op_detalle,
     detalle_ofic_No,
-    op_reof0
+    op_reof0,
+    busc_ofic,
+    new_ord__serv
 }

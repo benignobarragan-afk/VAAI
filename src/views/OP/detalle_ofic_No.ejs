@@ -204,7 +204,7 @@
 		//webix-components
 
 		var form_elements = [{
-			view: "label", class: { "font-weight": "bold", "font-size": 14, "text-align": "center" }, align: "center", label: "DETALLE DEL OFICIO"
+			view: "label", class: { "font-weight": "bold", "font-size": 14, "text-align": "center" }, align: "center", label: "CAPTURA DE NUEVO OFICIO INGRESADO"
 		},
 		<%
 		if(llDirectorio && !!laQuery.lcClav_ofic){ //  IF llDirectorio AND EMPTY(lcClav_ofic) %>
@@ -267,15 +267,108 @@
 		},
 		<%} //  ENDIF %>
 		{
-			cols: [
+			cols: [{
+				view: "combo", id: "cve", name: "cve", label: "<span class='obligatorio'>*</span>Oficial&iacute;a", labelPosition: "top",
+					<%
+					
+                    /*
+					GO TOP IN cOficialia
+					IF RECCOUNT("cOficialia") > 0
+                    */
+					%>
+					value:"<%=rows[0].cve%>", 
+					<% // ENDIF%>
+
+				on: {
+					"onChange": function (newv, oldv) {
+						obtenerSeccion();
+						
+						
+						if(["CGCE"].includes(newv)){
+							$$("oficio_bis").show();
+							if(["CGCE", "SP"].includes(newv)){
+								$$("ligado_a").show()
+							}else{
+								$$("ligado_a").hide()
+							}
+						}else{
+							$$("oficio_bis").hide();
+							$$("ligado_a").hide()
+						}
+						cambiaCombo(newv, 'id_oficio')
+						cambiaCombo(newv, 'liga');
+						var lista = $$("liga_entr").getList();
+						lista.clearAll();
+						$$("liga_entr").setValue();
+
+						var lista = $$("liga_sali").getList();
+						lista.clearAll();
+
+
+						$$("liga_sali").define({
+							options: [
+							<% 
+                            /*
+                            IF USED("ofic_sali")
+							GO TOP IN ofic_sali 
+                            */%>
+                            { "id":0 , "value": "0" }
+							//	{ "id":<% //  Response.write(ofic_sali.id_iden) %> , "value": "<% // Response.write(ofic_sali.oficio)%>" }
+								<% //  ENDIF %>
+						]
+						})
+
+
+						$$("liga_sali").setValue('<% // Response.write(IIF(USED("ofic_sali"),ofic_sali.id_iden,0))%>');
+						$$("liga_sali").refresh();
+
+						buscaNume();
+						buscaOficio()
+						
+						
+					},
+
+				},
+				options: {
+					filter: function (item, value) {
+						if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+							return true;
+						return false;
+					},
+					data:[
+						<%for (var i = 0; i < rows.length; i++) {%>
+						{ id: "<%= rows[i].cve%>", value: "(<%=rows[i].cve%>) <%=rows[i].depen%>" },
+						<%}%>
+						<% //SELECT cOficialia
+						//SCAN %>
+						//{ id: "<% // Response.write(ALLTRIM(cOficialia.cve))%>", value: "<% // Response.write(ALLTRIM(cOficialia.descrip))%>" },
+						<% //  ENDSCAN %>
+					]
+				}
+					
+			},
 			{
 				view:"checkbox", id:"oficio_bis", name:"oficio_bis", label:"Oficio BIS", hidden:true, width:120, borderless:false,
+			},
+			{
+				view: "select", id: "anio_ingr", name: "anio_ingr", labelPosition: "top", label: "A&ntildeo ingreso", width:110,
+				on:{
+					onChange:()=>{
+						buscaNume();
+					}
+				},
+				options:[
+				<% // FOR xx = YEAR(DATE()) TO 2019 STEP -1%>
+				//{id:"<% // Response.write(xx)%>", value:"<% // Response.write(xx)%>"},
+				{id:"<%=new Date().getFullYear()%>", value:"<%=new Date().getFullYear()%>"}
+				<% // NEXT%>
+				]
 			},
 			{
 				view: "text", id: "nume_cont", name: "nume_cont", labelPosition: "top", label: "N&uacute;mero de control", value: ""
 			},
 			{
-				view: "datepicker", id: "fech_ofic", name: "fech_ofic", labelPosition: "top", label: "<span class='obligatorio'>*</span>Fecha oficio", value: new Date()
+				view: "text", id: "fech_ofic", name: "fech_ofic", labelPosition: "top", label: "Fecha oficio", value: new Date()
 			},
 			]
 		},
@@ -304,9 +397,9 @@
 		},
 		{
 			cols: [{
-				view: "datepicker", id: "fech_rece", name: "fech_rece", labelPosition: "top", label: "<span class='obligatorio'>*</span>Fecha recepci&oacute;n", value: new Date()
+				view: "text", id: "fech_rece", name: "fech_rece", labelPosition: "top", label: "Fecha recepci&oacute;n", value: new Date()
 			}, {
-				view: "text", label: "<span class='obligatorio'>*</span>Hora recepci&oacute;n", labelPosition: "top", attributes: { maxlength: 5 }, id: "hora_rece", name: "hora_rece", placeholder: "Formato 24 hrs.", value:hour.trim(), 
+				view: "text", label: "Hora recepci&oacute;n", labelPosition: "top", attributes: { maxlength: 5 }, id: "hora_rece", name: "hora_rece", placeholder: "Formato 24 hrs.", value:hour.trim(), 
 				validate: function (value) {
 					return /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value);
 				}, invalidMessage: "El formato de la hora es invalido"
@@ -338,59 +431,14 @@
 			view: "fieldset", label: "Procedencia",
 			body: {
 				rows: [{
-					view: "radio", labelWidth:120, label: "<span class='obligatorio'>*</span>Dependencia", id: "rbDepe", name: "rbDepe", on: { "onChange": function (newv, oldv) { cambiaCombo(newv, 'depe') } }, value: 1, options: [{
+					view: "radio", labelWidth:120, label: "Dependencia", id: "rbDepe", name: "rbDepe", options: [{
 						id: 1, value: "U. de G."
 					}, {
 						id: 2, value: "Ajena a U. de G."
 					}]
 				}, {
-					view: "combo", id: "dependen", name: "dependen",editable: true, value: "<% // Response.write(IIF(USED('ofic_sali') AND !EMPTY(ofic_sali.dependen),ofic_sali.dependen, '0'))%>",
-					options: {
-						filter: function (item, value) {
-							if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
-								return true;
-							return false;
-						},
-						keyPressTimeout: 500,
-						body: {
-							fitMaster: false, template: "#value#",
-							dataFeed: "/api/gen/cmb_depew?lnTipo=1"
-						},
-						<% //  IF USED('ofic_sali') AND !EMPTY("ofic_sali.dependen")
-						//GO TOP IN ofic_sali%>
-						//data: [{ id: "<% // Response.write(ofic_sali.dependen)%>", value: "<% // Response.write(STRTRAN(STRCONV(ofic_sali.depe_nomb,9),'"', "'"))%>" }], 
-						<% //  ENDIF %>
-					},
-				}, {
-					view: "text", hidden: true, id: "txtDepen", name: "txtDepen", value:"<% // Response.write(	IIF(USED('ofic_sali') AND !EMPTY(ofic_sali.dependen), ofic_sali.dependen,''))%>",
-					on:{
-						"onKeyPress": function(code, e){
-							$$("id_cent").setValue('')
-						}
-					},
-					suggest: {
-						filter: function (item, value) {
-							if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
-								return true;
-							return false;
-						},
-						keyPressTimeout: 500,
-						body: {
-							fitMaster: false, template: "#value#",
-							dataFeed: "/api/gen/cmb_depew?lnTipo=2"
-						},
-						on: {
-							"onValueSuggest": function (obj) {
-								$$("txtDepen").setValue(obj.descrip)
-								$$('id_cent').setValue(obj.id)
-							}
-						}
-					},
-				}, {
-					view:"text", id:"id_cent", name:"id_cent", readonly:true, hidden:true
-				},{
-					view: "text", hidden: true, id: "clav_proc", name: "clav_proc"
-				}]
+					view: "text", id: "txtDepen", name: "txtDepen",
+				},]
 			}
 		}, {
 			view: "fieldset", label: "Remitente",
@@ -431,7 +479,7 @@
 						body: {
 							fitMaster: false,
 							template: "#value#",
-							dataFeed: "/<% // Response.Write(config.ruta)%>/cmb_opcargo.fwx"
+							//dataFeed: "/<% // Response.Write(config.ruta)%>/cmb_opcargo.fwx"
 						},
 					}
 				}]
@@ -473,7 +521,7 @@
 						body: {
 							fitMaster: false,
 							template: "#value#",
-							dataFeed: "/<% // Response.Write(config.ruta)%>/cmb_opcargo.fwx"
+							//dataFeed: "/<% // Response.Write(config.ruta)%>/cmb_opcargo.fwx"
 						},
 					}
 				}]
@@ -552,104 +600,7 @@
 		{
 			view: "textarea", id: "ligado_a", name: "ligado_a", label: "Ligado a:", labelPosition: "top", height: 80, hidden:true,
 		},
-		<% // IF !EMPTY(lnID_doficio)%>
-		{
-			cols:[
-			{
-				view:"multicombo", 
-				label:"Adjuntar archivos adjuntos al oficio",  labelWidth:250, labelPosition:"top", 
-				id:"adjuntos", name:"adjuntos",
-				options:{
-					filter: function (item, value) {
-						if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
-							return true;
-						return false;
-					},
-					body:{
-						maxWidth:400,
-					},
-                    /*
-					url:()=>{
-						return webix.ajax().get("/<% // Response.write(config.ruta)%>/op_ofic_arch.fwx?oficio=<% // Response.write(ofic_sali.id_iden)%>&to=1").then((res)=>{
-							res = res.json();
-							let values = []
-							res.data.forEach((item)=>{
-								values.push(item.id);
-							})
-							$$("adjuntos").setValue(values.toString())
-							return res.data;
-						})
-					}
-                    */
-				}
-			},
-			{
-				view:"button", label:"Marcar todos", width:100, click:()=>{
-					let list = $$("adjuntos").getList();
-					let values = [];
-					let currentId = list.getFirstId()
-					do{
-						values.push(currentId);
-						currentId = list.getNextId(currentId, 1);
-					}while(currentId);
-
-					$$("adjuntos").setValue(values.toString())
-				}
-			},
-			{
-				view:"button", label:"Desmarcar todos", width:100, click:()=>{
-					$$("adjuntos").setValue()
-				}
-			}
-			]
-		},
-		<% // ENDIF%>
-		{
-			view: "fieldset", label: "Ligar oficio",
-			body: {
-				rows: [{
-					cols: [{
-						view: "radio", label: "Ligar oficio", labelWidth:120, id: "rbLiga", name: "rbLiga", value: 1, on: { "onChange": function (newv, oldv) { cambiaCombo(newv, 'liga') } }, options: [{
-							id: 1, value: "Salida"
-						}, {
-							id: 2, value: "Entrada"
-						}]
-					}, {
-						view: "combo", placeholder: "Buscar oficio(De acuerdo a la oficialia seleccionada)", id: "cmbLiga_ofic", name: "cmbLiga_ofic",
-						options: {
-							filter: function (item, value) {
-								if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
-									return true;
-								return false;
-							},
-							keyPressTimeout: 500,
-							body: {
-								fitMaster: false, template: "#value#",
-								dataFeed: "/api/op/cmb_control3W?cve=<%=rows[0].cve%>" 
-							},
-						},
-					}, {
-						view: "button", label: "Ligar", click: ligar, width: 100
-					}]
-				}, {
-					cols: [{
-						view: "multiselect", placeholder: "Ofic. salida ligados", id: "liga_sali", name: "liga_sali", labelPosition: "top", label: "Ofic. salida ligados", options: [
-							<% //  IF USED("ofic_sali") %>
-							//{ "id":<% //  Response.write(ofic_sali.id_iden) %> , "value": "<% // Response.write(ofic_sali.oficio)%>" }
-							<% //  ENDIF %>
-						],
-						value: "<% // Response.write(IIF(USED("ofic_sali"),ofic_sali.id_iden,0))%>"
-					}, {
-						view: "multiselect", placeholder: "Ofic. entrada ligados", id: "liga_entr", name: "liga_entr", options: [], labelPosition: "top", label: "Ofic. entrada ligados"
-					}, {
-						view: "button", width: 100, label: "Limpiar", click: function () { var lista = $$("liga_ofic").getList(); lista.clearAll(); $$("liga_ofic").setValue(); }, hidden: true
-					},]
-
-				}]
-			}
-		},{
-			view: "button", label: "Ingresar oficio", click: guardar, id:"btnGuardar", align: "right", width: 150
-		}]
+		]
 
 		webix.ready(function () {
 			webix.ui({
@@ -693,10 +644,13 @@
 				}]
 			});
 			//inicializaCombo(1);
+			<%if (!!loOficio){%>
+			$$("frm1").load("/api/op/detalle_ofic_Nox?lnOficio=<%=loOficio%>&loCVE=<%=loCVE%>&loDepe=<%=loDepe%>");
+			<%}%>
 			<% // IF !EMPTY(lcClav_ofic)%>
-			buscaOficio();
-			$$("frm1").parse(<% //  Response.write(lcDatos) %>)
-			cargaArchivosAdjuntos()
+			//buscaOficio();
+			//$$("frm1").parse(<% //  Response.write(lcDatos) %>)
+			//cargaArchivosAdjuntos()
 			// if($$("tipo_docu").getValue() == 1){
 			// 	$$("doc_firm").show();
 			// }else{

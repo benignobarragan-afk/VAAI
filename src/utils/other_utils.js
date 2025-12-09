@@ -149,6 +149,7 @@ const registrarVisita = (async (logData) => {
 });
 
 const envi_corr = (async (lnTipo, lcCorreo, laArreglo) => {
+
     
     let transporter = nodemailer.createTransport({
         service: 'gmail', // Usar el servicio predefinido de Gmail
@@ -173,15 +174,15 @@ const envi_corr = (async (lnTipo, lcCorreo, laArreglo) => {
 
     let lcText_corr = rows[0].CORREO;
     
-    console.log(miArreglo)
+    //console.log(miArreglo)
 
     for (i = 0; i < miArreglo.length; i++ ){
         lcText_corr = lcText_corr.replace(miArreglo[i], laArreglo[i])
-        console.log(miArreglo[i])
-        console.log(laArreglo[i])
+        //console.log(miArreglo[i])
+        //console.log(laArreglo[i])
     }
 
-    console.log(lcText_corr)
+    //console.log(lcText_corr)
     //console.log(rows)
 
     // 2. Definir los detalles del correo

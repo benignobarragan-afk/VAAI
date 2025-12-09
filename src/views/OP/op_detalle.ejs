@@ -95,7 +95,7 @@ ENDIF
             body: {
               rows: [{
                 view: "iframe",
-                src: "/op/detalle_ofic_No?xx=<% //Response.write(lnXX)%>&lcCVE=<% //Response.Write(ALLTRIM(lcCVE))%>&lnOficio=<% //Response.Write(lnOfic)%>&lnAnio=<% //Response.Write(lcAnio) %>&lnIden=<% //Response.Write(lnIden)%>&lnAsignado=<% //Response.Write(lnAsignado)%> ",
+                src: "/op/detalle_ofic_No?xx=<%=lnXX%>&lnOficio=<%=lnOfic%>&lnAnio=<% //Response.Write(lcAnio) %>&lnIden=<% //Response.Write(lnIden)%>&lnAsignado=<% //Response.Write(lnAsignado)%> ",
                 type: {
                   height: 60
                 },
@@ -113,7 +113,7 @@ ENDIF
              body: {
                rows: [{
                  view: "iframe",
-                 src: "/op/new_ord__serv?lnOficio=<% //Response.Write(lnOfic)%>",
+                 src: "/op/new_ord__serv?lnOficio=<%=lnOfic%>&loCVE=<%=loCVE%>&loDepe=<%=loDepe%>&loTexto=<%=loTexto%>",
                  type: {
                    height: 60
                  },
@@ -132,7 +132,7 @@ ENDIF
             body: {
               rows: [{
                 view: "iframe",
-                src: "/op/seg_ofic?lcCVE=<% //Response.Write(ALLTRIM(lcCVE))%>&lnOficio=<% //Response.Write(lnOfic)%>&lnAnio=<% //Response.Write(lcAnio)%>&lnIden=<% //Response.Write(lnIden)%>",
+                src: "/op/seg_ofic?lcCVE=<% //Response.Write(ALLTRIM(lcCVE))%>&lnOficio=<%=lnOfic%>&lnAnio=<% //Response.Write(lcAnio)%>&lnIden=<% //Response.Write(lnIden)%>",
                 type: {
                   height: 60
                 },

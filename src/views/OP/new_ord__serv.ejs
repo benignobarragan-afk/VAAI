@@ -1,0 +1,160 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Intranet
+    </title>
+    <link rel="stylesheet" href="/style.css" type="text/css" media="screen" />
+    <link rel="icon" href="/imagenes/ico_udg.gif" type="image/gif">
+
+    <link rel="stylesheet" type="text/css" href="/webix/codebase/webix.css" />
+    <link rel="stylesheet" href="https://cdn.materialdesignicons.com/2.7.94/css/materialdesignicons.css?v=6.3.5"
+        type="text/css" charset="utf-8">
+
+    <script src="/webix/codebase/webix.js"></script>
+    <%
+/*
+	SET PROCEDURE TO myLib
+	SET NEAR OFF
+	SET CENTURY ON
+	SET DATE DMY
+	SET DELETED ON
+	SET SAFETY OFF
+  SET EXCLUSIVE OFF
+
+	IF !Derechos("OFICIO")
+		lcRuta = ALLTRIM(config.ruta)
+		SET PROCEDURE TO
+		CLOSE TABLES ALL
+		CLOSE DATABASES ALL
+		response.redirect("/"+lcRuta+"/sin_derechos.fwx")
+	ENDIF
+
+  lnOficio  = VAL(Request.QueryString('lnOficio'))
+
+	lcQbase_cgi = config.qbase_cgi
+	lnCone_cgi 	= &lcQbase_cgi
+
+    lcSQL = "SELECT cve, depen, clave FROM [hcg_cgi].[dbo].[GEN_TIPO_OFIC] c WHERE cve in (SELECT DISTINCT cve "
+	lcSQL = lcSQL + "FROM [hcg_cgi].[dbo].[GEN_DERE_OFIC] WHERE user_id = ?pcUser) and (SELECT COUNT(*) FROM ser_depen where cve = c.cve) > 0 ORDER BY 2"
+
+	IF SQLEXEC(lnCone_cgi, lcSQL, "cTree") != 1
+		a=Aerror(Mat)
+		SQLDISCONNECT(0)
+		sdsd
+    ENDIF
+    
+    lcCadena = ""
+    SELECT cTree
+    GO TOP
+    SCAN
+        lcHijo = ""
+        lcCadena = lcCadena +  '{ "id": "' + ALLTRIM(cTree.cve) + '", "cve":"' + ALLTRIM(cTree.cve) + '", "depen":"' + ALLTRIM(cTree.depen) +'" '
+        lcHijo = llen_tree(cTree.cve, lnOficio)
+        IF !EMPTY(lcHijo)
+            lcCadena = lcCadena + ', "data":[' + lcHijo + ']'
+        ENDIF
+        lcCadena = lcCadena  + IIF(RECCOUNT("cTree") != RECNO("cTree"), "},", "}")
+    ENDSCAN
+	
+    lcCadena = STRCONV(lcCadena,9)
+
+    lcQuery = "SELECT o.*, t.id_depe, t.descrip as indicacion FROM opc_oficio o INNER JOIN ser_soli_serv t ON o.id_ofic = id_oficio "
+    lcQuery = lcQuery + "WHERE  o.id_ofic = ?lnOficio"
+
+    IF SQLEXEC(lnCone_cgi, lcQuery, "cOficio") != 1
+        AERROR(laError)
+        SQLDISCONNECT(0)
+        Response.write(laError(2) + "; linea:72")
+        return
+    ENDIF
+
+    SQLDISCONNECT(0)
+
+*!* STRTRAN(STRTRAN(STRTRAN(cOficio.indicacion, CHR(13) + CHR(10), '\r\n'), CHR(13), '\r\n'), CHR(10), '\r\n')
+*/
+%>
+</head>
+
+<body>
+    <script type="text/javascript" charset="utf-8">
+        var form1 = [
+            {
+                id: "txtDescrip", view: "textarea", name: "txtDescrip", label: "Notas / Indicaciones:", labelPosition: "top",
+                value: `<%=loTexto%>`
+                
+            },
+            { view: "button", value: "Guardar", click: guardar}
+        ];
+
+        webix.ready(function () {
+            webix.ui({
+                cols: [
+                    {
+                        rows: [
+                            { view: "button", value: "Detalle de areas", click: nueva},
+                            {
+                                height: 35,
+                                type: "section",
+                                template: "&Aacute;reas de atenci&oacute;n:"
+                            },
+                            {
+                                view: "tree",
+                                id: "sop_all",
+                                name: 'sop_all',
+                                template: "{common.icon()} {common.custom_check()}  {common.folder()} #depen#",
+                                type:{
+                                    custom_check:function(obj,common, value){
+                                        return common.checkbox(obj, common, value);         
+                                    }
+                                },
+                                //threeState: true,
+                                select: true,
+                                url: "/api/op/new_ord__servx?lnOficio=<%=lnOficio%>&loCVE=<%=loCVE%>&loDepe=<%=loDepe%>",
+                                ready: function () {
+                                    this.openAll();
+                                }
+                            }
+                        ]
+                    },
+                    { id: "frm1", view: "form", elements: form1 }
+                ]
+            })
+        });
+
+        function guardar() {
+            var areas = $$("sop_all").getChecked()
+            
+            console.log(areas)
+            webix.ajax()
+                .post('/api/op/new_ord_servx2', {lnOficio:<%=lnOficio%>, lcAreas:areas.toString(), form:$$("frm1").getValues()})
+                .then(function (data) {
+                    var result = data.json();
+                    webix.message({ type: (!result.error ? "success" : "error"), text: result.message, expire: 4000 })
+                    //console.log();
+                    
+                    if(areas.length == 0) 
+                        window.location.href = "/<% //Response.Write(config.ruta)%>/new_ord__serv.fwx?lnOficio=<% //Response.Write(lnOficio)%>"
+                }); 
+        }
+
+        function nueva() {
+            window.parent.$$("tbView").addView({
+                header: "<span class='webix_icon mdi mdi-file-document-outline'></span>Areas del servicio",
+                body: {
+                    view: "iframe", src: "/<% //Response.Write(config.ruta)%>/op_narea.fwx",
+                    type: {
+                        height: 60
+                    }
+                },
+                close: true
+            });
+            window.parent.$$("tbView").getTabbar().setValue(window.parent.$$("tbView").getTabbar().data.options[window.parent.$$("tbView").getTabbar().data.options.length - 1].id);
+
+        }
+    </script>
+
+</body>
+
+</html>

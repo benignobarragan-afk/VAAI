@@ -82,6 +82,7 @@
 				}
 			}, webix.ui.datafilter.summColumn)
 
+
 			var ui = webix.ui({
 				view: "scrollview",
 				id: "verses",
@@ -95,10 +96,6 @@
 									rows: [
 										{
 											cols: [
-												{ view: "text", id: "txtNOficio", name: "txtNOficio", label:"Número de incio", labelPosition:"top", width: 200, pattern:{ mask:"#######", allow:/[0-9]/g}},
-												{ maxWidth: 15 },
-												{ view: "text", id: "txtNOficio2", name: "txtNOficio2", label:"Número de fin", labelPosition:"top", width: 200, pattern:{ mask:"#######", allow:/[0-9]/g}},
-												{ maxWidth: 15 },
                                                 { view: "combo", id: "cmbSoli", name: "cmbSoli",
                                                     //value: "<% // Response.Write(IIF(pnId_cent = 4, 'DG HCG', ALLTRIM(cSoli.cve)))%>",
                                                     label: "Oficio de",
@@ -118,6 +115,11 @@
                                                     },
                                                 },
 												{ maxWidth: 15 },
+                                                { view: "text", id: "txtControl", name: "txtControl", label:"Número de control", labelPosition:"top", width: 200, pattern:{ mask:"#######", allow:/[0-9]/g}},
+												{ maxWidth: 15 },
+												{ view: "text", id: "txtNOficio", name: "txtNOficio", label:"Número de oficio", labelPosition:"top", width: 200},
+												{ maxWidth: 15 },
+
                                                 {view: "select", label: "Año", id: "cmbAnio", name: "cmbAnio", value: <%=new Date().getFullYear()%>, width: 100,
                                                     labelPosition: "top", labelAlign: "left", options: [
                                                         <%
@@ -141,9 +143,9 @@
 										},
                                         {
 											cols: [
-												{ view: "textarea", id: "txtConcepto", name: "txtConcepto", label:"Concepto", labelPosition:"top", height:100},
+												{ view: "textarea", id: "txtAsunto", name: "txtAsunto", label:"Asunto", labelPosition:"top", height:100},
 												{ maxWidth: 15 },
-												{ view: "textarea", id: "txtRefe", name: "txtRefe", label:"Referencia", labelPosition:"top", height:100},
+												{ view: "textarea", id: "txtNota", name: "txtNota", label:"Nota", labelPosition:"top", height:100},
 												{ maxWidth: 15 },
                                                 { view: "textarea", id: "txtAnexo", name: "txtAnexo", label:"Anexo", labelPosition:"top", height:100},
                                                 
@@ -151,7 +153,7 @@
 										},
 										{
 											cols: [
-                                                { view: "text", id: "txtPersona", name: "txtPersona", label:"Persona", labelPosition:"top"},
+                                                { view: "text", id: "txtRemitente", name: "txtRemitente", label:"Remitente", labelPosition:"top"},
                                                 { maxWidth: 15 },
 												{
 													view: "select", label: "Tipo", id: "cmbTipo", name: "cmbTipo", value: 0, width: 120,
@@ -172,9 +174,9 @@
 													view: "select", label: "Estatus", id: "cmbStatus", name: "cmbStatus", value: -1, width: 200,
 													labelPosition: "top", labelAlign: "left", options: [
                                                         { id:-1, value: "TODOS" },
-														<%for (var i = 0; i < rows2.length; i++) {%>
-                                                        { id:"<%=rows2[i].STATUS%>", value: "<%=rows2[i].DESCRIP%>" },
-                                                        <%}%>
+                                                        { id: 1, value: "Proceso" },
+														{ id: 8, value: "Aplicado" },
+														{ id: 9, value: "Cancelado" },	
 														
 													]
 												},
@@ -206,27 +208,10 @@
                                                 header: [{text:"",css:"my_style"}, {text:""}],
                                                 template:(obj)=>{
                                                     return `
-                                                        <a href="#" onClick="window.parent.deta_sali('${obj.cve}',${obj.idoficio},${obj.anio},${obj.id_iden},'op_reof0.fwx');">
+                                                        <a href="#" onClick="window.parent.deta_ingr(${obj.idoficio});">
                                                             <i style='font-size:26px;color:#2b96cc;' class='fa-solid fa-magnifying-glass'></i>
                                                         </a>`
                                                 }
-                                            },
-                                            {
-                                                id: "doc", width: 80,sort: "int", css: { 'text-align': 'left' }, hidden:false,
-                                                header: [{text:"Doc.",css:"my_style"}, {
-                                                    content: "textFilter", placeholder:"Filtrar",
-                                                }],
-                                                template:(obj)=>{
-                                                    if(obj.doc != ''){
-                                                    //	return `<a href="#" onClick="window.open('${obj.doc}');">
-                                                    //		<img alt="Detalle del oficio" src="/imagenes/word.png" width="28" height="28" border="0">
-                                                    //	</a>`
-                                                    return `<div class='webix_el_button' style='cursor: pointer;' align='center'><a href='${obj.doc}' target='_blank'><i style='font-size:32px;color:#2b96cc;' class='far fa-file-word'></i></a></div>`
-                                                    }else{
-                                                        return `<input type="button" name="btnGenera" id="btnGenera" value="Generar" 
-                                                            onclick="gene_gdoc('${obj.cve.trim()}','${obj.idoficio}','${obj.anio}','${obj.id}' );">`
-                                                    }
-                                                },
                                             },
                                             {
                                                 id: "rank", width: 70,sort: "int", css: { 'text-align': 'center' }, 
@@ -234,8 +219,14 @@
                                                     content: "textFilter", placeholder:"Filtrar",
                                                 }],
                                             },	
+											{
+                                                id: "nume_cont", width: 80,sort: "int", css: { 'text-align': 'left' }, hidden:false,
+                                                header: [{text:"Control",css:"my_style"}, {
+                                                    content: "textFilter", placeholder:"Filtrar",
+                                                }],
+                                            },
                                             {
-                                                id: "oficio", width: 150,sort: "string", css: { 'text-align': 'left' }, 
+                                                id: "descrip", width: 150,sort: "string", css: { 'text-align': 'left' }, 
                                                 header: [{text:"Oficio",css:"my_style"}, {
                                                     content: "textFilter", placeholder:"Filtrar",
                                                 }],
@@ -248,34 +239,28 @@
                                             },	
                                             {
                                                 id: "centros", width: 200,sort: "string", css: { 'text-align': 'left' }, 
-                                                header: [{text:"Centros",css:"my_style"}, {
+                                                header: [{text:"Dependencia",css:"my_style"}, {
                                                     content: "textFilter", placeholder:"Filtrar",
                                                 }],
                                             },		
                                             {
-                                                id: "concepto", 
+                                                id: "asunto", 
                                                 $height:160, 
                                                 fillspace:true, minWidth:300,sort: "string", css: { 'text-align': 'left' }, 
-                                                header: [{text:"Concepto",css:"my_style"}, {
+                                                header: [{text:"Asunto",css:"my_style"}, {
                                                     content: "textFilter", placeholder:"Filtrar",
                                                     
                                                 }],
                                             },		
                                             {
-                                                id: "referencia", width: 70,sort: "string", css: { 'text-align': 'left' }, 
-                                                header: [{text:"Ref.",css:"my_style"}, {
+                                                id: "nota", width: 200,sort: "string", css: { 'text-align': 'left' }, 
+                                                header: [{text:"Nota",css:"my_style"}, {
                                                     content: "textFilter", placeholder:"Filtrar",
                                                 }],
                                             },		
                                             {
-                                                id: "anexo", width: 70,sort: "string", css: { 'text-align': 'left' }, 
-                                                header: [{text:"Anexo",css:"my_style"}, {
-                                                    content: "textFilter", placeholder:"Filtrar",
-                                                }],
-                                            },	
-                                            {
-                                                id: "solicitado", width: 70,sort: "string", css: { 'text-align': 'left' }, 
-                                                header: [{text:"Solic.",css:"my_style"}, {
+                                                id: "nomb_remi", width: 200,sort: "string", css: { 'text-align': 'left' }, 
+                                                header: [{text:"Genero",css:"my_style"}, {
                                                     content: "textFilter", placeholder:"Filtrar",
                                                 }],
                                             },		
@@ -308,8 +293,7 @@
 					view: "iframe",
 					src: "/op/op_plan"
 				}
-			},
-			);
+			});
 
 /* 			mues_soli();
 			obtenerSeccion()
@@ -318,15 +302,16 @@
 			  dirigido(id, 9)
 			});
  */
+
 		}
 
 		function genera() {
             let form = $$("form_busc").getValues()
 
-            //console.log(form)
+            console.log(form)
 			webix.extend($$("dtable"), webix.ProgressBar)
             $$("dtable").clearAll()
-            $$("dtable").load("/api/op/op_reof0x?loForm=" + JSON.stringify(form))
+            $$("dtable").load("/api/op/busc_oficx?loForm=" + JSON.stringify(form))
 		}
 
 	</script>

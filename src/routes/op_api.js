@@ -36,6 +36,11 @@ router.get("/op_rgrafx", midd.verifyToken, opCtrl.op_rgrafx);
 router.get("/op_rgrafx2", midd.verifyToken, opCtrl.op_rgrafx2);
 router.get("/op_rgrafx3", midd.verifyToken, opCtrl.op_rgrafx3);
 router.get("/op_rgrafx4", midd.verifyToken, opCtrl.op_rgrafx4);
+router.get("/busc_oficx", midd.verifyToken, opCtrl.busc_oficx);
+router.get("/new_ord__servx", midd.verifyToken, opCtrl.new_ord__servx);
+router.post("/new_ord_servx2", midd.verifyToken, opCtrl.new_ord_servx2);
+router.get("/detalle_ofic_Nox", midd.verifyToken, opCtrl.detalle_ofic_Nox);
+
 
 
 module.exports = router

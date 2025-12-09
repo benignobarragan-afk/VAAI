@@ -673,6 +673,9 @@ const op_ningrx = (async (req, res) => {
         return res.render("sin_derecho")
     }
 
+    //console.log(req.body)
+    return res.json([])
+
     if (req.body.nume_cont <= 0){
         res.json([{"status":false, "message":"El numero de control no puede estar vacío o ser cero"}]);
     }
@@ -1349,6 +1352,265 @@ const op_rgrafx4 = (async (req, res) => {
 
 });
 
+const busc_oficx = (async (req, res) => {
+
+    if (req.groups.indexOf(",BUSC_OFIC,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    //console.log(req.query)
+    const form = JSON.parse(req.query.loForm)
+    //console.log(form)
+    //return res.json([]);
+
+    let lcSQL = `SELECT cve 
+        FROM gen_dere_ofic 
+        WHERE user_id = '${req.userId}' AND cve = '${form.cmbSoli}'
+    `
+    
+    const llDere = await util.gene_cons(lcSQL)
+
+    //console.log(llDere)
+
+    if (!llDere || llDere.length <= 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    lcWhere = " o.cve = '" + form.cmbSoli + "'" + " AND YEAR(o.fecha) = " + form.cmbAnio
+
+    if (form.txtNOficio > 0){
+        lcWhere = lcWhere + " AND o.descrip >= " + form.txtNOficio
+    }
+
+    if (form.txtControl > 0){
+        lcWhere = lcWhere + " AND o.nume_cont <= " + form.txtNOficio2
+    }
+
+    if (!!form.txtFec_ini){
+        lcWhere = lcWhere + " AND o.fecha >= '" + form.txtFec_ini.substring(0, 10) + "'"
+    }
+
+    if (!!form.txtFec_fin){
+        lcWhere = lcWhere + " AND o.fecha <= '" + form.txtFec_fin.substring(0, 10) + "'"
+    }
+
+/*     if (form.txtDepen.length > 0){
+        lcWhere = lcWhere + " AND " + util.cade_busc("c.dependen", form.txtDepen)
+    }
+ */
+    if (form.txtAsunto.length > 0){
+        lcWhere = lcWhere + " AND " + util.cade_busc("o.asunto", form.txtAsunto)
+    }
+
+    if (form.txtNota.length > 0){
+        lcWhere = lcWhere + " AND " + util.cade_busc("o.nota", form.txtNota)
+    }
+
+    if (form.txtRemitente.length > 0){
+        lcWhere = lcWhere + " AND " + util.cade_busc("o.nomb_remi", form.txtRemitente)
+    }
+
+    /* if (form.txtPersona.length > 0){
+        lcWhere = lcWhere + " AND o.id_iden in (SELECT id_iden FROM gen_doficio WHERE " + util.cade_busc("diri_nomb, diri_carg", form.txtPersona) 
+        if (form.cmbTipo > 0){
+            lcWhere = lcWhere + " AND tipo = " + form.cmbTipo 
+        }
+        lcWhere = lcWhere + ") " 
+    }
+ */
+    if (form.cmbStatus > -1){
+        lcWhere = lcWhere + " AND o.status = " + form.cmbStatus
+    }
+
+    //console.log(lcWhere)
+    
+    lcSQL = `
+    SELECT ROW_NUMBER() OVER (ORDER BY o.fecha desc) AS rank, o.nume_cont, o.id_ofic as idoficio, o.descrip, if(o.tipo_depe = 1, c.dependen, oc.dependen) as centros,
+            DATE_FORMAT(o.fecha, '%d/%m/%Y') AS fecha, DATE_FORMAT(o.fecha, '%H:%i') AS hora, o.asunto, o.nota, o.nomb_remi,
+            if(o.status = 1, 'PROCESO', if(o.status = 8, "APLICADO", if(o.status = 9, "CANCELADO", "DESCONOCIDO"))) AS stat_desc
+        FROM 
+            opc_oficio o 
+        LEFT JOIN 
+            gen_centros c ON o.ID_CENT = c.ID_CENT 
+        LEFT JOIN 
+            gen_otro_cent oc ON o.ID_CENT = oc.ID_CENT 
+        WHERE 
+            ${lcWhere}
+        ORDER BY 
+        o.fecha DESC 
+    `
+    //console.log(lcSQL)
+    //return res.json([]);
+    const rows = await util.gene_cons(lcSQL)
+    return res.json(rows)
+});
+
+const new_ord__servx = (async (req, res) => {
+
+    if (req.groups.indexOf(",ASIG_OFIC,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    console.log(req.query)
+    let lcSQL = ''
+    //console.log(req.query)
+
+/*     let lcSQL = `
+    SELECT s.cve, s.id_depe, s.depen, s.piso, ss.codigo, ss.id_serv_pk, CONCAT('(', p.codigo, ') ', p.apepat, ' ', p.apemat, ' ', p.nombre) AS nombre, ss.correo  
+        from ser_depen s LEFT JOIN ser_soli_serv ss ON s.id_depe = ss.id_depe
+            LEFT JOIN gen_personas p ON ss.codigo = p.codigo
+            WHERE cve IN (SELECT cve FROM opc_oficio WHERE id_ofic = ${req.query.lnOficio})
+        ORDER BY 2,7
+    `
+ */    //console.log(lcSQL)
+    lcSQL = `   
+    SELECT o.cve, s.id_depe 
+        FROM opc_oficio o LEFT JOIN ser_soli_serv s ON o.ID_OFIC = s.id_oficio 
+        WHERE o.id_ofic = ${req.query.lnOficio}
+    `
+    const loSeek = await util.gene_cons(lcSQL)
+    
+    lcSQL = `
+
+    SELECT cve, id_depe, depen, piso, if(LOCATE(CONCAT(',',id_depe,','), ',${req.query.loDepe},') > 0, "true", "") AS marcado
+        from ser_depen 
+            WHERE cve = '${req.query.loCVE}'
+        ORDER BY 2
+    `
+    console.log(lcSQL)
+
+    const rows = await util.gene_cons(lcSQL)
+
+    let loPadre = [], loHijo = [], lnDepe = 0
+    
+    for(i = 0; i < rows.length; i++){
+        if (lnDepe != rows[i].cve){
+            lnDepe == rows[i].cve
+            loHijo = []
+            if(!!rows[i].id_serv_pk ){
+                loHijo.push({id:'H'+rows[i].id_serv_pk, depen:rows[i].nombre})
+            }
+        }
+        loPadre.push({id:rows[i].id_depe, depen:rows[i].depen, data:loHijo, checked:(rows[i].marcado==''?false:true)})
+         
+    }
+
+
+    return res.json(loPadre)
+
+});
+
+const new_ord_servx2 = (async(req, res) => {
+
+    if (req.groups.indexOf(",ASIG_OFIC,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    let lcInsert, lcSQL 
+    //console.log(req.body);
+
+    const loForm = JSON.parse(req.body.form)
+    /* laArea = req.body.lcAreas.split(',')
+
+    for(i=0; i < laArea.length; i++){
+        
+    } */
+    lcSQL = `
+        SELECT * 
+            FROM ser_soli_serv
+            WHERE id_oficio = ${req.body.lnOficio}
+    `
+    const loSeek = await util.gene_cons(lcSQL)
+    //console.log(loSeek)
+
+    if (loSeek.length > 0){
+        lcInsert = `
+            UPDATE ser_soli_serv SET id_depe = '${req.body.lcAreas}', descrip = '${(!loForm.txtDescrip? '': loForm.txtDescrip)}',  
+            cambios = CONCAT(cambios, CHAR(13,10), 'MODIFICADO|${req.userId}|', DATE_FORMAT(NOW(), '%d/%m/%Y %h:%i %p')) 
+            WHERE id_oficio = ${req.body.lnOficio}
+    `
+    }
+    else {
+    lcInsert = `
+        INSERT INTO ser_soli_serv (id_cent, id_oficio, id_depe, fecha, descrip, oficio, usua_alta, fech_alta, cambios) 
+            VALUES(${req.id_cent}, ${req.body.lnOficio}, '${req.body.lcAreas}', NOW(), '${(!loForm.txtDescrip? '': loForm.txtDescrip)}', 1, '${req.userId}', 
+            NOW(), CONCAT('ALTA|${req.userId}|', DATE_FORMAT(NOW(), '%d/%m/%Y %h:%i %p')));
+
+        UPDATE opc_oficio SET asignado = 1 
+            WHERE id_ofic = ${req.body.lnOficio};
+    `
+    }
+    
+    //console.log(lcInsert)
+    const rowsi = await util.gene_cons(lcInsert)
+
+    lcSQL = `
+        SELECT * 
+            FROM opc_oficio 
+            WHERE id_ofic = ${req.body.lnOficio}
+        `
+    
+    const rows = await util.gene_cons(lcSQL)    
+
+    
+    lcSQL = `
+        SELECT * 
+            FROM ser_depen 
+            WHERE id_depe IN (${req.body.lcAreas}) AND IFNULL(correo, '') <> ''
+        `
+    
+    const rows2 = await util.gene_cons(lcSQL)    
+
+    //console.log(lcSQL)
+
+    //console.log(rows2)
+    //console.log(rows)
+
+    for(i=0; i < rows2.length; i++){
+        //[RESPONSABLE],[UNIDAD],[NUME_OFIC],[FECHA],[ORIGEN],[ASUNTO],[NUME_CONT]
+        let loCampo = []
+
+        loCampo.push(rows2[i].jefe_cargo)
+        loCampo.push(rows2[i].DEPEN)
+        loCampo.push(rows[0].DESCRIP)
+        loCampo.push(rows[0].FECHA)
+        loCampo.push(rows[0].NOMB_PROC)
+        loCampo.push(rows[0].ASUNTO)
+        loCampo.push(rows[0].NUME_CONT)
+
+        lcResp = outil.envi_corr(3, rows2[i].CORREO, loCampo);
+        
+    }
+
+    return res.json({"error":false, "message":"La asignación fue correcto y se empezarán a enviar los corros"})
+
+});
+
+const detalle_ofic_Nox = (async(req,res) =>{
+    
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    console.log(req.query);
+
+    lcSQL = `
+        SELECT o.cve, o.anio as anio_ingr, o.nume_cont, DATE_FORMAT(o.fech_ofic, '%d/%m/%Y') as fech_ofic, DATE_FORMAT(o.fecha, '%d/%m/%Y') AS fech_rece, 
+                DATE_FORMAT(o.fecha, '%H:%i') AS hora_rece, o.descrip as nume_ofic, o.nomb_remi as remi_nomb, o.carg_remi as remi_carg, o.tipo_info, c.dependen as txtDepen, 
+                o.nomb_dest as dest_nomb, o.carg_dest as dest_carg, o.tipo_depe as rbDepe, o.id_tiof as tipo_ofic, o.id_clof as clase, o.asunto, o.nota, o.info_sens
+            FROM opc_oficio o left join gen_centros c on o.id_cent = c.id_cent
+            WHERE id_ofic = ${req.query.lnOficio}
+    `
+    console.log(lcSQL)
+    const rows = await util.gene_cons(lcSQL)
+
+    return res.json(rows)
+});
 
 module.exports = {
     op_cucsx2,
@@ -1379,5 +1641,9 @@ module.exports = {
     op_rgrafx,
     op_rgrafx2,
     op_rgrafx3,
-    op_rgrafx4
+    op_rgrafx4,
+    busc_oficx,
+    new_ord__servx,
+    new_ord_servx2,
+    detalle_ofic_Nox
 }
