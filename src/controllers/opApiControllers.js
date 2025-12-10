@@ -1612,6 +1612,80 @@ const detalle_ofic_Nox = (async(req,res) =>{
     return res.json(rows)
 });
 
+const csg_sServx2 = (async (req, res) => {
+
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    lcSQL = `
+    SELECT s.id_serv_pk as id, o.descrip as oficio, o.nomb_remi, CASE o.tipo_depe WHEN 1 THEN c.descrip ELSE oc.descrip END as area_remi
+        , s.descrip as nota, o.asunto, DATE_FORMAT(o.fech_ofic, '%d/%m/%Y %H:%i') AS fech_ofic, o.nomb_dest, p.nombre as realizo, s.id_oficio
+        , CASE IFNULL(o.status,0) WHEN 1 THEN 'PROCESO' WHEN 8 THEN 'APLICADO' WHEN 0 THEN 'ELABORADO' ELSE 'CANCELADO' END AS estado
+        , DATE_FORMAT(s.FECHA, '%d/%m/%Y %H:%i') as fecha_asig
+        FROM ser_soli_serv s 
+        INNER JOIN opc_oficio o ON s.id_oficio = o.id_ofic 
+        INNER JOIN passfile p ON o.usuario = p.user_id 
+        LEFT JOIN gen_centros c ON o.cent_proc = c.id_cent AND o.tipo_depe = 1
+        LEFT JOIN gen_otro_cent oc ON o.cent_proc = oc.id_cent AND o.tipo_depe = 2 
+        WHERE s.oficio = 1 
+    `
+    console.log(lcSQL)
+    const rows = await util.gene_cons(lcSQL)
+
+    return res.json(rows)
+
+
+});
+
+const seg_oficx = (async (req, res) => {
+
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    lcSQL = `
+    SELECT s.ID_OFIC, DATE_FORMAT(s.fecha, "%d/%m/%Y %H:%i") AS FECHA, IF(STATUS = 1, "EN PROCESO", IF(STATUS = 8, "APLICADO", "CANCELADO")) AS STATUS,
+		    p.NOMBRE, s.NOTA
+	    FROM opc_segu_ofic s LEFT JOIN passfile p ON s.user_id = p.user_id
+        WHERE id_ofic = ${req.query.lnOficio}
+        ORDER BY s.fecha DESC
+
+    `
+    console.log(lcSQL)
+    const rows = await util.gene_cons(lcSQL)
+
+    return res.json(rows)
+
+
+});
+
+const seg_oficx2 = (async (req, res) => {
+
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    console.log(req.body)
+    
+    loForm = JSON.parse(req.body.form)
+    console.log(loForm)
+
+    //return res.json([])
+    lcSQL = `
+    INSERT INTO opc_segu_ofic (id_ofic, fecha, STATUS, nota, user_id, id_tram) 
+        VALUES (${req.body.lnOficio}, now(), ${loForm.cmbStatus}, '${loForm.txtNota}', '${req.userId}', ${loForm.txtTramite})
+    `
+    console.log(lcSQL)
+    const rows = await util.gene_cons(lcSQL)
+
+    return res.json({"error":false, "mensage":"El seguimiento se guardo correctamente"})
+
+});
+
 module.exports = {
     op_cucsx2,
     op_oficx5,
@@ -1645,5 +1719,8 @@ module.exports = {
     busc_oficx,
     new_ord__servx,
     new_ord_servx2,
-    detalle_ofic_Nox
+    detalle_ofic_Nox,
+    csg_sServx2,
+    seg_oficx,
+    seg_oficx2
 }

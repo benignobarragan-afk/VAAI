@@ -433,6 +433,7 @@ const op_ingr = (async (req, res) => {
     return res.render("op/op_ingr", {rows})
 });
 
+
 const op_detalle = (async (req, res) => {
     
     if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
@@ -529,6 +530,19 @@ const new_ord__serv = (async (req, res) => {
     return res.render("op/new_ord__serv", {lnOficio})
 })
 
+const seg_ofic = (async (req, res) => {
+    if (req.groups.indexOf(",BUSC_OFIC,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    lnOficio = req.query.lnOficio
+    loClave = req.query.loClave
+    loDepe = req.query.loDepe
+
+    return res.render("op/seg_ofic", {lnOficio})    
+});
+
 module.exports = {
     op_cucs,
     op_ofic,
@@ -554,5 +568,6 @@ module.exports = {
     detalle_ofic_No,
     op_reof0,
     busc_ofic,
-    new_ord__serv
+    new_ord__serv,
+    seg_ofic
 }

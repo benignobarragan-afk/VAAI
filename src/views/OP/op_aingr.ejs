@@ -70,11 +70,11 @@
 						select: "row", resizeColumn: true, tooltip: true, hover: "myhover", footer: true,
 						columns: [
 								{ id: "rank", header: "", css: "rank", width: 50, footer: { colspan: 2, content: "rowCount", css: "footer" } },
-								{ id: "oficio", header: ["Oficio", { content: "textFilter" }], sort: "string", width: 100 },
-								{ id: "fecha_asig", header: ["Fecha asig.", { content: "textFilter" }], sort: "string", width: 160, css: { 'text-align': 'left' } },
+								{ id: "oficio", header: ["Oficio", { content: "textFilter" }], sort: "string", width: 120 },
+								{ id: "fecha_asig", header: ["Fecha asig.", { content: "textFilter" }], sort: "string", width: 140, css: { 'text-align': 'left' } },
 								{ id: "area_remi", header: ["&Aacute;rea requirente", { content: "textFilter" }], sort: "string", width: 300 },
 								{ id: "nomb_remi", header: ["Solicit&oacute;", { content: "textFilter" }], sort: "string", width: 300 },
-								{ id: "fech_ofic", header: ["Fecha ofic.", { content: "textFilter" }], sort: "string", width: 120, css: { 'text-align': 'left' } },
+								{ id: "fech_ofic", header: ["Fecha ofic.", { content: "textFilter" }], sort: "string", width: 140, css: { 'text-align': 'left' } },
 								{ id: "asunto", header: ["Asunto", { content: "textFilter" }], sort: "string", width: 300, css: { 'text-align': 'left' } },
 								{ id: "nota", header: ["Nota", { content: "textFilter" }], sort: "string", width: 300, css: { 'text-align': 'left' } },
 								{ id: "nomb_dest", header: ["Dirigido", { content: "textFilter" }], sort: "date", width: 300 },
@@ -177,7 +177,7 @@
 
 				function cargar() {
 						$$("grida2").clearAll();
-						$$("grida2").load("/csg_sServx2.fwx?lnDepe=" + $$("depe").getValue() + "&inicio=" + $$("inicio").getValue() + "&fin=" + $$("fin").getValue());
+						$$("grida2").load("/api/op/csg_sServx2?lnDepe=" + $$("depe").getValue() + "&inicio=" + $$("inicio").getValue() + "&fin=" + $$("fin").getValue());
 
 				}
 

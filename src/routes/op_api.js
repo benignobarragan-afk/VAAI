@@ -40,6 +40,11 @@ router.get("/busc_oficx", midd.verifyToken, opCtrl.busc_oficx);
 router.get("/new_ord__servx", midd.verifyToken, opCtrl.new_ord__servx);
 router.post("/new_ord_servx2", midd.verifyToken, opCtrl.new_ord_servx2);
 router.get("/detalle_ofic_Nox", midd.verifyToken, opCtrl.detalle_ofic_Nox);
+router.get("/csg_sServx2", midd.verifyToken, opCtrl.csg_sServx2);
+router.get("/seg_oficx", midd.verifyToken, opCtrl.seg_oficx);
+router.post("/seg_oficx2", midd.verifyToken, opCtrl.seg_oficx2);
+
+
 
 
 

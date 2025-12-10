@@ -32,6 +32,8 @@ router.get("/detalle_ofic_No", midd.verifyToken, opCtrl.detalle_ofic_No);
 router.get("/op_reof0", midd.verifyToken, opCtrl.op_reof0);
 router.get("/busc_ofic", midd.verifyToken, opCtrl.busc_ofic);
 router.get("/new_ord__serv", midd.verifyToken, opCtrl.new_ord__serv);
+router.get("/seg_ofic", midd.verifyToken, opCtrl.seg_ofic);
+
 
 
 module.exports = router
