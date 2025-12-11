@@ -875,7 +875,7 @@
 		}
 
 		function buscaNume() {
-			webix.ajax().get("/api/op/op_ningrx2",{anio:$$("anio_ingr").getValue(),cve:$$("cve").getValue(),tipo_docu:(typeof ($$("tipo_docu")) == 'undefined' ? 0 : $$("tipo_docu").getValue())}).then(function (response) {
+			webix.ajax().get("/api/op/op_ningrx2",{anio:$$("anio_ingr").getValue(),cve:$$("cve").getValue(),tipo_docu:1}).then(function (response) {
 				if (response.json().status) {
 					$$("nume_cont").setValue(response.json().nume_cont)
 				}

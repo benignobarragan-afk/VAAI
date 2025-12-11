@@ -590,7 +590,7 @@ const op_ningrx2 = (async (req, res) => {
         return res.render("sin_derecho")
     }
 
-    //console.log(req.query)
+    console.log(req.query)
     lcSQL = `
         SELECT IFNULL(MAX(nume_cont), 0) + 1 as control FROM opc_oficio 
 			WHERE cve = '${req.query.cve}' AND anio = ${req.query.anio} AND tipo = ${req.query.tipo_docu}
@@ -1607,7 +1607,7 @@ const detalle_ofic_Nox = (async(req,res) =>{
     lcSQL = `
         SELECT o.cve, o.anio as anio_ingr, o.nume_cont, DATE_FORMAT(o.fech_ofic, '%d/%m/%Y') as fech_ofic, DATE_FORMAT(o.fecha, '%d/%m/%Y') AS fech_rece, 
                 DATE_FORMAT(o.fecha, '%H:%i') AS hora_rece, o.descrip as nume_ofic, o.nomb_remi as remi_nomb, o.carg_remi as remi_carg, o.tipo_info, c.dependen as txtDepen, 
-                o.nomb_dest as dest_nomb, o.carg_dest as dest_carg, o.tipo_depe as rbDepe, o.id_tiof as tipo_ofic, o.id_clof as clase, o.asunto, o.nota, o.info_sens
+                o.nomb_dest as dest_nomb, o.carg_dest as dest_carg, o.tipo_depe as rbDepe, o.id_tiof as tipo_ofic, o.id_clof as clase, LEFT(o.asunto, 10) as asunto, o.nota, o.info_sens
             FROM opc_oficio o left join gen_centros c on o.id_cent = c.id_cent
             WHERE id_ofic = ${req.query.lnOficio}
     `
