@@ -114,6 +114,7 @@
             { id: "STATUS", header: ["Estatus", { content: "textFilter" }], width: 140, sort: "string", css: { 'text-align': 'left' } },
             { id: "FECHA", editor: "popup", header: ["Fecha", { content: "textFilter" }], width: 140, sort: "string", css: { 'text-align': 'left' } },
             { id: "NOMBRE", editor: "popup", header: ["Usuario", { content: "textFilter" }], width: 240, sort: "string", css: { 'text-align': 'left' } },
+			{ id: "ID_TRAM", editor: "popup", header: ["Tr&aacute;mite", { content: "textFilter" }], width: 100, sort: "string", css: { 'text-align': 'left' } },
             { id: "NOTA", editor: "popup", header: ["Seguimiento", { content: "textFilter" }], sort: "string", css: { 'text-align': 'left' }, fillspace:true },
             ],
             url:"/api/op/seg_oficx?lnOficio=<%=lnOficio%>"
@@ -359,7 +360,9 @@
 						Swal.fire({title:"", text:res.mensage, icon:(!res.error?"success":"error")}).then(()=>{
 							if(!res.error){
 								genera();
-								$$("save").disable();
+								if($$("cmbStatus").getValue() > 1){
+									$$("save").disable();
+								}
 							}
 						})
 					})

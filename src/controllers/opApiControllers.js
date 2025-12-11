@@ -1519,6 +1519,11 @@ const new_ord_servx2 = (async(req, res) => {
     for(i=0; i < laArea.length; i++){
         
     } */
+    if (!req.body.lcAreas){
+        return res.json({"error":true, "message":"Por lo menos debes seleccionar una dependencia"})
+    }
+    
+
     lcSQL = `
         SELECT * 
             FROM ser_soli_serv
@@ -1648,13 +1653,13 @@ const seg_oficx = (async (req, res) => {
 
     lcSQL = `
     SELECT s.ID_OFIC, DATE_FORMAT(s.fecha, "%d/%m/%Y %H:%i") AS FECHA, IF(STATUS = 1, "EN PROCESO", IF(STATUS = 8, "APLICADO", "CANCELADO")) AS STATUS,
-		    p.NOMBRE, s.NOTA
+		    p.NOMBRE, s.NOTA, s.ID_TRAM
 	    FROM opc_segu_ofic s LEFT JOIN passfile p ON s.user_id = p.user_id
         WHERE id_ofic = ${req.query.lnOficio}
         ORDER BY s.fecha DESC
 
     `
-    console.log(lcSQL)
+    //console.log(lcSQL)
     const rows = await util.gene_cons(lcSQL)
 
     return res.json(rows)
@@ -1669,16 +1674,33 @@ const seg_oficx2 = (async (req, res) => {
         return res.render("sin_derecho")
     }
 
-    console.log(req.body)
+    let lcSQL
+
+    lcSQL = `
+        SELECT id_ofic, status 
+        FROM opc_oficio 
+        WHERE id_ofic = ${req.body.lnOficio}
+    `
+    const loSeek = await util.gene_cons(lcSQL)
+
+    if (loSeek[0].status > 1){
+        return res.json({"error":true, "mensage":"El oficio se encuentra cerrado, ya no se puede dar seguimiento"})
+    }
+
+    //console.log(req.body)
     
     loForm = JSON.parse(req.body.form)
-    console.log(loForm)
+    //console.log(loForm)
 
     //return res.json([])
     lcSQL = `
     INSERT INTO opc_segu_ofic (id_ofic, fecha, STATUS, nota, user_id, id_tram) 
-        VALUES (${req.body.lnOficio}, now(), ${loForm.cmbStatus}, '${loForm.txtNota}', '${req.userId}', ${loForm.txtTramite})
+        VALUES (${req.body.lnOficio}, now(), ${loForm.cmbStatus}, '${loForm.txtNota}', '${req.userId}', ${loForm.txtTramite});
+    
+    UPDATE opc_oficio SET status = ${loForm.cmbStatus} WHERE id_ofic = ${req.body.lnOficio}
     `
+
+
     console.log(lcSQL)
     const rows = await util.gene_cons(lcSQL)
 
