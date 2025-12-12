@@ -180,6 +180,11 @@
 			color: red;
 		}
 
+		/* Definición del color verde para el texto */
+		.archivo-verde a {
+			color: #4CAF50 !important; /* Un tono de verde claro y visible */
+			font-weight: bold; /* Opcional: para que resalte más */
+		}
 	</style>
 
 	<script language="JavaScript">
@@ -204,7 +209,7 @@
 		//webix-components
 
 		var form_elements = [{
-			view: "label", class: { "font-weight": "bold", "font-size": 14, "text-align": "center" }, align: "center", label: "CAPTURA DE NUEVO OFICIO INGRESADO"
+			view: "label", class: { "font-weight": "bold", "font-size": 14, "text-align": "center" }, align: "center", label: "<%=(!loOficio?'CAPTURA DE NUEVO':'DATOS DEL')%> OFICIO INGRESADO"
 		},
 		<%
 		if(llDirectorio && !!laQuery.lcClav_ofic){ //  IF llDirectorio AND EMPTY(lcClav_ofic) %>
@@ -578,28 +583,93 @@
 			view: "textarea", id: "asunto", name: "asunto", label: "<span class='obligatorio'>*</span>Asunto", labelPosition: "top", height: 120
 		},
 		{
-			view: "combo", id:"seccion", name:"seccion", label: "Secci&oacute;n/Subsecci&oacute;n", labelPosition:"top", labelWidth:300, width:800,
-			options: {
-				filter: function (item, value) {
-					if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
-						return true;
-					return false;
-				},
-				keyPressTimeout: 500,
-						body: {
-							fitMaster: false, template: "#value#",
-							dataFeed: "/api/op/cmb_seccw"
+		cols: [
+			{
+			rows: [
+				{
+					view: "combo", id:"seccion", name:"seccion", label: "Secci&oacute;n/Subsecci&oacute;n", labelPosition:"top", labelWidth:300, 
+					options: {
+						filter: function (item, value) {
+							if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+								return true;
+							return false;
 						},
-				// keyPressTimeout: 1000,
-				//data:[]
-			}
+						keyPressTimeout: 500,
+								body: {
+									fitMaster: false, template: "#value#",
+									dataFeed: "/api/op/cmb_seccw"
+								},
+						// keyPressTimeout: 1000,
+						//data:[]
+					}
+				},
+				{
+					view: "textarea", id: "nota", name: "nota", label: "Nota (Seguimiento)", labelPosition: "top", height: 100
+				},
+				{
+					view: "textarea", id: "ligado_a", name: "ligado_a", label: "Ligado a:", labelPosition: "top", height: 80, hidden:true,
+				},
+			]
+			},
+			{ maxWidth: 15 },
+			{
+			rows: [
+				{view:"label", label:"Archivos"},
+				{
+					view: "list",
+					id: "archivos_adjuntos",
+					width: 400,
+					header: "Archivos Adjuntos",
+					scroll: "y",      // Permite scroll vertical si hay muchos
+					
+					// **CLAVE:** Este template define cómo se verá cada archivo
+					template: function(obj) {
+						// obj es el objeto de datos (e.g., {id: 1, nombre: "factura.pdf", ...})
+						
+						let html = "<div class='file-item archivo-verde'>";
+						
+						// Icono basado en la extensión (ejemplo)
+						html += "<span class='webix_icon wxi-trash delete-file'></span> ";
+						
+						// Enlace de descarga (usa el ID o la ruta)
+						html += "<a href='server/api/download?id=" + obj.id + "' target='_blank'>";
+						html += obj.nombre; // Muestra el nombre del archivo
+						html += "</a>";
+						
+						// Botón de eliminar (con un evento para manejar la lógica de borrado)
+						html += "<span class='webix_icon wxi-file' data-id='" + obj.id + "'></span>";
+						
+						html += "</div>";
+						return html;
+						},
+					on: {
+						onItemClick: function(id_item, e, node) {
+							
+							if (e.target.className.indexOf('delete-file') !== -1) {
+								
+								let id_archivo_a_borrar = id_item; 
+								alert("Se hizo clic en el bote de basura para el archivo con ID: " + id_archivo_a_borrar);
+								
+								// **Llama a la función de confirmación y eliminación**
+								//confirmarYEliminarArchivo(id_archivo_a_borrar);
+								
+								// Prevenir que el evento se propague si es necesario
+								return false; 
+							}
+						}
+					},
+					
+					// Configuración para cargar datos del servidor (metadatos de MariaDB)
+					data:[
+						{ "id": 1, "nombre": "factura_compra_01.pdf", "ruta": "/uploads/a3b1c2.pdf" },
+						{ "id": 2, "nombre": "contrato_firmado.docx", "ruta": "/uploads/x9y8z7.docx" }
+						]
+				}
+			] 
+			},
+			]
 		},
-		{
-			view: "textarea", id: "nota", name: "nota", label: "Nota (Seguimiento)", labelPosition: "top", height: 80
-		},
-		{
-			view: "textarea", id: "ligado_a", name: "ligado_a", label: "Ligado a:", labelPosition: "top", height: 80, hidden:true,
-		},
+		
 		]
 
 		webix.ready(function () {
