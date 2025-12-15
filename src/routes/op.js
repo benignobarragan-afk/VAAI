@@ -33,6 +33,8 @@ router.get("/op_reof0", midd.verifyToken, opCtrl.op_reof0);
 router.get("/busc_ofic", midd.verifyToken, opCtrl.busc_ofic);
 router.get("/new_ord__serv", midd.verifyToken, opCtrl.new_ord__serv);
 router.get("/seg_ofic", midd.verifyToken, opCtrl.seg_ofic);
+router.get("/op_nsoli", midd.verifyToken, opCtrl.op_nsoli);
+router.get("/op_narea", midd.verifyToken, opCtrl.op_narea);
 
 
 

@@ -1695,7 +1695,7 @@ const seg_oficx2 = (async (req, res) => {
     //return res.json([])
     lcSQL = `
     INSERT INTO opc_segu_ofic (id_ofic, fecha, STATUS, nota, user_id, id_tram) 
-        VALUES (${req.body.lnOficio}, now(), ${loForm.cmbStatus}, '${loForm.txtNota}', '${req.userId}', ${loForm.txtTramite});
+        VALUES (${req.body.lnOficio}, now(), ${loForm.cmbStatus}, '${loForm.txtNota}', '${req.userId}', ${(!loForm.txtTramite?0:loForm.txtTramite)});
     
     UPDATE opc_oficio SET status = ${loForm.cmbStatus} WHERE id_ofic = ${req.body.lnOficio}
     `
@@ -1707,6 +1707,26 @@ const seg_oficx2 = (async (req, res) => {
     return res.json({"error":false, "mensage":"El seguimiento se guardo correctamente"})
 
 });
+
+const op_nareax = (async (req, res) => {
+
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    let lcSQL
+
+    lcSQL = `
+    SELECT id_depe AS id,cve, depen AS value, piso, desc_piso 
+        FROM ser_depen c 
+        WHERE cve in (SELECT DISTINCT cve FROM GEN_DERE_OFIC WHERE user_id = '${req.userId}')
+    `
+    const rows = await util.gene_cons(lcSQL)
+
+    return res.json(rows)
+});
+
 
 module.exports = {
     op_cucsx2,
@@ -1744,5 +1764,6 @@ module.exports = {
     detalle_ofic_Nox,
     csg_sServx2,
     seg_oficx,
-    seg_oficx2
+    seg_oficx2,
+    op_nareax
 }

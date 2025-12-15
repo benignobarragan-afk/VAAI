@@ -43,6 +43,8 @@ router.get("/detalle_ofic_Nox", midd.verifyToken, opCtrl.detalle_ofic_Nox);
 router.get("/csg_sServx2", midd.verifyToken, opCtrl.csg_sServx2);
 router.get("/seg_oficx", midd.verifyToken, opCtrl.seg_oficx);
 router.post("/seg_oficx2", midd.verifyToken, opCtrl.seg_oficx2);
+router.get("/op_nareax", midd.verifyToken, opCtrl.op_nareax);
+
 
 
 

@@ -543,6 +543,33 @@ const seg_ofic = (async (req, res) => {
     return res.render("op/seg_ofic", {lnOficio})    
 });
 
+const op_nsoli = ((req, res) => {
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    const lcDerecho = req.groups;
+    res.render("op/op_nsoli", {lcDerecho})
+});
+
+const op_narea = (async (req, res) => {
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    let lcSQL = `
+        SELECT id_cent, cve, depen, clave 
+            FROM GEN_TIPO_OFIC 
+            WHERE cve in (SELECT DISTINCT cve FROM GEN_DERE_OFIC WHERE user_id = ${req.userId}) 
+        `
+    
+    const rows = await util.gene_cons(lcSQL)
+
+    res.render("op/op_narea", {rows})
+});
+
 module.exports = {
     op_cucs,
     op_ofic,
@@ -569,5 +596,7 @@ module.exports = {
     op_reof0,
     busc_ofic,
     new_ord__serv,
-    seg_ofic
+    seg_ofic,
+    op_nsoli,
+    op_narea
 }
