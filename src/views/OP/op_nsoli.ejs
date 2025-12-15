@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+		<title></title>
+		<meta http-equiv="Content-Type" content="text/html" charset="iso-8859-1">
+
+		<link rel="stylesheet" href="/style.css" type="text/css" media="screen" />
+
+
+		<link rel="stylesheet" type="text/css" href="/webix/codebase/webix.css" />
+		<link rel="stylesheet" href="https://cdn.materialdesignicons.com/2.7.94/css/materialdesignicons.css?v=6.0.7"
+				type="text/css" charset="utf-8">
+		<script src="/webix/codebase/webix.js"></script>
+		<script src="/webix/codebase/locale.js"></script>
+		<script src="codebase/dhtmlx.js"></script>
+
+		<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.0.0/animate.min.css" />
+		<%
+/*
+	SET PROCEDURE TO myLib
+	SET EXCLUSIVE OFF
+	SET NEAR OFF
+	SET DATE DMY
+	SET EXACT ON
+
+	IF !Derechos("OFICIO")
+				lcRuta = ALLTRIM(config.ruta)
+				SET PROCEDURE TO
+				CLOSE TABLES ALL
+				CLOSE DATABASES ALL
+				response.redirect("/"+lcRuta+"/sin_derechos.fwx")
+		ENDIF
+
+		lcQbase_cgce = config.qbase_cgce
+
+		lnCone_cgce = &lcQbase_cgce
+
+		IF SQLEXEC(lnCone_cgce, "SELECT * FROM [hcg_cgce].[dbo].[opc_clas_ofic]", "clas_ofic") != 1
+		a=Aerror(Mat)
+		SQLDISCONNECT(0)
+		sdsd
+		ENDIF
+
+		IF SQLEXEC(lnCone_cgce, "SELECT * FROM [hcg_cgce].[dbo].[opc_tipo_ofic]", "tipo_ofic") != 1
+		a=Aerror(Mat)
+		SQLDISCONNECT(0)
+		sdsd
+		ENDIF
+
+		IF SQLEXEC(lnCone_cgce, "SELECT * FROM [hcg_cgce].[dbo].[opc_op_config]", "op_config") != 1
+		a=Aerror(Mat)
+		SQLDISCONNECT(0)
+		sdsd
+		ENDIF
+
+		IF SQLEXEC(lnCone_cgce, "SELECT * FROM [hcg_cgce].[dbo].[opc_arch_muer]", "arch_muer") != 1
+		a=Aerror(Mat)
+		SQLDISCONNECT(0)
+		sdsd
+		ENDIF
+
+		lcSQL = "SELECT id_cent, cve, depen, clave FROM [GEN_TIPO_OFIC] WHERE cve in (SELECT DISTINCT cve "
+		lcSQL = lcSQL + "FROM GEN_DERE_OFIC WHERE user_id = ?pcUser) ORDER BY 3"
+
+		IF SQLEXEC(lnCone_cgce, lcSQL, "cSoli") != 1
+				a=Aerror(Mat)
+				?SQLDISCONNECT(0)
+				Response.write(Mat(2) + " Linea: 67")
+				return
+		ENDIF
+
+		UPDATE cSoli SET depen = STRTRAN(depen,'"',"'")
+		GO TOP IN cSoli
+
+
+		SQLDISCONNECT(0)
+        */
+%>
+		<style>
+				.webix_dtable .webix_ss_header {
+						font-weight: bold;
+				}
+
+				.edited {
+						font-weight: bold;
+				}
+
+				.footer {
+						font-weight: bold;
+
+				}
+		</style>
+</head>
+
+<body onLoad="doOnLoad();">
+		<div align="center" id="cuerpo">
+				<form name="form1" id="form1" method="post" action="/api/op/subr_auto.fwx">
+						<div id="view_ui"></div>
+						<input type="hidden" id="txtBuscar" name="txtBuscar" /> <input type="hidden" id="txtFiltro"
+								name="txtFiltro" />
+				</form>
+		</div>
+		<script language="JavaScript">
+				webix.i18n.setLocale();
+
+				function doOnLoad() {
+						var ui = webix.ui({
+								type: "clean",
+								rows: [
+										{
+                                            view: "form", id: "form", elements: [
+                                            {
+                                            cols: [
+                                                { view: "text", name: "num_soli", id: "num_soli", label: "Numero", labelPosition: "top", maxWidth: 90, required: true },
+                                                { view: "text", name: "servicio", id: "servicio", label: "Servicio", labelPosition: "top", required: true },
+                                                {
+                                                rows: [
+                                                        {},
+                                                        {
+                                                        cols: [
+                                                                {
+                                                                    view: "button", id: "btnGuardar", value: "Agregar", click: function () {
+                                                                        guardar()
+                                                                    }
+                                                                },
+                                                                { view: "button", id: "btnEliminar", value: "Eliminar", click: function () {
+                                                                    if($$("dtable").getSelectedId() == undefined)
+                                                                        webix.message({type: "debug", text: "Debes selecciona un registro para poder eliminar", expire: 2500})
+                                                                    else
+                                                                        webix.confirm({
+                                                                            title: "Agregar area solicitante",
+                                                                            text: "�Estas seguro que deseas agregar el area solicitante?",
+                                                                            type: "confirm-warning",
+                                                                            ok: 'S&iacute;', cancel: 'No',
+                                                                            callback: function (result) {
+                                                                                $$("dtable").remove($$("dtable").getSelectedId().id)
+                                                                            }
+                                                                        });
+                                                                    }
+                                                                },
+                                                        ]
+                                                        }
+                                                    ]
+                                                }
+                                                ]
+                                            }
+                                            ]
+										},
+										{
+												view: "datatable", id: "dtable", select: "row", editaction: "dblclick", rowCss: "#css#",
+												columns: [
+														{ id: "num_soli", header: ["Numero", { content: "textFilter" }], width: 80, sort: "string", css: { 'text-align': 'left' } },
+														{ id: "servicio", editor: "popup", header: ["Servicio", { content: "textFilter" }], width: 400, sort: "string", css: { 'text-align': 'left' } },
+												],
+												on: {
+                                                    onBeforeLoad: function () { this.showOverlay("Cargando..."); },
+                                                    onAfterLoad: function () {
+                                                        this.hideOverlay();
+                                                        this.adjustRowHeight();
+                                                        this.render();
+                                                    },
+                                                    onAfterEditStop: function (obj, editor) {
+                                                        if (obj.value !== obj.old) {
+                                                            $$("save").enable();
+                                                            this.addRowCss(editor.row, "edited");
+                                                        }
+                                                    },
+                                                    onCheck: function (row, column, state) {
+                                                        $$("save").enable();
+                                                        this.addRowCss(row, "edited");
+                                                    }
+												},
+												scrollY: true, scrollX: true, resizeColumn: true, resizeRow: true, navigation: true,
+												editable: true, borderless: false,
+												fixedRowHeight: false, rowLineHeight: 25, rowHeight: 25,
+												save: "/api/op/op_nsolix2.fwx",
+
+										}
+
+								]
+						});
+						//$$("form").bind($$("dtable"));
+						genera();
+				}
+
+				function genera() {
+						$$("dtable").clearAll();
+						$$("dtable").load('/api/op/op_nsolix');
+				}
+
+
+				// function guardar() {
+				// 		$$("save").disable();
+				// 		webix.dp($$("dtable")).send();
+				// }
+
+
+				function imprimir() {
+						var wndw = webix.ui({
+								view: "window",
+								id: "print_ming",
+								move: true,
+								left: 150,
+								top: 0,
+								width: 650,
+								height: 750,
+								resize: true,
+								head: {
+										view: "toolbar",
+										cols: [
+												{ view: "label", label: "Imprimir oficios" },
+												{ view: "icon", icon: 'mdi mdi-close', click: "$$('print_ming').close();" }
+										]
+								},
+								body: {
+										view: "iframe",
+										src: "/api/op/op_im_co?lnTipo=4&lnFiltro=" + document.getElementById('txtFiltro').value
+								}
+						}).show();
+				}
+
+				function detalle() {
+						var lcID = $$("dtable").getSelectedId();
+
+						if (lcID == undefined)
+								alert("Primero selecciona un oficio a mostrar");
+						else
+								window.parent.deta_ingr(lcID);
+				}
+
+		 const guardar = () =>{
+
+			if(!$$("form").validate())
+			{
+				webix.message({type: "error", text: "Los campos con * son obligatorios", expire: 2500})
+				return 
+			}	
+
+
+			Swal.fire({
+				title: '�Estas seguro que deseas agregar el area solicitante', text: '', icon: 'warning', showCancelButton: true,
+				confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Aceptar',
+			}).then((result) => {
+				if(result.isConfirmed){
+					$$("dtable").add($$("form").getValues());
+					return true;
+				}
+				return false;
+			})
+			.then((res) =>{
+				if(res){
+					webix.dp($$("dtable")).send();
+				}
+			})
+		}
+	</script>
+
+</body>
+
+</html>

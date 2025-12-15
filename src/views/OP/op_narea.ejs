@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title></title>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <link rel="stylesheet" href="/style.css" type="text/css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="/webix/codebase/webix.css" />
+    <link rel="stylesheet" href="https://cdn.materialdesignicons.com/2.7.94/css/materialdesignicons.css?v=6.0.7"
+        type="text/css" charset="utf-8">
+
+    <script src="/codebase/dhtmlx.js"></script>
+    <script src="/webix/codebase/webix.min.js"></script>
+    <script src="/webix/codebase/locale.js"></script>
+    <script src="/js/funciones_webix.js"></script>
+    <%
+    /*
+LOCAL llError, lcCentro, lcPie, llAplicar, lnOficio, lcOficio, lcPrevio, lnMens_usua
+LOCAL llNBusca, lcCVE, lcIniciales, lnIden, lcRuta_tabl
+LOCAL lcDiri_nomb, lnDiri_codi, lcDiri_carg, lcAten_nomb, lnAten_codi, lcAten_carg, llNBusca2, lnCant_ofic
+
+SET PROCEDURE TO mylib
+SET DATE DMY
+
+IF !Derechos("OFICIO")
+    lcRuta = ALLTRIM(config.ruta)
+    SET PROCEDURE TO
+    CLOSE TABLES ALL
+    CLOSE DATABASES ALL
+    response.redirect("/"+lcRuta+"/sin_derechos.fwx")
+ENDIF
+  
+lnID = VAL(Request.QueryString("lnID"))
+
+
+lcSQL = "SELECT id_cent, cve, depen, clave FROM GEN_TIPO_OFIC WHERE cve in (SELECT DISTINCT cve "
+lcSQL = lcSQL + "FROM GEN_DERE_OFIC WHERE user_id = ?pcUser) "
+
+lcQbase_cgce = config.qbase_cgce
+
+lnCone_cgce = &lcQbase_cgce
+IF SQLEXEC(lnCone_cgce, lcSQL, "cSoli") != 1
+	a=Aerror(Mat)
+	?SQLDISCONNECT(0)
+	Response.write(Mat(2) + " Linea: 67")
+	return
+ENDIF
+
+
+lcSQL = "SELECT cve, depen, clave FROM GEN_TIPO_OFIC c WHERE cve in (SELECT DISTINCT cve "
+lcSQL = lcSQL + "FROM GEN_DERE_OFIC WHERE user_id = ?pcUser) ORDER BY 2"
+
+    IF SQLEXEC(lnCone_cgce, lcSQL, "cDepe_cci") != 1
+        a=Aerror(Mat)
+        SQLDISCONNECT(0)
+        Response.write(Mat(2) + " L�nea: 83")
+        return
+    ENDIF
+
+SQLDISCONNECT(0)
+*/
+%>
+
+
+    <style type="text/css">
+        .dhtmlx-error {
+            font-weight: bold;
+            color: white;
+            background-color: #770000;
+        }
+
+        .webix_dtable .webix_ss_header {
+            font-weight: bold;
+        }
+
+        .edited {
+            font-weight: bold;
+        }
+
+        .footer {
+            font-weight: bold;
+
+        }
+
+        .my_style .webix_hcell {
+            background: #2b96cc;
+            color: white;
+
+
+        }
+
+        .my_style .webix_column {
+            font-style: italic;
+            background: #d5eefb;
+            opacity: 0.8;
+        }
+
+        .my_style .webix_column>div {
+            border-color: #d5eefb;
+        }
+    </style>
+</head>
+
+<body onLoad="doOnLoad();">
+    <script>
+        var form_area = {
+            view: "form", id: "form_area", hidden: true,
+            rows: [
+                {
+                    view: "select", id: "cmbCve", name: "cmbCve", required: true, label: "Oficialia", labelPosition: "top",
+                    options: [
+                        <%
+                        /*
+                        SELECT cDepe_cci
+                        GO TOP
+                        SCAN
+                        */
+                        %>
+                        /*{
+                            id: "0",     //<%//Response.write(cDepe_cci.cve)%>",
+                            value: "0",  //<%//Response.write('('+ALLTRIM(cDepe_cci.cve)+') '+ ALLTRIM(cDepe_cci.depen))%>",
+                        },
+                        */
+                        <%for (var i = 0; i < rows.length; i++) {%>
+                        { id: "<%= rows[i].cve%>", value: "(<%=rows[i].cve%>) <%=rows[i].depen%>" },
+                        <%}%>
+                        
+                        <%// ENDSCAN %>
+                    ]
+                },
+                {
+                    cols: [
+                        { view: "text", label: "Nombre", labelPosition: "top", width: 350, id: "nombre", name: "nombre", required: true, attributes: { maxlength: 120 } },
+                        {},
+                        { view: "text", label: "Nombre corto", labelPosition: "top", width: 200, id: "corto", name: "corto", attributes: { maxlength: 20 } },
+                        {}
+                    ]
+                },
+                {
+                    cols: [
+                        { view: "text", label: "Lugar", labelPosition: "top", width: 350, id: "desc_piso", name: "desc_piso", attributes: { maxlength: 10 } },
+                        {},
+                        { view: "text", label: "Piso", labelPosition: "top", width: 200, id: "piso", name: "piso" },
+                        {}
+                    ]
+                },
+                {
+                    cols: [
+                        {},
+                        { view: "button", value: "Nueva area", width: 120, id: "btnNueva_area", click: nueva_area },
+                        {
+                            view: "button", value: "Cancelar", width: 120, id: "btnCance_area", click: function () {
+                                if ($$("form_area").isVisible()) $$("form_area").hide();
+                                if (!$$("tree").isVisible()) $$("tree").show();
+                                if (!$$("btnGuardar").isVisible()) $$("btnGuardar").show();
+                            }
+                        },
+                    ]
+                },
+
+            ]
+        };
+
+        var form_persona = {
+            view: "form", id: "form_persona", hidden: true,
+            rows: [
+                {
+                    view: "combo", id: "cmbPers", name: "cmbPers", label: "Empleado", labelPosition: "top",
+                    required: true, invalidMessage: "Este campo no puede ir vacio",
+                    options: {
+                        fitMaster: false,
+                        width: 600,
+                        filter: function (item, value) {
+                            if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+                                return true;
+                            return false;
+                        },
+                        keyPressTimeout: 1000,
+                        body: {
+                            template: "#value#",
+                            dataFeed: "/api/gen/cmb_persw?lnTipo=2"
+                        }
+                    },
+                },
+                {
+                    cols: [
+                        {},
+                        { view: "button", value: "Agregar persona", width: 140, id: "btnNueva_pers", click: nueva_persona },
+                    ]
+                },
+
+            ]
+        }
+
+
+
+        function doOnLoad() {
+
+            webix.protoUI({
+                name: "edittree"
+            }, webix.EditAbility, webix.ui.treetable);
+
+            var ui = webix.ui({
+                view: "scrollview",
+                id: "verses",
+                scroll: "y",
+                body: {
+                    margin: 30, rows: [
+                        {
+                            rows: [
+
+                                {
+                                    cols: [
+                                        {
+                                            view: "button", label: "Nueva area", width: 120, id: "btnNuev_areas",
+                                            click: function () { muestra(1) }
+
+                                        },
+                                        {
+                                            view: "button", label: "Nueva personas", width: 140, id: "btnNuev_pers",
+                                            click: function () { muestra(2) }
+                                        },
+                                    ]
+                                },
+                                form_area,
+                                form_persona,
+                                {
+                                    cols: [
+                                        {
+                                            view: "edittree", id: "tree", editaction: "dblclick",
+                                            editable: true, scrollX: true, scrollY: true, select: true,
+                                            columns: [
+                                                {
+                                                    id: "cve", header: "Clave", width: 80
+                                                },
+                                                {
+                                                    id: "value", header: "Area", editor: "text",
+                                                    template: "{common.treetable()} #value#", minWidth: 180, fillspace: true
+                                                },
+                                                {
+                                                    id: "desc_piso", header: "Lugar", width: 80, editor: "text",
+                                                },
+                                                {
+                                                    id: "piso", header: "Piso", width: 80, editor: "text",
+                                                },
+                                                {
+                                                    id: "eliminar", header: "Eliminar",
+                                                    template: function (obj, common) {
+                                                        if (obj.$level === 1) return "";
+                                                        return common.checkbox.apply(common, arguments);
+                                                    }, width: 120
+                                                }
+                                            ],
+                                            template: "{common.icon()} {common.folder()} <span>#value#</span>",
+                                        }
+                                    ]
+                                },
+                                { view: "text", id: "txtTree", name: "txtTree", hidden: true },
+                                {
+                                    cols: [
+                                        {},
+                                        { view: "button", click: guardar, label: "Guardar", width: 120, id: "btnGuardar", align: "right" },
+                                        // { view: "button", click: eliminar, label: "Eliminar Area", width: 120, id: "btnEliminar", align: "right" },
+                                    ]
+                                }
+
+
+                            ]
+                        }
+                    ]
+                }
+            });
+            genera();
+        }
+
+        function genera() {
+            $$("tree").clearAll();
+            $$("tree").load("/api/op/op_nareax")
+        }
+
+        function guardar() {
+
+            webix.confirm({
+                title: "Guardar cambios", text: "Estas seguro de guardar los cambios?", ok: 'S&iacute;', cancel: 'No',
+                callback: function (result) {
+                    if (result) {
+                        webix.ajax()
+                            .post("/api/op/op_nareax2.fwx", { json: JSON.stringify($$("tree").serialize()), tipo: 1 })
+                            .then(function (response) {
+                                var respuesta = response.json();
+                                webix.message({ type: (respuesta.status ? "success" : "error"), text: respuesta.message })
+                                if (respuesta.status) genera();
+                            })
+                    }
+                }
+            });
+        }
+
+        function eliminar() {
+
+            if ($$("tree").getSelectedItem() === undefined) {
+                webix.message({ type: "error", text: "Seleccione una area", expire: 2500 });
+                return
+            }
+
+            if ($$("tree").getSelectedItem().id.indexOf("_") != -1) {
+                webix.message({ type: "error", text: "Seleccione el area principal", expire: 2500 });
+                return
+            }
+            webix.confirm({
+                title: "Eliminar area", text: "Seguro que desea eliminar el area seleccionada?", ok: 'S&iacute;', cancel: 'No',
+                callback: function (result) {
+                    if (result) {
+                        webix.ajax()
+                            .post("/api/op/op_nareax2.fwx", { id: $$("tree").getSelectedItem().id, tipo: 2 })
+                            .then(function (response) {
+                                var respuesta = response.json();
+                                webix.message({ type: (respuesta.status ? "success" : "error"), text: respuesta.message })
+                                if (respuesta.status) genera();
+                            })
+                    }
+                }
+            });
+        }
+
+        function muestra(tipo) {
+            if (tipo == 1) {
+                if (!$$("form_area").isVisible()) $$("form_area").show();
+                if ($$("form_persona").isVisible()) $$("form_persona").hide();
+                if ($$("tree").isVisible()) $$("tree").hide();
+                if ($$("btnGuardar").isVisible()) $$("btnGuardar").hide();
+
+            } else {
+                if ($$("form_area").isVisible()) $$("form_area").hide();
+                if (!$$("form_persona").isVisible()) $$("form_persona").show();
+            }
+        }
+
+        function nueva_area() {
+            if (!$$("form_area").validate()) {
+                webix.message({ type: "error", text: "Los campos con * deben ser llenados" })
+                return
+            }
+            
+            webix.confirm({
+                title: "Guardar cambios", text: "Seguro de guardar los cambios?", ok: 'S&iacute;', cancel: 'No',
+                callback: function (result) {
+                    if (result) {
+                        webix.ajax()
+                            .post("/api/op/op_nareax3.fwx?lnTipo=1", $$("form_area").getValues())
+                            .then(function (response) {
+                                var respuesta = response.json();
+                                webix.message({ type: (respuesta.status ? "success" : "error"), text: respuesta.message })
+
+                                if (respuesta.status) {
+                                    genera();
+                                    $$("nombre").setValue();
+                                    $$("corto").setValue();
+                                    $$("desc_piso").setValue();
+                                    $$("piso").setValue();
+                                    $$("form_area").hide();
+                                    $$("tree").show();
+                                   $$("btnGuardar").show();
+                                }
+                            })
+                    }
+                }
+            });
+
+        }
+
+        function nueva_persona() {
+            if (!$$("form_persona").validate()) {
+                webix.message({ type: "error", text: "Los campos con * deben ser llenados" })
+                return
+            }
+
+
+            if ($$("tree").getSelectedItem() === undefined) {
+                webix.message({ type: "error", text: "Seleccione una area", expire: 2500 });
+                return
+            }
+
+            if ($$("tree").getSelectedItem().id.indexOf("_") != -1) {
+                webix.message({ type: "error", text: "Seleccione el area principal", expire: 2500 });
+                return
+            }
+            webix.confirm({
+                title: "Guardar cambios", text: "Seguro de guardar los cambios?", ok: 'S&iacute;', cancel: 'No',
+                callback: function (result) {
+                    if (result) {
+                        webix.ajax()
+                            .post("/api/op/op_nareax3.fwx?lnTipo=2", { persona: $$("cmbPers").getValue(), area: $$("tree").getSelectedItem().id })
+                            .then(function (response) {
+                                var respuesta = response.json();
+                                webix.message({ type: (respuesta.status ? "success" : "error"), text: respuesta.message })
+
+                                if (respuesta.status) {
+                                    genera();
+                                    $$("cmbPers").setValue();
+                                    $$("form_persona").hide();
+                                }
+                            })
+                    }
+                }
+            });
+
+        }
+    </script>
+</body>
+
+
+</html>

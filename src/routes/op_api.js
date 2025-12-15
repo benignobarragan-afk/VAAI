@@ -45,6 +45,7 @@ router.get("/seg_oficx", midd.verifyToken, opCtrl.seg_oficx);
 router.post("/seg_oficx2", midd.verifyToken, opCtrl.seg_oficx2);
 router.get("/recu_arch", midd.verifyToken, opCtrl.recu_arch);
 router.get("/adownload", midd.verifyToken, opCtrl.adownload);
+router.get("/op_nareax", midd.verifyToken, opCtrl.op_nareax);
 
 
 

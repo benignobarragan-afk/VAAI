@@ -1696,7 +1696,7 @@ const seg_oficx2 = (async (req, res) => {
     //return res.json([])
     lcSQL = `
     INSERT INTO opc_segu_ofic (id_ofic, fecha, STATUS, nota, user_id, id_tram) 
-        VALUES (${req.body.lnOficio}, now(), ${loForm.cmbStatus}, '${loForm.txtNota}', '${req.userId}', ${loForm.txtTramite});
+        VALUES (${req.body.lnOficio}, now(), ${loForm.cmbStatus}, '${loForm.txtNota}', '${req.userId}', ${(!loForm.txtTramite?0:loForm.txtTramite)});
     
     UPDATE opc_oficio SET status = ${loForm.cmbStatus} WHERE id_ofic = ${req.body.lnOficio}
     `
@@ -1710,11 +1710,6 @@ const seg_oficx2 = (async (req, res) => {
 });
 
 const recu_arch = (async (req, res) => {
-
-    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
-    {
-        return res.render("sin_derecho")
-    }
 
     lcSQL = `
     SELECT UID AS id, DESCRIP as nombre
@@ -1769,6 +1764,26 @@ const adownload = (async (req, res) => {
 
 });
 
+const op_nareax = (async (req, res) => {
+
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    let lcSQL
+
+    lcSQL = `
+    SELECT id_depe AS id,cve, depen AS value, piso, desc_piso 
+        FROM ser_depen c 
+        WHERE cve in (SELECT DISTINCT cve FROM GEN_DERE_OFIC WHERE user_id = '${req.userId}')
+    `
+    const rows = await util.gene_cons(lcSQL)
+
+    return res.json(rows)
+});
+
+
 module.exports = {
     op_cucsx2,
     op_oficx5,
@@ -1808,4 +1823,5 @@ module.exports = {
     seg_oficx2,
     recu_arch,
     adownload,
+    op_nareax
 }
