@@ -617,7 +617,7 @@
 				{view:"label", label:"Archivos"},
 				{
 					view: "list",
-					id: "archivos_adjuntos",
+					id: "lsArchivo", name: "lsArchivo",
 					width: 400,
 					header: "Archivos Adjuntos",
 					scroll: "y",      // Permite scroll vertical si hay muchos
@@ -632,7 +632,7 @@
 						html += "<span class='webix_icon wxi-trash delete-file'></span> ";
 						
 						// Enlace de descarga (usa el ID o la ruta)
-						html += "<a href='server/api/download?id=" + obj.id + "' target='_blank'>";
+						html += "<a href='/api/op/adownload?id=" + obj.id + "' target='_blank'>";
 						html += obj.nombre; // Muestra el nombre del archivo
 						html += "</a>";
 						
@@ -660,10 +660,11 @@
 					},
 					
 					// Configuración para cargar datos del servidor (metadatos de MariaDB)
-					data:[
+					/* data:[
 						{ "id": 1, "nombre": "factura_compra_01.pdf", "ruta": "/uploads/a3b1c2.pdf" },
 						{ "id": 2, "nombre": "contrato_firmado.docx", "ruta": "/uploads/x9y8z7.docx" }
-						]
+						] */
+					url: "/api/op/recu_arch?lnOficio=<%=loOficio%>"
 				}
 			] 
 			},

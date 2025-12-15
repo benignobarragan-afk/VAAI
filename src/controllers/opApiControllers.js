@@ -4,6 +4,7 @@ const pool = require(path.join(__dirname, "..", "db"))
 const config = require(path.join(__dirname, "..", "config"));
 const util = require(path.join(__dirname, "..", "utils/busquedaUtils"));
 const outil = require(path.join(__dirname, "..", "utils/other_utils"));
+const fs = require('fs');
 
 const op_cucsx2 = (async (req, res) => {
 
@@ -1708,6 +1709,66 @@ const seg_oficx2 = (async (req, res) => {
 
 });
 
+const recu_arch = (async (req, res) => {
+
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    lcSQL = `
+    SELECT UID AS id, DESCRIP as nombre
+	    FROM opc_archivo 
+        WHERE id_ofic = ${req.query.lnOficio}
+        ORDER BY fecha DESC
+
+    `
+    //console.log(lcSQL)
+    const rows = await util.gene_cons(lcSQL)
+
+    return res.json(rows)
+
+});
+
+const adownload = (async (req, res) => {
+
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    lcSQL = `
+    SELECT *
+	    FROM opc_archivo 
+        WHERE UID = '${req.query.id}'
+    `
+    //console.log(lcSQL)
+    const rows = await util.gene_cons(lcSQL)
+
+    if (!rows){
+        return res.json({"error":false, "mensage":"No se econtro el archivo en la base de datos"})
+    }
+
+    console.log(rows)
+
+    
+    const ruta_fisica = config.SERV_ARCH + rows[0].ID_ARCH + path.extname(rows[0].DESCRIP);
+    
+    absolutePath = path.resolve(__dirname, 'uploads', ruta_fisica);
+
+    if (!fs.existsSync(absolutePath)) {
+        return res.status(404).send("El archivo no existe en el servidor.");
+    }
+
+    res.download(absolutePath, nombre_original, (err) => {
+        if (err) {
+            console.error("Error en la descarga:", err);
+        }
+    });
+
+
+});
+
 module.exports = {
     op_cucsx2,
     op_oficx5,
@@ -1744,5 +1805,7 @@ module.exports = {
     detalle_ofic_Nox,
     csg_sServx2,
     seg_oficx,
-    seg_oficx2
+    seg_oficx2,
+    recu_arch,
+    adownload,
 }
