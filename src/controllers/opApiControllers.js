@@ -1607,8 +1607,9 @@ const detalle_ofic_Nox = (async(req,res) =>{
 
     lcSQL = `
         SELECT o.cve, o.anio as anio_ingr, o.nume_cont, DATE_FORMAT(o.fech_ofic, '%d/%m/%Y') as fech_ofic, DATE_FORMAT(o.fecha, '%d/%m/%Y') AS fech_rece, 
-                DATE_FORMAT(o.fecha, '%H:%i') AS hora_rece, o.descrip as nume_ofic, o.nomb_remi as remi_nomb, o.carg_remi as remi_carg, o.tipo_info, c.dependen as txtDepen, 
-                o.nomb_dest as dest_nomb, o.carg_dest as dest_carg, o.tipo_depe as rbDepe, o.id_tiof as tipo_ofic, o.id_clof as clase, LEFT(o.asunto, 10) as asunto, o.nota, o.info_sens
+                DATE_FORMAT(o.fecha, '%H:%i') AS hora_rece, o.descrip as nume_ofic, o.nomb_remi as remi_nomb, o.carg_remi as remi_carg, ifnull(o.tipo_info, 0) as tipo_info, 
+                c.dependen as txtDepen, o.nomb_dest as dest_nomb, ifnull(o.carg_dest, '') as dest_carg, o.tipo_depe as rbDepe, o.id_tiof as tipo_ofic, o.id_clof as clase, 
+                o.asunto, IFNULL(o.nota, '') as nota, IFNULL(o.info_sens, 0) as info_sens
             FROM opc_oficio o left join gen_centros c on o.id_cent = c.id_cent
             WHERE id_ofic = ${req.query.lnOficio}
     `
@@ -1747,15 +1748,17 @@ const adownload = (async (req, res) => {
     console.log(rows)
 
     
-    const ruta_fisica = config.SERV_ARCH + rows[0].ID_ARCH + path.extname(rows[0].DESCRIP);
+    const ruta_fisica = config.SERV_ARCH + 'OPARCHIVO/' + rows[0].ID_ARCH + path.extname(rows[0].DESCRIP);
     
     absolutePath = path.resolve(__dirname, 'uploads', ruta_fisica);
+
+    console.log(absolutePath)
 
     if (!fs.existsSync(absolutePath)) {
         return res.status(404).send("El archivo no existe en el servidor.");
     }
 
-    res.download(absolutePath, nombre_original, (err) => {
+    res.download(absolutePath, rows[0].DESCRIP, (err) => {
         if (err) {
             console.error("Error en la descarga:", err);
         }

@@ -101,11 +101,6 @@
 		<script>
 			var xx = 1;
 			var estilo = 1;
-			var menu_data = [
-				<% for (let i = 0; i < rows.length; i++) { %>
-				{ preguntar: false, id: "<%=rows[i].ruta%>", value: "<%=rows[i].nombre%>", icon: "<%=rows[i].icono%>"},
-				<% } %>
-			];
 
 			let preguntar_cambio = false;
 			let selected = '';
@@ -363,7 +358,8 @@
 									tooltip:true,
 									css: "webix_dark",
 									//type: "customIcons",
-									data: menu_data,
+									//data: menu_data,
+									url: "/api/gene_menu",
 									// tooltip: function (obj) {
 									// 	return obj.value;
 									// },

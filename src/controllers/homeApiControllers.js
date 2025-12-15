@@ -75,7 +75,41 @@ const usua_nuevx2 = (async (req, res) => {
     return res.json({"error":false, "mensage":"El usuario se registro exitomente"})
 });
 
+const gene_menu = (async (req, res) => {
+
+    const lcGROUPS = req.groups;
+
+    const lcSQL = `
+    SELECT min(orden) as orden, nombre, ruta, icono, submenu  
+        FROM gen_menu WHERE LOCATE(derecho, '${lcGROUPS}') > 0 
+        GROUP BY nombre, ruta, icono, submenu
+        ORDER BY MIN(orden), submenu DESC
+    `
+    const rows = await util.gene_cons(lcSQL);
+    
+
+    let lnOrden = -1
+	let loHijo = [], loMenu = []
+			
+    for (i = 0; i < rows.length; i++){
+        if (!!rows[i].submenu){
+            loHijo.push({id:rows[i].ruta, value:rows[i].nombre, icon:rows[i].icono})
+        }
+        if (lnOrden != rows[i].orden && !rows[i].submenu){
+        
+        loMenu.push({id:rows[i].ruta, value:rows[i].nombre, icon:rows[i].icono, data:loHijo})
+            loHijo = [];
+            lnOrden = rows[i].orden;
+        }
+    }
+
+    console.log(loMenu)
+    return res.json(loMenu)
+
+});
+
 module.exports = {
     usua_nuevx,
-    usua_nuevx2
+    usua_nuevx2,
+    gene_menu,
 }

@@ -224,7 +224,7 @@
 							{ id: "<% // Response.write(cTipo_docu.id_pk)%>", value: "<% // Response.write(cTipo_docu.descrip)%>" },
 						<% //  ENDSCAN %>
 					],
-					on: {
+					/* on: {
 						"onChange": function (newv, oldv) {
 							buscaNume();
 							if(newv == 3){
@@ -243,7 +243,7 @@
 
 							}
 						}
-					}
+					} */
 				},
 				{
 					view:"combo", id:"segu_pra", name:"segu_pra", labelPosition:"top", label:"Si vas a dar seguimiento a un documento PRA seleccionalo",	 hidden:true, 
@@ -281,12 +281,12 @@
 					IF RECCOUNT("cOficialia") > 0
                     */
 					%>
-					value:"<%=rows[0].cve%>", 
+					//value:"<%=rows[0].cve%>", 
 					<% // ENDIF%>
 
-				on: {
+				/* on: {
 					"onChange": function (newv, oldv) {
-						obtenerSeccion();
+						//obtenerSeccion();
 						
 						
 						if(["CGCE"].includes(newv)){
@@ -317,23 +317,22 @@
                             IF USED("ofic_sali")
 							GO TOP IN ofic_sali 
                             */%>
-                            { "id":0 , "value": "0" }
 							//	{ "id":<% //  Response.write(ofic_sali.id_iden) %> , "value": "<% // Response.write(ofic_sali.oficio)%>" }
 								<% //  ENDIF %>
 						]
 						})
 
 
-						$$("liga_sali").setValue('<% // Response.write(IIF(USED("ofic_sali"),ofic_sali.id_iden,0))%>');
-						$$("liga_sali").refresh();
+						//$$("liga_sali").setValue('<% // Response.write(IIF(USED("ofic_sali"),ofic_sali.id_iden,0))%>');
+						//$$("liga_sali").refresh();
 
-						buscaNume();
-						buscaOficio()
+						//buscaNume();
+						//buscaOficio()
 						
 						
 					},
 
-				},
+				}, */
 				options: {
 					filter: function (item, value) {
 						if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
@@ -370,10 +369,10 @@
 				]
 			},
 			{
-				view: "text", id: "nume_cont", name: "nume_cont", labelPosition: "top", label: "N&uacute;mero de control", value: ""
+				view: "text", id: "nume_cont", name: "nume_cont", labelPosition: "top", label: "N&uacute;mero de control"
 			},
 			{
-				view: "text", id: "fech_ofic", name: "fech_ofic", labelPosition: "top", label: "Fecha oficio", value: new Date()
+				view: "text", id: "fech_ofic", name: "fech_ofic", labelPosition: "top", label: "Fecha oficio"
 			},
 			]
 		},
@@ -402,12 +401,12 @@
 		},
 		{
 			cols: [{
-				view: "text", id: "fech_rece", name: "fech_rece", labelPosition: "top", label: "Fecha recepci&oacute;n", value: new Date()
+				view: "text", id: "fech_rece", name: "fech_rece", labelPosition: "top", label: "Fecha recepci&oacute;n"
 			}, {
-				view: "text", label: "Hora recepci&oacute;n", labelPosition: "top", attributes: { maxlength: 5 }, id: "hora_rece", name: "hora_rece", placeholder: "Formato 24 hrs.", value:hour.trim(), 
-				validate: function (value) {
+				view: "text", label: "Hora recepci&oacute;n", labelPosition: "top", attributes: { maxlength: 5 }, id: "hora_rece", name: "hora_rece", placeholder: "Formato 24 hrs.", 
+				/* validate: function (value) {
 					return /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value);
-				}, invalidMessage: "El formato de la hora es invalido"
+				}, invalidMessage: "El formato de la hora es invalido" */
 
 			}, {
 				view: "text", id: "nume_ofic", name: "nume_ofic", label: "<span class='obligatorio'>*</span>N&uacute;mero de oficio recibido", labelPosition: "top",
@@ -580,7 +579,7 @@
 			},
 			]
 		}, {
-			view: "textarea", id: "asunto", name: "asunto", label: "<span class='obligatorio'>*</span>Asunto", labelPosition: "top", height: 120
+			view: "textarea", id: "asunto", name: "asunto", label: "Asunto", labelPosition: "top", height: 120
 		},
 		{
 		cols: [
@@ -684,7 +683,7 @@
 							view: "form", id: "frm1",
 							elements: form_elements,
 							rules: {
-								<%if(llDirectorio && !!laQuery.lcClav_ofic){ // IF llDirectorio AND EMPTY(lcClav_ofic)%>
+/* 								<%if(llDirectorio && !!laQuery.lcClav_ofic){ // IF llDirectorio AND EMPTY(lcClav_ofic)%>
 								"tipo_docu": webix.rules.isNotEmpty,
 								<%} // ENDIF%>
 								"cve": webix.rules.isNotEmpty,
@@ -708,7 +707,7 @@
 
 								"tipo_ofic": webix.rules.isNotEmpty,
 								"clase": webix.rules.isNotEmpty,
-								"asunto": webix.rules.isNotEmpty,
+								"asunto": webix.rules.isNotEmpty, */
 							},
 						}]
 					}
@@ -817,8 +816,8 @@
 		function ligar() {
 			var id = $$("cmbLiga_ofic").getValue();
 			var texto = $$("cmbLiga_ofic").getText();
-			console.log(id)
-			console.log(texto)
+			//console.log(id)
+			//console.log(texto)
 
 			if (id == '' || id == null || typeof (id) == 'undefined' || id== 0) {
 				webix.message({ text: "Debes seleccionar un registro" });
@@ -894,7 +893,7 @@
 			switch (combo) {
 				case "liga":
 					valor = $$("rbLiga").getValue();
-					console.log(valor)
+					//console.log(valor)
 					if (valor == '' || valor == null || typeof (valor) == 'undefined' || valor == 0) {
 						$$("rbLiga").setValue(1)
 						valor = 1

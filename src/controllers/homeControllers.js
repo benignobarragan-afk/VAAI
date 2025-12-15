@@ -5,34 +5,11 @@ const util = require(path.join(__dirname, "..", "utils/busquedaUtils"));
 
 const intro = (async (req, res) => {
     const lcNombre = req.nom_usu;
-    let lcGROUPS = req.groups
-    let rows = {}
-
-    try {
-        conn = await pool.getConnection();
+    let lcGROUPS = req.groups;
+    
+    //console.log(rows)
         
-        // 3. Ejecutar la consulta
-
-        const lcSQL = `
-        SELECT min(orden) as orden, nombre, ruta, icono 
-            FROM gen_menu WHERE LOCATE(derecho, '${lcGROUPS}') > 0 
-            GROUP BY nombre, ruta, icono 
-            ORDER BY MIN(orden)
-        `
-        rows = await conn.query(lcSQL, [1]);
-        console.log(rows);
-
-    } catch (err) {
-        console.log(err)
-        res.json({err})
-        throw err;
-    } finally {
-        // 4. Devolver la conexión al pool (¡Muy Importante!)
-        if (conn) conn.release(); 
-    }
-
-    console.log(rows)
-    res.render("intro", {lcNombre,rows})
+    res.render("intro", {lcNombre})
 });
 
 
