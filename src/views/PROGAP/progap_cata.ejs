@@ -1,0 +1,115 @@
+<%- include('../partials/header'); %>
+
+<script type="text/javascript">
+
+		let parents = ["fonsabi", "almacen", "suficiencias", "licitaciones"]
+
+		
+
+		let tree_menu = [
+		{
+			id:"progap_usuario", value:"Usuarios", icon: "account", 
+		},
+        {
+			id:"progap_directivo", value:"Directivo", icon: "human-greeting", 
+		},
+        {
+			id:"progap_estudia", value:"Estudiante", icon: "school", 
+		},
+		{
+			id:"progap_convoca", value:"Convocatoria", icon: "bullhorn", 
+		},
+        ]
+		webix.ready(function(){
+			webix.Touch.enable();
+
+			if (!webix.env.touch && webix.env.scrollSize)
+				webix.CustomScroll.init();
+
+			webix.type(webix.ui.tree, {
+				baseType: "sideBar",      // inherit everything else from sidebar type
+				name: "customIcons",
+				icon: function (obj, common) {  // custom rendering pattern for icons
+					if (obj.icon)
+						return "<img width='24' height='24' src='/intranet/imagenes/boton/" + obj.icon + "'>";
+					return "";
+				}
+			});
+
+			webix.ui({
+				rows:[
+				{
+					view: "toolbar", padding: 3, borderless: true, 
+					elements: [
+					{
+						view:"label", align:"center", label:"Catálogos", id:"lblReportes"
+					},
+					{
+						view: "icon", icon: "mdi mdi-menu", 
+						click: function () { $$("mySideBar").toggle();}
+					},
+					]
+				},
+				{
+					borderless:false,
+					cols: [
+					{ 
+						view:"iframe",  id:"frame-body",  borderless: true 
+					},
+					{
+						view: "sidebar", collapsed: false, borderless: true, width:200, id:"mySideBar",name:"mySideBar",tooltip: function (obj) {return obj.value;}, 
+                        template: "<span class='webix_icon mdi mdi-#icon#'></span> #value#",
+						data: tree_menu,
+						type: "customIcons",
+						scheme: {
+							$init(obj) {
+								if (obj.derecho == 1) { obj.$css = "derecho" };
+							}
+						},
+						on: {
+							onAfterSelect: changePage,
+							onItemClick: changePage
+						}
+					},
+					
+					]
+				}
+				]
+				
+			})
+			
+			$$("sidebar1").select("fin_facturas");
+			 
+		})
+
+		function changePage(id) {
+			if(parents.includes(id) && $$("mySideBar").getFirstChildId(id)){
+				if($$("mySideBar").config.collapsed){
+					$$("mySideBar").toggle();
+				}
+				return;
+			}
+			$$("frame-body").load(id);
+
+			var item = $$("mySideBar").getItem(id)
+			var padre = $$("mySideBar").getParentId(id)
+			var label = '';
+			if(typeof(padre) != 'undefined' && padre != 0 && padre != null && padre != ''){
+				var oPadre = $$("mySideBar").getItem(padre)
+				label = oPadre.value + " - "
+			}
+
+
+
+			$$("lblReportes").define({label:label + item.value})
+			$$("lblReportes").render();
+			$$("frame-body").load(id);
+			if(!$$("mySideBar").config.collapsed){
+				$$("mySideBar").toggle();
+			}
+
+		}
+	</script>
+<body>
+</body>
+</html>

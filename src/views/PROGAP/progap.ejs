@@ -1,4 +1,10 @@
 <%- include('../partials/header'); %>
+<!-- 
+<option value="1">Administrador</option>
+<option value="2">Revisor</option>
+<option value="3">Secretario Academico</option>
+<option value="4">Coordinador de posgrado</option>
+<option value="5">Estudiante</option> -->
 
 <body">
     <form id="form1" name="form1" method="post" action="">
@@ -14,22 +20,38 @@
             },
         }
         },
+        <%if (lcDerecho.indexOf(",ADMI_PROGAP,") >= 0 || lcDerecho.indexOf(",REVI_PROGAP,") >= 0){%>
         {
-        header: "<span class='mdi mdi-progress-check'></span>Programas de especialidad", body: {
-            view: "iframe", id: "tools_qr", src:"tools_qr",
+        header: "<span class='mdi mdi-progress-check'></span>Catalogos", body: {
+            view: "iframe", id: "progap_cata", src:"progap_cata",
             type: {
                 height: 60
             },
         }
         },
+        <%}%>
+        <%if (lcDerecho.indexOf(",ADMI_PROGAP,") >= 0){%>
         {
-        header: "<span class='mdi mdi-cash-multiple'></span>P3E", body: {
-            view: "iframe", id: "tools_sqr", src:"tools_sqr",
+        header: "<span class='mdi mdi-import'></span>Importar documentos", body: {
+            view: "iframe", id: "progap_impo", src:"progap_impo",
             type: {
                 height: 60
             },
         }
         },
+        <%}%>
+        <%if (lcDerecho.indexOf(",ADMI_PROGAP,") >= 0){%>
+        {
+        header: "<span class='mdi mdi-history'></span>ExaCam", body: {
+            view: "iframe", id: "progap_exacam", src:"progap_exacam",
+            type: {
+                height: 60
+            },
+        }
+        },
+        <%}%>
+
+        
         // {
         //   header: "<span class='webix_icon mdi mdi-checkbox-multiple-marked-outline'></span>Insumos", body: {
         //     view: "iframe", id: "pdf", src: "tools_pdf.fwx",
@@ -47,6 +69,7 @@
         rows: [
             {
                 id:"tbView",
+                name:"tbView",
                 view: "tabview",
             
                 animate:{ type:"slide", subtype:"together" },

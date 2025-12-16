@@ -1014,7 +1014,7 @@ const op_hoficx = (async (req, res) => {
         LEFT JOIN 
             gen_doficio d ON d.id_iden = o.ID_IDEN AND d.tipo = 1 
         WHERE 
-            o.cve = '${req.query.cve}' AND YEAR(o.fecha) = ${req.query.anio} AND MONTH(o.fecha) BETWEEN ${req.query.mesi} AND ${req.query.mesf}
+            o.cve = '${req.query.cve}' AND YEAR(o.fecha) = ${req.query.anio} AND MONTH(o.fecha) BETWEEN ${(!req.query.mesi?1:req.query.mesi)} AND ${(!req.query.mesf?12:req.query.mesf)}
         ORDER BY 
         o.fecha DESC 
     `

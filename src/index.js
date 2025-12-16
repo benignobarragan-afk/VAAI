@@ -58,6 +58,7 @@ const ToolsRoutes = require("./routes/tools")
 const ProgapRoutes = require("./routes/progap")
 const OpApiRoutes = require("./routes/op_api")
 const ToolsApiRoutes = require("./routes/tools_api")
+const ProgapApiRoutes = require("./routes/progap_api")
 //const UserRoutes = require("./routes/user")
 
 //settings
@@ -90,6 +91,7 @@ app.use("/progap", ProgapRoutes)
 app.use("/api/op", OpApiRoutes)
 app.use("/api/gen", GenApiRoutes)
 app.use("/api/tools", ToolsApiRoutes)
+app.use("/api/progap", ProgapApiRoutes)
 
 //app.use(UserRoutes)
 
