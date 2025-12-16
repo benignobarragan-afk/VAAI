@@ -3,7 +3,7 @@
 /* BASIC */
 
 html {
-  background-color: #56baed;
+  background-color: #3c3c3e;
 }
 
 body {
@@ -12,7 +12,7 @@ body {
 }
 
 a {
-  color: #92badd;
+  color: #e63946;
   display:inline-block;
   text-decoration: none;
   font-weight: 400;
@@ -75,7 +75,7 @@ h2.inactive {
 
 h2.active {
   color: #0d0d0d;
-  border-bottom: 2px solid #5fbae9;
+  border-bottom: 2px solid #92c236;
 }
 
 
@@ -83,7 +83,7 @@ h2.active {
 /* FORM TYPOGRAPHY*/
 
 input[type=button], input[type=submit], input[type=reset]  {
-  background-color: #56baed;
+  background-color: #004077;
   border: none;
   color: white;
   padding: 15px 80px;
@@ -237,7 +237,7 @@ input[type=text]:placeholder {
   bottom: -10px;
   width: 0;
   height: 2px;
-  background-color: #56baed;
+  background-color: #004077;
   content: "";
   transition: width 0.2s;
 }

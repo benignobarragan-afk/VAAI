@@ -1,1 +1,91 @@
-<%- include('header'); -%>
+<%- include('../partials/header'); %>
+
+<body">
+    <form id="form1" name="form1" method="post" action="">
+    <div id="principal" style="position: relative; border: #B5CDE4 1px solid;"></div>
+    <script>
+
+    var cells = [
+        {
+            header: "<span class='mdi mdi-view-dashboard'></span>Tablero", body: {
+            view: "iframe", id: "progap_dashboard", src:"progap_dashboard",
+            type: {
+                eight: 60
+            },
+        }
+        },
+        {
+        header: "<span class='mdi mdi-progress-check'></span>Programas de especialidad", body: {
+            view: "iframe", id: "tools_qr", src:"tools_qr",
+            type: {
+                height: 60
+            },
+        }
+        },
+        {
+        header: "<span class='mdi mdi-cash-multiple'></span>P3E", body: {
+            view: "iframe", id: "tools_sqr", src:"tools_sqr",
+            type: {
+                height: 60
+            },
+        }
+        },
+        // {
+        //   header: "<span class='webix_icon mdi mdi-checkbox-multiple-marked-outline'></span>Insumos", body: {
+        //     view: "iframe", id: "pdf", src: "tools_pdf.fwx",
+        //   }
+        // },
+        // {
+        //   header: "<span class='webix_icon mdi mdi-checkbox-multiple-marked-outline'></span>Sugerencias", body: {
+        //     view: "iframe", id: "csg_arti_Cambio", src: "csg_arti_Cambio.fwx?origen=1",
+        //   }
+        // },
+    ];
+
+    webix.ready(function () {
+        webix.ui({
+        rows: [
+            {
+                id:"tbView",
+                view: "tabview",
+            
+                animate:{ type:"slide", subtype:"together" },
+                tabbar: {
+                    tabMinWidth: 250,
+                    tabMoreWidth: 80,
+                    padding: 2,
+                    moreTemplate: "<span class='webix_icon mdi mdi-dots-vertical'></span>",
+                    popupWidth: 250,
+                    popupTemplate: "#value#",
+                    yCount: 10,
+                },
+                multiview: {
+                    keepViews: false,
+                    animate: {
+                        type: "slide",
+                        direction: "in"
+                    },
+                },
+            cells: cells
+            }
+        ]
+        });
+        buscaSolicitudes();
+        setInterval(()=>{
+            buscaSolicitudes();
+        },120*1000)
+
+        
+    });
+
+    function buscaSolicitudes(){
+//        webix.ajax().post("/SICGCE/csg_hcx.fwx",{t:1}).then((res)=>{
+//          res = res.json();
+//          document.getElementById('pendientes').innerHTML = res.numero
+//        })
+    }
+    </script>
+    </form>
+</body>
+
+</html>

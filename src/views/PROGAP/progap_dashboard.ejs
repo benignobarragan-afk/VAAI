@@ -1,0 +1,428 @@
+<%- include('../partials/header'); %>
+
+<script>
+
+var data = [
+  { val:"70", color1: "#2ECC71", color2:"#AAB7B8" },
+  { val:"30", color1: "#AAB7B8", color2:"#E74C3C" },
+];     
+
+</script>
+
+<body>
+	<form id="form1" name="form1" method="post" action="">
+		<div id="principal" style="position: relative; border: #B5CDE4 1px solid;"></div>
+		<script>
+			var cells = [
+				{
+					header: "<span class='webix_icon mdi mdi-file-document-outline'></span>Ingreso/Egreso", body: {
+						view: "iframe", id: "re_graf01", src: "op_rgraf01.fwx",
+						type: {
+							height: 60
+						},
+						select: true,
+					}
+				}
+
+			];
+
+			webix.ready(function () {
+				webix.ui({
+					rows: [
+						{
+							cols:[
+									{
+										view: "select", label: "Año", id: "cmbAnio", name: "cmbAnio", value: <%=new Date().getFullYear()%>, width: 150,
+										labelPosition: "left", labelAlign: "left", options: [
+											<%
+											for (var i = new Date().getFullYear(); i >= 2021; i--){%>
+												{ id: <%=i%>, value: "<%=i%>" },
+											<%
+											}
+											%>
+										],
+										on: {
+											onChange: ()=>{
+											genera();
+											}
+										}
+									},
+								  	{
+										view: "combo", id: "cmbSoli", name: "cmbSoli",
+										//value: "<% // Response.Write(IIF(pnId_cent = 4, 'DG HCG', ALLTRIM(cSoli.cve)))%>",
+										label: "Oficio de", 
+										value:"<%=rows[0].cve%>",
+										labelPosition:"left",
+										//required: true, invalidMessage: "Este campo no puede ir vacio",
+										options: {
+											fitMaster: false,
+											width: 600,
+											body: {
+												data: [
+													<%for (var i = 0; i < rows.length; i++) {%>
+													{ id: "<%= rows[i].cve%>", value: "(<%=rows[i].cve%>) <%=rows[i].depen%>" },
+													<%}%>
+												]
+											}
+										},
+										on: {
+											onChange: ()=>{
+												//mues_soli();
+												//obtenerSeccion();
+												genera();
+												
+											}
+										}
+									},
+							]
+						},
+						{
+							cols:[
+							{	
+							view:"chart",
+							type:"bar",
+							id:"chaConce",
+							name:"chaConce",
+							barWidth:60,
+							radius:2,
+							gradient:"rising",
+							xAxis:{
+								template:"#mes#"
+							},
+							yAxis:{
+								// start:0,
+								// step:10,
+								// end:100
+							},
+							legend:{
+								values:[{text:"Ingreso",color:"#58dccd"},{text:"Egreso",color:"#a7ee70"},{text:"No asignados",color:"#36abee"}],
+								valign:"middle",
+								align:"right",
+								width:120,
+								layout:"y"
+							},
+							series:[
+								{
+								value:"#ingreso#",
+								color: "#58dccd",
+								tooltip:{
+									template:"#ingreso#"
+								}
+								},
+								{
+								value:"#egreso#",
+								label:"#egreso#",
+								color:"#a7ee70",
+								tooltip:{
+									template:"#egreso#"
+								}
+								},
+								{
+								value:"#no_asignado#",
+								color:"#36abee",
+								tooltip:{
+									template:"#no_asignado#"
+								}
+								}
+							],
+							},
+							{
+								rows: [
+                                    {
+                                        view:"label", 
+                                        label: "Oficios de salida", 
+                                        align:"center" 
+                                    },
+									{
+										view: "chart",
+										id:"chaEgreF",
+										name:"chaEgreF",
+										donutInnerText: function(data, total) {
+										return "<span style='font-size:20px; color: black;'>Fin:<br>"+data[0].val+"%</span>";
+										},
+										type:"donut",
+										innerRadius:40, 
+										value:"#val#",  
+										color:"#color1#",
+										width:200,
+										data
+									},
+									{
+										view: "chart",
+										id:"chaEgreP",
+										name:"chaEgreP",
+										donutInnerText: function(data, total) {
+										return "<span style='font-size:20px; color: black;'>Pen:<br>"+data[1].val+"%</span>";
+										},
+										type:"donut",
+										innerRadius:40, 
+										value:"#val#",  
+										color:"#color2#",
+										data
+									}
+								]
+							},
+                            {
+								rows: [
+                                    {
+                                        view:"label", 
+                                        label: "Oficios de entrada", 
+                                        align:"center" 
+                                    },
+									{
+										view: "chart",
+										id:"chaIngreF",
+										name:"chaIngreF",
+										donutInnerText: function(data, total) {
+										return "<span style='font-size:20px; color: black;'>Fin:<br>"+data[0].val+"%</span>";
+										},
+										type:"donut",
+										innerRadius:40, 
+										value:"#val#",  
+										color:"#color1#",
+										width:200,
+										data
+									},
+									{
+										view: "chart",
+										id:"chaIngreP",
+										name:"chaIngreP",
+										donutInnerText: function(data, total) {
+										return "<span style='font-size:20px; color: black;'>Pen:<br>"+data[1].val+"%</span>";
+										},
+										type:"donut",
+										innerRadius:40, 
+										value:"#val#",  
+										color:"#color2#",
+										data
+									}
+								]
+							},
+							{ maxWidth: 5 },
+							{ 
+								rows: [
+								{view:"fieldset", label:"Total de egreso", body:{
+									rows:[
+										{ view:"label", align:"right", label:"", id:"lblDato01", name:"lblDato01", width:150, height: 90, 
+											template: "<div style='font-size: 45px; color: #FFFFFF;'>#label#</div>",
+										},
+									]
+									}
+								},
+								{view:"fieldset", label:"Oficio en proceso", body:{
+									rows:[
+										{ view:"label", align:"right", label:"", id:"lblDato02", name:"lblDato02", width:150, height: 60, 
+											template: "<div style='font-size: 30px; color: #FFFFFF;'>#label#</div>",
+										},
+									]
+									}
+								},
+								{view:"fieldset", label:"Oficio finalizados", body:{
+									rows:[
+										{ view:"label", align:"right", label:"", id:"lblDato03", name:"lblDato03", width:150, height: 60, 
+											template: "<div style='font-size: 30px; color: #FFFFFF;'>#label#</div>",
+										},
+									]
+									}
+								},
+								{view:"fieldset", label:"Total de cancelados", body:{
+									rows:[
+										{ view:"label", align:"right", label:"", id:"lblDato04", name:"lblDato04", width:150, height: 60, 
+											template: "<div style='font-size: 30px; color: #FFFFFF;'>#label#</div>",
+										},
+									]
+									}
+								},
+								]
+							},
+							{ maxWidth: 5 },
+							{ 
+								rows: [
+								{view:"fieldset", label:"Total de ingreso", body:{
+									rows:[
+										{ view:"label", align:"right", label:"", id:"lblDato11", name:"lblDato11", width:150, height: 90, 
+											template: "<div style='font-size: 45px; color: #FFFFFF;'>#label#</div>",
+										},
+									]
+									}
+								},
+								{view:"fieldset", label:"Sin asignar", body:{
+									rows:[
+										{ view:"label", align:"right", label:"", id:"lblDato12", name:"lblDato12", width:150, height: 60, 
+											template: "<div style='font-size: 30px; color: #FFFFFF;'>#label#</div>",
+										},
+									]
+									}
+								},
+								{view:"fieldset", label:"Asignados", body:{
+									rows:[
+										{ view:"label", align:"right", label:"", id:"lblDato13", name:"lblDato13", width:150, height: 60, 
+											template: "<div style='font-size: 30px; color: #FFFFFF;'>#label#</div>",
+										},
+									]
+									}
+								},
+								{view:"fieldset", label:"Cancelados", body:{
+									rows:[
+										{ view:"label", align:"right", label:"", id:"lblDato14", name:"lblDato14", width:150, height: 60, 
+											template: "<div style='font-size: 30px; color: #FFFFFF;'>#label#</div>",
+										},
+									]
+									}
+								},
+								]
+							},
+						]},
+						{
+							cols:[
+							{
+
+								view: "chart",
+								type:"donut",
+								id:"chaTotal",
+								naem:"chaTotal",
+								width:500,
+								value:"#oficio#",
+								//color:"#color#",
+								legend:{
+									width: 75,
+									align:"right",
+									valign:"middle",
+									template:"#mes#"
+								},
+								pieInnerText:"#oficio#",
+								shadow:0,
+								gradient:true,
+								//data:month_dataset
+							},
+							{
+							view:"treemap",
+							select: true,
+							id:"chaDeman",
+							name:"chaDeman",
+							headerTemplate: "#label#",
+							template: function(item){
+								return item.label || "";
+							},
+							type:{
+								cssClass: getCss
+							},
+							value: "#value#",
+							on: {
+									onItemClick: function(id){
+									if(this.isBranch(id)){
+										this.showBranch(id);
+									}
+									else{
+										var item = this.getItem(id);
+										webix.message("Cantidad: "+ item.value);
+									}
+									}
+								},
+							}
+							
+							]
+						},
+
+					]
+				})
+				genera();
+			});
+
+			function genera(){
+
+				$$("chaConce").clearAll();
+				$$("chaConce").load("/api/op/op_rgrafx?lnAnio=" + $$("cmbAnio").getValue() + "&lcCVE=" + $$("cmbSoli").getValue() );
+
+				$$("chaTotal").clearAll();
+				$$("chaTotal").load("/api/op/op_rgrafx2?lnAnio=" + $$("cmbAnio").getValue() + "&lcCVE=" + $$("cmbSoli").getValue() );
+
+				$$("chaDeman").clearAll();
+				$$("chaDeman").load("/api/op/op_rgrafx3?lnAnio=" + $$("cmbAnio").getValue() + "&lcCVE=" + $$("cmbSoli").getValue() );
+
+				webix.ajax().get("/api/op/op_rgrafx4?lnAnio=" + $$("cmbAnio").getValue() + "&lcCVE=" + $$("cmbSoli").getValue() ).then((res)=>{
+				res = res.json()
+					//console.log(res);
+					//console.log(res[0].value)
+
+					const formatterMXN = new Intl.NumberFormat('es-MX', {
+						style: 'decimal',
+						currency: 'MXN',
+					});
+					$$("lblDato01").define("label", formatterMXN.format(res[0].etotal));
+					$$("lblDato01").refresh();
+					$$("lblDato02").define("label", formatterMXN.format(res[0].ependiente));
+					$$("lblDato02").refresh();
+					$$("lblDato03").define("label", formatterMXN.format(res[0].efinalizado));
+					$$("lblDato03").refresh();
+					$$("lblDato04").define("label", formatterMXN.format(res[0].ecancelado));
+					$$("lblDato04").refresh();
+					$$("lblDato11").define("label", formatterMXN.format(res[0].itotal));
+					$$("lblDato11").refresh();
+					$$("lblDato12").define("label", formatterMXN.format(res[0].ipendiente));
+					$$("lblDato12").refresh();
+					$$("lblDato13").define("label", formatterMXN.format(res[0].ifinalizado));
+					$$("lblDato13").refresh();
+					$$("lblDato14").define("label", formatterMXN.format(res[0].icancelado));
+					$$("lblDato14").refresh();
+
+					
+					//$$("chaEgreF").setValue(res[0].etotal);
+					//$$("chaEgreF").refresh();
+					$$("chaEgreF").clearAll()
+					$$("chaEgreP").clearAll()
+					$$("chaIngreF").clearAll()
+					$$("chaIngreP").clearAll()
+					
+					const lnPendiE = Math.round((res[0].ependiente * 100) / (res[0].etotal-res[0].ecancelado))
+					const lnComplE = 100 - lnPendiE
+					const lnPendiI = Math.round((res[0].ipendiente * 100) / (res[0].itotal-res[0].icancelado))
+					const lnComplI = 100 - lnPendiI
+
+					console.log(lnPendiE)
+					console.log(lnComplE)
+
+					const loNewDatoE = [
+						{ val:lnComplE, color1: "#2ECC71", color2:"#AAB7B8" },
+						{ val:lnPendiE, color1: "#AAB7B8", color2:"#E74C3C" },
+						];
+					$$("chaEgreF").parse(loNewDatoE)
+					$$("chaEgreP").parse(loNewDatoE)
+
+					const loNewDatoI = [
+						{ val:lnComplI, color1: "#2ECC71", color2:"#AAB7B8" },
+						{ val:lnPendiI, color1: "#AAB7B8", color2:"#E74C3C" },
+						];
+					$$("chaIngreF").parse(loNewDatoI)
+					$$("chaIngreP").parse(loNewDatoI)
+					
+					
+				})
+			}
+
+			function getCss(item){
+				var color = "",
+					id = item.id,
+					comments = item.tipo;
+				
+				if(!this.isBranch(id)){
+					if(comments == 0)
+					color ="#b2dfdb";
+					else if(comments == 1)
+					color ="#80cbc4";
+					else if(comments == 2)
+					color ="#4db6ac";
+					else if(comments == 3)
+					color ="#26a69a";
+					else if(comments == 4)
+					color ="#42a5f5";
+					else 
+					color ="#f08080";
+				}
+				return { background: color};
+			}
+		</script>
+	</form>
+</body>
+
+</html>

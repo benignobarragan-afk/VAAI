@@ -14,6 +14,26 @@ const progap = ((req, res) => {
     res.render("PROGAP/progap", {lcDerecho})
 });
 
+const progap_dashboard = (async (req, res) => {
+    
+    if (req.groups.indexOf(",BUSC_OFIC,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    const lcSQL = `
+    SELECT id_cent, cve, depen, clave 
+        FROM GEN_TIPO_OFIC 
+        WHERE cve in (SELECT DISTINCT cve FROM GEN_DERE_OFIC WHERE user_id = ${req.userId}) 
+    `
+
+    const rows = await util.gene_cons(lcSQL);
+    
+    return res.render("progap/progap_dashboard", {rows})
+});
+
+
 module.exports = {
     progap,
+    progap_dashboard,
 }

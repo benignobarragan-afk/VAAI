@@ -9,5 +9,6 @@ const progapCtrl = require(path.join(__dirname,"..", "controllers/progapControll
 const router = express.Router()
 
 router.get("/progap", midd.verifyToken, progapCtrl.progap);
+router.get("/progap_dashboard", midd.verifyToken, progapCtrl.progap_dashboard);
 
 module.exports = router
