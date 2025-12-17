@@ -13,6 +13,7 @@ router.get("/progap_estudiax", midd.verifyToken, progapCtrl.progap_estudiax);
 router.get("/progap_convocax", midd.verifyToken, progapCtrl.progap_convocax);
 router.get("/progap_exacamx", midd.verifyToken, progapCtrl.progap_exacamx);
 router.get("/prueba", midd.verifyToken, progapCtrl.prueba);
+router.get("/prueba2", midd.verifyToken, progapCtrl.prueba2);
 
 
 module.exports = router

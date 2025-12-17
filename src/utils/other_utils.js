@@ -5,6 +5,7 @@ const pool = require(path.join(__dirname, "..", "db"))
 const nodemailer = require('nodemailer');
 const config = require(path.join(__dirname, "..", "config"));
 const util = require(path.join(__dirname, "..", "utils/busquedaUtils"));
+const fs = require('fs').promises;
 
 
 const ejecutarPython = (async (pythonScriptPath, args) => {
@@ -214,11 +215,23 @@ const envi_corr = (async (lnTipo, lcCorreo, laArreglo) => {
 
 });
 
+const exit_arch = (async (lcArchivo) => {
+    try {
+        await fs.access(lcArchivo);
+        return true;
+    } catch (error) {
+        return false;
+    }
+
+});
+
+
 module.exports = {
     ejecutarPython,
     form_fechSQL,
     gene_cont,
     registrarVisita,
-    envi_corr
+    envi_corr,
+    exit_arch
 
 }
