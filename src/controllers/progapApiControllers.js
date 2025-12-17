@@ -4,6 +4,8 @@ const pool = require(path.join(__dirname, "..", "db"))
 const config = require(path.join(__dirname, "..", "config"));
 const util = require(path.join(__dirname, "..", "utils/busquedaUtils"));
 const other_utils = require(path.join(__dirname, "..", "utils/other_utils"));
+const PDFDocument = require("pdfkit-table");
+const fs = require('fs');
 
 const progap_usuariox = (async (req, res) => {
 
@@ -110,11 +112,74 @@ const progap_exacamx = (async (req, res) => {
     return res.json(rows)
 });
 
+const prueba = ( async (req, res) => {
+
+    const PDFDocument = require('pdfkit');
+    const doc = new PDFDocument();
+
+    //doc.pipe(fs.createWriteStream('prueba.pdf')); // write to PDF
+    doc.pipe(res);                                       // HTTP response
+
+
+    doc.image(path.join(__dirname, "..", "public/imagenes/logo_vaai.png"), 150, 25, {width: 300})
+    doc.fontSize(12);
+    doc.moveDown(5);
+    doc.font('Helvetica-Bold');
+    doc.text(`Dr. Jaime Federico Andrade Villanueva`, { continued: true });
+    doc.font('Helvetica');
+    doc.text(`
+Vicerrector adjunto
+Vicerrector Adjunto Académico y de Investigación
+Presente
+`
+    );
+    doc.moveDown(2);
+    doc.fontSize(11);
+    doc.text ( `Por este medio, le envío un cordial saludo y aprovecho la ocasión para informarle que actualmente soy estudiante activo de la Universidad de Guadalajara, conforme a los datos que se detallan al final de este oficio. En tal calidad, me permito solicitar la condonación total del pago de matrícula del posgrado que actualmente curso, en los términos establecidos en el Programa Compensatorio para la Transición Gradual hacia la Gratuidad de los Servicios Educativos de Posgrado.`, {align: 'justify'})
+    doc.moveDown();
+    doc.text ( `Le agradecería que, a través de su amable gestión, esta solicitud sea presentada para consideración de la Comisión Permanente de Condonaciones y Becas del Consejo General Universitario.`, {align: 'justify'})
+    doc.moveDown();
+    doc.text ( `Asimismo, estoy al tanto de que el beneficio solicitado abarca exclusivamente el concepto de matrícula, por lo que cualquier otra cuota autorizada por la normativa institucional será cubierta por mi parte.`, {align: 'justify'})
+    doc.moveDown();
+    doc.text ( `Adjunto a esta solicitud los datos correspondientes, para que puedan ser evaluados y, en su caso, aprobados.`, {align: 'justify'});
+    doc.moveDown(3);
+    doc.table({
+        rowStyles: (i) => {
+    if (i === 1) return { backgroundColor: "#ccc" };
+    },
+    data: [
+        ['','',''],
+        ['Datos del solicitante', 'Column 2', 'Column 3'],
+        [{rowSpan:3, border: true, text:"Hola mundo con mucho texto para ver si se ajusta"}]
+    ]
+    });
+    doc.moveDown(3);
+    doc.table({
+    defaultStyle: { border: false, width: 60 },
+    data: [
+        ["", "column 1", "column 2", "column 3"],
+        [
+        "row 1",
+        {
+            rowSpan: 3,
+            colSpan: 3,
+            border: true,
+            backgroundColor: "#ccc",
+            text: "rowSpan: 3\ncolSpan: 3\n\nborder:\n[true, true, true, true]",
+        },
+        ],
+        ["row 2"],
+        ["row 3"],
+    ],
+    })
+    doc.end();
+});
 
 module.exports = {
     progap_usuariox,
     progap_directivox,
     progap_estudiax,
     progap_convocax,
-    progap_exacamx
+    progap_exacamx,
+    prueba
 }
