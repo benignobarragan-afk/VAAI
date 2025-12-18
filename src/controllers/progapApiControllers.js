@@ -4,7 +4,8 @@ const pool = require(path.join(__dirname, "..", "db"))
 const config = require(path.join(__dirname, "..", "config"));
 const util = require(path.join(__dirname, "..", "utils/busquedaUtils"));
 const other_utils = require(path.join(__dirname, "..", "utils/other_utils"));
-const PDFDocument = require("pdfkit-table");
+const oplantilla = require(path.join(__dirname, "..", "utils/plantilla_pdf"));
+const PDFDocument = require("pdfkit");
 const fs = require('fs');
 
 const progap_usuariox = (async (req, res) => {
@@ -114,16 +115,13 @@ const progap_exacamx = (async (req, res) => {
 
 const prueba = ( async (req, res) => {
 
-    const PDFDocument = require('pdfkit');
     const doc = new PDFDocument({ size: 'letter' });
 
     //doc.pipe(fs.createWriteStream('prueba.pdf')); // write to PDF
     doc.pipe(res);                                       // HTTP response
 
-
-    doc.image(path.join(__dirname, "..", "public/imagenes/logo_vaai.png"), 150, 25, {width: 300})
-    doc.fontSize(12);
-    doc.moveDown(5);
+    doc.fontSize(11);
+    doc.moveDown(3);
     doc.font('Helvetica-Bold');
     doc.text(`Dr. Jaime Federico Andrade Villanueva`, { continued: true });
     doc.font('Helvetica');
@@ -134,7 +132,7 @@ Presente
 `
     );
     doc.moveDown(2);
-    doc.fontSize(11);
+    doc.fontSize(10);
     doc.text ( `Por este medio, le envío un cordial saludo y aprovecho la ocasión para informarle que actualmente soy estudiante activo de la Universidad de Guadalajara, conforme a los datos que se detallan al final de este oficio. En tal calidad, me permito solicitar la condonación total del pago de matrícula del posgrado que actualmente curso, en los términos establecidos en el Programa Compensatorio para la Transición Gradual hacia la Gratuidad de los Servicios Educativos de Posgrado.`, {align: 'justify'})
     doc.moveDown();
     doc.text ( `Le agradecería que, a través de su amable gestión, esta solicitud sea presentada para consideración de la Comisión Permanente de Condonaciones y Becas del Consejo General Universitario.`, {align: 'justify'})
@@ -142,20 +140,92 @@ Presente
     doc.text ( `Asimismo, estoy al tanto de que el beneficio solicitado abarca exclusivamente el concepto de matrícula, por lo que cualquier otra cuota autorizada por la normativa institucional será cubierta por mi parte.`, {align: 'justify'})
     doc.moveDown();
     doc.text ( `Adjunto a esta solicitud los datos correspondientes, para que puedan ser evaluados y, en su caso, aprobados.`, {align: 'justify'});
-    doc.moveDown(3);
+    doc.moveDown(1);
     doc.table({
         rowStyles: (i) => {
-    if (i === 1) return { backgroundColor: "#ccc" };
+    if (i === 0) return { backgroundColor: "#ccc" };
     },
     data: [
-        ['','',''],
-        ['Datos del solicitante', 'Column 2', 'Column 3'],
-        [{rowSpan:3, border: true, text:"Hola mundo con mucho texto para ver si se ajusta"}]
+        [{colSpan:2, text:"Datos del solicitante"}],
+        ["Nombre completo:",""],
+        ["CURP:",""],
+        ["Código de estudiante:",""],
+        ["Centro universitario de adcripción:",""],
+        ["Clave y nombre del programa académico:",""],
+        ["Ciclo escolar de ingreso:",""],
+        ["Ciclo escolar en curso:",""],
+        ["Ciclo escolar por condonar:",""],
+        ["Correo institucional:",""],
     ]
     });
+    doc.moveDown(2);
+    doc.text ( `Sin otro particular, reciban un cordial saludo.`, {align: 'justify'});
+    doc.moveDown(1);
+    doc.text ( `
+Atentamente
+Ameca, Jalisco, México; a 16 de octubre de 2025`, {align: 'center'});
+    doc.moveDown(4);
+    doc.moveTo(180, doc.y)
+    .lineTo(450, doc.y)
+    .stroke();
+    doc.moveDown(1);
+   doc.text ( `Nombre del alumno.`, {align: 'center'});
+    doc.end();
+});
+
+const prueba2 = ( async (req, res) => {
+
+    const doc = new PDFDocument();
+
+    doc.on('pageAdded', async () => {
+        await oplantilla.plantilla01(doc, "CUCS.png");
+        doc.fillColor('black').fontSize(12); // Resetear estilo para el contenido
+        doc.y = 70; // Resetear posición vertical para no encimar el encabezado
+    });
+    
+/*     let lcArchivo = path.join(__dirname, "..", "pdf/imagenes/CUCS.PNG")
+    const llArchivo = await other_utils.exit_arch(lcArchivo)
+    if (llArchivo){
+        doc.image(lcArchivo, 25, 25, {width: 630});
+    }
+    else
+    {
+        lcArchivo = path.join(__dirname, "..", "pdf/imagenes/VICERRECTORIA.jpg")
+        doc.image(lcArchivo, 25, 25, {width: 580})
+    }
+ */
+    await oplantilla.plantilla01(doc, "CUCS.png");
+    doc.fillColor('black').fontSize(12); // Resetear estilo para el contenido
+    doc.y = 70; // Resetear posición vertical para no encimar el encabezado
+
+    //doc.pipe(fs.createWriteStream('prueba.pdf')); // write to PDF
+    doc.pipe(res);                                       // HTTP response
+
+    doc.font('Helvetica');
+    doc.fontSize(10);
     doc.moveDown(3);
+    doc.text(`REC/0223/2025`, { align: 'right' });
+    doc.fontSize(11);
+    doc.moveDown(1);
+    doc.font('Helvetica-Bold');
+    doc.text(`Dr. Jaime Federico Andrade Villanueva`, { continued: true });
+    doc.font('Helvetica');
+    doc.text(`
+Vicerrector adjunto
+Vicerrector Adjunto Académico y de Investigación
+Presente
+`
+    );
+    doc.moveDown(2);
+    doc.fontSize(10);
+    doc.text ( `Por este medio reciba un cordial saludo y a su vez, me permito solicitar que, por su amable conducto, se pueda poner a consideración de la Comisión Permanente Condonaciones y Becas del Consejo General Universitario la solicitud de condonación conforme a lo estabiecido en el Programa Compensatorio para la Transición Gradual hacia la Gratuidad de los Servicios Educativos de Posgrado, relativa a los estudiantes de posgrado del Centro Universitario de Ciencias Biológicas y Agropecuarias.`, {align: 'justify'})
+    doc.moveDown();
+    doc.text ( `Al respecto, le comparto la información concentrada de los estudiantes de posgrado susceptibles de ser beneficiados y el monto de apoyo económico a condonar por nivel educativo, para efectos del traslado de los recursos financieros equivalente a las matrícuias condonadas, conforme se enlista a continuación:`, {align: 'justify'})
+    doc.moveDown(1);
     doc.table({
-    defaultStyle: { border: false, width: 60 },
+        rowStyles: (i) => {
+    if (i === 0) return { backgroundColor: "#ccc" };
+    },
     data: [
         ["", "column 1", "column 2", "column 3"],
         [
@@ -172,7 +242,6 @@ Presente
         ["row 3"],
     ],
     })
-    
     doc.end();
 });
 
@@ -182,5 +251,6 @@ module.exports = {
     progap_estudiax,
     progap_convocax,
     progap_exacamx,
-    prueba
+    prueba,
+    prueba2
 }
