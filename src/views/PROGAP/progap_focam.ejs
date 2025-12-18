@@ -43,7 +43,7 @@
                                 view: "button",
                                 type: "icon",
                                 icon: "mdi mdi-plus",
-                                label: "Crear usuario",
+                                label: "Crear FOCAM",
                                 width: 130,
                                 on: {
                                     onItemClick: function () { deta_grup() }
@@ -63,6 +63,26 @@
                                         });
                                      }
                                 }
+                            },
+                            {
+                                view: "button",
+                                type: "icon",
+                                icon: "mdi mdi-file-document",
+                                label: "Formato a firmar",
+                                width: 150,
+                                on: {
+                                    onItemClick: function () { 
+                                        const lnID = $$("dtable").getSelectedId()
+                                        if(lnID === undefined){
+                                            webix.message({type: "debug", text: "Selecciona un registro para generar el documentos", expire: 2500})
+                                        }
+                                        else {
+                                            window.open(`/api/progap/progap_form01?id=${lnID}`, '_blank');
+                                        }
+                                        
+                                        }
+                                     }
+
                             },
 
                             /* {
@@ -139,40 +159,43 @@
                             }],
                         },	
                         {
-                            id: "usuario", width: 150,sort: "string", css: { 'text-align': 'left' }, 
-                            header: [{text:"Usuario",css:"my_style"}, {
-                                content: "textFilter", placeholder:"Filtrar",
-                            }],
-                        },	
-                        {
-                            id: "nombre", width: 300,sort: "string", css: { 'text-align': 'left' }, 
-                            header: [{text:"Nombre",css:"my_style"}, {
+                            id: "folio", width: 200,sort: "string", css: { 'text-align': 'left' }, 
+                            header: [{text:"Oficio",css:"my_style"}, {
                                 content: "textFilter", placeholder:"Filtrar",
                             }],
                         },
                         {
-                            id: "tipo", width: 150,sort: "string", css: { 'text-align': 'left' }, 
-                            header: [{text:"Tipo de Usuario",css:"my_style"}, {
+                            id: "fecha_solicitud", width: 150,sort: "string", css: { 'text-align': 'center' }, 
+                            header: [{text:"Fecha solicitud",css:"my_style"}, {
+                                content: "textFilter", placeholder:"Filtrar",
+                            }],
+                        },                        	
+                        {
+                            id: "dependencia", width: 250,sort: "string", css: { 'text-align': 'left' }, 
+                            minWidth:150, header: [{text:"Centro Universitario",css:"my_style"}, {
                                 content: "textFilter", placeholder:"Filtrar",
                             }],
                         },			
                         {
-                            id: "correo", 
-                            height:160, 
-                            fillspace:true, minWidth:300,sort: "string", css: { 'text-align': 'left' }, 
-                            header: [{text:"Correo",css:"my_style"}, {
-                                content: "textFilter", placeholder:"Filtrar",
-                                
-                            }],
-                        },		
-                        {
-                            id: "siglas", width: 150,sort: "string", css: { 'text-align': 'left' }, 
-                            header: [{text:"C.U.",css:"my_style"}, {
+                            id: "codigo", width: 100,sort: "string", css: { 'text-align': 'left' }, 
+                            header: [{text:"Código",css:"my_style"}, {
                                 content: "textFilter", placeholder:"Filtrar",
                             }],
-                        },		
+                        },			
                         {
-                            id: "status", width: 100,sort: "string", css: { 'text-align': 'left' }, 
+                            id: "nombre", width: 250,sort: "string", css: { 'text-align': 'left' }, 
+                            fillspace:true, minWidth:150, header: [{text:"Nombre",css:"my_style"}, {
+                                content: "textFilter", placeholder:"Filtrar",
+                            }],
+                        },			
+                        {
+                            id: "programa", width: 300,sort: "string", css: { 'text-align': 'left' }, 
+                            fillspace:true, minWidth:150, header: [{text:"Programa posgrado",css:"my_style"}, {
+                                content: "textFilter", placeholder:"Filtrar",
+                            }],
+                        },
+                        {
+                            id: "status", width: 180,sort: "string", css: { 'text-align': 'left' }, 
                             header: [{text:"Estatus",css:"my_style"}, {
                                 content: "selectFilter", placeholder:"Filtrar",
                             }],
@@ -205,13 +228,13 @@
 
         function genera() {
             $$("dtable").clearAll();
-            $$("dtable").load("/api/progap/progap_usuariox?lnConv=" + $$("cmbSoli").getValue() )
+            $$("dtable").load("/api/progap/progap_focamx?lnConv=" + $$("cmbSoli").getValue() )
 
         }
 
         function deta_grup(id) {
             window.parent.parent.$$("tbView").addView({
-                header: "<span class='webix_icon mdi mdi-file-document-outline'></span>" + (id == undefined ? "Nuevo" : "Modifica") + " Usuario",
+                header: "<span class='webix_icon mdi mdi-file-document-outline'></span>" + (id == undefined ? "Nuevo" : "Modifica") + " FOCAM",
                 body: {
                     view: "iframe", src: "/op/op_ngrup?lnID=" + id,
                     type: {

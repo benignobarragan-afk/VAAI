@@ -42,8 +42,18 @@
         <%}%>
         <%if (lcDerecho.indexOf(",ADMI_PROGAP,") >= 0){%>
         {
-        header: "<span class='mdi mdi-history'></span>ExaCam", body: {
+        header: "<span class='mdi mdi-history'></span>ExaCam's", body: {
             view: "iframe", id: "progap_exacam", src:"progap_exacam",
+            type: {
+                height: 60
+            },
+        }
+        },
+        <%}%>
+        <%if (lcDerecho.indexOf(",ADMI_PROGAP,") >= 0){%>
+        {
+        header: "<span class='mdi mdi-account-check'></span>FoCam's", body: {
+            view: "iframe", id: "progap_focam", src:"progap_focam",
             type: {
                 height: 60
             },

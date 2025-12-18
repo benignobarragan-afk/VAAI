@@ -128,6 +128,25 @@ const progap_exacam = (async (req, res) => {
     return res.render("progap/progap_exacam", {rows})
 });
 
+const progap_focam = (async (req, res) => {
+    
+    if (req.groups.indexOf(",ADMI_PROGAP,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    const lcSQL = `
+    SELECT id AS id, anio AS anio  
+        FROM PROGAP_CONVOCATORIA
+        ORDER BY 2 DESC
+    `
+
+    const rows = await util.gene_cons(lcSQL)
+    
+    return res.render("progap/progap_focam", {rows})
+});
+
+
 module.exports = {
     progap,
     progap_dashboard,
@@ -136,5 +155,6 @@ module.exports = {
     progap_directivo,
     progap_estudia,
     progap_convoca,
-    progap_exacam
+    progap_exacam,
+    progap_focam,
 }

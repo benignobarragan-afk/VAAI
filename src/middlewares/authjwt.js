@@ -29,8 +29,9 @@ const verifyToken = async (req, res, next) => {
             if (rows.length <= 0){
                 return res.status(401).json({"message":"No se localizó al usuario del token"});
             }
-            if (rows[0].bloqueada === 1){
-                return res.status(401).json({"message":"La cuenta del usuario se encuentra bloqueada"});
+            if (rows[0].bloqueada == 1){
+                //return res.status(401).json({"message":"La cuenta del usuario se encuentra bloqueada"});
+                return res.render("cuen_bloq")
             }
 
             req.id_cent = (!rows[0].id_cent ? 0 : rows[0].id_cent);
