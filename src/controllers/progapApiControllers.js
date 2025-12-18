@@ -115,7 +115,7 @@ const progap_exacamx = (async (req, res) => {
 const prueba = ( async (req, res) => {
 
     const PDFDocument = require('pdfkit');
-    const doc = new PDFDocument();
+    const doc = new PDFDocument({ size: 'letter' });
 
     //doc.pipe(fs.createWriteStream('prueba.pdf')); // write to PDF
     doc.pipe(res);                                       // HTTP response
@@ -172,6 +172,7 @@ Presente
         ["row 3"],
     ],
     })
+    
     doc.end();
 });
 
