@@ -5,7 +5,7 @@ const config = require(path.join(__dirname, "..", "config"));
 const util = require(path.join(__dirname, "..", "utils/busquedaUtils"));
 const other_utils = require(path.join(__dirname, "..", "utils/other_utils"));
 const oplantilla = require(path.join(__dirname, "..", "utils/plantilla_pdf"));
-const PDFDocument = require("pdfkit");
+const PDFDocument = require("pdfkit-table");
 const fs = require('fs');
 
 const progap_usuariox = (async (req, res) => {
@@ -141,7 +141,27 @@ Presente
     doc.moveDown();
     doc.text ( `Adjunto a esta solicitud los datos correspondientes, para que puedan ser evaluados y, en su caso, aprobados.`, {align: 'justify'});
     doc.moveDown(1);
-    doc.table({
+    const table = {
+      headers: [{label:"Datos del solicitante"},{hideHeader: true}],
+      rows: [
+        ["Nombre completo:","BENIGNO BARRAGAN SANCHEZ"],
+        ["CURP:",""],
+        ["Código de estudiante:",""],
+        ["Centro universitario de adcripción:",""],
+        ["Clave y nombre del programa académico:",""],
+        ["Ciclo escolar de ingreso:",""],
+        ["Ciclo escolar en curso:",""],
+        ["Ciclo escolar por condonar:",""],
+        ["Correo institucional:",""],
+      ],
+    };
+
+    await doc.table(table, { prepareHeader: () => doc.font("Helvetica-Bold").fontSize(10),
+        prepareRow: (row, indexColumn, indexRow, rectRow) => {
+        doc.font("Helvetica").fontSize(9);
+        }
+    });
+/*     doc.table({
         rowStyles: (i) => {
     if (i === 0) return { backgroundColor: "#ccc" };
     },
@@ -157,7 +177,8 @@ Presente
         ["Ciclo escolar por condonar:",""],
         ["Correo institucional:",""],
     ]
-    });
+    }); */
+    doc.fontSize(10);
     doc.moveDown(2);
     doc.text ( `Sin otro particular, reciban un cordial saludo.`, {align: 'justify'});
     doc.moveDown(1);
@@ -175,12 +196,18 @@ Ameca, Jalisco, México; a 16 de octubre de 2025`, {align: 'center'});
 
 const prueba2 = ( async (req, res) => {
 
-    const doc = new PDFDocument();
+    const doc = new PDFDocument({bufferPages: true}
+        /* {margin: 50, 
+        margins: { top: 120, bottom: 80, left: 50, right: 50 }, 
+        bufferPages: true} */
+    );
 
     doc.on('pageAdded', async () => {
-        await oplantilla.plantilla01(doc, "CUCS.png");
+        oplantilla.plantilla01(doc, "CUCS.png");
         doc.fillColor('black').fontSize(12); // Resetear estilo para el contenido
-        doc.y = 70; // Resetear posición vertical para no encimar el encabezado
+        doc.page.margins.top = 120; // Reforzamos el margen de la página actual
+        doc.page.margins.bottom = 10; // Reforzamos el margen de la página actual
+        doc.y = 120;
     });
     
 /*     let lcArchivo = path.join(__dirname, "..", "pdf/imagenes/CUCS.PNG")
@@ -194,16 +221,16 @@ const prueba2 = ( async (req, res) => {
         doc.image(lcArchivo, 25, 25, {width: 580})
     }
  */
-    await oplantilla.plantilla01(doc, "CUCS.png");
+    oplantilla.plantilla01(doc, "CUCS.png");
     doc.fillColor('black').fontSize(12); // Resetear estilo para el contenido
-    doc.y = 70; // Resetear posición vertical para no encimar el encabezado
+    doc.y = 120; // Resetear posición vertical para no encimar el encabezado
 
     //doc.pipe(fs.createWriteStream('prueba.pdf')); // write to PDF
     doc.pipe(res);                                       // HTTP response
 
     doc.font('Helvetica');
     doc.fontSize(10);
-    doc.moveDown(3);
+    //doc.moveDown(3);
     doc.text(`REC/0223/2025`, { align: 'right' });
     doc.fontSize(11);
     doc.moveDown(1);
@@ -221,27 +248,177 @@ Presente
     doc.text ( `Por este medio reciba un cordial saludo y a su vez, me permito solicitar que, por su amable conducto, se pueda poner a consideración de la Comisión Permanente Condonaciones y Becas del Consejo General Universitario la solicitud de condonación conforme a lo estabiecido en el Programa Compensatorio para la Transición Gradual hacia la Gratuidad de los Servicios Educativos de Posgrado, relativa a los estudiantes de posgrado del Centro Universitario de Ciencias Biológicas y Agropecuarias.`, {align: 'justify'})
     doc.moveDown();
     doc.text ( `Al respecto, le comparto la información concentrada de los estudiantes de posgrado susceptibles de ser beneficiados y el monto de apoyo económico a condonar por nivel educativo, para efectos del traslado de los recursos financieros equivalente a las matrícuias condonadas, conforme se enlista a continuación:`, {align: 'justify'})
-    doc.moveDown(1);
-    doc.table({
+    doc.moveDown(2);
+/*     doc.table({
         rowStyles: (i) => {
     if (i === 0) return { backgroundColor: "#ccc" };
     },
     data: [
-        ["", "column 1", "column 2", "column 3"],
-        [
-        "row 1",
-        {
-            rowSpan: 3,
-            colSpan: 3,
-            border: true,
-            backgroundColor: "#ccc",
-            text: "rowSpan: 3\ncolSpan: 3\n\nborder:\n[true, true, true, true]",
-        },
+        [{text: "Nivel educativo del programa", align: 'center'}, {text: "Cantidad de alumnos", align: 'center'}, {text: "Ciclo escolar del cual se solicita condonación de matricula", align: 'center'}, {text: "Monto total de apoyo de condonación por nivel educativo", align: 'center'}],
+        ["Doctorado",{text: "0", align: 'center'},{text: "2025-B", align: 'center'},{text: "$0.00", align: 'right'}],
+        ["Maestría",{text: "1", align: 'center'},{text: "2025-B", align: 'center'},{text: "$9,458.52", align: 'right'}],
+    ]
+    }); */
+    let table = {
+      headers: [{label:"Nivel educativo del programa", align: 'center'},
+        {label:"Cantidad de alumnos", align: 'center'},
+        {label:"Ciclo escolar del cual se solicita condonación de matricula", align: 'center'},
+        {label:"Monto total de apoyo de condonación por nivel educativo", headerAlign: 'center', align: 'right', renderer: (value, indexColumn, indexRow, row, rectRow, rectCell) => { return `$ ${Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` } }
         ],
-        ["row 2"],
-        ["row 3"],
-    ],
-    })
+      rows: [
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+      ],
+    };
+
+    await doc.table(table, {columnsSize: [ 150, 80, 115, 115 ],
+    });
+
+    doc.fontSize(10);
+    doc.moveDown(2);
+
+    doc.text ( `Se incluye como parte de esta solicitud un expediente que contiene la información y documentación de la totalidad del alumnado y programas educativos de este Centro Universitario, según se solicita en el numeral 3 del apartado 9 de las Reglas de Operación del Programa antes mencionado.`, {align: 'justify'});
+    doc.text ( `Sin otro particular, reciban un cordial saludo.`, {align: 'justify'});
+    doc.moveDown(1);
+    doc.text ( `
+    Atentamente`, {align: 'center',continued: true});
+    doc.font('Helvetica-Bold');    
+    doc.text ( `
+"PIENSA Y TRABAJA"                 
+"1925-2025, Un Siglo de Pensar y Trabajar"                 `, {align: 'center',continued: true});
+doc.font('Helvetica');    
+    doc.text ( `
+Ameca, Jalisco, México; a 16 de octubre de 2025`, {align: 'center'});
+    doc.moveDown(4);
+    doc.moveTo(180, doc.y)
+    .lineTo(450, doc.y)
+    .stroke();
+    doc.moveDown(1);
+   doc.text ( `
+Dra. Graciela Gudiño Cabrera
+Rectora del Centro Universitario de Ciencias Biológicas y Agropecuarias`, {align: 'center'});
+
+    doc.addPage();
+
+    table = {
+      headers: [{label:"Nivel educativo del programa", align: 'center'},
+        {label:"Cantidad de alumnos", align: 'center'},
+        {label:"Ciclo escolar del cual se solicita condonación de matricula", align: 'center'},
+        {label:"Monto total de apoyo de condonación por nivel educativo", align: 'right', renderer: (value, indexColumn, indexRow, row, rectRow, rectCell) => { return `$ ${Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` } }
+        ],
+      rows: [
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado","0", "2025-B", "0"],
+        ["Maestría","1", "2025-B", "9458.52"],
+
+        ],
+    };
+
+    await doc.table(table, {columnsSize: [ 150, 80, 115, 115 ],
+        //addPage: true, 
+        onPageAdd: (doc) => {
+        doc.y = 120;
+        
+    }
+    });
+
     doc.end();
 });
 
