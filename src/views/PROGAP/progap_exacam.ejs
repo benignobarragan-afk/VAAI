@@ -64,6 +64,26 @@
                                      }
                                 }
                             },
+                            {
+                                view: "button",
+                                type: "icon",
+                                icon: "mdi mdi-file-document",
+                                label: "Formato a firmar",
+                                width: 150,
+                                on: {
+                                    onItemClick: function () { 
+                                        const lnID = $$("dtable").getSelectedId()
+                                        if(lnID === undefined){
+                                            webix.message({type: "debug", text: "Selecciona un registro para generar el documentos", expire: 2500})
+                                        }
+                                        else {
+                                            window.open(`/api/progap/progap_form02?id=${lnID}`, '_blank');
+                                        }
+                                        
+                                        }
+                                     }
+
+                            },
 
                             /* {
                                 view: "button",

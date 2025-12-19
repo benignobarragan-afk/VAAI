@@ -24,7 +24,6 @@ const progap_usuariox = (async (req, res) => {
 		    LEFT JOIN progap_dependencias d ON u.id_centro_universitario = d.id
             ${(!req.query.lnConv?'':'WHERE id_convocatoria = '+ req.query.lnConv)}
         ORDER BY 3
-
     `
 
     const rows = await util.gene_cons(lcSQL)
@@ -148,14 +147,14 @@ const progap_form01 = ( async (req, res) => {
     let lcSQL = `
     SELECT COUNT(*) as total
         FROM log_visitas 
-        WHERE usuario_id = ${req.userId} AND DATE(fecha_visita) = DATE(NOW()) AND LEFT(URL,18) = "/api/progap/prueba"
+        WHERE usuario_id = ${req.userId} AND DATE(fecha_visita) = DATE(NOW()) AND LEFT(URL,18) = "/api/progap/progap_form01"
     `
     const rows = await util.gene_cons(lcSQL)
 
     if (rows[0].total > 200){
     lcSQL = `
-    UPDATE passfile SET bloqueada = 1, bloq_MOTI = "Bloqueo por mas de 200 descargas de formato: '/api/progap/prueba' por día",
-    		cambios = CONCAT(IFNULL(cambios, ''), "BLOQUEO_AUTO-/api/progap/prueba", DATE_FORMAT(NOW(), "%d/%m/%Y %h:%i")) 
+    UPDATE passfile SET bloqueada = 1, bloq_MOTI = "Bloqueo por mas de 200 descargas de formato: '/api/progap/progap_form01' por día",
+    		cambios = CONCAT(IFNULL(cambios, ''), "BLOQUEO_AUTO-/api/progap/progap_form01", DATE_FORMAT(NOW(), "%d/%m/%Y %h:%i")) 
 	    WHERE user_id = '${req.userId}'
     `
     const bloqueo = await util.gene_cons(lcSQL)
@@ -193,7 +192,7 @@ const progap_form01 = ( async (req, res) => {
     doc.fontSize(11);
     doc.moveDown(3);
     doc.font('Helvetica-Bold');
-    doc.text(`Dr. Jaime Federico Andrade Villanueva`, { continued: true });
+    doc.text(`${config.VICERRECTOR}`, { continued: true });
     doc.font('Helvetica');
     doc.text(`
 Vicerrector adjunto
@@ -265,8 +264,69 @@ ${laAlumno[1][0].fecha_texto}`, {align: 'center'});
     doc.end();
 });
 
-const prueba2 = ( async (req, res) => {
+const progap_form02 = ( async (req, res) => {
 
+    if (req.groups.indexOf(",ADMI_PROGAP,") <= 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    let lcSQL = `
+    SELECT COUNT(*) as total
+        FROM log_visitas 
+        WHERE usuario_id = ${req.userId} AND DATE(fecha_visita) = DATE(NOW()) AND LEFT(URL,18) = "/api/progap/progap_form02"
+    `
+    const rows = await util.gene_cons(lcSQL)
+
+    if (rows[0].total > 50){
+    lcSQL = `
+    UPDATE passfile SET bloqueada = 1, bloq_MOTI = "Bloqueo por mas de 50 descargas de formato: '/api/progap/progap_form02' por día",
+    		cambios = CONCAT(IFNULL(cambios, ''), "BLOQUEO_AUTO-/api/progap/progap_form02", DATE_FORMAT(NOW(), "%d/%m/%Y %h:%i")) 
+	    WHERE user_id = '${req.userId}'
+    `
+    const bloqueo = await util.gene_cons(lcSQL)
+    return res.render("cuen_bloq")
+    } 
+
+    lcSQL =  `
+    SELECT ex.id AS id_exacam, cco.nombre AS cicl_cond, a.id_centro_universitario, SUM(if(LEFT(p.nivel,1) = 'D', c.arancel_doctorado, 0)) AS nive_doct,
+            SUM(if(LEFT(p.nivel,1) != 'D', c.arancel_maestria, 0)) AS nive_otro, SUM(if(LEFT(p.nivel,1) = 'D', c.arancel_doctorado, c.arancel_maestria)) as nive_tota,
+            SUM(if(LEFT(p.nivel,1) = 'D', 1, 0)) AS alum_doct, SUM(if(LEFT(p.nivel,1) != 'D', 1, 0)) AS alum_otro, count(*) as alum_tota
+        FROM progap_alumnos a
+        LEFT JOIN progap_usuarios u ON a.id_usuario = u.id
+        LEFT JOIN progap_convocatoria c ON a.id_convocatoria = c.id
+        LEFT JOIN progap_exacam ex ON ex.id_cu = a.id_centro_universitario AND  ex.id_convocatoria = a.id_convocatoria
+        LEFT JOIN progap_programa p ON a.id_programa = p.id
+        LEFT JOIN progap_ciclos cco ON a.id_ciclo_condonar = cco.id	
+        WHERE ex.id = ${req.query.id} and a.id_estado = 3
+        group BY 1,2,3
+    `
+    const ltTotal = await util.gene_cons(lcSQL)
+
+    lcSQL =  `
+    SELECT a.id, p.programa, a.codigo, concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, cco.nombre AS cicl_cond,
+            p.nivel, if(LEFT(p.nivel,1) = 'D', c.arancel_doctorado, c.arancel_maestria) AS monto
+        FROM progap_alumnos a
+        LEFT JOIN progap_usuarios u ON a.id_usuario = u.id
+        LEFT JOIN progap_convocatoria c ON a.id_convocatoria = c.id
+        LEFT JOIN progap_exacam ex ON ex.id_cu = a.id_centro_universitario AND  ex.id_convocatoria = a.id_convocatoria
+        LEFT JOIN progap_programa p ON a.id_programa = p.id
+        LEFT JOIN progap_ciclos cco ON a.id_ciclo_condonar = cco.id	
+        WHERE ex.id = ${req.query.id} AND a.id_estado = 3
+        ORDER BY 3
+    `
+    const ltDeta = await util.gene_cons(lcSQL)
+
+    const laDeta = ltDeta.map(item => [
+        item.programa,
+        item.codigo,
+        item.nombre,
+        item.cicl_cond,
+        item.nivel,
+        item.monto
+    ]);
+    console.log(ltDeta)
+    console.log(laDeta)
     const doc = new PDFDocument({bufferPages: true}
         /* {margin: 50, 
         margins: { top: 120, bottom: 80, left: 50, right: 50 }, 
@@ -306,7 +366,7 @@ const prueba2 = ( async (req, res) => {
     doc.fontSize(11);
     doc.moveDown(1);
     doc.font('Helvetica-Bold');
-    doc.text(`Dr. Jaime Federico Andrade Villanueva`, { continued: true });
+    doc.text(`${config.VICERRECTOR}`, { continued: true });
     doc.font('Helvetica');
     doc.text(`
 Vicerrector adjunto
@@ -337,8 +397,8 @@ Presente
         {label:"Monto total de apoyo de condonación por nivel educativo", headerAlign: 'center', align: 'right', renderer: (value, indexColumn, indexRow, row, rectRow, rectCell) => { return `$ ${Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` } }
         ],
       rows: [
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
+        ["Doctorado",ltTotal[0].alum_doct, ltTotal[0].cicl_cond, ltTotal[0].nive_doct],
+        ["Maestría",ltTotal[0].alum_otro, ltTotal[0].cicl_cond, ltTotal[0].nive_otro],
       ],
     };
 
@@ -409,121 +469,236 @@ Rectora del Centro Universitario de Ciencias Biológicas y Agropecuarias`, {alig
         .fontSize(9)
         .text(`    Centro universitario que presenta la solicitud:`, {align: 'left'});
 
-    doc.moveDown(5)
+    doc.moveDown(2)
+    //columna 1
+    doc.rect(84, doc.y-6, 160, 18)
+        .lineWidth(1)
+        .stroke();
+    
+    doc.rect(84, doc.y+12, 160, 18)
+        .lineWidth(1)
+        .stroke();
+    
+    doc.rect(84, doc.y+30, 160, 18)
+        .lineWidth(1)
+        .stroke();
+    //columna 2
+    doc.rect(244, doc.y-6, 40, 18)
+        .lineWidth(1)
+        .stroke();
+    
+    doc.rect(244, doc.y+12, 40, 18)
+        .lineWidth(1)
+        .stroke();
+    
+    doc.rect(244, doc.y+30, 40, 18)
+        .lineWidth(1)
+        .stroke();
+    //columna 3
+    doc.rect(300, doc.y-6, 160, 18)
+        .lineWidth(1)
+        .stroke();
+    
+    doc.rect(300, doc.y+12, 160, 18)
+        .lineWidth(1)
+        .stroke();
+    
+    doc.rect(300, doc.y+30, 160, 18)
+        .lineWidth(1)
+        .stroke();
+    //columna 4
+    doc.rect(460, doc.y-6, 80, 18)
+        .lineWidth(1)
+        .stroke();
+    
+    doc.rect(460, doc.y+12, 80, 18)
+        .lineWidth(1)
+        .stroke();
+    
+    doc.rect(460, doc.y+30, 80, 18)
+        .lineWidth(1)
+        .stroke();
+    doc.x = 80
+
+    //texto columna 1
+    doc.moveDown(-1)
+    doc.fillColor('#047195')
+        .fontSize(8)
+        .text(`
+Total de alumnos a condonar
+
+Alumnos de Maestría a condonar
+
+Alumnos de Maestría a condonar
+            `, {
+                width: 160,      // Ancho de la columna
+                align: 'center',
+                columns: 1,      // ¡PDFKit lo hace automáticamente!
+                columnGap: 15    // Espacio entre columnas
+        });
+
+    //texto columna 2
+    doc.moveDown(-7)
+        .fillColor('#000000')
+        .fontSize(8)
+        .text(`
+${ltTotal[0].alum_tota}
+
+${ltTotal[0].alum_doct}
+
+${ltTotal[0].alum_otro}
+            `, {
+                width: 380,      // Ancho de la columna
+                align: 'right',
+                columns: 2,      // ¡PDFKit lo hace automáticamente!
+                columnGap: 15    // Espacio entre columnas
+        });
+
+//texto columna 3
+    doc.x = 300
+    doc.moveDown(-7)
+    doc.fillColor('#047195')
+        .fontSize(8)
+        .text(`
+Monto total a condonar
+
+Monto a condonar de nivel maestría
+
+Monto a condonar de nivel doctorado
+            `, {
+                width: 160,      // Ancho de la columna
+                align: 'center',
+                columns: 1,      // ¡PDFKit lo hace automáticamente!
+                columnGap: 15    // Espacio entre columnas
+        });
+
+    //texto columna 4
+    doc.moveDown(-7)
+        .fillColor('#000000')
+        .fontSize(8)
+        .text(`
+$ ${Number(ltTotal[0].nive_tota).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}            
+
+$ ${Number(ltTotal[0].nive_doct).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+
+$ ${Number(ltTotal[0].nive_otro).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            `, {
+                width: 480,      // Ancho de la columna
+                align: 'right',
+                columns: 2,      // ¡PDFKit lo hace automáticamente!
+                columnGap: 15    // Espacio entre columnas
+        });
 
 
+    doc.x = 80
+    doc.moveDown(2)
+    doc.fillColor('#047195')
+        .fontSize(10)
+        .text(`Fecha de elaboración: 05/11/2025`)
+
+    doc.moveDown(2)
+
+    doc.rect(84, doc.y-21, 456, 25)
+        .lineWidth(0)
+        .fill("#f2f2f2")
+        .stroke();
+        //doc.moveDown()
+    
+    doc.moveDown(-1)
+
+    doc.fillColor("#047195")
+        .font('Helvetica')
+        .fontSize(12)
+        .text (`NOMBRE Y FIRMA DE REVISOR Y AUTORIZADOR`, {align: 'center'});
+
+    //columna 1
+    doc.rect(84, doc.y+10, 200, 80)
+        .lineWidth(1)
+        .stroke();
+    
+    doc.rect(84, doc.y+90, 200, 18)
+        .lineWidth(1)
+        .stroke();
+    
+    doc.rect(84, doc.y+108, 200, 18)
+        .lineWidth(1)
+        .stroke();
+    
+    //columna 2
+    doc.rect(340, doc.y+10, 200, 80)
+        .lineWidth(1)
+        .stroke();
+    
+    doc.rect(340, doc.y+90, 200, 18)
+        .lineWidth(1)
+        .stroke();
+    
+    doc.rect(340, doc.y+108, 200, 18)
+        .lineWidth(1)
+        .stroke();
+
+    //texto columna 1
+    doc.x = 100
+    doc.moveDown(7)
+    doc.fillColor('#047195')
+        .fontSize(8)
+        .text(`Revisado por:`, {
+                width: 160,      // Ancho de la columna
+                align: 'center',
+                columns: 1,      // ¡PDFKit lo hace automáticamente!
+                columnGap: 15    // Espacio entre columnas
+        });
+
+    doc.fillColor('#000000')
+        .fontSize(8)
+        .text(`
+Dr. Haiku Daniel de Jesús Gómez Velázquez
+            `, {
+                width: 160,      // Ancho de la columna
+                align: 'center',
+                columns: 1,      // ¡PDFKit lo hace automáticamente!
+                columnGap: 15    // Espacio entre columnas
+        });  
+
+    
+    //texto columna 2
+    doc.x = 360
+    doc.moveDown(-4)
+    doc.fillColor('#047195')
+        .fontSize(8)
+        .text(`Revisado por:`, {
+                width: 160,      // Ancho de la columna
+                align: 'center',
+                columns: 1,      // ¡PDFKit lo hace automáticamente!
+                columnGap: 15    // Espacio entre columnas
+        });
+
+    doc.fillColor('#000000')
+        .fontSize(8)
+        .text(`
+Dr. Haiku Daniel de Jesús Gómez Velázquez
+            `, {
+                width: 160,      // Ancho de la columna
+                align: 'center',
+                columns: 1,      // ¡PDFKit lo hace automáticamente!
+                columnGap: 15    // Espacio entre columnas
+        });
+
+
+    doc.x = 65
+    doc.moveDown(3)
     table = {
-    headers: [{label:"Nivel educativo del programa", align: 'center'},
-        {label:"Cantidad de alumnos", align: 'center'},
-        {label:"Ciclo escolar del cual se solicita condonación de matricula", align: 'center'},
-        {label:"Monto total de apoyo de condonación por nivel educativo", align: 'right', renderer: (value, indexColumn, indexRow, row, rectRow, rectCell) => { return `$ ${Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` } }
+    headers: [{label:"Nombre del Programa", align: 'left', headerAlign: 'center' },
+        {label:"Código del estudiante", align: 'center', headerAlign: 'center'},
+        {label:"Nombre", align: 'left', headerAlign: 'center'},
+        {label:"Ciclo a condonar", align: 'center', headerAlign: 'center'},
+        {label:"Nivel del programa", align: 'center', headerAlign: 'center'},
+        {label:"Arancel por concepto de Matrícula", align: 'right', headerAlign: 'center', renderer: (value, indexColumn, indexRow, row, rectRow, rectCell) => { return `$ ${Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` } }
         ],
-      rows: [
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-        ["Doctorado","0", "2025-B", "0"],
-        ["Maestría","1", "2025-B", "9458.52"],
-
-        ],
+      rows: laDeta
     };
 
-    await doc.table(table, {columnsSize: [ 150, 80, 115, 115 ],
+    await doc.table(table, {columnsSize: [ 130, 60, 140, 40, 60, 70 ],
         //addPage: true, 
         onPageAdd: (doc) => {
         doc.y = 120;
@@ -542,5 +717,5 @@ module.exports = {
     progap_exacamx,
     progap_focamx,
     progap_form01,
-    prueba2
+    progap_form02
 }

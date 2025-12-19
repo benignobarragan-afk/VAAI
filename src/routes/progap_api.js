@@ -14,7 +14,7 @@ router.get("/progap_convocax", midd.verifyToken, progapCtrl.progap_convocax);
 router.get("/progap_exacamx", midd.verifyToken, progapCtrl.progap_exacamx);
 router.get("/progap_focamx", midd.verifyToken, progapCtrl.progap_focamx);
 router.get("/progap_form01", midd.verifyToken, progapCtrl.progap_form01);
-router.get("/prueba2", midd.verifyToken, progapCtrl.prueba2);
+router.get("/progap_form02", midd.verifyToken, progapCtrl.progap_form02);
 
 
 module.exports = router
