@@ -1,5 +1,10 @@
 <%- include('../partials/header'); %>
 
+<style>
+	.webix_view {
+	background-color: #3c3c3e; /* Cambiar el fondo solo aquí */
+}
+	</style>
 <script>
 
 var data = [
@@ -31,46 +36,64 @@ var data = [
 					rows: [
 						{
 							cols:[
-									{
-										view: "select", label: "Año", id: "cmbAnio", name: "cmbAnio", value: <%=new Date().getFullYear()%>, width: 150,
-										labelPosition: "left", labelAlign: "left", options: [
-											<%
-											for (var i = new Date().getFullYear(); i >= 2021; i--){%>
-												{ id: <%=i%>, value: "<%=i%>" },
-											<%
-											}
-											%>
-										],
-										on: {
-											onChange: ()=>{
-											genera();
-											}
-										}
-									},
 								  	{
-										view: "combo", id: "cmbSoli", name: "cmbSoli",
-										//value: "<% // Response.Write(IIF(pnId_cent = 4, 'DG HCG', ALLTRIM(cSoli.cve)))%>",
-										label: "Oficio de", 
-										value:"<%=rows[0].cve%>",
+										view: "combo", id: "cmbConvo", name: "cmbConvo",
+										label: "Convocatoria: ", 
+										labelWidth: 100,
+										width: 220,
+										value:"<%=rows[0].id%>",
 										labelPosition:"left",
-										//required: true, invalidMessage: "Este campo no puede ir vacio",
 										options: {
 											fitMaster: false,
-											width: 600,
+											width: 200,
 											body: {
 												data: [
 													<%for (var i = 0; i < rows.length; i++) {%>
-													{ id: "<%= rows[i].cve%>", value: "(<%=rows[i].cve%>) <%=rows[i].depen%>" },
+													{ id: "<%= rows[i].id%>", value: "<%=rows[i].anio%>" },
 													<%}%>
 												]
 											}
 										},
 										on: {
 											onChange: ()=>{
-												//mues_soli();
-												//obtenerSeccion();
 												genera();
 												
+											}
+										}
+									},
+									{
+										view: "combo", id: "cmbDepe", name: "cmbDepe",
+										label: "Dependencia: ", 
+										labelWidth: 100,
+										value:"0",
+										labelPosition:"left",
+										options: {
+											//fitMaster: true,
+											width: 600,
+											body: {
+												data: [
+													{id:"0", value:"Todos"},
+													<%for (var i = 0; i < rows2.length; i++) {%>
+													{ id: "<%= rows2[i].id%>", value: "(<%=rows2[i].siglas%>) <%=rows2[i].dependencia%>" },
+													<%}%>
+												]
+											},
+											filter: function(item, value) {
+											// Retorna true si el texto del combo contiene lo que el usuario escribió
+											// Usamos .toLowerCase() para que no importe si es MAYÚSCULA o minúscula
+											return item.value.toString().toLowerCase().indexOf(value.toLowerCase()) !== -1;
+											},
+										},
+										on: {
+											onChange: ()=>{
+												genera();
+												
+											},
+											onFocus: function() {
+											// Usamos un pequeño delay para asegurar que el input ya esté listo
+											setTimeout(() => {
+												this.getInputNode().select();
+											}, 50);
 											}
 										}
 									},
@@ -95,7 +118,7 @@ var data = [
 								// end:100
 							},
 							legend:{
-								values:[{text:"Ingreso",color:"#58dccd"},{text:"Egreso",color:"#a7ee70"},{text:"No asignados",color:"#36abee"}],
+								values:[{text:"Completas",color:"#58dccd"},{text:"Rechazos",color:"#f08080"},{text:"Pendientes",color:"#36abee"}],
 								valign:"middle",
 								align:"right",
 								width:120,
@@ -103,34 +126,140 @@ var data = [
 							},
 							series:[
 								{
-								value:"#ingreso#",
+								value:"#completa#",
 								color: "#58dccd",
 								tooltip:{
-									template:"#ingreso#"
+									template:"#completa#"
 								}
 								},
 								{
-								value:"#egreso#",
-								label:"#egreso#",
-								color:"#a7ee70",
+								value:"#rechazada#",
+								//label:"#rechazada#",
+								color:"#f08080",
 								tooltip:{
-									template:"#egreso#"
+									template:"#rechazada#"
 								}
 								},
 								{
-								value:"#no_asignado#",
+								value:"#pendiente#",
 								color:"#36abee",
 								tooltip:{
-									template:"#no_asignado#"
+									template:"#pendiente#"
 								}
 								}
 							],
+							},
+							{ maxWidth: 5 },
+							{ 
+								rows: [
+								{view:"fieldset", label:"Total Maestría", body:{
+									rows:[
+										{ view:"label", align:"right", label:"", id:"lblDato01", name:"lblDato01", width:150, height: 90, 
+											template: "<div style='font-size: 45px; color: #FFFFFF;'>#label#</div>",
+										},
+									]
+									}
+								},
+								{view:"fieldset", label:"Maestría completos", body:{
+									rows:[
+										{ view:"label", align:"right", label:"", id:"lblDato02", name:"lblDato02", width:150, height: 60, 
+											template: "<div style='font-size: 30px; color: #FFFFFF;'>#label#</div>",
+										},
+									]
+									}
+								},
+								{view:"fieldset", label:"Maestría Pen/rech", body:{
+									rows:[
+										{ view:"label", align:"right", label:"", id:"lblDato03", name:"lblDato03", width:150, height: 60, 
+											template: "<div style='font-size: 30px; color: #FFFFFF;'>#label#</div>",
+										},
+									]
+									}
+								},
+								{view:"fieldset", label:"Total completos", body:{
+									rows:[
+										{ view:"label", align:"right", label:"", id:"lblDato04", name:"lblDato04", width:150, height: 60, 
+											template: "<div style='font-size: 30px; color: #FFFFFF;'>#label#</div>",
+										},
+									]
+									}
+								},
+								]
+							},
+							{ maxWidth: 5 },
+							{ 
+								rows: [
+								{view:"fieldset", label:"Total Doctorados", body:{
+									rows:[
+										{ view:"label", align:"right", label:"", id:"lblDato11", name:"lblDato11", width:150, height: 90, 
+											template: "<div style='font-size: 45px; color: #FFFFFF;'>#label#</div>",
+										},
+									]
+									}
+								},
+								{view:"fieldset", label:"Doctorados completos", body:{
+									rows:[
+										{ view:"label", align:"right", label:"", id:"lblDato12", name:"lblDato12", width:150, height: 60, 
+											template: "<div style='font-size: 30px; color: #FFFFFF;'>#label#</div>",
+										},
+									]
+									}
+								},
+								{view:"fieldset", label:"Doctorados pen/rech", body:{
+									rows:[
+										{ view:"label", align:"right", label:"", id:"lblDato13", name:"lblDato13", width:150, height: 60, 
+											template: "<div style='font-size: 30px; color: #FFFFFF;'>#label#</div>",
+										},
+									]
+									}
+								},
+								{view:"fieldset", label:"Total pen/rech", body:{
+									rows:[
+										{ view:"label", align:"right", label:"", id:"lblDato14", name:"lblDato14", width:150, height: 60, 
+											template: "<div style='font-size: 30px; color: #FFFFFF;'>#label#</div>",
+										},
+									]
+									}
+								},
+								]
+							},
+						]},
+						{
+							cols:[
+							{
+
+								view: "chart",
+								type:"donut",
+								id:"chaTotal",
+								naem:"chaTotal",
+								width:700,
+								value:"#valor#",
+								tooltip:{
+									template: function(obj) {
+									// obj contiene todos los datos de la fila/punto
+									const formatoMoneda = Number(obj.valor).toLocaleString('en-US', { 
+										currency: 'USD',
+									});
+									return obj.mes + ": " + formatoMoneda;
+									}
+								},
+								//color:"#color#",
+								legend:{
+									width: 130,
+									align:"right",
+									valign:"middle",
+									template:"#mes#"
+								},
+								pieInnerText:"#porcen# %",
+								shadow:0,
+								gradient:true,
+								//data:month_dataset
 							},
 							{
 								rows: [
                                     {
                                         view:"label", 
-                                        label: "Oficios de salida", 
+                                        label: "Maestría revisada", 
                                         align:"center" 
                                     },
 									{
@@ -166,7 +295,7 @@ var data = [
 								rows: [
                                     {
                                         view:"label", 
-                                        label: "Oficios de entrada", 
+                                        label: "Doctorado revisado", 
                                         align:"center" 
                                     },
 									{
@@ -197,103 +326,6 @@ var data = [
 										data
 									}
 								]
-							},
-							{ maxWidth: 5 },
-							{ 
-								rows: [
-								{view:"fieldset", label:"Total de egreso", body:{
-									rows:[
-										{ view:"label", align:"right", label:"", id:"lblDato01", name:"lblDato01", width:150, height: 90, 
-											template: "<div style='font-size: 45px; color: #FFFFFF;'>#label#</div>",
-										},
-									]
-									}
-								},
-								{view:"fieldset", label:"Oficio en proceso", body:{
-									rows:[
-										{ view:"label", align:"right", label:"", id:"lblDato02", name:"lblDato02", width:150, height: 60, 
-											template: "<div style='font-size: 30px; color: #FFFFFF;'>#label#</div>",
-										},
-									]
-									}
-								},
-								{view:"fieldset", label:"Oficio finalizados", body:{
-									rows:[
-										{ view:"label", align:"right", label:"", id:"lblDato03", name:"lblDato03", width:150, height: 60, 
-											template: "<div style='font-size: 30px; color: #FFFFFF;'>#label#</div>",
-										},
-									]
-									}
-								},
-								{view:"fieldset", label:"Total de cancelados", body:{
-									rows:[
-										{ view:"label", align:"right", label:"", id:"lblDato04", name:"lblDato04", width:150, height: 60, 
-											template: "<div style='font-size: 30px; color: #FFFFFF;'>#label#</div>",
-										},
-									]
-									}
-								},
-								]
-							},
-							{ maxWidth: 5 },
-							{ 
-								rows: [
-								{view:"fieldset", label:"Total de ingreso", body:{
-									rows:[
-										{ view:"label", align:"right", label:"", id:"lblDato11", name:"lblDato11", width:150, height: 90, 
-											template: "<div style='font-size: 45px; color: #FFFFFF;'>#label#</div>",
-										},
-									]
-									}
-								},
-								{view:"fieldset", label:"Sin asignar", body:{
-									rows:[
-										{ view:"label", align:"right", label:"", id:"lblDato12", name:"lblDato12", width:150, height: 60, 
-											template: "<div style='font-size: 30px; color: #FFFFFF;'>#label#</div>",
-										},
-									]
-									}
-								},
-								{view:"fieldset", label:"Asignados", body:{
-									rows:[
-										{ view:"label", align:"right", label:"", id:"lblDato13", name:"lblDato13", width:150, height: 60, 
-											template: "<div style='font-size: 30px; color: #FFFFFF;'>#label#</div>",
-										},
-									]
-									}
-								},
-								{view:"fieldset", label:"Cancelados", body:{
-									rows:[
-										{ view:"label", align:"right", label:"", id:"lblDato14", name:"lblDato14", width:150, height: 60, 
-											template: "<div style='font-size: 30px; color: #FFFFFF;'>#label#</div>",
-										},
-									]
-									}
-								},
-								]
-							},
-						]},
-						{
-							cols:[
-							{
-
-								view: "chart",
-								type:"donut",
-								id:"chaTotal",
-								naem:"chaTotal",
-								width:500,
-								value:"#oficio#",
-								//color:"#color#",
-								legend:{
-									width: 75,
-									align:"right",
-									valign:"middle",
-									template:"#mes#"
-								},
-								pieInnerText:"#oficio#",
-								shadow:0,
-								gradient:true,
-								//data:month_dataset
 							},
 							{
 							view:"treemap",
@@ -332,15 +364,15 @@ var data = [
 			function genera(){
 
 				$$("chaConce").clearAll();
-				$$("chaConce").load("/api/op/op_rgrafx?lnAnio=" + $$("cmbAnio").getValue() + "&lcCVE=" + $$("cmbSoli").getValue() );
+				$$("chaConce").load("/api/progap/progap_dashboardx?lnConvo=" + $$("cmbConvo").getValue() + "&lnDepe=" + $$("cmbDepe").getValue() );
 
 				$$("chaTotal").clearAll();
-				$$("chaTotal").load("/api/op/op_rgrafx2?lnAnio=" + $$("cmbAnio").getValue() + "&lcCVE=" + $$("cmbSoli").getValue() );
+				$$("chaTotal").load("/api/progap/progap_dashboardx2?lnConvo=" + $$("cmbConvo").getValue() + "&lnDepe=" + $$("cmbDepe").getValue() );
 
 				$$("chaDeman").clearAll();
-				$$("chaDeman").load("/api/op/op_rgrafx3?lnAnio=" + $$("cmbAnio").getValue() + "&lcCVE=" + $$("cmbSoli").getValue() );
+				$$("chaDeman").load("/api/progap/progap_dashboardx3?lnConvo=" + $$("cmbConvo").getValue() + "&lnDepe=" + $$("cmbDepe").getValue() );
 
-				webix.ajax().get("/api/op/op_rgrafx4?lnAnio=" + $$("cmbAnio").getValue() + "&lcCVE=" + $$("cmbSoli").getValue() ).then((res)=>{
+				webix.ajax().get("/api/progap/progap_dashboardx4?lnConvo=" + $$("cmbConvo").getValue() + "&lnDepe=" + $$("cmbDepe").getValue()).then((res)=>{
 				res = res.json()
 					//console.log(res);
 					//console.log(res[0].value)
@@ -349,21 +381,21 @@ var data = [
 						style: 'decimal',
 						currency: 'MXN',
 					});
-					$$("lblDato01").define("label", formatterMXN.format(res[0].etotal));
+					$$("lblDato01").define("label", formatterMXN.format(res[0].mtotal));
 					$$("lblDato01").refresh();
-					$$("lblDato02").define("label", formatterMXN.format(res[0].ependiente));
+					$$("lblDato02").define("label", formatterMXN.format(res[0].mcompleta));
 					$$("lblDato02").refresh();
-					$$("lblDato03").define("label", formatterMXN.format(res[0].efinalizado));
+					$$("lblDato03").define("label", formatterMXN.format(res[0].mpendienter));
 					$$("lblDato03").refresh();
-					$$("lblDato04").define("label", formatterMXN.format(res[0].ecancelado));
+					$$("lblDato04").define("label", formatterMXN.format(parseInt(res[0].mcompleta)+parseInt(res[0].dcompleta)));
 					$$("lblDato04").refresh();
-					$$("lblDato11").define("label", formatterMXN.format(res[0].itotal));
+					$$("lblDato11").define("label", formatterMXN.format(res[0].dtotal));
 					$$("lblDato11").refresh();
-					$$("lblDato12").define("label", formatterMXN.format(res[0].ipendiente));
+					$$("lblDato12").define("label", formatterMXN.format(res[0].dcompleta));
 					$$("lblDato12").refresh();
-					$$("lblDato13").define("label", formatterMXN.format(res[0].ifinalizado));
+					$$("lblDato13").define("label", formatterMXN.format(res[0].dpendienter));
 					$$("lblDato13").refresh();
-					$$("lblDato14").define("label", formatterMXN.format(res[0].icancelado));
+					$$("lblDato14").define("label", formatterMXN.format(parseInt(res[0].dpendienter)+parseInt(res[0].mpendienter)));
 					$$("lblDato14").refresh();
 
 					
@@ -374,24 +406,24 @@ var data = [
 					$$("chaIngreF").clearAll()
 					$$("chaIngreP").clearAll()
 					
-					const lnPendiE = Math.round((res[0].ependiente * 100) / (res[0].etotal-res[0].ecancelado))
-					const lnComplE = 100 - lnPendiE
-					const lnPendiI = Math.round((res[0].ipendiente * 100) / (res[0].itotal-res[0].icancelado))
-					const lnComplI = 100 - lnPendiI
+					const lnPendiM = Math.round((res[0].mpendiente * 100) / (res[0].mtotal-res[0].mcompleta))
+					const lnComplM = 100 - lnPendiM
+					const lnPendiD = Math.round((res[0].dpendiente * 100) / (res[0].dtotal-res[0].dcompleta))
+					const lnComplD = 100 - lnPendiD
 
-					console.log(lnPendiE)
-					console.log(lnComplE)
+					//console.log(lnPendiM)
+					//console.log(lnComplM)
 
 					const loNewDatoE = [
-						{ val:lnComplE, color1: "#2ECC71", color2:"#AAB7B8" },
-						{ val:lnPendiE, color1: "#AAB7B8", color2:"#E74C3C" },
+						{ val:lnComplM, color1: "#26a69a", color2:"#AAB7B8" },
+						{ val:lnPendiM, color1: "#AAB7B8", color2:"#42a5f5" },
 						];
 					$$("chaEgreF").parse(loNewDatoE)
 					$$("chaEgreP").parse(loNewDatoE)
 
 					const loNewDatoI = [
-						{ val:lnComplI, color1: "#2ECC71", color2:"#AAB7B8" },
-						{ val:lnPendiI, color1: "#AAB7B8", color2:"#E74C3C" },
+						{ val:lnComplD, color1: "#26a69a", color2:"#AAB7B8" },
+						{ val:lnPendiD, color1: "#AAB7B8", color2:"#42a5f5" },
 						];
 					$$("chaIngreF").parse(loNewDatoI)
 					$$("chaIngreP").parse(loNewDatoI)
@@ -406,18 +438,18 @@ var data = [
 					comments = item.tipo;
 				
 				if(!this.isBranch(id)){
-					if(comments == 0)
+					if(comments == 1)
 					color ="#b2dfdb";
-					else if(comments == 1)
-					color ="#80cbc4";
 					else if(comments == 2)
-					color ="#4db6ac";
+					color ="#80cbc4";
 					else if(comments == 3)
+					color ="#4db6ac";
+					else if(comments == 5)
 					color ="#26a69a";
 					else if(comments == 4)
-					color ="#42a5f5";
-					else 
 					color ="#f08080";
+					else 
+					color ="#42a5f5";
 				}
 				return { background: color};
 			}

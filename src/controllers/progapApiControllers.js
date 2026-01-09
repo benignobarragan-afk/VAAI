@@ -1,12 +1,13 @@
 const { AsyncLocalStorage } = require("async_hooks");
 const path = require("path")
-const pool = require(path.join(__dirname, "..", "db"))
+//const pool = require(path.join(__dirname, "..", "db"))
 const config = require(path.join(__dirname, "..", "config"));
 const util = require(path.join(__dirname, "..", "utils/busquedaUtils"));
 const other_utils = require(path.join(__dirname, "..", "utils/other_utils"));
 const oplantilla = require(path.join(__dirname, "..", "utils/plantilla_pdf"));
 const PDFDocument = require("pdfkit-table");
 const fs = require('fs');
+const { cacheUsuarios } = require("../middlewares/authjwt");
 
 const progap_usuariox = (async (req, res) => {
 
@@ -16,14 +17,14 @@ const progap_usuariox = (async (req, res) => {
     }
 
     const lcSQL = `
-    SELECT ROW_NUMBER() OVER (ORDER BY CONCAT(u.nombre, ' ', u.apellido_paterno, ' ', u.apellido_materno)) AS rank, u.usuario, CONCAT(u.nombre, ' ', u.apellido_paterno, ' ', u.apellido_materno) AS nombre,
+    SELECT ROW_NUMBER() OVER (ORDER BY CONCAT(u.nombre, ' ', u.apellido_paterno, ' ', u.apellido_materno)) AS rank, u.id, u.usuario, CONCAT(u.nombre, ' ', u.apellido_paterno, ' ', u.apellido_materno) AS nombre,
 	        if(u.id_tipo_usuario = 1, "Administrador", if(u.id_tipo_usuario = 2, "Revisor", if(u.id_tipo_usuario = 3, "Secretario Academico", 
             if(u.id_tipo_usuario = 4, "Coordinador de posgrado", if(u.id_tipo_usuario = 5, "Estudiante", "Sin definir"))))) AS tipo,
 	        u.correo, d.siglas, if(estado = 1, "Activo", "Inactivo") AS status
 	    FROM progap_usuarios u LEFT JOIN progap_nivel_estudios e ON u.id_nivel_estudios = e.id
 		    LEFT JOIN progap_dependencias d ON u.id_centro_universitario = d.id
             ${(!req.query.lnConv?'':'WHERE id_convocatoria = '+ req.query.lnConv)}
-        ORDER BY 3
+        ORDER BY u.nombre, u.apellido_paterno,u.apellido_materno
     `
 
     const rows = await util.gene_cons(lcSQL)
@@ -57,11 +58,20 @@ const progap_estudiax = (async (req, res) => {
         return res.render("sin_derecho")
     }
 
-    const lcSQL = `
+/*     const lcSQL = `
     SELECT ROW_NUMBER() OVER (ORDER BY nombre_completo) AS rank, id, codigo, nombre_completo AS nombre, correo, campus, if(estado = 1, "Activo", "Inactivo") AS status 
         FROM progap_accesos
         ${(!req.query.lnConv?'':'WHERE codigo IN (SELECT usuario FROM progap_usuarios WHERE id_convocatoria = '+ req.query.lnConv) + ')'}
         order by nombre_completo
+    `
+ */
+    const lcSQL = `
+    SELECT ROW_NUMBER() OVER (ORDER BY a.nombre, a.apellido_paterno, a.apellido_materno) as rank, a.id, a.codigo, CONCAT(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, a.correo_institucional,
+            d.siglas, if(IFNULL(a.id_estado, 0) < 3, 'Inactivo', 'Activo') AS status
+        FROM progap_alumnos a 
+            LEFT JOIN progap_dependencias d ON a.id_centro_universitario = d.id 
+        ${!req.query.lnConv?'':'WHERE a.id_convocatoria = ' + req.query.lnConv}
+        ORDER BY a.nombre, a.apellido_paterno, a.apellido_materno
     `
 
     const rows = await util.gene_cons(lcSQL)
@@ -147,17 +157,23 @@ const progap_form01 = ( async (req, res) => {
     let lcSQL = `
     SELECT COUNT(*) as total
         FROM log_visitas 
-        WHERE usuario_id = ${req.userId} AND DATE(fecha_visita) = DATE(NOW()) AND LEFT(URL,18) = "/api/progap/progap_form01"
+        WHERE usuario_id = ${req.userId} AND LEFT(URL,18) = "/api/progap/progap_form01" 
+            AND fecha_visita > DATE_SUB(NOW(), INTERVAL 1 HOUR)
     `
     const rows = await util.gene_cons(lcSQL)
 
-    if (rows[0].total > 200){
+    if (rows[0].total > 20){
     lcSQL = `
-    UPDATE passfile SET bloqueada = 1, bloq_MOTI = "Bloqueo por mas de 200 descargas de formato: '/api/progap/progap_form01' por día",
+    UPDATE passfile SET bloqueada = 1, bloq_MOTI = "Bloqueo por mas de 20 descargas de formato: '/api/progap/progap_form01' en una hora",
     		cambios = CONCAT(IFNULL(cambios, ''), "BLOQUEO_AUTO-/api/progap/progap_form01", DATE_FORMAT(NOW(), "%d/%m/%Y %h:%i")) 
 	    WHERE user_id = '${req.userId}'
     `
     const bloqueo = await util.gene_cons(lcSQL)
+
+    // 5. Limpiar caché para que el bloqueo sea inmediato
+    cacheUsuarios.delete(req.userId);
+    console.log(`Usuario ${userId} bloqueado por seguridad.`);
+    
     return res.render("cuen_bloq")
     } 
 
@@ -167,7 +183,7 @@ const progap_form01 = ( async (req, res) => {
     SELECT concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, curp, a.codigo, 
             d.dependencia, CONCAT(p.clave_cgipv, ' - ', p.programa) AS programa, ci.nombre AS cicl_ingr, 
             cc.nombre AS cicl_curs, cco.nombre AS cicl_cond, a.correo_institucional, d.municipio, a.fecha_solicitud,
-            CONCAT(CONVERT(d.municipio USING utf8mb4), ', Jalisco, México; a ', DATE_FORMAT(a.fecha_solicitud, '%d de %M de %Y')) AS fecha_texto
+            CONCAT(CONVERT(d.municipio USING utf8mb4), ', Jalisco, México, a ', DATE_FORMAT(a.fecha_solicitud, '%d de %M de %Y')) AS fecha_texto
         FROM progap_alumnos a 
         LEFT JOIN progap_usuarios u ON a.id_usuario = u.id
         LEFT JOIN progap_dependencias d ON u.id_centro_universitario = d.id
@@ -195,8 +211,9 @@ const progap_form01 = ( async (req, res) => {
     doc.text(`${config.VICERRECTOR}`, { continued: true });
     doc.font('Helvetica');
     doc.text(`
-Vicerrector adjunto
 Vicerrector Adjunto Académico y de Investigación
+Vicerrectoría Ejecutiva
+Universidad de Guadalajara
 Presente
 `
     );
@@ -274,24 +291,33 @@ const progap_form02 = ( async (req, res) => {
     let lcSQL = `
     SELECT COUNT(*) as total
         FROM log_visitas 
-        WHERE usuario_id = ${req.userId} AND DATE(fecha_visita) = DATE(NOW()) AND LEFT(URL,18) = "/api/progap/progap_form02"
+        WHERE usuario_id = ${req.userId} AND LEFT(URL,18) = "/api/progap/progap_form02"
+            AND fecha_visita > DATE_SUB(NOW(), INTERVAL 1 HOUR)
     `
     const rows = await util.gene_cons(lcSQL)
 
-    if (rows[0].total > 50){
+    if (rows[0].total > 5){
     lcSQL = `
-    UPDATE passfile SET bloqueada = 1, bloq_MOTI = "Bloqueo por mas de 50 descargas de formato: '/api/progap/progap_form02' por día",
+    UPDATE passfile SET bloqueada = 1, bloq_MOTI = "Bloqueo por mas de 5 descargas de formato: '/api/progap/progap_form02' en una hora",
     		cambios = CONCAT(IFNULL(cambios, ''), "BLOQUEO_AUTO-/api/progap/progap_form02", DATE_FORMAT(NOW(), "%d/%m/%Y %h:%i")) 
 	    WHERE user_id = '${req.userId}'
     `
     const bloqueo = await util.gene_cons(lcSQL)
+
+    // 5. Limpiar caché para que el bloqueo sea inmediato
+    cacheUsuarios.delete(req.userId);
+    console.log(`Usuario ${userId} bloqueado por seguridad.`);
+    
     return res.render("cuen_bloq")
     } 
 
     lcSQL =  `
+    SET lc_time_names = 'es_MX';
+    
     SELECT ex.id AS id_exacam, cco.nombre AS cicl_cond, a.id_centro_universitario, SUM(if(LEFT(p.nivel,1) = 'D', c.arancel_doctorado, 0)) AS nive_doct,
             SUM(if(LEFT(p.nivel,1) != 'D', c.arancel_maestria, 0)) AS nive_otro, SUM(if(LEFT(p.nivel,1) = 'D', c.arancel_doctorado, c.arancel_maestria)) as nive_tota,
-            SUM(if(LEFT(p.nivel,1) = 'D', 1, 0)) AS alum_doct, SUM(if(LEFT(p.nivel,1) != 'D', 1, 0)) AS alum_otro, count(*) as alum_tota
+            SUM(if(LEFT(p.nivel,1) = 'D', 1, 0)) AS alum_doct, SUM(if(LEFT(p.nivel,1) != 'D', 1, 0)) AS alum_otro, count(*) as alum_tota, 
+            MAX(date_format(ex.fecha, '%d de %M de %Y')) AS fecha
         FROM progap_alumnos a
         LEFT JOIN progap_usuarios u ON a.id_usuario = u.id
         LEFT JOIN progap_convocatoria c ON a.id_convocatoria = c.id
@@ -304,7 +330,8 @@ const progap_form02 = ( async (req, res) => {
     const ltTotal = await util.gene_cons(lcSQL)
 
     lcSQL =  `
-    SELECT a.id, p.programa, a.codigo, concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, cco.nombre AS cicl_cond,
+    SELECT ROW_NUMBER() OVER (ORDER BY p.nivel, concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno)) AS rank,
+            a.id, p.programa, a.codigo, concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, cco.nombre AS cicl_cond,
             p.nivel, if(LEFT(p.nivel,1) = 'D', c.arancel_doctorado, c.arancel_maestria) AS monto
         FROM progap_alumnos a
         LEFT JOIN progap_usuarios u ON a.id_usuario = u.id
@@ -313,11 +340,25 @@ const progap_form02 = ( async (req, res) => {
         LEFT JOIN progap_programa p ON a.id_programa = p.id
         LEFT JOIN progap_ciclos cco ON a.id_ciclo_condonar = cco.id	
         WHERE ex.id = ${req.query.id} AND a.id_estado = 3
-        ORDER BY 3
+        ORDER BY p.nivel, concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno)
     `
     const ltDeta = await util.gene_cons(lcSQL)
 
+    lcSQL =  `
+    SELECT am.id, concat(if(LEFT(am.genero, 1) = "F", g.abreviatura_f, g.abreviatura_m), ' ', am.nombres) AS nombre, 
+            if(am.cargo = 'Revisor', "Revisado por: ", if(am.cargo = "Autorizador", "Autorizado por:", "")) AS cargo,
+            CONCAT(am.cargo, if(LEFT(am.genero, 1) = "F", 'a', ''), ' del ', d.dependencia)  AS carg_rect, d.siglas, d.dependencia,
+            CONCAT(d.municipio , ', Jalisco, México, a ', '${ltTotal[1][0].fecha}') AS fecha_texto  
+        FROM progap_altos_mandos am LEFT JOIN progap_grado g ON am.id_grado = g.id
+            LEFT JOIN progap_dependencias d ON am.id_cu = d.id
+        WHERE id_cu = ${ltTotal[1][0].id_centro_universitario}
+        ORDER BY 1 
+    `
+
+    const ltDire = await util.gene_cons(lcSQL)
+
     const laDeta = ltDeta.map(item => [
+        item.rank,
         item.programa,
         item.codigo,
         item.nombre,
@@ -325,8 +366,8 @@ const progap_form02 = ( async (req, res) => {
         item.nivel,
         item.monto
     ]);
-    console.log(ltDeta)
-    console.log(laDeta)
+    //console.log(ltDeta)
+    //console.log(laDeta)
     const doc = new PDFDocument({bufferPages: true}
         /* {margin: 50, 
         margins: { top: 120, bottom: 80, left: 50, right: 50 }, 
@@ -334,7 +375,7 @@ const progap_form02 = ( async (req, res) => {
     );
 
     doc.on('pageAdded', async () => {
-        oplantilla.plantilla01(doc, "CUCS.png");
+        oplantilla.plantilla01(doc, ltDire[0].siglas + ".png");
         doc.fillColor('black').fontSize(12); // Resetear estilo para el contenido
         doc.page.margins.top = 120; // Reforzamos el margen de la página actual
         doc.page.margins.bottom = 10; // Reforzamos el margen de la página actual
@@ -352,7 +393,7 @@ const progap_form02 = ( async (req, res) => {
         doc.image(lcArchivo, 25, 25, {width: 580})
     }
  */
-    oplantilla.plantilla01(doc, "CUCS.png");
+    oplantilla.plantilla01(doc, ltDire[0].siglas + ".png");
     doc.fillColor('black').fontSize(10); // Resetear estilo para el contenido
     doc.y = 120; // Resetear posición vertical para no encimar el encabezado
 
@@ -369,16 +410,19 @@ const progap_form02 = ( async (req, res) => {
     doc.text(`${config.VICERRECTOR}`, { continued: true });
     doc.font('Helvetica');
     doc.text(`
-Vicerrector adjunto
 Vicerrector Adjunto Académico y de Investigación
+Vicerrectoría Ejecutiva
+Universidad de Guadalajara
 Presente
 `
     );
     doc.moveDown(2);
     doc.fontSize(10);
-    doc.text ( `Por este medio reciba un cordial saludo y a su vez, me permito solicitar que, por su amable conducto, se pueda poner a consideración de la Comisión Permanente Condonaciones y Becas del Consejo General Universitario la solicitud de condonación conforme a lo estabiecido en el Programa Compensatorio para la Transición Gradual hacia la Gratuidad de los Servicios Educativos de Posgrado, relativa a los estudiantes de posgrado del Centro Universitario de Ciencias Biológicas y Agropecuarias.`, {align: 'justify'})
+//    doc.text ( `Por este medio reciba un cordial saludo y a su vez, me permito solicitar que, por su amable conducto, se pueda poner a consideración de la Comisión Permanente Condonaciones y Becas del Consejo General Universitario la solicitud de condonación conforme a lo estabiecido en el Programa Compensatorio para la Transición Gradual hacia la Gratuidad de los Servicios Educativos de Posgrado, relativa a los estudiantes de posgrado del Centro Universitario de Ciencias Biológicas y Agropecuarias.`, {align: 'justify'})
+    doc.text ( `Por este medio, reciba un cordial saludo. Asimismo, me permito solicitar atentamente que, por su amable conducto, se someta a consideración de la Comisión Permanente de Condonaciones y Becas del Consejo General Universitario la solicitud de condonación, conforme a lo establecido en el Programa Compensatorio para la Transición Gradual hacia la Gratuidad de los Servicios Educativos de Posgrado, relativa a las y los estudiantes de posgrado del Centro Universitario de Ciencias Biológicas y Agropecuarias.`, {align: 'justify'})
     doc.moveDown();
-    doc.text ( `Al respecto, le comparto la información concentrada de los estudiantes de posgrado susceptibles de ser beneficiados y el monto de apoyo económico a condonar por nivel educativo, para efectos del traslado de los recursos financieros equivalente a las matrícuias condonadas, conforme se enlista a continuación:`, {align: 'justify'})
+//    doc.text ( `Al respecto, le comparto la información concentrada de los estudiantes de posgrado susceptibles de ser beneficiados y el monto de apoyo económico a condonar por nivel educativo, para efectos del traslado de los recursos financieros equivalente a las matrícuias condonadas, conforme se enlista a continuación:`, {align: 'justify'})
+    doc.text ( `Al respecto, se adjunta  la información concentrada de los estudiantes de posgrado susceptibles de ser beneficiados, así como el monto del apoyo económico a condonar por nivel educativo, para efectos del traslado de los recursos financieros equivalentes a las matrículas condonadas, conforme se detalla a continuación:`, {align: 'justify'})
     doc.moveDown(2);
 /*     doc.table({
         rowStyles: (i) => {
@@ -397,8 +441,8 @@ Presente
         {label:"Monto total de apoyo de condonación por nivel educativo", headerAlign: 'center', align: 'right', renderer: (value, indexColumn, indexRow, row, rectRow, rectCell) => { return `$ ${Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` } }
         ],
       rows: [
-        ["Doctorado",ltTotal[0].alum_doct, ltTotal[0].cicl_cond, ltTotal[0].nive_doct],
-        ["Maestría",ltTotal[0].alum_otro, ltTotal[0].cicl_cond, ltTotal[0].nive_otro],
+        ["Doctorado",ltTotal[1][0].alum_doct, ltTotal[1][0].cicl_cond, ltTotal[1][0].nive_doct],
+        ["Maestría",ltTotal[1][0].alum_otro, ltTotal[1][0].cicl_cond, ltTotal[1][0].nive_otro],
       ],
     };
 
@@ -409,25 +453,22 @@ Presente
     doc.moveDown(2);
 
     doc.text ( `Se incluye como parte de esta solicitud un expediente que contiene la información y documentación de la totalidad del alumnado y programas educativos de este Centro Universitario, según se solicita en el numeral 3 del apartado 9 de las Reglas de Operación del Programa antes mencionado.`, {align: 'justify'});
-    doc.text ( `Sin otro particular, reciban un cordial saludo.`, {align: 'justify'});
-    doc.moveDown(1);
     doc.text ( `
-    Atentamente`, {align: 'center',continued: true});
-    doc.font('Helvetica-Bold');    
-    doc.text ( `
-"PIENSA Y TRABAJA"                 
-"1925-2025, Un Siglo de Pensar y Trabajar"                 `, {align: 'center',continued: true});
-doc.font('Helvetica');    
-    doc.text ( `
-Ameca, Jalisco, México; a 16 de octubre de 2025`, {align: 'center'});
+Sin otro particular, reciban un cordial saludo.`, {align: 'justify'});
+    doc.moveDown(2)
+    .text ( `Atentamente`, {align: 'center'});
+    doc.font('Helvetica-Bold')    
+    .text ( `"PIENSA Y TRABAJA"
+"1925-2025, Un Siglo de Pensar y Trabajar"`, {align: 'center'});
+    doc.font('Helvetica')
+    .text ( `${ltDire[0].fecha_texto}`, {align: 'center'});
     doc.moveDown(4);
     doc.moveTo(180, doc.y)
     .lineTo(450, doc.y)
     .stroke();
-    doc.moveDown(1);
-   doc.text ( `
-Dra. Graciela Gudiño Cabrera
-Rectora del Centro Universitario de Ciencias Biológicas y Agropecuarias`, {align: 'center'});
+    doc.moveDown(2);
+   doc.text ( `${ltDire[0].nombre}
+${ltDire[0].carg_rect}`, {align: 'center'});
 
     doc.addPage();
     doc.fillColor("#047195")
@@ -458,7 +499,7 @@ Rectora del Centro Universitario de Ciencias Biológicas y Agropecuarias`, {alig
 
     doc.moveDown(1)
     
-    doc.rect(84, doc.y-2, 456, 15)
+    doc.rect(84, doc.y-2, 456, (ltDire[0].dependencia.length > 65?25:15))
         .lineWidth(0)
         .fill("#f2f2f2")
         .stroke();
@@ -467,8 +508,15 @@ Rectora del Centro Universitario de Ciencias Biológicas y Agropecuarias`, {alig
 
     doc.fillColor('black')
         .fontSize(9)
-        .text(`    Centro universitario que presenta la solicitud:`, {align: 'left'});
+        .text(`    Centro universitario que presenta la solicitud: `, {align: 'left'});
 
+    doc.moveDown(-1)
+    doc.x = 280
+    doc.fillColor('black')
+        .fontSize(9)
+        .text(`${ltDire[0].dependencia}`, {align: 'center'});
+
+    doc.x = 80
     doc.moveDown(2)
     //columna 1
     doc.rect(84, doc.y-6, 160, 18)
@@ -529,7 +577,7 @@ Total de alumnos a condonar
 
 Alumnos de Maestría a condonar
 
-Alumnos de Maestría a condonar
+Alumnos de Doctorado a condonar
             `, {
                 width: 160,      // Ancho de la columna
                 align: 'center',
@@ -542,13 +590,13 @@ Alumnos de Maestría a condonar
         .fillColor('#000000')
         .fontSize(8)
         .text(`
-${ltTotal[0].alum_tota}
+${ltTotal[1][0].alum_tota}
 
-${ltTotal[0].alum_doct}
+${ltTotal[1][0].alum_otro}
 
-${ltTotal[0].alum_otro}
+${ltTotal[1][0].alum_doct}
             `, {
-                width: 380,      // Ancho de la columna
+                width: 400,      // Ancho de la columna
                 align: 'right',
                 columns: 2,      // ¡PDFKit lo hace automáticamente!
                 columnGap: 15    // Espacio entre columnas
@@ -577,11 +625,11 @@ Monto a condonar de nivel doctorado
         .fillColor('#000000')
         .fontSize(8)
         .text(`
-$ ${Number(ltTotal[0].nive_tota).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}            
+$ ${Number(ltTotal[1][0].nive_tota).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}            
 
-$ ${Number(ltTotal[0].nive_doct).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+$ ${Number(ltTotal[1][0].nive_otro).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
 
-$ ${Number(ltTotal[0].nive_otro).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+$ ${Number(ltTotal[1][0].nive_doct).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             `, {
                 width: 480,      // Ancho de la columna
                 align: 'right',
@@ -642,7 +690,7 @@ $ ${Number(ltTotal[0].nive_otro).toLocaleString('en-US', { minimumFractionDigits
     doc.moveDown(7)
     doc.fillColor('#047195')
         .fontSize(8)
-        .text(`Revisado por:`, {
+        .text(`${ltDire[1].cargo}`, {
                 width: 160,      // Ancho de la columna
                 align: 'center',
                 columns: 1,      // ¡PDFKit lo hace automáticamente!
@@ -652,7 +700,7 @@ $ ${Number(ltTotal[0].nive_otro).toLocaleString('en-US', { minimumFractionDigits
     doc.fillColor('#000000')
         .fontSize(8)
         .text(`
-Dr. Haiku Daniel de Jesús Gómez Velázquez
+${ltDire[1].nombre}
             `, {
                 width: 160,      // Ancho de la columna
                 align: 'center',
@@ -666,7 +714,7 @@ Dr. Haiku Daniel de Jesús Gómez Velázquez
     doc.moveDown(-4)
     doc.fillColor('#047195')
         .fontSize(8)
-        .text(`Revisado por:`, {
+        .text(`${ltDire[2].cargo}`, {
                 width: 160,      // Ancho de la columna
                 align: 'center',
                 columns: 1,      // ¡PDFKit lo hace automáticamente!
@@ -676,7 +724,7 @@ Dr. Haiku Daniel de Jesús Gómez Velázquez
     doc.fillColor('#000000')
         .fontSize(8)
         .text(`
-Dr. Haiku Daniel de Jesús Gómez Velázquez
+${ltDire[2].nombre}
             `, {
                 width: 160,      // Ancho de la columna
                 align: 'center',
@@ -688,7 +736,8 @@ Dr. Haiku Daniel de Jesús Gómez Velázquez
     doc.x = 65
     doc.moveDown(3)
     table = {
-    headers: [{label:"Nombre del Programa", align: 'left', headerAlign: 'center' },
+    headers: [{label:"#", align: 'center', headerAlign: 'center' },
+        {label:"Nombre del Programa", align: 'left', headerAlign: 'center' },
         {label:"Código del estudiante", align: 'center', headerAlign: 'center'},
         {label:"Nombre", align: 'left', headerAlign: 'center'},
         {label:"Ciclo a condonar", align: 'center', headerAlign: 'center'},
@@ -698,7 +747,7 @@ Dr. Haiku Daniel de Jesús Gómez Velázquez
       rows: laDeta
     };
 
-    await doc.table(table, {columnsSize: [ 130, 60, 140, 40, 60, 70 ],
+    await doc.table(table, {columnsSize: [ 20, 120, 60, 120, 40, 60, 70 ],
         //addPage: true, 
         onPageAdd: (doc) => {
         doc.y = 120;
@@ -709,6 +758,520 @@ Dr. Haiku Daniel de Jesús Gómez Velázquez
     doc.end();
 });
 
+const progap_dashboardx = (async (req, res) => {
+    
+    if (req.groups.indexOf(",PROGAP,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    //console.log(req.query.lnDepe)
+    
+    lcSQL = `
+    SELECT d.siglas as mes, SUM(if(a.id_estado = 3, 1, 0)) AS completa, SUM(if(a.id_estado = 4, 1, 0)) AS rechazada, 
+            SUM(if(IFNULL(a.id_estado,0) <> 4 AND IFNULL(a.id_estado,0) <> 3, 1, 0)) AS pendiente 
+        FROM progap_alumnos a LEFT JOIN progap_dependencias d ON a.id_centro_universitario = d.id
+        WHERE a.id_convocatoria = ${req.query.lnConvo} ${(req.query.lnDepe > 0?' and a.id_centro_universitario = ' + req.query.lnDepe:'')}
+        group BY d.siglas
+        ORDER BY d.siglas
+    `
+    const rows = await util.gene_cons(lcSQL)
+    return res.json(rows)
+
+});
+
+const progap_dashboardx2 = (async (req, res) => {
+    
+    if (req.groups.indexOf(",PROGAP,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    //console.log(req.query)
+    
+    lcSQL = `
+    SELECT SUM(if(a.id_estado = 3 AND LEFT(p.nivel,1) = 'D', 1, 0)) AS dcompleta, 
+            SUM(if(a.id_estado = 4 AND LEFT(p.nivel,1) = 'D', 1, 0)) AS drechazada, 
+            SUM(if(IFNULL(a.id_estado,0) <> 4 AND IFNULL(a.id_estado,0) <> 3 AND IFNULL(LEFT(p.nivel,1),"M") = 'D', 1, 0)) AS dpendiente,
+            SUM(if(a.id_estado = 3 AND LEFT(p.nivel,1) <> 'D', 1, 0)) AS mcompleta, 
+            SUM(if(a.id_estado = 4 AND LEFT(p.nivel,1) <> 'D', 1, 0)) AS mrechazada, 
+            SUM(if(IFNULL(a.id_estado,0) <> 4 AND IFNULL(a.id_estado,0) <> 3 AND IFNULL(LEFT(p.nivel,1),"M") <> 'D', 1, 0)) AS mpendiente  
+	FROM progap_alumnos a LEFT JOIN progap_dependencias d ON a.id_centro_universitario = d.id
+		LEFT JOIN progap_programa p ON a.id_programa = p.id
+        WHERE a.id_convocatoria = ${req.query.lnConvo} ${(req.query.lnDepe > 0?' and a.id_centro_universitario = ' + req.query.lnDepe:'')}
+    `
+    const rows = await util.gene_cons(lcSQL)
+    const lnTotal = parseInt(rows[0].dcompleta) + parseInt(rows[0].drechazada) + parseInt(rows[0].dpendiente) + parseInt(rows[0].mcompleta) + parseInt(rows[0].mrechazada) + parseInt(rows[0].mpendiente)
+    //console.log(lnTotal)
+    const vertical = [
+        { id: 1, mes: "D. Completos", valor: rows[0].dcompleta, porcen: ((rows[0].dcompleta*100)/lnTotal).toFixed(2) },
+        { id: 2, mes: "D. Rechazados", valor: rows[0].drechazada, porcen: ((rows[0].drechazada*100)/lnTotal).toFixed(2) },
+        { id: 3, mes: "D. Pendientes", valor: rows[0].dpendiente, porcen: ((rows[0].dpendiente*100)/lnTotal).toFixed(2) },
+        { id: 4, mes: "M. Completos", valor: rows[0].mcompleta, porcen: ((rows[0].mcompleta*100)/lnTotal).toFixed(2) },
+        { id: 5, mes: "M. Rechazados", valor: rows[0].mrechazada, porcen: ((rows[0].mrechazada*100)/lnTotal).toFixed(2) },
+        { id: 6, mes: "M. Pendientes", valor: rows[0].mpendiente, porcen: ((rows[0].mpendiente*100)/lnTotal).toFixed(2) }
+    ];
+
+    return res.json(vertical)
+
+});
+
+const progap_dashboardx3 = (async (req, res) => {
+    
+    if (req.groups.indexOf(",PROGAP,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    //console.log(req.query)
+    
+    lcSQL = `
+    SELECT d.siglas, SUM(if(ifnull(a.id_estado,1) = 1, 1, 0)) AS s1, SUM(if(ifnull(a.id_estado,1) = 2, 1, 0)) AS s2,
+            SUM(if(ifnull(a.id_estado,1) = 3, 1, 0)) AS s3, SUM(if(ifnull(a.id_estado,1) = 4, 1, 0)) AS s4,
+            SUM(if(ifnull(a.id_estado,5) = 2, 1, 0)) AS s5, COUNT(*) AS total
+        FROM progap_alumnos a LEFT JOIN progap_dependencias d ON a.id_centro_universitario = d.id 
+        WHERE a.id_convocatoria = ${req.query.lnConvo} ${(req.query.lnDepe > 0?' and a.id_centro_universitario = ' + req.query.lnDepe:'')}
+        group BY 1
+        ORDER BY 1 DESC 
+        LIMIT 10
+    `
+    const rows = await util.gene_cons(lcSQL)
+
+    let loDatos = []
+    for (i = 0; i < rows.length; i++){
+        
+        const lcDeta = [{id:i+'.1', value: rows[i].s1, tipo:1, label:'<br><br>SIN ENVIAR (' + rows[i].s1 + ')'},
+        {id:i+'.2', value: rows[i].s2, tipo:2, label:'<br><br>ENVIADA A REVISION (' + rows[i].s2 + ')'},
+        {id:i+'.3', value: rows[i].s3, tipo:3, label:'<br><br>SOLICITUD COMPLETA (' + rows[i].s3 + ')'},
+        {id:i+'.4', value: rows[i].s4, tipo:4, label:'<br><br>RECHAZADA (' + rows[i].s4 + ')'},
+        {id:i+'.5', value: rows[i].s99, tipo:99, label:'<br><br>ES NECESARIO CORREGIR (' + rows[i].s99 + ')'}
+        ]
+
+        const lcGrupo = 
+            {id:i, label: rows[i].siglas + ' (' + rows[i].total + ')', value:rows[i].total, data:lcDeta}
+
+        //console.log(lcGrupo)
+        loDatos.push(lcGrupo)
+    }
+
+    //console.log(loDatos)
+
+    return res.json(loDatos)
+
+});
+
+const progap_dashboardx4 = (async (req, res) => {
+    
+    if (req.groups.indexOf(",PROGAP,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    //console.log(req.query)
+    
+    lcSQL = `
+    SELECT SUM(if(ifnull(LEFT(p.nivel,1),'M') = 'D', 1, 0)) AS dtotal, SUM(if(a.id_estado = 3 AND LEFT(p.nivel,1) = 'D', 1, 0)) AS dcompleta, 		
+            SUM(if(IFNULL(a.id_estado,0) <> 3 AND IFNULL(LEFT(p.nivel,1),"M") = 'D', 1, 0)) AS dpendienter,
+            SUM(if(IFNULL(a.id_estado,0) <> 3 and IFNULL(a.id_estado,0) <> 4 AND IFNULL(LEFT(p.nivel,1),"M") = 'D', 1, 0)) AS dpendiente,
+            SUM(if(ifnull(LEFT(p.nivel,1),'M') <> 'D', 1, 0)) AS mtotal, SUM(if(a.id_estado = 3 AND LEFT(p.nivel,1) <> 'D', 1, 0)) AS mcompleta, 
+            SUM(if(IFNULL(a.id_estado,0) <> 3 AND IFNULL(LEFT(p.nivel,1),"M") <> 'D', 1, 0)) AS mpendienter, 
+            SUM(if(IFNULL(a.id_estado,0) <> 3 AND IFNULL(a.id_estado,0) <> 4 AND IFNULL(LEFT(p.nivel,1),"M") <> 'D', 1, 0)) AS mpendiente  
+        FROM progap_alumnos a LEFT JOIN progap_dependencias d ON a.id_centro_universitario = d.id
+            LEFT JOIN progap_programa p ON a.id_programa = p.id
+        WHERE a.id_convocatoria = ${req.query.lnConvo} ${(req.query.lnDepe > 0?' and a.id_centro_universitario = ' + req.query.lnDepe:'')}
+    `
+    const rows = await util.gene_cons(lcSQL)
+
+    return res.json(rows)
+
+});
+
+const progap_prograx = (async (req, res) => {
+
+    if (req.groups.indexOf(",ADMI_PROGAP,") <= 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    const lcSQL = `
+    SELECT p.clave_cgipv, d.siglas,  p.nivel, p.programa, p.clave_911, p.duracion, if(p.participa = 1, "SI", "NO") AS participa
+        FROM progap_programa p LEFT JOIN progap_dependencias d ON p.id_cu = d.id
+        ORDER BY p.nivel, p.programa, d.siglas	
+    `
+
+    const rows = await util.gene_cons(lcSQL)
+    return res.json(rows)
+});
+
+const progap_impo_progx = ( async (req, res) => {
+    
+    //console.log(req.file)
+    
+    const laArchivo = req.file.originalname;
+    const laExtencion = laArchivo.substring(laArchivo.lastIndexOf(".")+1).toUpperCase() ;
+    //console.log(laExtencion);
+
+    if(laExtencion != 'XLS' && laExtencion != 'XLSX'){
+        res.json({"status" : "error", "message": "El archivo no es un formato compatible", "data":{}})
+    }
+
+    const loExcel = other_utils.leer_excel(req.file.path); 
+
+    if (loExcel.status === "error"){
+        return res.json(loExcel);
+    }
+
+    let lcSQL = `
+    SELECT p.clave_cgipv, d.siglas, p.nivel, p.programa, p.clave_911, IFNULL(p.duracion, '') as duracion, p.id, p.id_cu,
+            0 as cambio, '' as camp_dife 
+        FROM progap_programa p LEFT JOIN progap_dependencias d ON p.id_cu = d.id
+        ORDER BY p.clave_cgipv
+`
+
+    const datosBD = await util.gene_cons(lcSQL)
+
+    // Creamos el mapa usando el ID como llave para búsqueda rápida
+    const mapaBD = new Map();
+    datosBD.forEach(reg => {
+        mapaBD.set(reg.clave_cgipv.toString(), reg);
+    });
+
+lcSQL = `
+    SELECT id, siglas, dependencia 
+        FROM progap_dependencias 
+        WHERE id_antecesor = 0 
+`
+
+    const depenBD = await util.gene_cons(lcSQL)
+
+    // Creamos el mapa usando el ID como llave para búsqueda rápida
+    const mdepeBD = new Map();
+    depenBD.forEach(reg => {
+        mdepeBD.set(reg.siglas.toString(), reg);
+    });
+    
+
+    datosExcel = loExcel.datos;
+    let lcUPDATE = "", lcORIGIN = "", laActualiza = []
+
+    datosExcel.forEach(fila => {
+        //console.log(fila)
+        //console.log(Object.values(fila)[0].toString());
+        const idExcel = Object.values(fila)[0].toString(); // Ajusta al nombre de tu columna en Excel
+        //const estatusExcel = fila["ESTATUS"];  // Ajusta al nombre de tu columna en Excel
+
+        // Si el ID existe en la BD
+        lcUPDATE = ""
+        lcORIGIN = ""
+        lnIDDepen = ''
+        if (mapaBD.has(idExcel)) {
+            const estatusActual = mapaBD.get(idExcel);
+            //console.log(fila)
+            //console.log(estatusActual)
+            for (i = 0; i < 6; i++){
+                if (Object.values(estatusActual)[i] != Object.values(fila)[i]){
+                    lcUPDATE = lcUPDATE + (lcUPDATE != ''? ', ': '') + Object.keys(estatusActual)[i] + "= '" + (!Object.values(fila)[i]?'':Object.values(fila)[i]) + "'"
+                    lcORIGIN = lcORIGIN + (lcORIGIN != ''? ', ': '') + Object.keys(estatusActual)[i] + "= '" + (!Object.values(estatusActual)[i]?'':Object.values(estatusActual)[i]) + "'"
+                }
+            }
+            if (lcUPDATE != ''){
+                if (mdepeBD.has(Object.values(fila)[1])) {
+                    lnIDDepen = mdepeBD.get(Object.values(fila)[1]).id
+                }
+            }
+
+            laActualiza.push({ marcar: (lcUPDATE!=''?1:0), id: Object.values(estatusActual)[6], clave_cgipv: Object.values(fila)[0], siglas: Object.values(fila)[1], 
+                nivel: Object.values(fila)[2], programa: Object.values(fila)[3], clave_911: Object.values(fila)[4], 
+                duracion: Object.values(fila)[5], actual: lcORIGIN, update: lcUPDATE, id_cu : lnIDDepen})
+
+            // Solo agregamos si el estatus es diferente
+            /* if (estatusActual !== estatusExcel) {
+                paraActualizar.push({ id: idExcel, nuevoEstatus: estatusExcel });
+            } */
+        }
+        else 
+        {
+            if (mdepeBD.has(Object.values(fila)[1])) {
+                lnIDDepen = mdepeBD.get(Object.values(fila)[1]).id
+            }
+            
+            laActualiza.push({marcar: 1, id: Object.values(fila)[0], clave_cgipv: Object.values(fila)[0], siglas: Object.values(fila)[1], 
+                    nivel: Object.values(fila)[2], programa: Object.values(fila)[3], clave_911: Object.values(fila)[4], 
+                    duracion: Object.values(fila)[5], actual: '', update: 'NUEVO', id_cu : lnIDDepen})
+        }
+    });
+
+    return res.json(laActualiza)
+
+});
+
+
+const progap_actu_progx = ( async (req, res) => {
+    
+    //console.log(req.file)
+    
+    const laArchivo = req.file.originalname;
+    const laExtencion = laArchivo.substring(laArchivo.lastIndexOf(".")+1).toUpperCase() ;
+    //console.log(laExtencion);
+
+    if(laExtencion != 'XLS' && laExtencion != 'XLSX'){
+        res.json({"status" : "error", "message": "El archivo no es un formato compatible", "data":{}})
+    }
+
+    const loExcel = other_utils.leer_excel(req.file.path); 
+
+    if (loExcel.status === "error"){
+        return res.json(loExcel);
+    }
+    
+    let lcSQL = `
+    SELECT p.clave_cgipv, d.siglas, p.nivel, p.programa, p.clave_911, IFNULL(p.duracion, '') as duracion, p.id, p.id_cu,
+            0 as cambio, '' as camp_dife, IF(ifnull(participa, 0) = 1, "SI", "NO") as participa 
+        FROM progap_programa p LEFT JOIN progap_dependencias d ON p.id_cu = d.id
+        ORDER BY p.clave_cgipv
+`
+
+    const datosBD = await util.gene_cons(lcSQL)
+
+    //console.log(datosBD)
+
+    // Creamos el mapa usando el ID como llave para búsqueda rápida
+    const mapaBD = new Map();
+    loExcel.datos.forEach(reg => {
+        mapaBD.set(Object.values(reg)[0].toString(), reg);
+    });
+
+    let lcUPDATE = "", lcORIGIN = "", laActualiza = []
+
+    //console.log(req.sessionID);
+    datosBD.forEach(fila => {
+        
+        //console.log(fila)
+        //console.log(Object.values(fila)[0].toString());
+        const idExcel = Object.values(fila)[0].toString(); // Ajusta al nombre de tu columna en Excel
+        //const estatusExcel = fila["ESTATUS"];  // Ajusta al nombre de tu columna en Excel
+
+        // Si el ID existe en la BD
+        lcUPDATE = ""
+        lcORIGIN = ""
+
+        if (mapaBD.has(idExcel)) {
+            const estatusActual = mapaBD.get(idExcel);
+            lcUPDATE = "SI"
+        }
+        else 
+        {
+            lcUPDATE = "NO"
+        }
+        laActualiza.push({ marcar: (fila.participa == lcUPDATE?0:1), id: fila.id, clave_cgipv: fila.clave_cgipv, 
+            siglas: fila.siglas, nivel: fila.nivel, programa: fila.programa, clave_911: fila.clave_911, 
+            duracion: fila.duracion, actual: fila.participa, update: lcUPDATE, id_cu : fila.id_cu})
+
+    });
+
+    return res.json(laActualiza)
+
+});
+
+const progap_actu_progx2 = (async (req, res) => {
+
+    console.log(req.body)
+    let lcSQL = '', rows = [], lnCambios = 0
+    for(i = 0; i < req.body.length; i++){
+        lcSQL = `UPDATE progap_programa SET participa = ${(req.body[i].update=='SI'?1:0)} WHERE id = ${req.body[i].id} AND ifnull(participa,0) = ${(req.body[i].update=='SI'?0:1)}`
+        rows = await util.gene_cons(lcSQL)
+        
+        lnCambios = lnCambios + Number(rows.affectedRows)
+        //console.log(rows)
+    }
+    //console.log(lnCambios)
+
+    return res.json({"error":false, "mensage":"Se aplicaron " + lnCambios + " cambios exitosamente"})
+});
+
+const progap_impo_progx2 = (async (req, res) => {
+
+    //console.log(req.body)
+    let lcSQL = '', rows = [], lnCambios = 0
+    for(i = 0; i < req.body.length; i++){
+        if(req.body[i].update == "NUEVO"){
+            lcSQL = `INSERT INTO progap_programa (clave_cgipv, id_cu, nivel, programa, clave_911, duracion, participa)
+	                    VALUES ('${req.body[i].clave_cgipv}', '${req.body[i].id_cu}', '${req.body[i].nivel}', 
+                            '${req.body[i].programa}', '${req.body[i].clave_911}', '${req.body[i].duracion}', 1)
+            `
+        }
+        else{
+            lcSQL = `UPDATE progap_programa SET ${req.body[i].update} WHERE id = ${req.body[i].id} `
+        }
+        
+        //console.log(lcSQL)
+        rows = await util.gene_cons(lcSQL)
+        lnCambios = lnCambios + Number(rows.affectedRows)
+        //console.log(rows)
+    }
+    //console.log(lnCambios)
+
+    return res.json({"error":false, "mensage":"Se aplicaron " + lnCambios + " cambios exitosamente"})
+});
+
+const progap_nestudiax = (async (req, res) => {
+
+    if (req.groups.indexOf(",ADMI_PROGAP,") <= 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    let lcSQL = ''
+    if(req.body.id > 0){                        //si es modificación
+        
+        lcSQL = `
+            SELECT * 
+                FROM progap_alumnos
+                WHERE id = ${req.body.id}
+        `
+        modifica = await util.gene_cons(lcSQL)
+
+        console.log(req.body.id)
+        console.log(modifica)
+
+        if (modifica.length <= 0){
+            return res.json({"status" : "error", "message": "No se econtro al alumno a modificar"})
+        }
+
+        lcSQL = `
+            SELECT * 
+                FROM progap_alumnos
+                WHERE codigo = '${req.body.codigo}' AND id != ${req.body.id} AND id_convocatoria = ${modifica[0].id_convocatoria}
+        `
+
+        activo = await util.gene_cons(lcSQL)
+
+        if (activo.length > 0){
+            return res.json({"status" : "error", "message": "El usuario ya existe"})
+        }
+
+
+        /* lcSQL = `UPDATE progap_usuarios SET usuario = '${req.body.codigo}', 
+            contrasena = '${req.body.contrasena}', 
+            nombre = '${req.body.nombre}', 
+            apellido_paterno = '${req.body.apellido_paterno}', 
+            apellido_materno =  '${req.body.apellido_materno}', 
+            id_centro_universitario = ${req.body.centro}, 
+            correo = '${req.body.correo_institucional}' 
+        WHERE id = ${req.body.id}
+        ` */
+        lcSQL = `UPDATE progap_alumnos SET codigo = '${req.body.codigo}', 
+            nombre = '${req.body.nombre}', 
+            apellido_paterno = '${req.body.apellido_paterno}', 
+            apellido_materno = '${req.body.apellido_materno}', 
+            curp = '${req.body.curp}', 
+            id_centro_universitario = ${req.body.centro}, 
+            id_programa = ${req.body.programa}, 
+            correo_institucional = '${req.body.correo_institucional}', 
+            id_ciclo_ingreso = ${req.body.id_ciclo_ingreso}, 
+            id_ciclo_curso = ${req.body.id_ciclo_curso}, 
+            id_ciclo_condonar = ${req.body.id_ciclo_condonar} 
+        WHERE id = ${req.body.id}
+        `
+
+        modifico = await util.gene_cons(lcSQL)
+
+        return res.json({"status" : "server", "message": "El estudiante se modificó exitosamente"})
+        
+    }
+    else                                           //si es usuario nuevo
+    {
+        lcSQL = `
+            SELECT * 
+                FROM progap_usuarios
+                WHERE USUARIO = '${req.body.codigo}'
+        `
+
+        activo = await util.gene_cons(lcSQL)
+
+        if (activo.length > 0){
+            return res.json({"status" : "error", "message": "El usuario ya existe"})
+        }
+
+        lcSQL = `
+        INSERT INTO progap_usuarios (usuario, contrasena, md5HASH, nombre, apellido_paterno, apellido_materno, id_centro_universitario, correo,
+            id_tipo_usuario, estado, id_convocatoria) 
+        VALUES ('${req.body.codigo}', '${req.body.contrasena}', UUID(), '${req.body.nombre}', '${req.body.apellido_paterno}', 
+            '${req.body.apellido_materno}', ${req.body.centro}, '${req.body.correo_institucional}', 5, ${req.body.id_estado},
+            (SELECT id FROM progap_convocatoria WHERE id_status = 1 order BY id desc LIMIT 1)
+            );
+
+        INSERT INTO progap_alumnos (id_usuario, codigo, nombre, apellido_paterno, apellido_materno, curp, id_centro_universitario, id_programa,
+            correo_institucional, id_ciclo_ingreso, id_ciclo_curso, id_ciclo_condonar, id_estado, id_convocatoria) 
+        VALUES (LAST_INSERT_ID(), '${req.body.codigo}', '${req.body.nombre}', '${req.body.apellido_paterno}', '${req.body.apellido_materno}', '${req.body.curp}', 
+                ${req.body.centro}, ${req.body.programa}, '${req.body.correo_institucional}', ${req.body.id_ciclo_ingreso}, ${req.body.id_ciclo_curso}, 
+                ${req.body.id_ciclo_condonar}, ${req.body.id_estado},
+                (SELECT id FROM progap_convocatoria WHERE id_status = 1 order BY id desc LIMIT 1)
+                )
+    `
+        console.log(lcSQL)
+        rows = await util.gene_cons(lcSQL)
+
+        return res.json({"status" : "server", "message": "El usuario se creo exitosamente"})
+    }
+});
+
+const progap_ndirectivox = (async (req, res) => {
+
+    if (req.groups.indexOf(",ADMI_PROGAP,") <= 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    let lcSQL = ''
+    if(req.body.id > 0){                        //si es modificación
+        
+        lcSQL = `
+            SELECT * 
+                FROM progap_altos_mandos
+                WHERE id = ${req.body.id}
+        `
+        modifica = await util.gene_cons(lcSQL)
+
+        console.log(req.body.id)
+        console.log(modifica)
+
+        if (modifica.length <= 0){
+            return res.json({"status" : "error", "message": "No se econtro al directivo a modificar"})
+        }
+
+        lcSQL = `UPDATE progap_altos_mandos SET nombres = '${req.body.nombres}', 
+            genero = '${req.body.genero}', 
+            correo = '${req.body.correo}', 
+            telefono = '${req.body.telefono}', 
+            celular = '${req.body.celular}', 
+            cargo = '${req.body.cargo}', 
+            id_cu = ${req.body.id_cu}, 
+            id_grado = ${req.body.id_grado}
+        WHERE id = ${req.body.id}
+        `
+        console.log(lcSQL)
+        modifico = await util.gene_cons(lcSQL)
+
+        return res.json({"status" : "server", "message": "El directivo se modificó exitosamente"})
+        
+    }
+    else                                           //si es usuario nuevo
+    {
+
+        lcSQL = `
+        INSERT INTO progap_altos_mandos (nombres, genero, correo, telefono, celular, cargo, id_cu, id_grado) 
+        VALUES ('${req.body.nombres}', '${req.body.genero}', '${req.body.correo}', '${req.body.telefono}', 
+            '${req.body.celular}', '${req.body.cargo}', ${req.body.id_cu}, ${req.body.id_grado})
+
+    `
+        console.log(lcSQL)
+        rows = await util.gene_cons(lcSQL)
+
+        return res.json({"status" : "server", "message": "El directivo se creo exitosamente"})
+    }
+});
+
 module.exports = {
     progap_usuariox,
     progap_directivox,
@@ -717,5 +1280,16 @@ module.exports = {
     progap_exacamx,
     progap_focamx,
     progap_form01,
-    progap_form02
+    progap_form02,
+    progap_dashboardx,
+    progap_dashboardx2,
+    progap_dashboardx3,
+    progap_dashboardx4,
+    progap_prograx,
+    progap_impo_progx,
+    progap_actu_progx,
+    progap_actu_progx2,
+    progap_impo_progx2,
+    progap_nestudiax,
+    progap_ndirectivox
 }

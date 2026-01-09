@@ -27,7 +27,7 @@ const plantilla01 = (async (doc, lcArch) => {
    //if (llArchivo){
    if (fs.existsSync(lcArchivo)){
       doc.image(lcArchivo, 25, 25, {width: 630})
-      console.log("si entro en la función pantilla")
+      //console.log("si entro en la función pantilla")
    }
    else
    {

@@ -6,7 +6,7 @@ const nodemailer = require('nodemailer');
 const config = require(path.join(__dirname, "..", "config"));
 const util = require(path.join(__dirname, "..", "utils/busquedaUtils"));
 const fs = require('fs').promises;
-
+const XLSX = require('xlsx');
 
 const ejecutarPython = (async (pythonScriptPath, args) => {
     return new Promise((resolve, reject) => {
@@ -130,10 +130,10 @@ const registrarVisita = (async (logData) => {
     const params = [
         logData.method,
         logData.url,
-        logData.status,
+        (!logData.status?0:logData.status),
         logData.ip,
         logData.userId || 'GUEST', // Si el usuario no está autenticado, registrar como GUEST
-        logData.responseTime
+        (!logData.responseTime?0:logData.responseTime),
     ];
 
     let conn;
@@ -226,12 +226,84 @@ const exit_arch = (async (lcArchivo) => {
 });
 
 
+const leer_excel = (loArchivo) => {
+    try {
+        // 1. Cargar el archivo (Workbook)
+        // Si usas storage en disco: XLSX.readFile(req.file.path)
+        // Si usas memoryStorage: XLSX.read(req.file.buffer, { type: 'buffer' })
+        const workbook = XLSX.readFile(loArchivo);
+
+        // 2. Obtener el nombre de la primera hoja
+        const nombreHoja = workbook.SheetNames[0];
+        
+        // 3. Obtener el contenido de esa hoja
+        const hoja = workbook.Sheets[nombreHoja];
+
+        // 4. Convertir el contenido a un arreglo de objetos JSON
+        const datos = XLSX.utils.sheet_to_json(hoja, {
+            defval: "" // Esto asegura que todas las columnas existan en el JSON
+        });
+
+        //console.log("Datos del Excel:", datos);
+
+        return ({status: "server", datos});
+
+    } catch (error) {
+        return ({ status: "error", message: error.message });
+    }
+};
+
+const regi_even_segu = (async (userId, evento, ip) => {
+    // 1. Insertar el evento actual
+    let lcSQL = 
+    `INSERT INTO logs_seguridad (user_id, evento, ip_address) 
+            VALUES ('${userId}', '${evento}', '${ip}')
+    `
+    let rows = await util.gene_cons(lcSQL)
+
+    // 2. Si es un duplicado, revisar cuántos lleva en la última hora
+    if (evento === 'DUPLICADO') {
+        
+        lcSQL =
+        `SELECT COUNT(*) as intentos 
+             FROM logs_seguridad 
+             WHERE user_id = '${userId}' AND evento = 'DUPLICADO' 
+             AND fecha > DATE_SUB(NOW(), INTERVAL 1 HOUR)
+        `
+
+        rows = await util.gene_cons(lcSQL)
+
+        if (rows[0].intentos >= 4) {
+            // 3. Bloquear al usuario
+            lcSQL = `
+            UPDATE passfile SET bloqueada = 1, bloq_MOTI = "Bloqueo automático por 4 intentos de sesión duplicada en una hora",
+                    cambios = CONCAT(IFNULL(cambios, ''), "BLOQUEO_AUTO-DUPLICADO", DATE_FORMAT(NOW(), "%d/%m/%Y %h:%i")) 
+                WHERE user_id = '${userId}';
+
+            INSERT INTO logs_seguridad (user_id, evento, ip, detalles) 
+                VALUES (${userId}, 'BLOQUEO_AUTO', ${ip}, 'Bloqueo automático por 4 intentos de sesión duplicada')
+            `
+            const bloqueo = await util.gene_cons(lcSQL)
+
+            // 5. con el return true Limpiar caché para que el bloqueo sea inmediato
+            //cacheUsuarios.delete(userId);
+            console.log(`Usuario ${userId} bloqueado por seguridad.`);
+
+            return true;
+        }
+        //no limpiar el cache
+        return false;
+    }
+});
+
 module.exports = {
     ejecutarPython,
     form_fechSQL,
     gene_cont,
     registrarVisita,
     envi_corr,
-    exit_arch
+    exit_arch,
+    leer_excel,
+    regi_even_segu
 
 }

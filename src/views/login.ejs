@@ -3,7 +3,6 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
 
 
-
 <head>
 	<title></title>
 	<link rel="stylesheet" href="/login.css">
@@ -75,7 +74,7 @@
 
         if (response.ok) {
             // Éxito: Guarda el token y redirige al usuario
-            localStorage.setItem('x-access-token', resultado.token);
+            //localStorage.setItem('refresh_token', resultado.token);
             window.location.href = '/intro'; // Redirige a la página principal
         } else {
             // Error: Muestra el mensaje de error de la API

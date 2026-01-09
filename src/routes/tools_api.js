@@ -7,8 +7,6 @@ const multer = require("multer")
 
 const upload = multer({ dest: 'src/uploads' })
 
-
-
 const router = express.Router()
 
 router.post("/tools_pdfx", midd.verifyToken, upload.single('upload'), toolCtrl.tools_pdfx);

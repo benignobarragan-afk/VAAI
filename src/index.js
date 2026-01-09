@@ -1,3 +1,5 @@
+// Carga las variables del archivo .env al objeto process.env
+require('dotenv').config();
 
 const express = require("express")
 const morgan = require("morgan")
@@ -94,6 +96,7 @@ app.use("/api/tools", ToolsApiRoutes)
 app.use("/api/progap", ProgapApiRoutes)
 
 //app.use(UserRoutes)
+const puerto = process.env.PORT || 3000
 
-app.listen(3000)
-console.log("Servidor corriendo en el puerto 3000")
+app.listen(puerto)
+console.log(`Servidor corriendo en el puerto ${puerto}`)

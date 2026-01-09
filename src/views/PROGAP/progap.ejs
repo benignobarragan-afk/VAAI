@@ -10,7 +10,7 @@
     <form id="form1" name="form1" method="post" action="">
     <div id="principal" style="position: relative; border: #B5CDE4 1px solid;"></div>
     <script>
-
+    var xx = 0;
     var cells = [
         {
             header: "<span class='mdi mdi-view-dashboard'></span>Tablero", body: {
@@ -20,20 +20,18 @@
             },
         }
         },
-        <%if (lcDerecho.indexOf(",ADMI_PROGAP,") >= 0 || lcDerecho.indexOf(",REVI_PROGAP,") >= 0){%>
         {
-        header: "<span class='mdi mdi-progress-check'></span>Catalogos", body: {
-            view: "iframe", id: "progap_cata", src:"progap_cata",
+        header: "<span class='mdi mdi-sign-text'></span>Convocatoria", body: {
+            view: "iframe", id: "progap_convo", src:"progap_convo",
             type: {
                 height: 60
             },
         }
         },
-        <%}%>
-        <%if (lcDerecho.indexOf(",ADMI_PROGAP,") >= 0){%>
+        <%if (lcDerecho.indexOf(",ADMI_PROGAP,") >= 0 || lcDerecho.indexOf(",REVI_PROGAP,") >= 0){%>
         {
-        header: "<span class='mdi mdi-import'></span>Importar documentos", body: {
-            view: "iframe", id: "progap_impo", src:"progap_impo",
+        header: "<span class='mdi mdi-progress-check'></span>Catalogos", body: {
+            view: "iframe", id: "progap_cata", src:"progap_cata",
             type: {
                 height: 60
             },
@@ -117,6 +115,47 @@
 //          document.getElementById('pendientes').innerHTML = res.numero
 //        })
     }
+
+
+    function deta_impo(lnTipo) {
+		xx++;
+
+        let lcTipo = '', lcPagina = ''
+        switch (lnTipo) {
+            case 1:
+                lcTipo = "Subir lista de programas existentes (Se actualizaran los ya existentes e insertaran los nuevos)"
+                lcPagina = "/progap/progap_impo_prog"
+                break;
+            case 2:
+                lcTipo = "Activar Programas de forma masiva (subir lista de los activos todos los demás se desactivaran)"
+                lcPagina = "/progap/progap_actu_prog"
+                break;
+
+        }
+
+		webix.ui({
+			view: "window", id: "w4" + xx,
+			move: false, left: 0, top: 0, width: 1000, height: 600, resize: true, fullscreen:true,
+			head: {
+				view: "toolbar", id: "toolbar4" + xx, css: "mi_toolbar_color",
+				cols: [
+					{ view: "label", label: lcTipo },
+					{ view: "icon", icon: 'mdi mdi-fullscreen', click:()=>{
+						var ventana = $$('w4' + xx)
+						ventana.config.move = !ventana.config.move
+                        ventana.config.fullscreen = !ventana.config.fullscreen;
+                        ventana.setPosition(0,0)
+                        ventana.resize();
+					} },
+					{ view: "icon", icon: 'mdi mdi-close', click: "$$('w4" + xx + "').close();" }
+				]
+			},
+			body: {
+				view: "iframe",
+				src: lcPagina
+			}
+		}).show();
+	}
     </script>
     </form>
 </body>

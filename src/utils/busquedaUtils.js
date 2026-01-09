@@ -3,7 +3,7 @@ const pool = require(path.join(__dirname, "..", "db"))
 const crypto = require('crypto')
 const qrcode = require('qrcode')
 
-const gene_cons = async (lcSQL) => {
+const gene_cons = async (lcSQL, parameters) => {
 
     let rows = {}
 
@@ -11,7 +11,7 @@ const gene_cons = async (lcSQL) => {
             conn = await pool.getConnection();            
             // 3. Ejecutar la consulta
 
-            rows = await conn.query(lcSQL, [1]);
+            rows = await conn.query(lcSQL, (!parameters?[]:parameters));
             //console.log(rows);
 
         } catch (err) {

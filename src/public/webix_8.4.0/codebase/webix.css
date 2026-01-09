@@ -9268,10 +9268,10 @@ body.webix_print {
   color: #e2e2a7;
 }
 .webix_dtable .webix_hcell.webix_ss_filter_active .webix_excel_filter {
-  color: #e2e2a7;
+  color: #ef7d85;
 }
 .webix_dtable .webix_hcell.webix_ss_filter_active .webix_excel_filter:hover {
-  color: #cfcf6d;
+  color: #e63946;
 }
 .webix_ss_sort_num {
   color: #ffffff;

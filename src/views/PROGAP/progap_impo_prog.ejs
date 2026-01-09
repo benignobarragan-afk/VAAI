@@ -1,0 +1,193 @@
+<%- include('../partials/header'); %>
+
+<body onLoad="doOnLoad();">
+    <div align="center" id="cuerpo">
+            <div id="view_ui"></div>
+    </div>
+    <script>
+
+        var tip = 0<% // Response.write(lnTipo)%>;
+        var w1;
+        var mygrid;
+
+        //alert(tip);
+
+        function doOnLoad() {
+
+
+            webix.ui.datafilter.rowCount = webix.extend({
+                refresh: function (master, node, value) {
+                    node.firstChild.innerHTML = "Total: " + master.count();
+                }
+            }, webix.ui.datafilter.summColumn)
+
+
+            var ui = webix.ui({
+                space: "wide",
+                rows: [
+                    {
+                    cols:[
+                        {    
+                            view:"form", id:"formPDF", name:"formPDF", rows: [
+                                { 
+                                view: "uploader", value: "Selecciona un archivo de Excel", 
+                                accept: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel",
+                                name:"filePDF", id:"filePDF", 
+                                link:"list1",  upload:"/api/progap/progap_impo_progx",
+                                    on:{
+                                            onUploadComplete:(response, file)=>{
+                                            
+                                            //console.log("si entro");
+                                            //console.log(response);
+                                            $$("formPDF").enable();
+                                            //$$("formPDF").hideProgress();
+
+                                            if (response.status === "error"){
+                                                //webix.message({ type:"info", text: response.message });
+                                                return false;
+                                            }
+                                            $$("dtable").clearAll();
+                                            $$("dtable").parse(response);
+                                            //$$("dtable").filter("#marcar#", 1);
+                                            
+                                        },
+                                        onBeforeFileAdd: function (item) {
+                                        //$$("formPDF").showProgress();
+
+                                        $$("formPDF").disable(); 
+                                        //$$("textoPDF").setValue("Subiendo y procesando archivo...");
+                                        webix.message({ type:"info", text:"Subiendo y procesando archivo..."});
+                                            return true;
+                                        },
+                                        onUploadFail: function (item){
+                                        $$("formPDF").enable(); 
+                                        },
+
+                                    }
+                                },
+                                {
+                                view:"list",  id:"list1", type:"uploader",
+                                autoheight:true, borderless:true	
+                                },
+                            ]
+                        },
+                        {
+                            view: "button",
+                            type: "icon",
+                            icon: "mdi mdi-database-import",
+                            label: "Aplicar cambios",
+                            width: 230,
+                            on: {
+                                onItemClick: function () { 
+                                    guardar();
+                                }
+                            }
+                        },
+                    ]},
+                    {
+                        view:"datatable", id:"dtable", select:true, minHeight:500, scroll:true,
+                        resizeColumn: true,  navigation: true, resizeRow:true, tooltip:true, 
+                        rightSplit:1, leftSplit:3,
+                        scheme: {
+                            $init: function (obj) {
+                                obj.fecha = (obj.fecha ? (obj.fecha == '01/01/1900'?'': convertDate(obj.fecha) ) : '');
+                            }
+                        },
+
+                        columns:[	
+                        { id: "marcar", 
+                            header: ["", { content: "selectFilter" }], template: "{common.checkbox()}", width: 50,
+                            footer: { colspan: "2", content: "rowCount"} 
+                            
+                        },
+                        {
+                            id: "clave_cgipv", width: 150,sort: "string", css: { 'text-align': 'left' }, 
+                            header: [{text:"Clave CGIPV",css:"my_style"}, {
+                                content: "excelFilter", placeholder:"Filtrar",
+                            }],
+                            footer:{ content: "rowCount" }
+                        },	
+                        {
+                            id: "siglas", width: 100,sort: "string", css: { 'text-align': 'left' }, 
+                            header: [{text:"C.U.",css:"my_style"}, {
+                                content: "excelFilter", placeholder:"Filtrar",
+                            }],
+                        },
+                        {
+                            id: "nivel", width: 150,sort: "string", css: { 'text-align': 'left' }, 
+                            header: [{text:"Nivel",css:"my_style"}, {
+                                content: "excelFilter", placeholder:"Filtrar",
+                            }],
+                        },			
+                        {
+                            id: "programa", 
+                            height:160, 
+                            fillspace:true, minWidth:300,sort: "string", css: { 'text-align': 'left' }, 
+                            header: [{text:"Nombre",css:"my_style"}, {
+                                content: "excelFilter", placeholder:"Filtrar",
+                                
+                            }],
+                        },		
+                        {
+                            id: "clave_911", width: 100,sort: "string", css: { 'text-align': 'left' }, 
+                            header: [{text:"Clave 911",css:"my_style"}, {
+                                content: "excelFilter", placeholder:"Filtrar",
+                            }],
+                        },
+                        {
+                            id: "duracion", width: 100,sort: "string", css: { 'text-align': 'left' }, 
+                            header: [{text:"Duración",css:"my_style"}, {
+                                content: "excelFilter", placeholder:"Filtrar",
+                            }],
+                        },		
+                        {
+                            id: "actual", width: 300,sort: "string", css: { 'text-align': 'left' }, 
+                            header: [{text:"Valor actual",css:"my_style"}, {
+                                content: "excelFilter", placeholder:"Filtrar",
+                            }],
+                        },
+                        {
+                            id: "update", width: 300,sort: "string", css: { 'text-align': 'left' }, 
+                            header: [{text:"Cambios",css:"my_style"}, {
+                                content: "excelFilter", placeholder:"Filtrar",
+                            }],
+                        },
+                        ], footer:true,
+                    },
+                ]
+            });
+
+    }
+
+    function guardar(){
+        var checked = [];
+        $$("dtable").data.each(function (obj) {
+            if (obj.marcar == 1 && obj.update != '') {
+                checked.push(obj);
+            }
+        });
+
+        Swal.fire({
+				title: '¿Seguro de aplicar el(los) ' + checked.length + ' cambio(s)?', icon: 'warning', showCancelButton: true,
+				confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Aceptar',
+			}).then((result) => {
+				if(result.isConfirmed){
+					webix.ajax().headers({"Content-Type": "application/json"})
+                        .post("/api/progap/progap_impo_progx2", JSON.stringify(checked)).then(function (res) {
+						webix.message({ type: (res.json().error ? "error" : "success"), text: res.json().mensage, expire: 2500 });
+						if (!res.json().error) {
+							//$$("myform").clear();
+							$$("dtable").clearAll();
+						}
+					});
+				}
+			})
+
+        console.log(checked)
+    } 
+    
+    </script>
+</body>
+
+
+</html>

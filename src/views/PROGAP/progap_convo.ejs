@@ -1,0 +1,28 @@
+<%- include('../partials/header'); %>
+
+<script type="text/javascript">
+
+
+// Asegúrate de que el DOM esté listo
+webix.ready(function(){
+    // Verifica que el componente esté cargado
+    if (webix.ui.pdfviewer) {
+        webix.ui({
+            rows:[
+                { view:"pdfbar", id:"toolbar" },
+                { 
+                    view:"pdfviewer", 
+                    id:"pdf",
+                    toolbar:"toolbar", 
+                    // El prefijo binary-> es correcto para URLs externas
+                    url:"binary->/pdf/7-GRATUIDAD-GRADUAL-R.pdf",
+                    scale:"page-width",
+                }
+            ]
+        });
+    } else {
+        webix.message({ type:"error", text:"El componente PDFViewer no está cargado." });
+    }
+});
+
+</script>

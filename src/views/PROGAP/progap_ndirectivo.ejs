@@ -1,0 +1,124 @@
+<%- include('../partials/header'); %>
+
+<style>
+.char_counter {
+    text-align: right;
+    font-size: 11px;
+    color: #666;
+    padding-top: 2px;
+    padding-right: 5px;
+    line-height: 15px; /* Ajusta la altura de línea para que pegue al input */
+}
+</style>
+
+<script>
+
+<%if(directivo.length>0){%>
+var datosIniciales = <%- JSON.stringify(directivo) %>;
+<%}%>
+
+webix.ready(function(){
+    webix.ui({
+        view:"form",
+        id:"form_registro",
+        scroll: "y",
+        elementsConfig:{
+            labelPosition:"top",
+            labelWidth:140,
+            bottomPadding: 15
+        },
+        elements:[
+            { view:"template", type:"header", template:"<%=(directivo.length<1?'Añadir Nuevo Registro':'Modificar a: ' + directivo[0].nombres)%>", css:"header_form" },
+            
+            // Fila: Código y Contraseña
+            { cols:[
+                { view:"text", name:"id", label:"id", hidden: true },
+                { view:"text", name:"nombres", label:"Nombre completo *", placeholder:"Nombre:", required:true },
+                { view:"combo", name:"genero", label:"Género *", value:"Masculino", width: 200, options:[
+                { id:"Masculino", value:"Masculino" }, { id:"Femenino", value:"Femenino" }, { id:"Otro", value:"Otro" }
+            ]},
+            ]},
+            { cols:[
+                { view:"text", name:"correo", label:"Correo Institucional *", placeholder:"Correo Institucional", validate:webix.rules.isEmail, required:true, invalidMessage:"Correo no válido" },
+                { view:"text", name:"telefono", label:"Teléfono", placeholder:"Teléfono:"},
+            ]},
+            { cols:[
+                { view:"text", name:"celular", label:"Celular", placeholder:"Celular:"},
+                { view:"combo", name:"cargo", label:"Catgo *", value:"Rector", width: 200, options:[
+                { id:"Rector", value:"Rector" }, { id:"Vicerrector adjunto", value:"Vicerrector adjunto" }, { id:"Revisor", value:"Revisor" }, { id:"Autorizador", value:"Autorizador" }
+                ]},
+            ]},
+            // Selects
+            { cols:[
+                { view:"combo", id:"id_cu", name:"id_cu", value:175, label:"Centro Universitario de Adscripción *", 
+                options: {
+                    fitMaster: false,
+                    width: 550,
+                    keyPressTimeout: 300,
+                    filter: function (item, value) {
+                        if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+                            return true;
+                        return false;
+                    },
+                    body: {
+                        template: "#value#",
+                        dataFeed: "/api/gen/cmb_progap_depe",
+                        // AGREGA ESTA LÍNEA:
+                        // Inyectamos el valor que ya traes del servidor para que Webix lo reconozca
+                        <%if(depe_id > 0){%>
+                        data: [ { id: <%=depe_id%>, value: "<%=depe_value%>" } ]
+                        <%}%>
+                    }
+                }, placeholder:"-- Seleccione un centro universitario --", required:true },
+                { view:"combo", name:"id_grado", label:"Grado *", width: 300, options:[
+                { id:"1", value:"Licenciatura" }, { id:"2", value:"Maestría" }, { id:"3", value:"Doctorado" },
+                ], placeholder:"-- Seleccione un grado --", required:true},
+            ]},
+            // Botón Centrado
+            { margin:20, cols:[
+                {},
+                { view:"button", value:"<%=(directivo.length<1?'Crear directivo':'Modificar directivo')%>", css:"webix_primary", width:250, click:guardarDirectivo },
+                {}
+            ]}
+        ],
+        <%if(directivo.length>0){%>
+        data: datosIniciales,
+        <%}%>
+    });
+});
+
+function guardarDirectivo(){
+    var form = $$("form_registro");
+    if(form.validate()){
+        var datos = form.getValues();
+        console.log("Datos listos para enviar:", datos);
+        
+        // Aquí usarías tu webix.ajax().post("/api/...", datos)
+        webix.message("Procesando registro...");
+        webix.ajax()
+				.post("/api/progap/progap_ndirectivox", datos)
+				.then(function (data) {
+					//$$("btnGuardar").enable();
+					let res = data.json()
+					console.log(res)
+					Swal.fire({
+						title:res.message, icon:res.status=='error'?"error":"success"
+					}).then(()=>{
+						if(res.status=='server'){
+//							window.location = "/op/op_ofic";
+                        }
+					})
+					// webix.alert({ type: (data.json()[0].status ? "" : "alert-error"), text:  })
+					// if (data.json()[0].status)
+				})
+    } else {
+        webix.message({ type:"error", text:"Por favor llene los campos marcados en rojo" });
+    }
+}
+
+function validarCURP(valor) {
+    const regexCURP = /^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[0-9A-Z]{1}[0-9]{1}$/;
+    return regexCURP.test(valor.toUpperCase());
+}
+
+</script>

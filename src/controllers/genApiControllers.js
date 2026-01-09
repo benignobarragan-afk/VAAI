@@ -1,5 +1,4 @@
 const path = require("path")
-const pool = require(path.join(__dirname, "..", "db"))
 const config = require(path.join(__dirname, "..", "config"));
 const util = require(path.join(__dirname, "..", "utils/busquedaUtils"));
 
@@ -48,8 +47,53 @@ const cmb_persw = (async (req, res) => {
     return res.json(rows)
 });
 
+const cmb_progap_depe = (async (req, res) => {
+    
+    const lcNombre = req.nom_usu;
+    let lcGROUPS = req.groups
+
+    const lcBusca = req.query['filter[value]']
+    
+    const lcWhere = util.cade_busc('siglas,dependencia', lcBusca)
+    console.log(lcWhere)
+
+    const lcSQL = `
+        SELECT  id, siglas, dependencia, concat('(',siglas ,') ',  dependencia) as value 
+            FROM progap_dependencias
+            WHERE id_antecesor = 0 and ${lcWhere}
+            LIMIT 20
+    ` 
+    //console.log(lcSQL)   
+    const rows = await util.gene_cons(lcSQL)
+    //console.log(rows)
+    res.json(rows)
+});
+
+const cmb_progap_prog = (async (req, res) => {
+    
+    const lcNombre = req.nom_usu;
+    let lcGROUPS = req.groups
+
+    const lcBusca = req.query['filter[value]']
+    
+    const lcWhere = util.cade_busc('nivel,programa', lcBusca)
+    console.log(lcWhere)
+
+    const lcSQL = `
+        SELECT  id, clave_cgipv, programa, concat('(',clave_cgipv ,') ', programa) as value 
+            FROM progap_programa
+            WHERE ${lcWhere}
+            LIMIT 20
+    ` 
+    //console.log(lcSQL)   
+    const rows = await util.gene_cons(lcSQL)
+    //console.log(rows)
+    res.json(rows)
+});
 
 module.exports = {
     cmb_depew,
-    cmb_persw
+    cmb_persw,
+    cmb_progap_depe,
+    cmb_progap_prog
 }

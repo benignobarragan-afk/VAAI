@@ -55,10 +55,10 @@ const usua_nuevx2 = (async (req, res) => {
     //console.log(req.body)
 
      lcSQL = `
-        INSERT INTO passfile (user_id, password, codigo, id_cent, nombre, dn, \`groups\`, correo)
+        INSERT INTO passfile (user_id, password, codigo, id_cent, nombre, dn, \`groups\`, correo, acceso)
             VALUES ('${req.body.txtUser_id}', '${req.body.txtPassword}', ${req.body.txtCodigo}, ${(!req.body.txtServicio ? '0' : req.body.txtServicio)},
             '${req.body.txtApellidos + ' ' + req.body.txtNombre}', '"DN "${req.body.txtApellidos + ' "DN "' + req.body.txtNombre}',
-            '${(!req.body.txtDerecho ? '' : req.body.txtDerecho)}', '${(!req.body.txtCorreo ? '' : req.body.txtCorreo)}')
+            '${(!req.body.txtDerecho ? '' : req.body.txtDerecho)}', '${(!req.body.txtCorreo ? '' : req.body.txtCorreo)}', UUID())
         `    
 
     //console.log(lcSQL)
@@ -103,7 +103,7 @@ const gene_menu = (async (req, res) => {
         }
     }
 
-    console.log(loMenu)
+    //console.log(loMenu)
     return res.json(loMenu)
 
 });

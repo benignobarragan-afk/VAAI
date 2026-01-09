@@ -2,6 +2,7 @@ const path = require("path")
 const pool = require(path.join(__dirname, "..", "db"))
 const config = require(path.join(__dirname, "..", "config"));
 const util = require(path.join(__dirname, "..", "utils/busquedaUtils"));
+const { cacheUsuarios } = require("../middlewares/authjwt");
 
 const intro = (async (req, res) => {
     const lcNombre = req.nom_usu;
@@ -20,12 +21,19 @@ const logout = ((req, res) => {
     // 1. Llamar a res.clearCookie()
     // Debes especificar el mismo 'path' (ruta) que usaste al crearla.
     // Si no especificaste 'path' al crearla, no es necesario aquí.
-    res.clearCookie(nombreCookie, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production', // Mismo valor que al crear
-        sameSite: 'strict', // Mismo valor que al crear
-        // path: '/' // (Si usaste path, inclúyelo aquí)
-    });
+    res.clearCookie('refresh_token', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production', // Mismo valor que al crear
+            sameSite: 'strict', // Mismo valor que al crear
+            // path: '/' // (Si usaste path, inclúyelo aquí)            
+        }).clearCookie('access_token', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production', // Mismo valor que al crear
+            sameSite: 'strict', // Mismo valor que al crear
+            // path: '/' // (Si usaste path, inclúyelo aquí)            
+        });
+
+    cacheUsuarios.delete(req.userId);
 
     // 2. Enviar una respuesta al cliente
     //res.status(200).json({ 
@@ -63,7 +71,12 @@ const usua_nuev = (async(req, res) => {
     const rows = await util.gene_cons(lcSQL)
 
     console.log(rows)
-    res.render("usua_nuev", {rows})
+    return res.render("usua_nuev", {rows})
+});
+
+
+const otro_equi = (async(req, res) => {
+    return res.render("otro_equi")
 });
 
 
@@ -74,5 +87,6 @@ module.exports = {
     sin_derecho,
     principal,
     usuarios,
-    usua_nuev
+    usua_nuev,
+    otro_equi,
 }

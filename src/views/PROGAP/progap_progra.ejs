@@ -1,5 +1,39 @@
 <%- include('../partials/header'); %>
 
+<style>
+    .mi-boton-azul .webix_button {
+        background-color: #0d6efd !important;
+        color: white !important;
+        border-radius: 5px;
+    }
+
+    /* Opcional: Color al pasar el mouse (hover) */
+    .mi-boton-azul .webix_button:hover {
+        background-color: #428dfc !important;
+    }
+
+    .mi-boton-amarillo .webix_button {
+        background-color: #fec007 !important;
+        color: black !important;
+        border-radius: 5px;
+    }
+
+    /* Forzamos el color directamente a la clase del icono */
+    .mi-boton-amarillo .mdi {
+        color: #000000 !important;
+    }
+
+    /* Opcionalmente, para asegurar que el círculo del icono también cambie */
+    .mi-boton-amarillo .webix_icon_btn {
+        color: #000000 !important;
+    }
+
+    /* Opcional: Color al pasar el mouse (hover) */
+    .mi-boton-amarillo .webix_button:hover {
+        background-color: #f4d36f !important;
+    }
+
+</style>
 <body onLoad="doOnLoad();">
     <div align="center" id="cuerpo">
         <form name="form1" id="form1" method="post" action="/<% // Response.Write(config.ruta)%>/op_bgrup.fwx">
@@ -43,8 +77,8 @@
                                 view: "button",
                                 type: "icon",
                                 icon: "mdi mdi-plus",
-                                label: "Crear usuario",
-                                width: 130,
+                                label: "Crear estudiante",
+                                width: 180,
                                 on: {
                                     onItemClick: function () { deta_grup() }
                                 }
@@ -64,47 +98,33 @@
                                      }
                                 }
                             },
-
-                            /* {
+                            {},
+                            {
                                 view: "button",
                                 type: "icon",
-                                icon: "mdi mdi-plus",
-                                label: "Agregar grupo a oficio",  
-                                //disabled: tip == 2 ? true : false ,
-                                hidden: tip == 2 ? true : false,
-                                width: 200,
+                                icon: "mdi mdi-upload",
+                                label: "Actualizar",
+                                tooltip: "Subir lista de programas existentes (Se actualizaran los ya existentes e insertaran los nuevos)",
+                                css: "mi-boton-azul", // Aplicamos la clase
+                                width: 130,
                                 on: {
-                                    onItemClick: agregar
+                                    onItemClick: function () { 
+                                        window.parent.parent.deta_impo(1);
+                                     }
                                 }
-                            }, */
-                            
-                            {}, {},
+                            },
                             {
-                                view: "combo", id: "cmbSoli", name: "cmbSoli", value: "<%=rows[0].id%>",
-                                width: 300,
-                                options: {
-                                    fitMaster: false,
-                                    width: 300,
-                                    body: {
-                                        data: [
-                                    <% // 
-                                    /*
-                                            SELECT cSoli
-                                    GO TOP
-                                    SCAN
-                                    */
-                                            %>
-                                    //        { id: <% //  Response.Write(cSoli.id_cent) %>, value: "<% // Response.Write(ALLTRIM(cSoli.depen))%>" },
-                                    <% //  ENDSCAN %>
-                                    <%for (var i = 0; i < rows.length; i++) {%>
-                                    { id: "<%= rows[i].id%>", value: "<%=rows[i].anio%>" },
-                                    <%}%>
-
-                                ]
-                                    }
-                                },
+                                view: "button",
+                                type: "icon",
+                                icon: "mdi mdi-power",
+                                label: "Activar/Desactivar",
+                                tooltip: "Activar Programas de forma masiva (subir lista de los activos todos los demás se desactivaran)",
+                                css: "mi-boton-amarillo", // Aplicamos la clase 
+                                width: 180,
                                 on: {
-                                    onChange: genera
+                                    onItemClick: function () { 
+                                        window.parent.parent.deta_impo(2);
+                                     },
 
                                 }
                             },
@@ -113,7 +133,7 @@
                     },
                     {
                         view:"datatable", id:"dtable", select:true, footer:true, editable:true, hidden:false, minHeight:500, scroll:true,
-                        resizeColumn: true,  navigation: true, resizeRow:true, css:"celda_compacta", 
+                        resizeColumn: true,  navigation: true, resizeRow:true, css:"celda_compacta", tooltip: true, 
                         rightSplit:1, leftSplit:3,
                         scheme: {
                             $init: function (obj) {
@@ -127,7 +147,7 @@
                             header: [{text:"",css:"my_style"}, {text:""}],
                             template:(obj)=>{
                                 return `
-                                    <a href="#" onClick="deta_grup(${obj.id});">
+                                    <a href="#" onClick="window.parent.parent.deta_sali('${obj.cve}',${obj.idoficio},${obj.anio},${obj.id_iden},'op_reof0.fwx');">
                                         <i style='font-size:26px;color:#2b96cc;' class='fa-solid fa-magnifying-glass'></i>
                                     </a>`
                             }
@@ -135,46 +155,52 @@
                         {
                             id: "rank", width: 70,sort: "int", css: { 'text-align': 'center' }, 
                             header: [{text:"#",css:"my_style"}, {
-                                content: "textFilter", placeholder:"Filtrar",
+                                content: "excelFilter", placeholder:"Filtrar",
                             }],
                         },	
                         {
-                            id: "usuario", width: 150,sort: "string", css: { 'text-align': 'left' }, 
-                            header: [{text:"Usuario",css:"my_style"}, {
-                                content: "textFilter", placeholder:"Filtrar",
+                            id: "clave_cgipv", width: 150,sort: "string", css: { 'text-align': 'left' }, 
+                            header: [{text:"Clave CGIPV",css:"my_style"}, {
+                                content: "excelFilter", placeholder:"Filtrar",
                             }],
                         },	
                         {
-                            id: "nombre", width: 300,sort: "string", css: { 'text-align': 'left' }, 
-                            header: [{text:"Nombre",css:"my_style"}, {
-                                content: "textFilter", placeholder:"Filtrar",
+                            id: "siglas", width: 100,sort: "string", css: { 'text-align': 'left' }, 
+                            header: [{text:"C.U.",css:"my_style"}, {
+                                content: "excelFilter", placeholder:"Filtrar",
                             }],
                         },
                         {
-                            id: "tipo", width: 150,sort: "string", css: { 'text-align': 'left' }, 
-                            header: [{text:"Tipo de Usuario",css:"my_style"}, {
-                                content: "textFilter", placeholder:"Filtrar",
+                            id: "nivel", width: 150,sort: "string", css: { 'text-align': 'left' }, 
+                            header: [{text:"Nivel",css:"my_style"}, {
+                                content: "excelFilter", placeholder:"Filtrar",
                             }],
                         },			
                         {
-                            id: "correo", 
+                            id: "programa", 
                             height:160, 
                             fillspace:true, minWidth:300,sort: "string", css: { 'text-align': 'left' }, 
-                            header: [{text:"Correo",css:"my_style"}, {
-                                content: "textFilter", placeholder:"Filtrar",
+                            header: [{text:"Nombre",css:"my_style"}, {
+                                content: "excelFilter", placeholder:"Filtrar",
                                 
                             }],
                         },		
                         {
-                            id: "siglas", width: 150,sort: "string", css: { 'text-align': 'left' }, 
-                            header: [{text:"C.U.",css:"my_style"}, {
-                                content: "textFilter", placeholder:"Filtrar",
+                            id: "clave_911", width: 100,sort: "string", css: { 'text-align': 'left' }, 
+                            header: [{text:"Clave 911",css:"my_style"}, {
+                                content: "excelFilter", placeholder:"Filtrar",
+                            }],
+                        },
+                        {
+                            id: "duracion", width: 100,sort: "string", css: { 'text-align': 'left' }, 
+                            header: [{text:"Duración",css:"my_style"}, {
+                                content: "excelFilter", placeholder:"Filtrar",
                             }],
                         },		
                         {
-                            id: "status", width: 100,sort: "string", css: { 'text-align': 'left' }, 
-                            header: [{text:"Estatus",css:"my_style"}, {
-                                content: "selectFilter", placeholder:"Filtrar",
+                            id: "participa", width: 100,sort: "string", css: { 'text-align': 'left' }, 
+                            header: [{text:"Participa",css:"my_style"}, {
+                                content: "excelFilter", placeholder:"Filtrar",
                             }],
                         },
                         ],
@@ -182,38 +208,38 @@
                 ]
             });
 
-						webix.ui({
-	            view:"contextmenu", id:"cmenu", master:$$("dtable"), width:220,
-	            data:[
-	              {value:"Eliminar grupo", id:"eliminaGrupo"},
-	              
-	            ],
-	            on:{
-	              "onItemClick":function(id){
-	                var id_grup = $$("dtable").getSelectedId();
-	                if(id === "eliminaGrupo"){
-	                	console.log(id_grup)
-	                  eliminaGrupo(id_grup.id)
-	                }
-	                
-	              }
-	            }
-	          });
-
+/* 			webix.ui({
+            view:"contextmenu", id:"cmenu", master:$$("dtable"), width:220,
+            data:[
+                {value:"Eliminar grupo", id:"eliminaGrupo"},
+                
+            ],
+            on:{
+                "onItemClick":function(id){
+                var id_grup = $$("dtable").getSelectedId();
+                if(id === "eliminaGrupo"){
+                    console.log(id_grup)
+                    eliminaGrupo(id_grup.id)
+                }
+                
+                }
+            }
+            });
+ */
             genera();
         }
 
         function genera() {
             $$("dtable").clearAll();
-            $$("dtable").load("/api/progap/progap_usuariox?lnConv=" + $$("cmbSoli").getValue() )
+            $$("dtable").load("/api/progap/progap_prograx")
 
         }
 
         function deta_grup(id) {
             window.parent.parent.$$("tbView").addView({
-                header: "<span class='webix_icon mdi mdi-file-document-outline'></span>" + (id == undefined ? "Nuevo" : "Modifica") + " Usuario",
+                header: "<span class='webix_icon mdi mdi-file-document-outline'></span>" + (id == undefined ? "Nuevo" : "Modifica") + " Estudiante",
                 body: {
-                    view: "iframe", src: "/progap/progap_nusuario?lnID=" + id,
+                    view: "iframe", src: "/op/op_ngrup?lnID=" + id,
                     type: {
                         height: 60
                     }

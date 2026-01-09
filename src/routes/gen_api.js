@@ -9,5 +9,7 @@ const opCtrl = require("../controllers/genApiControllers.js")
 
 router.get("/cmb_depew", midd.verifyToken, opCtrl.cmb_depew);
 router.get("/cmb_persw", midd.verifyToken, opCtrl.cmb_persw);
+router.get("/cmb_progap_depe", midd.verifyToken, opCtrl.cmb_progap_depe);
+router.get("/cmb_progap_prog", midd.verifyToken, opCtrl.cmb_progap_prog);
 
 module.exports = router

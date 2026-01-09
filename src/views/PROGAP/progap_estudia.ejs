@@ -127,7 +127,7 @@
                             header: [{text:"",css:"my_style"}, {text:""}],
                             template:(obj)=>{
                                 return `
-                                    <a href="#" onClick="window.parent.parent.deta_sali('${obj.cve}',${obj.idoficio},${obj.anio},${obj.id_iden},'op_reof0.fwx');">
+                                    <a href="#" onClick="deta_grup(${obj.id});">
                                         <i style='font-size:26px;color:#2b96cc;' class='fa-solid fa-magnifying-glass'></i>
                                     </a>`
                             }
@@ -139,7 +139,7 @@
                             }],
                         },	
                         {
-                            id: "usuario", width: 150,sort: "string", css: { 'text-align': 'left' }, 
+                            id: "codigo", width: 150,sort: "string", css: { 'text-align': 'left' }, 
                             header: [{text:"Usuario",css:"my_style"}, {
                                 content: "textFilter", placeholder:"Filtrar",
                             }],
@@ -151,13 +151,7 @@
                             }],
                         },
                         {
-                            id: "tipo", width: 150,sort: "string", css: { 'text-align': 'left' }, 
-                            header: [{text:"Tipo de Usuario",css:"my_style"}, {
-                                content: "textFilter", placeholder:"Filtrar",
-                            }],
-                        },			
-                        {
-                            id: "correo", 
+                            id: "correo_institucional", 
                             height:160, 
                             fillspace:true, minWidth:300,sort: "string", css: { 'text-align': 'left' }, 
                             header: [{text:"Correo",css:"my_style"}, {
@@ -205,7 +199,7 @@
 
         function genera() {
             $$("dtable").clearAll();
-            $$("dtable").load("/api/progap/progap_usuariox?lnConv=" + $$("cmbSoli").getValue() )
+            $$("dtable").load("/api/progap/progap_estudiax?lnConv=" + $$("cmbSoli").getValue() )
 
         }
 
@@ -213,7 +207,7 @@
             window.parent.parent.$$("tbView").addView({
                 header: "<span class='webix_icon mdi mdi-file-document-outline'></span>" + (id == undefined ? "Nuevo" : "Modifica") + " Estudiante",
                 body: {
-                    view: "iframe", src: "/op/op_ngrup?lnID=" + id,
+                    view: "iframe", src: "/progap/progap_nestudia?lnID=" + id,
                     type: {
                         height: 60
                     }

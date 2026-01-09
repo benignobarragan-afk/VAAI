@@ -19,7 +19,10 @@
 		{
 			id:"progap_convoca", value:"Convocatoria", icon: "bullhorn", 
 		},
-        ]
+    	{
+			id:"progap_progra", value:"Programas", icon: "book-multiple", 
+		},
+		]
 		webix.ready(function(){
 			webix.Touch.enable();
 
@@ -31,7 +34,7 @@
 				name: "customIcons",
 				icon: function (obj, common) {  // custom rendering pattern for icons
 					if (obj.icon)
-						return "<img width='24' height='24' src='/intranet/imagenes/boton/" + obj.icon + "'>";
+						return "<span class='webix_icon mdi mdi-" + obj.icon + "'></span>";
 					return "";
 				}
 			});
@@ -57,11 +60,12 @@
 						view:"iframe",  id:"frame-body",  borderless: true 
 					},
 					{
-						view: "sidebar", collapsed: false, borderless: true, width:200, id:"mySideBar",name:"mySideBar",tooltip: function (obj) {return obj.value;}, 
-                        template: "<span class='webix_icon mdi mdi-#icon#'></span> #value#",
+						view: "sidebar", collapsed: false, borderless: true, id:"mySideBar",name:"mySideBar",tooltip: function (obj) {return obj.value;}, 
+                        //template: "<span class='webix_icon mdi mdi-#icon#'></span> #value#",
+						//position: "right",
 						data: tree_menu,
 						type: "customIcons",
-						scheme: {
+ 						scheme: {
 							$init(obj) {
 								if (obj.derecho == 1) { obj.$css = "derecho" };
 							}
@@ -71,14 +75,13 @@
 							onItemClick: changePage
 						}
 					},
-					
 					]
 				}
 				]
 				
 			})
 			
-			$$("sidebar1").select("fin_facturas");
+			//$$("sidebar1").select("fin_facturas");
 			 
 		})
 

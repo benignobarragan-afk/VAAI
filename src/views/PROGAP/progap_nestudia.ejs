@@ -1,0 +1,216 @@
+<%- include('../partials/header'); %>
+
+<style>
+.char_counter {
+    text-align: right;
+    font-size: 11px;
+    color: #666;
+    padding-top: 2px;
+    padding-right: 5px;
+    line-height: 15px; /* Ajusta la altura de línea para que pegue al input */
+}
+</style>
+
+<script>
+
+<%if(usuario.length>0){%>
+var datosIniciales = <%- JSON.stringify(usuario) %>;
+<%}%>
+
+webix.ready(function(){
+    webix.ui({
+        view:"form",
+        id:"form_registro",
+        scroll: "y",
+        elementsConfig:{
+            labelPosition:"top",
+            labelWidth:140,
+            bottomPadding: 15
+        },
+        elements:[
+            { view:"template", type:"header", template:"<%=(usuario.length<1?'Añadir Nuevo Registro':'Modificar a: ' + usuario[0].nombre)%>", css:"header_form" },
+            
+            // Fila: Código y Contraseña
+            { cols:[
+                { view:"text", name:"id", label:"id", hidden: true },
+                { view:"text", name:"codigo", label:"Código de Estudiante *", placeholder:"Código de Estudiante", required:true, invalidMessage:"Requerido" },
+                { view:"text", type:"password", name:"contrasena", label:"Contraseña *", placeholder:"Contraseña:", required:true, invalidMessage:"Requerido" }
+            ]},
+
+            // CURP
+            { cols:[
+                {
+                    view: "text",
+                    id: "curp",
+                    name: "curp",
+                    label: "CURP *",
+                    placeholder: "Escribe tu CURP",
+                    required: true,
+                    attributes: { maxlength: 18 },
+                    // Definimos la validación
+                    validate: function(value) {
+                        return validarCURP(value);
+                    },
+                    invalidMessage: "Formato de CURP incorrecto",
+                    on: {
+                        // Convertir automáticamente a mayúsculas mientras el usuario escribe
+                        onTimedKeyPress: function() {
+                            var value = this.getValue().toUpperCase();
+                            this.setValue(value);
+
+                            if($$("contador")){
+                                $$("contador").setHTML(value.length + " / 18");
+                                //$$("contador").setHTML(val.length + " / 18");
+                            }
+
+                            // 3. Opcional: Cambiar el color si se pasa de 18 (por seguridad)
+                            if (value.length < 18) {
+                                $$("contador").$view.style.color = "red";
+                            } else {
+                                $$("contador").$view.style.color = ""; // Color original
+                            }
+                        }
+                    }
+                },
+                { 
+                    view: "template", // Cambiado de label a template para mejor manejo de HTML
+                    id: "contador", 
+                    name: "contador", 
+                    template: "0 / 18", 
+                    borderless: true, // Para que no se vea el recuadro del template
+                    css: "char_counter", 
+                    height: 25,
+                    width: 50,
+
+                },
+            ]},
+            // Nombre Completo (3 columnas)
+            { label:"Nombre completo *", view:"label" },
+            { cols:[
+                { view:"text", name:"nombre", placeholder:"Nombre:", required:true },
+                { view:"text", name:"apellido_paterno", placeholder:"Apellido paterno:", required:true },
+                { view:"text", name:"apellido_materno", placeholder:"Apellido materno:", required:true }
+            ]},
+
+            // Selects
+            { view:"combo", id:"centro", name:"centro", label:"Centro Universitario de Adscripción *", 
+            options: {
+                fitMaster: false,
+                width: 550,
+                keyPressTimeout: 300,
+                filter: function (item, value) {
+                    if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+                        return true;
+                    return false;
+                },
+                body: {
+                    template: "#value#",
+                    dataFeed: "/api/gen/cmb_progap_depe",
+                    // AGREGA ESTA LÍNEA:
+                    // Inyectamos el valor que ya traes del servidor para que Webix lo reconozca
+                    <%if(depe_id > 0){%>
+                    data: [ { id: <%=depe_id%>, value: "<%=depe_value%>" } ]
+                    <%}%>
+                }
+            }, placeholder:"-- Seleccione un centro universitario --", required:true },
+
+            { view:"combo", name:"programa", label:"Clave y nombre del programa académico *", 
+            options: {
+                fitMaster: false,
+                width: 550,
+                keyPressTimeout: 300,
+                filter: function (item, value) {
+                    if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+                        return true;
+                    return false;
+                },
+                body: {
+                    template: "#value#",
+                    dataFeed: "/api/gen/cmb_progap_prog",
+                    // AGREGA ESTA LÍNEA:
+                    // Inyectamos el valor que ya traes del servidor para que Webix lo reconozca
+                    <%if(prog_id > 0){%>
+                    data: [ { id: <%=prog_id%>, value: "<%=prog_value%>" } ]
+                    <%}%>
+                }
+            }, placeholder:"-- Seleccione --", required:true },
+            { cols:[
+            { view:"richselect", name:"id_ciclo_ingreso", label:"Ciclo Escolar de Ingreso *", 
+            options:[
+                <%for (var i = 0; i < rows.length; i++) {%>
+                { id: "<%= rows[i].id%>", value: "<%=rows[i].nombre%>" },
+                <%}%>
+            ], placeholder:"-- Seleccione --", required:true },
+
+            { view:"richselect", name:"id_ciclo_curso", label:"Ciclo Escolar en Curso *", options:[
+                <%for (var i = 0; i < rows.length; i++) {%>
+                { id: "<%= rows[i].id%>", value: "<%=rows[i].nombre%>" },
+                <%}%>
+            ], placeholder:"-- Seleccione --", required:true },
+
+            { view:"richselect", name:"id_ciclo_condonar", label:"Ciclo Escolar por Condonar *", options:[
+                <%for (var i = 0; i < rows.length; i++) {%>
+                { id: "<%= rows[i].id%>", value: "<%=rows[i].nombre%>" },
+                <%
+                if (i > 2)
+                    break;
+                }%>
+            ], placeholder:"-- Seleccione --", required:true },
+            ]},
+            { cols:[
+            // Correo
+            { view:"text", name:"correo_institucional", label:"Correo Institucional *", placeholder:"Correo Institucional", validate:webix.rules.isEmail, required:true, invalidMessage:"Correo no válido" },
+
+            // Estado
+            { view:"combo", name:"id_estado", label:"Estado *", value:"1", options:[
+                { id:"1", value:"Activo" }, { id:"0", value:"Inactivo" }
+            ]},
+            ]},
+            // Botón Centrado
+            { margin:20, cols:[
+                {},
+                { view:"button", value:"<%=(usuario.length<1?'Crear usuario de estudiante':'Modificar estudiante')%>", css:"webix_primary", width:250, click:guardarEstudiante },
+                {}
+            ]}
+        ],
+        <%if(usuario.length>0){%>
+        data: datosIniciales,
+        <%}%>
+    });
+});
+
+function guardarEstudiante(){
+    var form = $$("form_registro");
+    if(form.validate()){
+        var datos = form.getValues();
+        console.log("Datos listos para enviar:", datos);
+        
+        // Aquí usarías tu webix.ajax().post("/api/...", datos)
+        webix.message("Procesando registro...");
+        webix.ajax()
+				.post("/api/progap/progap_nestudiax", datos)
+				.then(function (data) {
+					//$$("btnGuardar").enable();
+					let res = data.json()
+					console.log(res)
+					Swal.fire({
+						title:res.message, icon:res.status=='error'?"error":"success"
+					}).then(()=>{
+						if(res.status=='server'){
+//							window.location = "/op/op_ofic";
+                        }
+					})
+					// webix.alert({ type: (data.json()[0].status ? "" : "alert-error"), text:  })
+					// if (data.json()[0].status)
+				})
+    } else {
+        webix.message({ type:"error", text:"Por favor llene los campos marcados en rojo" });
+    }
+}
+
+function validarCURP(valor) {
+    const regexCURP = /^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[0-9A-Z]{1}[0-9]{1}$/;
+    return regexCURP.test(valor.toUpperCase());
+}
+
+</script>
