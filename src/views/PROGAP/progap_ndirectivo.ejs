@@ -34,7 +34,7 @@ webix.ready(function(){
             { cols:[
                 { view:"text", name:"id", label:"id", hidden: true },
                 { view:"text", name:"nombres", label:"Nombre completo *", placeholder:"Nombre:", required:true },
-                { view:"combo", name:"genero", label:"Género *", value:"Masculino", width: 200, options:[
+                { view:"combo", name:"genero", label:"Género *", value:"Masculino", width: 200, required:true, options:[
                 { id:"Masculino", value:"Masculino" }, { id:"Femenino", value:"Femenino" }, { id:"Otro", value:"Otro" }
             ]},
             ]},
@@ -44,13 +44,13 @@ webix.ready(function(){
             ]},
             { cols:[
                 { view:"text", name:"celular", label:"Celular", placeholder:"Celular:"},
-                { view:"combo", name:"cargo", label:"Catgo *", value:"Rector", width: 200, options:[
+                { view:"combo", name:"cargo", label:"Cargo", value:"Rector", width: 200, required:true, options:[
                 { id:"Rector", value:"Rector" }, { id:"Vicerrector adjunto", value:"Vicerrector adjunto" }, { id:"Revisor", value:"Revisor" }, { id:"Autorizador", value:"Autorizador" }
                 ]},
             ]},
             // Selects
             { cols:[
-                { view:"combo", id:"id_cu", name:"id_cu", value:175, label:"Centro Universitario de Adscripción *", 
+                { view:"combo", id:"id_cu", name:"id_cu", label:"Centro Universitario de Adscripción", required:true, 
                 options: {
                     fitMaster: false,
                     width: 550,

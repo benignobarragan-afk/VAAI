@@ -239,15 +239,22 @@ const op_noficx7 = (async (req, res) => {
     {
         return res.render("sin_derecho")
     }
-
     
-    lcSQL = `
+/*     lcSQL = `
         SELECT corr_ofic, diri_nomb, diri_carg 
             from gen_doficio 
             WHERE id_cent = ${req.query.id} AND tipo_depe = 1 
             ORDER BY id_iden DESC LIMIT 1
-        `
-    
+        ` */
+    const lcSQL = `    
+    SELECT ROW_NUMBER() OVER (ORDER BY COUNT(*) desc) AS id, diri_nomb AS value, diri_carg as cargo, corr_ofic, COUNT(*) AS copias
+        FROM gen_doficio 
+        WHERE id_cent = ${req.query.id} and diri_nomb not in ("N/A", "NA", "-")
+        group BY 2,3,4
+        ORDER BY 5 DESC 
+        LIMIT 30
+    `
+
     const rows = await util.gene_cons(lcSQL)
     //console.log(rows)
     return res.json(rows)

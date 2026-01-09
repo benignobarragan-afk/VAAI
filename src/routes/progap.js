@@ -24,5 +24,8 @@ router.get("/progap_actu_prog", midd.verifyToken, progapCtrl.progap_actu_prog);
 router.get("/progap_nestudia", midd.verifyToken, progapCtrl.progap_nestudia);
 router.get("/progap_ndirectivo", midd.verifyToken, progapCtrl.progap_ndirectivo);
 router.get("/progap_nusuario", midd.verifyToken, progapCtrl.progap_nusuario);
+router.get("/progap_nprogra", midd.verifyToken, progapCtrl.progap_nprogra);
+router.get("/progap_dexacam", midd.verifyToken, progapCtrl.progap_dexacam);
+
 
 module.exports = router

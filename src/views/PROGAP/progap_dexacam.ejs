@@ -1,0 +1,104 @@
+<%- include('../partials/header'); %>
+
+<style>
+.char_counter {
+    text-align: right;
+    font-size: 11px;
+    color: #666;
+    padding-top: 2px;
+    padding-right: 5px;
+    line-height: 15px; /* Ajusta la altura de línea para que pegue al input */
+}
+</style>
+
+<script>
+
+webix.ready(function(){
+    webix.ui({
+        view:"form",
+        id:"form_registro",
+        scroll: "y",
+        elementsConfig:{
+            labelPosition:"top",
+            labelWidth:140,
+            bottomPadding: 15
+        },
+        elements:[
+            { view:"template", type:"header", template:"<%=(exacam.length<1?'Añadir Nuevo Registro':'Detalle del oficio: ' + exacam[0].numero_oficio + ' del ' + exacam[0].dependencia)%>", css:"header_form" },
+            {
+                view:"datatable", id:"dtable", select:true, footer:true, editable:true, hidden:false, minHeight:500, scroll:true,
+                resizeColumn: true,  navigation: true, resizeRow:true, css:"celda_compacta", 
+                rightSplit:1, leftSplit:3,
+                scheme: {
+                    $init: function (obj) {
+                        obj.fecha = (obj.fecha ? (obj.fecha == '01/01/1900'?'': convertDate(obj.fecha) ) : '');
+                    }
+                },
+
+                columns:[
+                {
+                    id: "detalle", width: 40,sort: "int", css: { 'text-align': 'center' }, 
+                    header: [{text:"",css:"my_style"}, {text:""}],
+                    template:(obj)=>{
+                        return `
+                            <a href="#" onClick="window.parent.parent.deta_sali('${obj.cve}',${obj.idoficio},${obj.anio},${obj.id_iden},'op_reof0.fwx');">
+                                <i style='font-size:26px;color:#2b96cc;' class='fa-solid fa-magnifying-glass'></i>
+                            </a>`
+                    }
+                },
+                {
+                    id: "rank", width: 70,sort: "int", css: { 'text-align': 'center' }, 
+                    header: [{text:"#",css:"my_style"}, {
+                        content: "textFilter", placeholder:"Filtrar",
+                    }],
+                },	
+                {
+                    id: "folio", width: 200,sort: "string", css: { 'text-align': 'left' }, 
+                    header: [{text:"Oficio",css:"my_style"}, {
+                        content: "excelFilter", placeholder:"Filtrar",
+                    }],
+                },
+                {
+                    id: "fecha_solicitud", width: 150,sort: "string", css: { 'text-align': 'center' }, 
+                    header: [{text:"Fecha solicitud",css:"my_style"}, {
+                        content: "excelFilter", placeholder:"Filtrar",
+                    }],
+                },                        	
+                {
+                    id: "codigo", width: 100,sort: "string", css: { 'text-align': 'left' }, 
+                    header: [{text:"Código",css:"my_style"}, {
+                        content: "excelFilter", placeholder:"Filtrar",
+                    }],
+                },			
+                {
+                    id: "nombre", width: 250,sort: "string", css: { 'text-align': 'left' }, 
+                    fillspace:true, minWidth:150, header: [{text:"Nombre",css:"my_style"}, {
+                        content: "excelFilter", placeholder:"Filtrar",
+                    }],
+                },			
+                {
+                    id: "programa", width: 300,sort: "string", css: { 'text-align': 'left' }, 
+                    fillspace:true, minWidth:150, header: [{text:"Programa posgrado",css:"my_style"}, {
+                        content: "excelFilter", placeholder:"Filtrar",
+                    }],
+                },
+                {
+                    id: "status", width: 180,sort: "string", css: { 'text-align': 'left' }, 
+                    header: [{text:"Estatus",css:"my_style"}, {
+                        content: "excelFilter", placeholder:"Filtrar",
+                    }],
+                },
+                ],
+            },
+        ]
+    });
+    genera();
+});
+
+function genera() {
+        $$("dtable").clearAll();
+        $$("dtable").load("/api/progap/progap_focamx?lnConv=<%=exacam[0].id_convocatoria%>&id_cu=<%=exacam[0].id_cu%>")
+
+    }
+
+</script>

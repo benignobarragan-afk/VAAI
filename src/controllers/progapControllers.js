@@ -316,7 +316,7 @@ const progap_nusuario = (async (req, res) => {
 
     if (req.query.lnID > 0){
     lcSQL = `
-        SELECT usuario, contrasena, nombre, apellido_paterno, apellido_materno, genero, id_nivel_estudios,
+        SELECT id, usuario, contrasena, nombre, apellido_paterno, apellido_materno, genero, id_nivel_estudios,
                 id_centro_universitario, telefonos, extension, celular, correo, id_tipo_usuario, estado, id_convocatoria
             FROM progap_usuarios
             WHERE id = ${req.query.lnID}
@@ -344,6 +344,74 @@ const progap_nusuario = (async (req, res) => {
     return res.render("progap/progap_nusuario", {rows, usuario, depe_id, depe_value})
 });
 
+
+const progap_nprogra = (async (req, res) => {
+    
+    if (req.groups.indexOf(",ADMI_PROGAP,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+    
+    let programa = [], depe_id = '', depe_value = ''
+
+    if (req.query.lnID > 0){
+        lcSQL = `
+        SELECT id, clave_cgipv, id_cu, nivel, programa, clave_911, duracion, participa 
+        	FROM progap_programa
+            WHERE id = ${req.query.lnID}
+
+            `
+        programa = await util.gene_cons(lcSQL)
+
+        console.log(req.query.lnID)
+        console.log(programa)
+
+        if(!!programa[0].id_cu){                //verifica que exista la dependencia
+            lcSQL = `
+            SELECT  id, siglas, dependencia, concat('(',siglas ,') ',  dependencia) as value 
+                FROM progap_dependencias
+                WHERE id = ${programa[0].id_cu}
+            `
+            depen = await util.gene_cons(lcSQL)
+
+            //console.log(depen)
+            if (depen.length > 0){
+                depe_id = depen[0].id
+                depe_value = depen[0].value
+            }
+        }
+
+    }
+    
+
+    return res.render("progap/progap_nprogra", {programa, depe_id, depe_value})
+});
+
+const progap_dexacam = (async (req, res) => {
+    
+    if (req.groups.indexOf(",ADMI_PROGAP,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+    
+    let exacam = []
+
+    if (req.query.lnID > 0){
+        lcSQL = `
+    SELECT e.numero_oficio, e.id_cu, d.dependencia, e.id_convocatoria, d.id_responsable 
+	    FROM progap_exacam e LEFT JOIN progap_dependencias d ON e.id_cu = d.id
+	    WHERE e.id = ${req.query.lnID}
+    `
+        exacam = await util.gene_cons(lcSQL)
+
+        console.log(req.query.lnID)
+        console.log(exacam)
+
+    }
+    
+    return res.render("progap/progap_dexacam", {exacam})
+});
+
 module.exports = {
     progap,
     progap_dashboard,
@@ -361,4 +429,6 @@ module.exports = {
     progap_nestudia,
     progap_ndirectivo,
     progap_nusuario,
+    progap_nprogra,
+    progap_dexacam,
 }

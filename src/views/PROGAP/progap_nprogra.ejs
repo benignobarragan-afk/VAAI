@@ -1,0 +1,151 @@
+<%- include('../partials/header'); %>
+
+<style>
+.char_counter {
+    text-align: right;
+    font-size: 11px;
+    color: #666;
+    padding-top: 2px;
+    padding-right: 5px;
+    line-height: 15px; /* Ajusta la altura de línea para que pegue al input */
+}
+
+</style>
+
+<script>
+
+<%if(programa.length>0){%>
+var datosIniciales = <%- JSON.stringify(programa) %>;
+<%}%>
+
+webix.ready(function(){
+    webix.ui({
+        view:"form",
+        id:"form_registro",
+        scroll: "y",
+        elementsConfig:{
+            labelPosition:"top",
+            labelWidth:140,
+            bottomPadding: 15
+        },
+        elements:[
+            { view:"template", type:"header", template:"<%=(programa.length<1?'Añadir Nuevo Registro':'Modificar a: ' + programa[0].nombres)%>", css:"header_form" },
+            
+            // Fila: Código y Contraseña
+            { cols:[
+                { view:"text", name:"id", label:"id", hidden: true },
+                { view:"text", name:"programa", label:"Programa", placeholder:"Programa:", required:true },
+                { view:"combo", name:"nivel", label:"Nivel", width: 300, required:true, options:[
+                { id:"DOCTORADO", value:"DOCTORADO" }, { id:"DOCTORADO DIRECTO", value:"DOCTORADO DIRECTO" }, { id:"ESPECIALIDAD", value:"ESPECIALIDAD" },
+                { id:"ESPECIALIDAD-ENF", value:"ESPECIALIDAD-ENF" }, { id:"ESPECIALIDAD-MED", value:"ESPECIALIDAD-MED" }, { id:"ESPECIALIDAD-ODT", value:"ESPECIALIDAD-ODT" }, { id:"MAESTRÍA", value:"MAESTRÍA" }
+            ]},
+            ]},
+            { cols:[
+                { view:"text", name:"clave_cgipv", label:"clave CGIPV", placeholder:"clave CGIPV", required:true },
+                { view:"text", name:"clave_911", label:"Clave 911", placeholder:"Clave 911:", required:true},
+                { view:"text", name:"duracion", label:"Duración", placeholder:"Duración:", required:true, 
+                    validate: function(value) {
+                        // 1. Permitimos el 0: verificamos que no sea string vacío y sea un número
+                        if (value === "" || value === null) return false;
+                        
+                        var n = parseInt(value);
+                        return !isNaN(n) && n >= 1 && n <= 99;
+                    },
+                    invalidMessage: "Debe ser un número entre 1 y 99",
+                    attributes: { 
+                    maxlength: 2,      // Limita la entrada visual a 2 caracteres
+                    type: "number",    // Muestra el teclado numérico en dispositivos móviles
+                    min: 1, 
+                    max: 99 
+                    },
+                    on: {
+                        onTimedKeyPress: function() {
+                            var valor = this.getValue();
+                            
+                            // 1. Quitamos cualquier cosa que no sea número
+                            var soloNumeros = valor.replace(/[^0-9]/g, "");
+                            
+                            // 2. Si el usuario pegó texto o el browser ignoró el maxlength, cortamos a 2
+                            if (soloNumeros.length > 2) {
+                                soloNumeros = soloNumeros.substring(0, 2);
+                            }
+                            // 3. Aplicamos el valor limpio
+                            this.setValue(soloNumeros);
+                        }
+                    }
+                },
+            ]},
+            // Selects
+            { cols:[
+                { view:"combo", id:"id_cu", name:"id_cu", label:"Centro Universitario de Adscripción", required:true,
+                options: {
+                    fitMaster: false,
+                    width: 550,
+                    keyPressTimeout: 300,
+                    filter: function (item, value) {
+                        if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+                            return true;
+                        return false;
+                    },
+                    body: {
+                        template: "#value#",
+                        dataFeed: "/api/gen/cmb_progap_depe",
+                        // AGREGA ESTA LÍNEA:
+                        // Inyectamos el valor que ya traes del servidor para que Webix lo reconozca
+                        <%if(depe_id > 0){%>
+                        data: [ { id: <%=depe_id%>, value: "<%=depe_value%>" } ]
+                        <%}%>
+                    }
+                }, placeholder:"-- Seleccione un centro universitario --", required:true },
+                { view:"combo", name:"participa", label:"Participa", width: 300, options:[
+                { id:"0", value:"NO" }, { id:"1", value:"SI" }
+                ], placeholder:"-- Participa --", required:true},
+            ]},
+            // Botón Centrado
+            { margin:20, cols:[
+                {},
+                { view:"button", value:"<%=(programa.length<1?'Crear programa':'Modificar programa')%>", css:"webix_primary", width:250, click:guardarPrograma },
+                {}
+            ]}
+        ],
+        <%if(programa.length>0){%>
+        data: datosIniciales,
+        <%}%>
+    });
+});
+
+function guardarPrograma(){
+    var form = $$("form_registro");
+    if(form.validate()){
+        var datos = form.getValues();
+        console.log("Datos listos para enviar:", datos);
+        
+        // Aquí usarías tu webix.ajax().post("/api/...", datos)
+        webix.message("Procesando registro...");
+        webix.ajax()
+				.post("/api/progap/progap_nprograx", datos)
+				.then(function (data) {
+					//$$("btnGuardar").enable();
+					let res = data.json()
+					console.log(res)
+					Swal.fire({
+						title:res.message, icon:res.status=='error'?"error":"success"
+					}).then(()=>{
+						if(res.status=='server'){
+//							window.location = "/op/op_ofic";
+                        }
+					})
+					// webix.alert({ type: (data.json()[0].status ? "" : "alert-error"), text:  })
+					// if (data.json()[0].status)
+				})
+    } else {
+        webix.message({ type:"error", text:"Por favor llene los campos marcados en rojo" });
+    }
+}
+
+function validarCURP(valor) {
+    const regexCURP = /^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[0-9A-Z]{1}[0-9]{1}$/;
+    return regexCURP.test(valor.toUpperCase());
+}
+
+</script>

@@ -139,7 +139,7 @@ const progap_focamx = (async (req, res) => {
         LEFT JOIN progap_usuarios u ON a.id_usuario = u.id
         LEFT JOIN progap_dependencias d ON u.id_centro_universitario = d.id
         LEFT JOIN progap_programa p ON a.id_programa = p.id
-        ${(!req.query.lnConv?'':'WHERE a.id_convocatoria = '+ req.query.lnConv)} 
+        ${(!req.query.lnConv?'':'WHERE a.id_convocatoria = '+ req.query.lnConv)} ${(!req.query.id_cu?'':' AND u.id_centro_universitario = '+ req.query.id_cu)}  
         ORDER BY a.id
 
     `
@@ -314,7 +314,7 @@ const progap_form02 = ( async (req, res) => {
     lcSQL =  `
     SET lc_time_names = 'es_MX';
     
-    SELECT ex.id AS id_exacam, cco.nombre AS cicl_cond, a.id_centro_universitario, SUM(if(LEFT(p.nivel,1) = 'D', c.arancel_doctorado, 0)) AS nive_doct,
+    SELECT ex.id AS id_exacam, cco.nombre AS cicl_cond, a.id_centro_universitario, ex.numero_oficio, SUM(if(LEFT(p.nivel,1) = 'D', c.arancel_doctorado, 0)) AS nive_doct,
             SUM(if(LEFT(p.nivel,1) != 'D', c.arancel_maestria, 0)) AS nive_otro, SUM(if(LEFT(p.nivel,1) = 'D', c.arancel_doctorado, c.arancel_maestria)) as nive_tota,
             SUM(if(LEFT(p.nivel,1) = 'D', 1, 0)) AS alum_doct, SUM(if(LEFT(p.nivel,1) != 'D', 1, 0)) AS alum_otro, count(*) as alum_tota, 
             MAX(date_format(ex.fecha, '%d de %M de %Y')) AS fecha
@@ -325,7 +325,7 @@ const progap_form02 = ( async (req, res) => {
         LEFT JOIN progap_programa p ON a.id_programa = p.id
         LEFT JOIN progap_ciclos cco ON a.id_ciclo_condonar = cco.id	
         WHERE ex.id = ${req.query.id} and a.id_estado = 3
-        group BY 1,2,3
+        group BY 1,2,3,4
     `
     const ltTotal = await util.gene_cons(lcSQL)
 
@@ -403,7 +403,8 @@ const progap_form02 = ( async (req, res) => {
     doc.font('Helvetica');
     doc.fontSize(10);
     //doc.moveDown(3);
-    doc.text(`REC/0223/2025`, { align: 'right' });
+    console.log(ltTotal)
+    doc.text(`${ltTotal[1][0].numero_oficio}`, { align: 'right' });
     doc.fontSize(11);
     doc.moveDown(1);
     doc.font('Helvetica-Bold');
@@ -894,7 +895,7 @@ const progap_prograx = (async (req, res) => {
     }
 
     const lcSQL = `
-    SELECT p.clave_cgipv, d.siglas,  p.nivel, p.programa, p.clave_911, p.duracion, if(p.participa = 1, "SI", "NO") AS participa
+    SELECT p.id, p.clave_cgipv, d.siglas,  p.nivel, p.programa, p.clave_911, p.duracion, if(p.participa = 1, "SI", "NO") AS participa
         FROM progap_programa p LEFT JOIN progap_dependencias d ON p.id_cu = d.id
         ORDER BY p.nivel, p.programa, d.siglas	
     `
@@ -1075,7 +1076,7 @@ const progap_actu_progx = ( async (req, res) => {
 
 const progap_actu_progx2 = (async (req, res) => {
 
-    console.log(req.body)
+    //console.log(req.body)
     let lcSQL = '', rows = [], lnCambios = 0
     for(i = 0; i < req.body.length; i++){
         lcSQL = `UPDATE progap_programa SET participa = ${(req.body[i].update=='SI'?1:0)} WHERE id = ${req.body[i].id} AND ifnull(participa,0) = ${(req.body[i].update=='SI'?0:1)}`
@@ -1131,8 +1132,8 @@ const progap_nestudiax = (async (req, res) => {
         `
         modifica = await util.gene_cons(lcSQL)
 
-        console.log(req.body.id)
-        console.log(modifica)
+        //console.log(req.body.id)
+        //console.log(modifica)
 
         if (modifica.length <= 0){
             return res.json({"status" : "error", "message": "No se econtro al alumno a modificar"})
@@ -1209,7 +1210,7 @@ const progap_nestudiax = (async (req, res) => {
                 (SELECT id FROM progap_convocatoria WHERE id_status = 1 order BY id desc LIMIT 1)
                 )
     `
-        console.log(lcSQL)
+        //console.log(lcSQL)
         rows = await util.gene_cons(lcSQL)
 
         return res.json({"status" : "server", "message": "El usuario se creo exitosamente"})
@@ -1233,8 +1234,8 @@ const progap_ndirectivox = (async (req, res) => {
         `
         modifica = await util.gene_cons(lcSQL)
 
-        console.log(req.body.id)
-        console.log(modifica)
+        //console.log(req.body.id)
+        //console.log(modifica)
 
         if (modifica.length <= 0){
             return res.json({"status" : "error", "message": "No se econtro al directivo a modificar"})
@@ -1250,7 +1251,7 @@ const progap_ndirectivox = (async (req, res) => {
             id_grado = ${req.body.id_grado}
         WHERE id = ${req.body.id}
         `
-        console.log(lcSQL)
+        //console.log(lcSQL)
         modifico = await util.gene_cons(lcSQL)
 
         return res.json({"status" : "server", "message": "El directivo se modificó exitosamente"})
@@ -1265,10 +1266,179 @@ const progap_ndirectivox = (async (req, res) => {
             '${req.body.celular}', '${req.body.cargo}', ${req.body.id_cu}, ${req.body.id_grado})
 
     `
-        console.log(lcSQL)
+        //console.log(lcSQL)
         rows = await util.gene_cons(lcSQL)
 
         return res.json({"status" : "server", "message": "El directivo se creo exitosamente"})
+    }
+});
+
+const progap_nusuariox = (async (req, res) => {
+
+    if (req.groups.indexOf(",ADMI_PROGAP,") <= 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    let lcSQL = ''
+    if(req.body.id > 0){                        //si es modificación
+        
+        lcSQL = `
+            SELECT * 
+                FROM progap_usuarios
+                WHERE id = ${req.body.id}
+        `
+        modifica = await util.gene_cons(lcSQL)
+
+        //console.log(req.body.id)
+        //console.log(modifica)
+
+        if (modifica.length <= 0){
+            return res.json({"status" : "error", "message": "No se econtro al usuario a modificar"})
+        }
+
+        lcSQL = `
+            SELECT * 
+                FROM progap_usuarios
+                WHERE usuario = '${req.body.usuario}' AND id != ${req.body.id} 
+        `
+
+        activo = await util.gene_cons(lcSQL)
+
+        if (activo.length > 0){
+            return res.json({"status" : "error", "message": "El usuario ya existe"})
+        }
+
+        lcSQL = `UPDATE progap_usuarios SET usuario = '${req.body.usuario}', 
+            contrasena = '${req.body.contrasena}', 
+            nombre = '${req.body.nombre}', 
+            apellido_paterno = '${req.body.apellido_paterno}', 
+            apellido_materno = '${req.body.apellido_materno}', 
+            genero = ${req.body.genero}, 
+            id_nivel_estudios = ${req.body.id_nivel_estudios}, 
+            id_centro_universitario = ${req.body.id_centro_universitario}, 
+            telefonos = '${req.body.telefonos}', 
+            extension = '${req.body.extension}', 
+            celular = '${req.body.celular}', 
+            correo = '${req.body.correo}', 
+            id_tipo_usuario = ${req.body.id_tipo_usuario}, 
+            estado = ${req.body.estado}, 
+            id_convocatoria = ${req.body.id_convocatoria}
+        WHERE id = ${req.body.id}            
+        `
+
+        console.log(lcSQL)
+
+        modifico = await util.gene_cons(lcSQL)
+
+        return res.json({"status" : "server", "message": "El usuario se modificó exitosamente"})
+        
+    }
+    else                                           //si es usuario nuevo
+    {
+        lcSQL = `
+            SELECT * 
+                FROM progap_usuarios
+                WHERE USUARIO = '${req.body.codigo}'
+        `
+
+        activo = await util.gene_cons(lcSQL)
+
+        if (activo.length > 0){
+            return res.json({"status" : "error", "message": "El usuario ya existe"})
+        }
+
+        lcSQL = `
+        INSERT INTO progap_usuarios (usuario, contrasena, md5HASH, nombre, apellido_paterno, apellido_materno, id_centro_universitario, correo,
+            id_tipo_usuario, estado, id_convocatoria, genero, id_nivel_estudios, telefonos, extension, celular) 
+        VALUES ('${req.body.usuario}', '${req.body.contrasena}', UUID(), '${req.body.nombre}', '${req.body.apellido_paterno}', 
+            '${req.body.apellido_materno}', ${req.body.id_centro_universitario}, '${req.body.correo}', 5, ${req.body.estado},
+            (SELECT id FROM progap_convocatoria WHERE id_status = 1 order BY id desc LIMIT 1), ${req.body.genero}, ${req.body.id_nivel_estudios},
+            '${req.body.telefonos}', '${req.body.extension}', '${req.body.celular}');
+    `
+        console.log(lcSQL)
+        rows = await util.gene_cons(lcSQL)
+
+        return res.json({"status" : "server", "message": "El usuario se creo exitosamente"})
+    }
+});
+
+const progap_nprograx = (async (req, res) => {
+
+    if (req.groups.indexOf(",ADMI_PROGAP,") <= 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    let lcSQL = ''
+    if(req.body.id > 0){                        //si es modificación
+        
+        lcSQL = `
+            SELECT * 
+                FROM progap_programa
+                WHERE id = ${req.body.id}
+        `
+        modifica = await util.gene_cons(lcSQL)
+
+        //console.log(req.body.id)
+        //console.log(modifica)
+
+        if (modifica.length <= 0){
+            return res.json({"status" : "error", "message": "No se econtro el programa a modificar"})
+        }
+
+        lcSQL = `
+            SELECT * 
+                FROM progap_programa
+                WHERE id <> ${req.body.id} and (clave_cgipv = '${req.body.clave_cgipv}' or clave_911 = '${req.body.clave_911}')
+        `
+
+        activo = await util.gene_cons(lcSQL)
+
+        if (activo.length > 0){
+            return res.json({"status" : "error", "message": "La clave CGIPV o clave 911 ya existen"})
+        }
+
+        lcSQL = `UPDATE progap_programa SET clave_cgipv = '${req.body.clave_cgipv}', 
+            id_cu = ${req.body.id_cu}, 
+            nivel = '${req.body.nivel}', 
+            programa = '${req.body.programa}', 
+            clave_911 = '${req.body.clave_911}', 
+            duracion = ${req.body.duracion}, 
+            participa = ${req.body.participa}
+        WHERE id = ${req.body.id}
+        `
+        console.log(lcSQL)
+        modifico = await util.gene_cons(lcSQL)
+
+        return res.json({"status" : "server", "message": "El programa se modificó exitosamente"})
+        
+    }
+    else                                           //si es usuario nuevo
+    {
+
+        lcSQL = `
+            SELECT * 
+                FROM progap_programa
+                WHERE clave_cgipv = '${req.body.clave_cgipv}' or clave_911 = '${req.body.clave_911}'
+        `
+
+        activo = await util.gene_cons(lcSQL)
+
+        if (activo.length > 0){
+            return res.json({"status" : "error", "message": "La clave CGIPV o clave 911 ya existen"})
+        }
+
+        lcSQL = `
+        INSERT INTO progap_programa (clave_cgipv, id_cu, nivel, programa, clave_911, duracion, participa) 
+        VALUES ('${req.body.clave_cgipv}', ${req.body.id_cu}, '${req.body.nivel}', '${req.body.programa}', 
+            '${req.body.clave_911}', ${req.body.duracion}, ${req.body.participa})
+
+    `
+        //console.log(lcSQL)
+        rows = await util.gene_cons(lcSQL)
+
+        return res.json({"status" : "server", "message": "El programa se creo exitosamente"})
     }
 });
 
@@ -1291,5 +1461,7 @@ module.exports = {
     progap_actu_progx2,
     progap_impo_progx2,
     progap_nestudiax,
-    progap_ndirectivox
+    progap_ndirectivox,
+    progap_nusuariox,
+    progap_nprograx
 }

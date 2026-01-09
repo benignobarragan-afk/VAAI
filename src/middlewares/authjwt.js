@@ -94,6 +94,7 @@ const verifyToken = async (req, res, next) => {
             const esRutaDatos = /^\/api/.test(req.path);
             
             if (token != datosUsuario.token){
+                //console.log(req)
                 if(other_utils.regi_even_segu(req.userId, 'DUPLICADO', req.ip)){
                     //limpia el cache
                     cacheUsuarios.delete(req.userId);

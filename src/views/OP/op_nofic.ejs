@@ -456,7 +456,6 @@
 													view:"richselect", id:"precargado", name:"precargado", label:"Personas precargadas (No se guarda el valor)",  width: 300,  labelPosition:"top",  options:[], 
 													on:{
 														onChange:(id)=>{
-															/*				no se bien para que se utiliza por eso lo comente 11/05/2025
 															if(!id)
 																return
 															let element =  $$("precargado").getList().getItem(id)
@@ -464,7 +463,6 @@
 															$$("txtCorr_ofic").setValue(element["corr_ofic"]);
 															$$("txtDiri_carg").setValue(element["cargo"])
 															$$("copias").setValue(element["copias"])
-															*/
 														}
 													}
 												}
@@ -707,15 +705,21 @@
 			webix.ajax()
 				.get("/api/op/op_noficx7", {id})
 				.then(function (data) {
+
+					console.log(data)
 					let res = data.json()[0]
+
+					$$("precargado").getPopup().getList().clearAll();
+					$$("precargado").getPopup().getList().parse(data);
+					$$("precargado").setValue(1);
 					
 					//console.log("si entro")
 					//console.log(typeof res)
 					
 					if (typeof res != undefined){
 						$$("txtCorr_ofic").setValue(res.corr_ofic);
-						$$("cmbPers").setValue(res.diri_nomb);
-						$$("txtDiri_carg").setValue(res.diri_carg);
+						$$("cmbPers").setValue(res.value);
+						$$("txtDiri_carg").setValue(res.cargo);
 					//console.log(res.corr_ofic)
 					}
 				})

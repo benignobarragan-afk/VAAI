@@ -77,7 +77,7 @@
                                 view: "button",
                                 type: "icon",
                                 icon: "mdi mdi-plus",
-                                label: "Crear estudiante",
+                                label: "Crear programa",
                                 width: 180,
                                 on: {
                                     onItemClick: function () { deta_grup() }
@@ -147,7 +147,7 @@
                             header: [{text:"",css:"my_style"}, {text:""}],
                             template:(obj)=>{
                                 return `
-                                    <a href="#" onClick="window.parent.parent.deta_sali('${obj.cve}',${obj.idoficio},${obj.anio},${obj.id_iden},'op_reof0.fwx');">
+                                    <a href="#" onClick="deta_grup(${obj.id});">
                                         <i style='font-size:26px;color:#2b96cc;' class='fa-solid fa-magnifying-glass'></i>
                                     </a>`
                             }
@@ -239,7 +239,7 @@
             window.parent.parent.$$("tbView").addView({
                 header: "<span class='webix_icon mdi mdi-file-document-outline'></span>" + (id == undefined ? "Nuevo" : "Modifica") + " Estudiante",
                 body: {
-                    view: "iframe", src: "/op/op_ngrup?lnID=" + id,
+                    view: "iframe", src: "/progap/progap_nprogra?lnID=" + id,
                     type: {
                         height: 60
                     }

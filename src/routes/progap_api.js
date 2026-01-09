@@ -30,6 +30,7 @@ router.post("/progap_actu_progx2", midd.verifyToken, upload.single('upload'), pr
 router.post("/progap_impo_progx2", midd.verifyToken, upload.single('upload'), progapCtrl.progap_impo_progx2);
 router.post("/progap_nestudiax", midd.verifyToken, upload.single('upload'), progapCtrl.progap_nestudiax);
 router.post("/progap_ndirectivox", midd.verifyToken, upload.single('upload'), progapCtrl.progap_ndirectivox);
-
+router.post("/progap_nusuariox", midd.verifyToken, upload.single('upload'), progapCtrl.progap_nusuariox);
+router.post("/progap_nprograx", midd.verifyToken, upload.single('upload'), progapCtrl.progap_nprograx);
 
 module.exports = router
