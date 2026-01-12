@@ -682,7 +682,7 @@ const op_ningrx = (async (req, res) => {
     }
 
     //console.log(req.body)
-    return res.json([])
+    //return res.json([])
 
     if (req.body.nume_cont <= 0){
         res.json([{"status":false, "message":"El numero de control no puede estar vacío o ser cero"}]);
@@ -725,7 +725,7 @@ const op_ningrx = (async (req, res) => {
     const rows4 = await util.gene_cons(lcSQL);
 
     lcSQL = `
-        INSERT INTO opc_segu_ofic(id_ofic, fecha, status, usuario, nombre) VALUES(${rows4.insertId}, now(), 1, '${req.userId}', '${req.nom_usu}')
+        INSERT INTO opc_segu_ofic(id_ofic, fecha, status, USER_ID, nombre) VALUES(${rows4.insertId}, now(), 1, '${req.userId}', '${req.nom_usu}')
     `
     const rows5 = await util.gene_cons(lcSQL);
 
@@ -1466,7 +1466,7 @@ const new_ord__servx = (async (req, res) => {
     let lcSQL = ''
     //console.log(req.query)
 
-/*     let lcSQL = `
+/*      lcSQL = `
     SELECT s.cve, s.id_depe, s.depen, s.piso, ss.codigo, ss.id_serv_pk, CONCAT('(', p.codigo, ') ', p.apepat, ' ', p.apemat, ' ', p.nombre) AS nombre, ss.correo  
         from ser_depen s LEFT JOIN ser_soli_serv ss ON s.id_depe = ss.id_depe
             LEFT JOIN gen_personas p ON ss.codigo = p.codigo
@@ -1481,13 +1481,22 @@ const new_ord__servx = (async (req, res) => {
     `
     const loSeek = await util.gene_cons(lcSQL)
     
-    lcSQL = `
+/*     lcSQL = `
 
     SELECT cve, id_depe, depen, piso, if(LOCATE(CONCAT(',',id_depe,','), ',${req.query.loDepe},') > 0, "true", "") AS marcado
         from ser_depen 
             WHERE cve = '${req.query.loCVE}'
         ORDER BY 2
     `
+ */
+    lcSQL = `
+    SELECT s.cve, s.id_depe, s.depen, s.piso, ss.codigo, ss.id_serv_pk, CONCAT('(', p.codigo, ') ', p.apepat, ' ', p.apemat, ' ', p.nombre) AS nombre, ss.correo  
+        from ser_depen s LEFT JOIN ser_soli_serv ss ON s.id_depe = ss.id_depe
+            LEFT JOIN gen_personas p ON ss.codigo = p.codigo
+            WHERE cve IN (SELECT cve FROM opc_oficio WHERE id_ofic = ${req.query.lnOficio})
+        ORDER BY 2,7;
+    `
+
     console.log(lcSQL)
 
     const rows = await util.gene_cons(lcSQL)
@@ -1498,10 +1507,12 @@ const new_ord__servx = (async (req, res) => {
         if (lnDepe != rows[i].cve){
             lnDepe == rows[i].cve
             loHijo = []
-            if(!!rows[i].id_serv_pk ){
-                loHijo.push({id:'H'+rows[i].id_serv_pk, depen:rows[i].nombre})
-            }
         }
+
+        if(!!rows[i].id_serv_pk ){
+            loHijo.push({id:'H'+rows[i].id_serv_pk, depen:rows[i].nombre})
+        }
+
         loPadre.push({id:rows[i].id_depe, depen:rows[i].depen, data:loHijo, checked:(rows[i].marcado==''?false:true)})
          
     }
@@ -1806,14 +1817,14 @@ const op_uoficio = (async (req, res) => {
     //inserta el registro para guardar el archivo de la oficialía
     const lcSQL = `
     INSERT INTO opc_archivo (id_ofic, descrip, fecha, usuario, ofic_out, uid) 
-        VALUES (${req.body.idOficio}, '${req.file.originalname}', now(), ${req.userId}, 1, UUID())
+        VALUES (${req.body.idOficio}, '${req.file.originalname}', now(), '${req.userId}', 1, '${util.gene_id_11()}')
     `
 
     const laInsert = await util.gene_cons(lcSQL)
     //console.log(laInsert)
 
     const lfOriginal  = path.join(__dirname, "../uploads/", req.file.filename)
-    const lfDestino = config.SERV_ARCH  + 'OP_OFICIOS\\' + laInsert.insertId + '.' + laExtencion 
+    const lfDestino = config.SERV_ARCH  + 'OPARCHIVO\\' + laInsert.insertId + '.' + laExtencion 
 
     //console.log(lfOriginal)
     //console.log(lfDestino)
