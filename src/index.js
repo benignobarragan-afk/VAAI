@@ -1,5 +1,5 @@
 // Carga las variables del archivo .env al objeto process.env
-require('dotenv').config();
+//require('dotenv').config();
 
 const express = require("express")
 const morgan = require("morgan")
