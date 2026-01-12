@@ -1722,7 +1722,7 @@ const recu_arch = (async (req, res) => {
     lcSQL = `
     SELECT UID AS id, DESCRIP as nombre
 	    FROM opc_archivo 
-        WHERE id_ofic = ${req.query.lnOficio}
+        WHERE id_ofic = ${req.query.lnOficio} ${(!req.query.out, '', ' and ofic_out = 1')}
         ORDER BY fecha DESC
 
     `
@@ -1793,6 +1793,49 @@ const op_nareax = (async (req, res) => {
     return res.json(rows)
 });
 
+const op_uoficio = (async (req, res) => {
+
+    const laArchivo = req.file.originalname;
+    const laExtencion = laArchivo.substring(laArchivo.lastIndexOf(".")+1).toUpperCase() ;
+    //console.log(laExtencion);
+
+    if(laExtencion != 'PDF'){
+        return res.json({"status" : false, "message": "Sólo se permiten archivos con extención PDF", "data":{}})
+    }
+
+    //inserta el registro para guardar el archivo de la oficialía
+    const lcSQL = `
+    INSERT INTO opc_archivo (id_ofic, descrip, fecha, usuario, ofic_out, uid) 
+        VALUES (${req.body.idOficio}, '${req.file.originalname}', now(), ${req.userId}, 1, UUID())
+    `
+
+    const laInsert = await util.gene_cons(lcSQL)
+    //console.log(laInsert)
+
+    const lfOriginal  = path.join(__dirname, "../uploads/", req.file.filename)
+    const lfDestino = config.SERV_ARCH  + 'OP_OFICIOS\\' + laInsert.insertId + '.' + laExtencion 
+
+    //console.log(lfOriginal)
+    //console.log(lfDestino)
+
+    try {
+        //await fs.copyFile(lfOriginal, lfDestino);
+        await fs.promises.copyFile(lfOriginal, lfDestino);
+        if (!fs.existsSync(lfDestino)) {
+            return res.json({"status" : false, "message": "Error al guardar el archivo"});
+        }
+        //console.log('¡Archivo copiado con éxito!');
+    } catch (err) {
+        //console.log(err);
+        return res.json({"status" : false, "message": "Error al guardar el archivo"});
+    }
+
+    return res.json({"status" : "server", "message": "El archivo se cargo correctamente"});
+
+
+
+});
+
 
 module.exports = {
     op_cucsx2,
@@ -1833,5 +1876,6 @@ module.exports = {
     seg_oficx2,
     recu_arch,
     adownload,
-    op_nareax
+    op_nareax,
+    op_uoficio
 }

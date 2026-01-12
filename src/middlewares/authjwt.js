@@ -171,6 +171,7 @@ const verifyToken = async (req, res, next) => {
                 cacheUsuarios.set(rdecoded.id, usuarioEnCache);
 
                 // 6. Seteamos los datos en el req para que la ruta final los tenga
+                req.userId  = rdecoded.id;
                 req.id_cent = usuarioEnCache.id_cent;
                 req.centro  = usuarioEnCache.centro;
                 req.nom_cen = usuarioEnCache.nom_cen;

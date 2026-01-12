@@ -2,10 +2,10 @@ const express = require("express");
 const router = express.Router();
 const path = require("path")
 const midd = require(path.join(__dirname,"..", "middlewares/authjwt.js"))
-
-//const pool = require('../db')
-
 const opCtrl = require("../controllers/opApiControllers.js")
+const multer = require("multer")
+
+const upload = multer({ dest: 'src/uploads' })
 
 router.post("/op_cucsx2", midd.verifyToken, opCtrl.op_cucsx2);
 router.get("/op_oficx5", midd.verifyToken, opCtrl.op_oficx5);
@@ -46,10 +46,7 @@ router.post("/seg_oficx2", midd.verifyToken, opCtrl.seg_oficx2);
 router.get("/recu_arch", midd.verifyToken, opCtrl.recu_arch);
 router.get("/adownload", midd.verifyToken, opCtrl.adownload);
 router.get("/op_nareax", midd.verifyToken, opCtrl.op_nareax);
-
-
-
-
+router.post("/op_uoficio", midd.verifyToken, upload.single('upload'), opCtrl.op_uoficio);
 
 
 module.exports = router

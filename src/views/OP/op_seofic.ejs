@@ -138,9 +138,50 @@
 								{
 									view: "form", id: "form",
 									rows: [
+										{cols: [
 										{
 											label: "Concepto", view: "textarea", id: "txtConcepto", name: "txtConcepto", labelWidth: 95, labelPosition:"top", height: 120, value:`<%=rows2[0].CONCEPTO%>`, 
 										},
+										{width:15},
+										{rows: [
+											{ 
+												view: "uploader", value: "Adjunta un archivo PDF", accept:"application/pdf",
+												name:"filePDF", id:"filePDF", width:300,
+												link:"list1",  upload:"/api/op/op_uoficio",
+												formData: {
+													idOficio: <%=rows2[0].ID_IDEN%>,
+												},
+													on:{
+															onUploadComplete:(response, file)=>{
+
+															console.log(response);
+															console.log(response.message);
+															webix.message({ type:"info", text:response.message, id:"loadingMsg" });
+															$$("form").enable();
+															carg_arch();
+
+															//$$("formPDF").hideProgress();
+														},
+														onBeforeFileAdd: function (item) {
+														//$$("formPDF").showProgress();
+
+														$$("form").disable(); 
+														//$$("textoPDF").setValue("Subiendo y procesando archivo...");
+														webix.message({ type:"info", text:"Subiendo y procesando archivo...", id:"loadingMsg" });
+										
+														return true;
+														},
+														onUploadFail: function (item){
+														$$("form").enable(); 
+														},
+													}
+												},
+												{
+												view:"list",  id:"list1", type:"uploader",
+												autoheight:true, borderless:true	
+												},
+										]},
+										]},
 										{
 										cols: [
 											{
@@ -186,6 +227,7 @@
 										{
 											cols: [
 												{ label: "Referencia", view: "textarea", name: "txtRefe", labelWidth: 95, labelPosition:"top", value:`<%=rows2[0].REFERENCIA%>`},
+												{width:15},
 												{ label: "Anexos", view: "textarea", name: "txtAnexo", labelWidth: 95, labelPosition:"top", value:`<%=rows2[0].ANEXO%>`},
 											]
 										},
@@ -354,8 +396,8 @@
 													
 													// Configuración para cargar datos del servidor (metadatos de MariaDB)
 													data:[
-														{ "id": 1, "nombre": "factura_compra_01.pdf", "ruta": "/uploads/a3b1c2.pdf" },
-														{ "id": 2, "nombre": "contrato_firmado.docx", "ruta": "/uploads/x9y8z7.docx" }
+													//	{ "id": 1, "nombre": "factura_compra_01.pdf", "ruta": "/uploads/a3b1c2.pdf" },
+													//	{ "id": 2, "nombre": "contrato_firmado.docx", "ruta": "/uploads/x9y8z7.docx" }
 														]
 												}
 											] 
@@ -387,6 +429,7 @@
 					src: "/op/op_plan"
 				}
 			});
+			carg_arch();
 			/*
 			mues_soli();
 			obtenerSeccion()
@@ -395,6 +438,7 @@
 			  dirigido(id, 9)
 			});
 			*/
+
 		}
 
 		function mues_soli() {
@@ -557,6 +601,12 @@
 				});
 			} 
 
+		}
+
+		function carg_arch() {
+			
+			$$("archivos_adjuntos").clearAll()
+			$$("archivos_adjuntos").load("/api/op/recu_arch?lnOficio=<%=rows2[0].ID_IDEN%>&out=1");
 		}
 
 		function carg_plantilla(plantilla) {
