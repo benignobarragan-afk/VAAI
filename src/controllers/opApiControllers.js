@@ -1499,7 +1499,7 @@ const new_ord__servx = (async (req, res) => {
     `
  */   
    lcSQL = `
-    SELECT s.cve, s.id_depe, if(ifnull(s.id_depe_padr, 0) = 0, s.id_depe, s.id_depe_padr) AS id_depe_padr, s.depen, s.piso, 
+    SELECT s.cve, s.id_depe, if(ifnull(s.id_depe_padr, 0) = 0, s.id_depe, s.id_depe_padr) AS id_depe_padr, s.depen, s.piso, s.jefe_cargo, 
 			s.codigo, CONCAT('(', p.codigo, ') ', p.apepat, ' ', p.apemat, ' ', p.nombre) AS nombre,
             if(LOCATE(CONCAT(',',s.id_depe,','), ',${loSeek[0].id_depe},') > 0, "true", "") AS marcado
         FROM ser_depen s LEFT JOIN gen_personas p ON s.codigo = p.codigo
@@ -1524,7 +1524,7 @@ const new_ord__servx = (async (req, res) => {
         }
         else 
         {
-            loPadre.push({id:rows[i].id_depe, depen:rows[i].depen, data:loHijo, checked:(rows[i].marcado==''?false:true)})
+            loPadre.push({id:rows[i].id_depe, depen:rows[i].depen + ' (' + rows[i].jefe_cargo + ')', data:loHijo, checked:(rows[i].marcado==''?false:true)})
         }
     }
 
@@ -1593,11 +1593,13 @@ const new_ord_servx2 = (async(req, res) => {
 
     
     lcSQL = `
-        SELECT * 
-            FROM ser_depen 
+        SELECT s.*, (SELECT correo FROM ser_depen WHERE id_depe = s.id_depe_padr LIMIT 1) AS corr_jefe,
+                (SELECT depen FROM ser_depen WHERE id_depe = s.id_depe_padr LIMIT 1) AS depe_titu
+            FROM ser_depen s
             WHERE id_depe IN (${req.body.lcAreas}) AND IFNULL(correo, '') <> ''
         `
     
+    console.log()
     const rows2 = await util.gene_cons(lcSQL)    
 
     //console.log(lcSQL)
@@ -1610,14 +1612,14 @@ const new_ord_servx2 = (async(req, res) => {
         let loCampo = []
 
         loCampo.push(rows2[i].jefe_cargo)
-        loCampo.push(rows2[i].DEPEN)
+        loCampo.push((!rows2[i].DEPEN?rows2[i].depe_titu:rows2[i].DEPEN))
         loCampo.push(rows[0].DESCRIP)
         loCampo.push(rows[0].FECHA)
         loCampo.push(rows[0].NOMB_PROC)
         loCampo.push(rows[0].ASUNTO)
         loCampo.push(rows[0].NUME_CONT)
 
-        lcResp = outil.envi_corr(3, rows2[i].CORREO, loCampo);
+        lcResp = outil.envi_corr(3, rows2[i].CORREO+(!rows2[i].corr_jefe, '', ';'+rows2[i].corr_jefe), loCampo);
         
     }
 
