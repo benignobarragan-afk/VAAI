@@ -109,7 +109,7 @@
                                         return common.checkbox(obj, common, value);         
                                     }
                                 },
-                                //threeState: true,
+                                threeState: true,
                                 select: true,
                                 url: "/api/op/new_ord__servx?lnOficio=<%=lnOficio%>&loCVE=<%=loCVE%>&loDepe=<%=loDepe%>",
                                 ready: function () {
@@ -127,6 +127,7 @@
             var areas = $$("sop_all").getChecked()
             
             console.log(areas)
+            
             webix.ajax()
                 .post('/api/op/new_ord_servx2', {lnOficio:<%=lnOficio%>, lcAreas:areas.toString(), form:$$("frm1").getValues()})
                 .then(function (data) {

@@ -190,6 +190,7 @@ const envi_corr = (async (lnTipo, lcCorreo, laArreglo) => {
     let mailOptions = {
         from: `SIVA <${config.EMAIL_USER}>`, 
         to: lcCorreo, 
+        cc: (!rows[0].COPIA, '', rows[0].COPIA), 
         subject: rows[0].ASUNTO, 
         html: lcText_corr, 
         // Si quieres adjuntar archivos, usa la propiedad 'attachments':
