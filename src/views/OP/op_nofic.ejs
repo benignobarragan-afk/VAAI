@@ -958,7 +958,12 @@
 				var lcCorreo = substrMail($$("txtCorr_ofic").getValue())
 
 
-				if (lnTipo_cont == 1 && ((lnDepe == 1 && $$("cmbServicio").getValue() == "") || (lnDepe == 2 && $$("cmbAjena").getValue() == "" && $$("id_ajena").getText() == "") || ($$("txtCorr_ofic").getValue() == "" && !['DG HCG', 'SP'].includes($$("cmbSoli").getValue())) || $$("cmbPers").getValue() == "" || $$("txtDiri_carg").getValue() == "")) {
+/* 				if (lnTipo_cont == 1 && ((lnDepe == 1 && $$("cmbServicio").getValue() == "") || (lnDepe == 2 && $$("cmbAjena").getValue() == "" && $$("id_ajena").getText() == "") || ($$("txtCorr_ofic").getValue() == "" && !['DG HCG', 'SP'].includes($$("cmbSoli").getValue())) || $$("cmbPers").getValue() == "" || $$("txtDiri_carg").getValue() == "")) {
+					webix.alert("Tienes que llenar todos los campos para poder agregar una persona de tipo 'Dirigido a'");
+					return
+				}
+ */				
+				if (lnTipo_cont == 1 && ((lnDepe == 1 && $$("cmbServicio").getValue() == "") || (lnDepe == 2 && $$("cmbAjena").getValue() == "" && $$("id_ajena").getText() == "") || $$("cmbPers").getValue() == "" || $$("txtDiri_carg").getValue() == "")) {
 					webix.alert("Tienes que llenar todos los campos para poder agregar una persona de tipo 'Dirigido a'");
 					return
 				}
@@ -973,8 +978,9 @@
 					// }
 				}
 
-				if ((lnTipo_cont == 2 || lnTipo_cont == 3 || lnTipo_cont == 4) && ($$("txtCorr_ofic").getValue() == "" || $$("cmbPers").getValue() == "")) {
-					webix.alert("Tienes que por lo menos el nombre y correo para los tipos de persona 'Con copia', 'Autoriza', 'Vo. Bo.'");
+				//if ((lnTipo_cont == 2 || lnTipo_cont == 3 || lnTipo_cont == 4) && ($$("txtCorr_ofic").getValue() == "" || $$("cmbPers").getValue() == "")) {
+				if ((lnTipo_cont == 2 || lnTipo_cont == 3 || lnTipo_cont == 4) && ($$("cmbPers").getValue() == "")) {
+					webix.alert("Tienes que colocar por lo menos el nombre para los tipos de persona 'Con copia', 'Autoriza', 'Vo. Bo.'");
 					return
 				}
 
@@ -983,11 +989,15 @@
 					return
 				}
 
-				if (!veri_corr(lcCorreo) && !['DG HCG', 'SP'].includes($$("cmbSoli").getValue()) ) {
+/* 				if (!veri_corr(lcCorreo) && !['DG HCG', 'SP'].includes($$("cmbSoli").getValue()) ) {
 					webix.alert("El correo tiene un formato invalido");
 					return
 				}
-
+ */
+				if (!veri_corr(lcCorreo) && lcCorreo.length > 0) {
+					webix.alert("El correo tiene un formato invalido");
+					return
+				}
 				$$("dtable").add({
 					// id: lnServicio,
 					servicio: lnServicio,

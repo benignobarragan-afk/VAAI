@@ -146,7 +146,7 @@ const gene_id_11 = () => {
     base64 = base64.replace(/=/g, ''); 
 
     // Devolver los primeros 11 caracteres
-    return base64.substring(0, 11); 
+    return base64.substring(0, 16); 
 }
 
 // Exporta la función (o un objeto con varias funciones)

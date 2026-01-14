@@ -21,6 +21,7 @@ router.post("/op_gofic", midd.verifyToken, opCtrl.op_gofic);
 router.get("/op_sdoficx", midd.verifyToken, opCtrl.op_sdoficx);
 router.get("/op_admix2", midd.verifyToken, opCtrl.op_admix2);
 router.get("/op_ningrx2", midd.verifyToken, opCtrl.op_ningrx2);
+router.get("/op_ningrx3", midd.verifyToken, opCtrl.op_ningrx3);
 router.get("/cmb_control2W", midd.verifyToken, opCtrl.cmb_control2W);
 router.get("/cmb_control3W", midd.verifyToken, opCtrl.cmb_control3W);
 router.post("/op_ningrx", midd.verifyToken, opCtrl.op_ningrx);

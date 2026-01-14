@@ -593,21 +593,58 @@ const op_admix2 = (async (req, res) => {
 
 const op_ningrx2 = (async (req, res) => {
 
-    if (req.groups.indexOf(",OP_TOTA,") < 0)        //si no tiene derechos
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    console.log(req.query)
+/*     lcSQL = `
+        SELECT IFNULL(MAX(nume_cont), 0) + 1 as control FROM opc_oficio 
+			WHERE cve = '${req.query.cve}' AND anio = ${req.query.anio} AND tipo = ${req.query.tipo_docu}
+    ` */
+    lcSQL = `
+        SELECT IFNULL(MAX(nume_cont), 0) + 1 as control FROM opc_oficio 
+			WHERE cve = '${req.query.cve}' AND anio = ${req.query.anio} 
+    `
+
+    //console.log(lcSQL)
+    const rows = await util.gene_cons(lcSQL)
+    //console.log(rows)
+    //return res.json(rows)
+    return res.json({status:true, nume_cont : rows[0].control})
+
+});
+
+const op_ningrx3 = (async (req, res) => {
+
+    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
 
     console.log(req.query)
     lcSQL = `
-        SELECT IFNULL(MAX(nume_cont), 0) + 1 as control FROM opc_oficio 
-			WHERE cve = '${req.query.cve}' AND anio = ${req.query.anio} AND tipo = ${req.query.tipo_docu}
+    SELECT MAX(nomb_remi) AS nomb_remi, MAX(carg_remi) AS carg_remi, MAX(nomb_dest) AS nomb_dest, MAX(carg_dest) AS carg_dest
+        FROM (
+                (SELECT nomb_remi, carg_remi, '' AS nomb_dest, '' AS carg_dest  
+                FROM opc_oficio 
+                WHERE cent_proc = ${req.query.id}
+                ORDER BY id_ofic DESC LIMIT 1)
+                
+                UNION ALL
+                
+                (SELECT '', '', nomb_dest, carg_dest
+                FROM opc_oficio
+                WHERE cve = '${req.query.cve}'
+                ORDER BY id_ofic DESC LIMIT 1)
+                ) datos
     `
-    //console.log(lcSQL)
+    console.log(lcSQL)
     const rows = await util.gene_cons(lcSQL)
     //console.log(rows)
     //return res.json(rows)
-    return res.json({status:true, nume_cont : rows[0].control})
+    return res.json(rows)
 
 });
 
@@ -676,6 +713,8 @@ const cmb_control3W = (async (req, res) => {
 
 const op_ningrx = (async (req, res) => {
 
+    //console.log(req.body);
+
     if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
@@ -714,9 +753,9 @@ const op_ningrx = (async (req, res) => {
     lcSQL = `
         INSERT INTO opc_oficio (clave, fech_ofic, nume_cont, fecha, descrip, tipo_depe, cent_proc, clv_proc, nomb_proc, ligado_a
                 , id_tiof, id_clof, asunto, codi_remi, nomb_remi, carg_remi, codi_dest, nomb_dest, nota, usuario, lud, anio
-                , id_refe_in, id_refe_ou,pendiente, tipo,  carg_dest, tele_dest, cve, id_cent, asignado, status, doc_firma, info_sens, segu_pra, letra
+                , id_refe_in, id_refe_ou,pendiente, tipo, carg_dest, tele_dest, cve, id_cent, asignado, status, doc_firma, info_sens, segu_pra, letra
                 , tipo_info, tipo_ingr, BIS, id_seccion) 
-            VALUES ('${req.centro}', '${outil.form_fechSQL(req.body.fech_ofic)}', ${lnNume_cont}, NOW(), '${req.body.nume_ofic}', ${req.body.rbLiga}, ${req.id_cent}, '${req.body.clav_proc}', '${req.body.txtDepen}', '${req.body.ligado_a}'
+            VALUES ('${req.centro}', '${outil.form_fechSQL(req.body.fech_ofic)}', ${lnNume_cont}, NOW(), '${req.body.nume_ofic}', ${req.body.rbLiga}, ${req.body.dependen}, '${req.body.clav_proc}', '${req.body.txtDepen}', '${req.body.ligado_a}'
                 ,${req.body.tipo_ofic}, ${req.body.clase}, '${req.body.asunto}', 0, '${req.body.remi_nomb}', '${req.body.remi_carg}', 0, '${req.body.dest_nomb}', '${req.body.nota}', '${req.userId}', now(), ${req.body.anio_ingr}
                 ,'${req.body.liga_sali}', '${req.body.liga_entr}', 0, ${req.body.tipo_ingr},  '${req.body.dest_carg}', '', '${req.body.cve}', ${req.id_cent}, 0, 1, 0, ${req.body.info_sens}, 0, ''
                 , ${req.body.tipo_info}, ${req.body.tipo_ingr}, 0, ${req.body.seccion === '' ? 0 : req.body.seccion});
@@ -1886,6 +1925,7 @@ module.exports = {
     op_sdoficx,
     op_admix2,
     op_ningrx2,
+    op_ningrx3,
     cmb_control2W,
     cmb_control3W,
     op_ningrx,

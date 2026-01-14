@@ -61,7 +61,7 @@
 
 	IF !EMPTY(lcClav_ofic)
 
-		lcSQL = "SELECT o.cve as cveSali,CONVERT(VARCHAR(10), o.FECHA, 103) AS fech_ofic, CONVERT(varchar(5), GETDATE(), 108) as hora_rece, 0 as	tipo_docu"
+		lcSQL = "SELECT o.cve as cveSali,CONVERT(VARCHAR(10), o.FECHA, 103) AS fech_ofic, CONVERT(varchar(5), GETDATE(), 108) as hora_rece, 0 as tipo_docu"
 		lcSQL = lcSQL + " , o.id_iden, o.id_iden as id_oficio,	o.oficio, o.oficio as nume_ofic, o.concepto as asunto, t.nomb_firm as remi_nomb, t.carg_firm as remi_carg, 0 as remi_codi"
 		lcSQL = lcSQL + " , co.id_Cent as dependen, '(' +co.clave + ') ' +LTRIM(co.dependen) as depe_nomb, CONVERT(varchar(10), GETDATE(), 103)	as fech_rece, o.tipo_depe as rbDepe"
 		lcSQL = lcSQL + " , 1 AS rbLiga, IFNULL(do.diri_nomb,'') AS dest_nomb, IFNULL(do.diri_carg,'') as dest_carg, 1 as tipo_ofic, 1 as clase"
@@ -212,7 +212,7 @@
 			cols: [
 
 				{
-					view: "select", id: "tipo_docu", name: "tipo_docu", label: "<span class='obligatorio'>*</span>Tipo documento", labelPosition: "top", value:0<% //  Response.write(lnTipo_docu) %>, 
+					view: "select", id: "tipo_docu", name: "tipo_docu", label: "<span class='obligatorio'>*</span>Tipo documento", labelPosition: "top", value:1<% //  Response.write(lnTipo_docu) %>, 
 					options: [
 						<% //  SELECT cTipo_docu
 						//SCAN %>
@@ -319,8 +319,8 @@
 						})
 
 
-						$$("liga_sali").setValue('<% // Response.write(IIF(USED("ofic_sali"),ofic_sali.id_iden,0))%>');
-						$$("liga_sali").refresh();
+						//$$("liga_sali").setValue('<% // Response.write(IIF(USED("ofic_sali"),ofic_sali.id_iden,0))%>');
+						//$$("liga_sali").refresh();
 
 						buscaNume();
 						buscaOficio()
@@ -339,10 +339,6 @@
 						<%for (var i = 0; i < rows.length; i++) {%>
 						{ id: "<%= rows[i].cve%>", value: "(<%=rows[i].cve%>) <%=rows[i].depen%>" },
 						<%}%>
-						<% //SELECT cOficialia
-						//SCAN %>
-						//{ id: "<% // Response.write(ALLTRIM(cOficialia.cve))%>", value: "<% // Response.write(ALLTRIM(cOficialia.descrip))%>" },
-						<% //  ENDSCAN %>
 					]
 				}
 					
@@ -453,6 +449,30 @@
 						//GO TOP IN ofic_sali%>
 						//data: [{ id: "<% // Response.write(ofic_sali.dependen)%>", value: "<% // Response.write(STRTRAN(STRCONV(ofic_sali.depe_nomb,9),'"', "'"))%>" }], 
 						<% //  ENDIF %>
+					},
+					on: {
+					onChange: function (id) {
+							console.log(id);
+							webix.ajax()
+					.get("/api/op/op_ningrx3", {id, cve:$$("cve").getValue()})
+					.then(function (data) {
+
+						let res = data.json()[0]
+						console.log(typeof res != undefined)
+						
+						if (typeof res != undefined){
+							$$("remi_nomb").setValue(res.nomb_remi);
+							$$("remi_carg").setValue(res.carg_remi);
+							$$("dest_nomb").setValue(res.nomb_dest);
+							$$("dest_carg").setValue(res.carg_dest);
+
+							console.log(res.nomb_remi)
+						}
+					})
+						//mues_dato(id);
+						//dirigido(id);
+						//obtenerSeccion();
+					}
 					},
 				}, {
 					view: "text", hidden: true, id: "txtDepen", name: "txtDepen", value:"<% // Response.write(	IIF(USED('ofic_sali') AND !EMPTY(ofic_sali.dependen), ofic_sali.dependen,''))%>",
@@ -788,7 +808,7 @@
 			//inicializaCombo(1);
 			<% // IF !EMPTY(lcClav_ofic)%>
 			buscaOficio();
-			$$("frm1").parse(<% //  Response.write(lcDatos) %>)
+			//$$("frm1").parse(<% //  Response.write(lcDatos) %>)
 			cargaArchivosAdjuntos()
 			// if($$("tipo_docu").getValue() == 1){
 			// 	$$("doc_firm").show();
@@ -1009,7 +1029,7 @@
 
 				case "depe":
 					if (valor == '') {
-						$$("rbDepe").setValue(<% //  Response.write(IIF(USED("ofic_sali"), ofic_sali.rbDepe, 1)) %>);
+						//$$("rbDepe").setValue(<% //  Response.write(IIF(USED("ofic_sali"), ofic_sali.rbDepe, 1)) %>);
 						valor = $$("rbDepe").getValue()
 					}
 					
