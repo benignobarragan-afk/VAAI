@@ -1497,7 +1497,7 @@ const new_ord__servx = (async (req, res) => {
         ORDER BY 2,7;
     `
 
-    console.log(lcSQL)
+    //console.log(lcSQL)
 
     const rows = await util.gene_cons(lcSQL)
 
