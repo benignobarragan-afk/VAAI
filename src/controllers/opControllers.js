@@ -152,7 +152,7 @@ const op_sofic = (async (req, res) => {
     }
     const laQuery = req.query
     
-    //console.log(req.query)
+    console.log(req.query)
 
     return res.render("op/op_sofic", {laQuery})
 });

@@ -149,7 +149,7 @@
 												name:"filePDF", id:"filePDF", width:300,
 												link:"list1",  upload:"/api/op/op_uoficio",
 												formData: {
-													idOficio: <%=rows2[0].ID_IDEN%>,
+													idOficio: <%=rows2[0].ID_IDEN%>, out: 1
 												},
 													on:{
 															onUploadComplete:(response, file)=>{
@@ -606,7 +606,7 @@
 		function carg_arch() {
 			
 			$$("archivos_adjuntos").clearAll()
-			$$("archivos_adjuntos").load("/api/op/recu_arch?lnOficio=<%=rows2[0].ID_IDEN%>&out=0");
+			$$("archivos_adjuntos").load("/api/op/recu_arch?lnOficio=<%=rows2[0].ID_IDEN%>&out=1");
 		}
 
 		function carg_plantilla(plantilla) {

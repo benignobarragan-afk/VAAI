@@ -1743,10 +1743,11 @@ const seg_oficx2 = (async (req, res) => {
 
 const recu_arch = (async (req, res) => {
 
+    //console.log(req.query.out)
     lcSQL = `
     SELECT UID AS id, DESCRIP as nombre
 	    FROM opc_archivo 
-        WHERE id_ofic = ${req.query.lnOficio} ${(!req.query.out, '', ' and ofic_out = 1')}
+        WHERE id_ofic = ${req.query.lnOficio} ${(!req.query.out?'':' and ofic_out = 1')}
         ORDER BY fecha DESC
 
     `
@@ -1830,7 +1831,7 @@ const op_uoficio = (async (req, res) => {
     //inserta el registro para guardar el archivo de la oficialía
     let lcSQL = `
     INSERT INTO opc_archivo (id_ofic, descrip, fecha, usuario, ofic_out, uid) 
-        VALUES (${req.body.idOficio}, '${req.file.originalname}', now(), '${req.userId}', 1, '${util.gene_id_11()}')
+        VALUES (${req.body.idOficio}, '${req.file.originalname}', now(), '${req.userId}', ${(!req.body.out?0:1)}, '${util.gene_id_11()}')
     `
 
     const laInsert = await util.gene_cons(lcSQL)
