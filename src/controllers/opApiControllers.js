@@ -1828,7 +1828,7 @@ const op_uoficio = (async (req, res) => {
     }
 
     //inserta el registro para guardar el archivo de la oficialía
-    const lcSQL = `
+    let lcSQL = `
     INSERT INTO opc_archivo (id_ofic, descrip, fecha, usuario, ofic_out, uid) 
         VALUES (${req.body.idOficio}, '${req.file.originalname}', now(), '${req.userId}', 1, '${util.gene_id_11()}')
     `
@@ -1846,11 +1846,20 @@ const op_uoficio = (async (req, res) => {
         //await fs.copyFile(lfOriginal, lfDestino);
         await fs.promises.copyFile(lfOriginal, lfDestino);
         if (!fs.existsSync(lfDestino)) {
+            
+            lcSQL = `
+    DELETE FROM opc_archivo WHERE id_arch = ${laInsert.insertId}
+    `
+            const laDelete = await util.gene_cons(lcSQL)
             return res.json({"status" : false, "message": "Error al guardar el archivo"});
         }
         //console.log('¡Archivo copiado con éxito!');
     } catch (err) {
         //console.log(err);
+        lcSQL = `
+    DELETE FROM opc_archivo WHERE id_arch = ${laInsert.insertId}
+    `
+        const laDelete = await util.gene_cons(lcSQL)
         return res.json({"status" : false, "message": "Error al guardar el archivo"});
     }
 

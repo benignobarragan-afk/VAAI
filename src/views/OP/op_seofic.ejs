@@ -367,7 +367,7 @@
 														html += "<span class='webix_icon wxi-trash delete-file'></span> ";
 														
 														// Enlace de descarga (usa el ID o la ruta)
-														html += "<a href='server/api/download?id=" + obj.id + "' target='_blank'>";
+														html += "<a href='/api/op/adownload?id=" + obj.id + "' target='_blank'>";
 														html += obj.nombre; // Muestra el nombre del archivo
 														html += "</a>";
 														
@@ -606,7 +606,7 @@
 		function carg_arch() {
 			
 			$$("archivos_adjuntos").clearAll()
-			$$("archivos_adjuntos").load("/api/op/recu_arch?lnOficio=<%=rows2[0].ID_IDEN%>&out=1");
+			$$("archivos_adjuntos").load("/api/op/recu_arch?lnOficio=<%=rows2[0].ID_IDEN%>&out=0");
 		}
 
 		function carg_plantilla(plantilla) {

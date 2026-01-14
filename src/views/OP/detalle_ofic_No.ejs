@@ -657,7 +657,7 @@
 				{view:"label", label:"Archivos"},
 				{
 					view: "list",
-					id: "lsArchivo", name: "lsArchivo",
+					id: "archivos_adjuntos", name: "archivos_adjuntos",
 					width: 400,
 					header: "Archivos Adjuntos",
 					scroll: "y",      // Permite scroll vertical si hay muchos
@@ -1010,6 +1010,11 @@
 			return "";
 		}
 
+		function carg_arch() {
+			
+			$$("archivos_adjuntos").clearAll()
+			$$("archivos_adjuntos").load("/api/op/recu_arch?lnOficio=<%=loOficio%>&out=1");
+		}
 
 		function guardar() {
 		
