@@ -578,9 +578,50 @@
 				labelPosition:"top", value:"<% // Response.write(IIF(!EMPTY(lcClav_ofic), '1', '0'))%>", 
 			},
 			]
-		}, {
-			view: "textarea", id: "asunto", name: "asunto", label: "Asunto", labelPosition: "top", height: 120
-		},
+		}, 
+		{
+		cols: [
+			{view: "textarea", id: "asunto", name: "asunto", label: "Asunto", labelPosition: "top", height: 120},
+			{width:15},
+			{rows: [
+					{ 
+						view: "uploader", value: "Adjunta un archivo PDF", accept:"application/pdf",
+						name:"filePDF", id:"filePDF", width:300,
+						link:"list1",  upload:"/api/op/op_uoficio",
+						formData: {
+							idOficio: <%=loOficio%>,
+						},
+							on:{
+									onUploadComplete:(response, file)=>{
+
+									console.log(response);
+									console.log(response.message);
+									webix.message({ type:"info", text:response.message, id:"loadingMsg" });
+									$$("frm1").enable();
+									carg_arch();
+
+									//$$("formPDF").hideProgress();
+								},
+								onBeforeFileAdd: function (item) {
+								//$$("formPDF").showProgress();
+
+								$$("frm1").disable(); 
+								//$$("textoPDF").setValue("Subiendo y procesando archivo...");
+								webix.message({ type:"info", text:"Subiendo y procesando archivo...", id:"loadingMsg" });
+				
+								return true;
+								},
+								onUploadFail: function (item){
+								$$("frm1").enable(); 
+								},
+							}
+						},
+						{
+						view:"list",  id:"list1", type:"uploader",
+						autoheight:true, borderless:true	
+						},
+				]},
+		]},
 		{
 		cols: [
 			{

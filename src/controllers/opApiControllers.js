@@ -1475,7 +1475,7 @@ const new_ord__servx = (async (req, res) => {
     `
  */    //console.log(lcSQL)
     lcSQL = `   
-    SELECT o.cve, s.id_depe 
+    SELECT o.cve, IFNULL(s.id_depe, '') AS id_depe 
         FROM opc_oficio o LEFT JOIN ser_soli_serv s ON o.ID_OFIC = s.id_oficio 
         WHERE o.id_ofic = ${req.query.lnOficio}
     `
@@ -1488,13 +1488,23 @@ const new_ord__servx = (async (req, res) => {
             WHERE cve = '${req.query.loCVE}'
         ORDER BY 2
     `
- */
+
     lcSQL = `
-    SELECT s.cve, s.id_depe, s.depen, s.piso, ss.codigo, ss.id_serv_pk, CONCAT('(', p.codigo, ') ', p.apepat, ' ', p.apemat, ' ', p.nombre) AS nombre, ss.correo  
+    SELECT s.cve, s.id_depe, s.depen, s.piso, ss.codigo, ss.id_serv_pk, CONCAT('(', p.codigo, ') ', p.apepat, ' ', p.apemat, ' ', p.nombre) AS nombre, ss.correo,
+            if(LOCATE(CONCAT(',',s.id_depe,','), ',${loSeek[0].id_depe},') > 0, "true", "") AS marcado  
         from ser_depen s LEFT JOIN ser_soli_serv ss ON s.id_depe = ss.id_depe
             LEFT JOIN gen_personas p ON ss.codigo = p.codigo
             WHERE cve IN (SELECT cve FROM opc_oficio WHERE id_ofic = ${req.query.lnOficio})
         ORDER BY 2,7;
+    `
+ */   
+   lcSQL = `
+    SELECT s.cve, s.id_depe, if(ifnull(s.id_depe_padr, 0) = 0, s.id_depe, s.id_depe_padr) AS id_depe_padr, s.depen, s.piso, s.jefe_cargo, 
+			s.codigo, CONCAT('(', p.codigo, ') ', p.apepat, ' ', p.apemat, ' ', p.nombre) AS nombre,
+            if(LOCATE(CONCAT(',',s.id_depe,','), ',${loSeek[0].id_depe},') > 0, "true", "") AS marcado
+        FROM ser_depen s LEFT JOIN gen_personas p ON s.codigo = p.codigo
+            WHERE cve IN (SELECT cve FROM opc_oficio WHERE id_ofic = ${req.query.lnOficio})
+        ORDER BY if(ifnull(s.id_depe_padr, 0) = 0, s.id_depe, s.id_depe_padr), s.depen, p.APEPAT, p.apemat
     `
 
     //console.log(lcSQL)
@@ -1504,17 +1514,18 @@ const new_ord__servx = (async (req, res) => {
     let loPadre = [], loHijo = [], lnDepe = 0
     
     for(i = 0; i < rows.length; i++){
-        if (lnDepe != rows[i].cve){
-            lnDepe == rows[i].cve
+        if (lnDepe != rows[i].id_depe_padr){
+            lnDepe = rows[i].id_depe_padr
             loHijo = []
         }
 
-        if(!!rows[i].id_serv_pk ){
-            loHijo.push({id:'H'+rows[i].id_serv_pk, depen:rows[i].nombre})
+        if(rows[i].id_depe != rows[i].id_depe_padr){
+            loHijo.push({id:+rows[i].id_depe, depen:rows[i].nombre, checked:(rows[i].marcado==''?false:true)})
         }
-
-        loPadre.push({id:rows[i].id_depe, depen:rows[i].depen, data:loHijo, checked:(rows[i].marcado==''?false:true)})
-         
+        else 
+        {
+            loPadre.push({id:rows[i].id_depe, depen:rows[i].depen + ' (' + rows[i].jefe_cargo + ')', data:loHijo, checked:(rows[i].marcado==''?false:true)})
+        }
     }
 
 
@@ -1582,11 +1593,13 @@ const new_ord_servx2 = (async(req, res) => {
 
     
     lcSQL = `
-        SELECT * 
-            FROM ser_depen 
+        SELECT s.*, (SELECT correo FROM ser_depen WHERE id_depe = s.id_depe_padr LIMIT 1) AS corr_jefe,
+                (SELECT depen FROM ser_depen WHERE id_depe = s.id_depe_padr LIMIT 1) AS depe_titu
+            FROM ser_depen s
             WHERE id_depe IN (${req.body.lcAreas}) AND IFNULL(correo, '') <> ''
         `
     
+    console.log()
     const rows2 = await util.gene_cons(lcSQL)    
 
     //console.log(lcSQL)
@@ -1599,14 +1612,14 @@ const new_ord_servx2 = (async(req, res) => {
         let loCampo = []
 
         loCampo.push(rows2[i].jefe_cargo)
-        loCampo.push(rows2[i].DEPEN)
+        loCampo.push((!rows2[i].DEPEN?rows2[i].depe_titu:rows2[i].DEPEN))
         loCampo.push(rows[0].DESCRIP)
         loCampo.push(rows[0].FECHA)
         loCampo.push(rows[0].NOMB_PROC)
         loCampo.push(rows[0].ASUNTO)
         loCampo.push(rows[0].NUME_CONT)
 
-        lcResp = outil.envi_corr(3, rows2[i].CORREO, loCampo);
+        lcResp = outil.envi_corr(3, rows2[i].CORREO+(!rows2[i].corr_jefe, '', ';'+rows2[i].corr_jefe), loCampo);
         
     }
 
@@ -1621,7 +1634,7 @@ const detalle_ofic_Nox = (async(req,res) =>{
         return res.render("sin_derecho")
     }
 
-    console.log(req.query);
+    //console.log(req.query);
 
     lcSQL = `
         SELECT o.cve, o.anio as anio_ingr, o.nume_cont, DATE_FORMAT(o.fech_ofic, '%d/%m/%Y') as fech_ofic, DATE_FORMAT(o.fecha, '%d/%m/%Y') AS fech_rece, 
@@ -1631,7 +1644,7 @@ const detalle_ofic_Nox = (async(req,res) =>{
             FROM opc_oficio o left join gen_centros c on o.id_cent = c.id_cent
             WHERE id_ofic = ${req.query.lnOficio}
     `
-    console.log(lcSQL)
+    //console.log(lcSQL)
     const rows = await util.gene_cons(lcSQL)
 
     return res.json(rows)
