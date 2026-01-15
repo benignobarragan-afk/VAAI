@@ -1,27 +1,4 @@
-<!DOCTYPE html>
-<html>
-
-<head>
-	<title></title>
-	<script src="/webix_8.4.0/codebase/webix.js"></script>
-	<script src="/webix_8.4.0/codebase/locale.js"></script>
-	<link rel="stylesheet" type="text/css" href="/webix_8.4.0/codebase/webix.css" />
-	<link rel="stylesheet" href="https://cdn.materialdesignicons.com/2.7.94/css/materialdesignicons.css?v=6.3.5"
-		type="text/css" charset="utf-8">
-
-	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.0.0/animate.min.css" />
-
-	<style type="text/css">
-		.add {
-			font-weight: bold;
-		}
-
-		.obligatorio {
-			color: red;
-		}
-
-	</style>
+<%- include('partials/header'); %>
 
 	<script language="JavaScript">
 
@@ -58,13 +35,19 @@
 		//webix-components
 
 		var form_elements = [{
-			view: "label", class: { "font-weight": "bold", "font-size": 14, "text-align": "center" }, align: "center", label: "GENERAR USUARIO NUEVO"
+			view: "label", id:"lblTitulo", class: { "font-weight": "bold", "font-size": 14, "text-align": "center" }, align: "center", label: "GENERAR USUARIO NUEVO"
 		},
 		{
 			cols: [
 			{
 				view: "text", id: "txtCodigo", name: "txtCodigo", labelPosition: "top", label: "C&oacute;digo", value: "", 
-				 pattern:{ mask:"#######", allow:/[0-9]/g}
+				 pattern:{ mask:"#######", allow:/[0-9]/g},
+			on:{
+				"onBlur":function(){
+					gene_pass();
+				}
+
+			}
 			},
 			{ maxWidth: 15 },
 			{
@@ -118,9 +101,12 @@
 		{cols: [
 			{
 			view: "button", label: "Genera password", click: gene_pass, id:"btnPassword", name:"btnPassword", align: "right", width: 150
+			},{maxWidth: 15},
+			{
+			view: "button", label: "Enviar correo al usuario", click: envi_corr, id:"btnCorreo", name:"btnCorreo", align: "right", width: 250, disabled:true, 
 			},{},
 			{
-				view: "button", label: "Alta de usuario", click: guardar, id:"btnGuardar", align: "right", width: 150
+				view: "button", label: "Alta de usuario", click: guardar, id:"btnGuardar", align: "right", width: 250
 			}
 		]},
 		{
@@ -177,13 +163,13 @@
 
 		function gene_pass(){
 			
-			let form = $$("form_usua").getValues()
+			const form = $$("form_usua").getValues()
 			
 			if (!form.txtCodigo){
 				Swal.fire("Por lo menos tienes que agregara el código del usuario");
 				return false;
 			}
-			console.log(form);
+			//console.log(form);
 			webix.ajax()
 			.post("/api/usua_nuevx", form)
 			.then(function (data) {
@@ -201,12 +187,82 @@
 						
 				})
 				*/
-				if(!res.error){
-					$$("form_usua").setValues(res.form);
+				if(!res.error){						
+					if (!res.nuevo){						//si encontro el usuario en passfile
+						
+						$$("cmbServicio").getPopup().getList().clearAll();
+						
+						$$("cmbServicio").getPopup().getList().add({
+        				id: res.form.txtServicio, 
+        				value: res.form.txtValue 
+    					});
+
+						$$('dtable').filter();
+						const tabla = $$("dtable");
+
+						let lcDere = ',' + res.form.txtDerecho + ','
+						let lcBusca = ''
+						//console.log(lcDere)
+						tabla.data.each(function(obj) {
+							lcBusca = ',' + obj.GROUP + ','
+							if(lcDere.includes(lcBusca)){
+								obj.ID = 1;
+								//console.log(lcBusca)
+							}
+							else 
+							{
+								obj.ID = 0;
+							}
+							tabla.updateItem(obj.id, obj);
+						});
+						tabla.refresh();
+						//console.log(tabla)
+						$$("btnGuardar").define("label", "Modificación de usuario");
+						$$("btnGuardar").refresh();
+						$$("lblTitulo").define("label", "MODIFICAR USUARIO: "+ res.form.txtNombre);
+						$$("lblTitulo").refresh();
+						$$("btnCorreo").define("disabled", false);
+						$$("btnCorreo").refresh();
+						$$("txtUser_id").define("readonly", true);
+						$$("txtUser_id").refresh();
+						
+						
+
+						
+
+					}
+					else {
+						$$("btnGuardar").define("label", "Alta de usuario");
+						$$("btnGuardar").refresh();
+						$$("lblTitulo").define("label", "GENERAR USUARIO NUEVO");
+						$$("lblTitulo").refresh();
+						$$("btnCorreo").define("disabled", true);
+						$$("btnCorreo").refresh();
+						$$("txtUser_id").define("readonly", false);
+						$$("txtUser_id").refresh();
+					}
+					$$("form_usua").setValues(res.form);		//llena los derechos
+					
 				}
 
 			})
 
+		}
+
+		function envi_corr(){
+
+			$$("form_usua").disable(); 
+
+			webix.ajax()
+			.post("/api/usua_nuevx3", {txtUser_id:$$("txtUser_id").getValue()})
+			.then(function (data) {
+				$$("btnGuardar").enable();
+				let res = data.json()
+				//console.log(res)
+				webix.message(res.mensage);
+				$$("form_usua").enable(); 
+
+			});
 		}
 
 		function guardar() {
@@ -225,14 +281,13 @@
 
 			let lcDere = ''
 			tabla.data.each(function(obj) {
-				console.log(obj.ID == 1)
 				if (obj.ID == 1) {
 					lcDere = lcDere + (lcDere.length == 0 ? '' : ',') + obj.GROUP
 				}
 			});
-			console.log(form.txtDerecho);
+			//console.log(form.txtDerecho);
 			form.txtDerecho = lcDere;
-			console.log(form.txtDerecho);
+			//console.log(form.txtDerecho);
 			
 			webix.ajax()
 			.post("/api/usua_nuevx2", form)

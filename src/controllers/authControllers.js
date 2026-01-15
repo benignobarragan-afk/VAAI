@@ -42,6 +42,9 @@ const signin = async (req, res) => {
         //borra el cache por si apenas inicio sesión en un equipo nuevo
         cacheUsuarios.delete(req.body.username);
 
+        //Marca la fecha de ingreso en passfile
+        conn.query("UPDATE passfile SET last_hit = NOW() WHERE user_id = " + req.body.username, [1]);
+
         res.cookie("refresh_token", rtoken, {
             httpOnly: true,             //la cookie solo se puede acceder en el servidor
             secure: false,

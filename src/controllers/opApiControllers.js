@@ -598,7 +598,7 @@ const op_ningrx2 = (async (req, res) => {
         return res.render("sin_derecho")
     }
 
-    console.log(req.query)
+    //console.log(req.query)
 /*     lcSQL = `
         SELECT IFNULL(MAX(nume_cont), 0) + 1 as control FROM opc_oficio 
 			WHERE cve = '${req.query.cve}' AND anio = ${req.query.anio} AND tipo = ${req.query.tipo_docu}
@@ -623,7 +623,7 @@ const op_ningrx3 = (async (req, res) => {
         return res.render("sin_derecho")
     }
 
-    console.log(req.query)
+    //console.log(req.query)
     lcSQL = `
     SELECT MAX(nomb_remi) AS nomb_remi, MAX(carg_remi) AS carg_remi, MAX(nomb_dest) AS nomb_dest, MAX(carg_dest) AS carg_dest
         FROM (
@@ -640,7 +640,7 @@ const op_ningrx3 = (async (req, res) => {
                 ORDER BY id_ofic DESC LIMIT 1)
                 ) datos
     `
-    console.log(lcSQL)
+    //console.log(lcSQL)
     const rows = await util.gene_cons(lcSQL)
     //console.log(rows)
     //return res.json(rows)
@@ -1027,7 +1027,7 @@ const op_hoficx = (async (req, res) => {
         return res.render("sin_derecho")
     }
 
-//    console.log(req.query)
+    //console.log(req.query)
     lcSQL = `
     SELECT ROW_NUMBER() OVER (ORDER BY o.fecha desc) AS rank, o.depe_envi AS centros,
             CASE 
@@ -1501,7 +1501,7 @@ const new_ord__servx = (async (req, res) => {
         return res.render("sin_derecho")
     }
 
-    console.log(req.query)
+    //console.log(req.query)
     let lcSQL = ''
     //console.log(req.query)
 
@@ -1539,7 +1539,7 @@ const new_ord__servx = (async (req, res) => {
  */   
    lcSQL = `
     SELECT s.cve, s.id_depe, if(ifnull(s.id_depe_padr, 0) = 0, s.id_depe, s.id_depe_padr) AS id_depe_padr, s.depen, s.piso, s.jefe_cargo, 
-			s.codigo, CONCAT('(', p.codigo, ') ', p.apepat, ' ', p.apemat, ' ', p.nombre) AS nombre,
+			s.codigo, CONCAT(p.apepat, ' ', p.apemat, ' ', p.nombre) AS nombre,
             if(LOCATE(CONCAT(',',s.id_depe,','), ',${loSeek[0].id_depe},') > 0, "true", "") AS marcado
         FROM ser_depen s LEFT JOIN gen_personas p ON s.codigo = p.codigo
             WHERE cve IN (SELECT cve FROM opc_oficio WHERE id_ofic = ${req.query.lnOficio})
@@ -1550,7 +1550,7 @@ const new_ord__servx = (async (req, res) => {
 
     const rows = await util.gene_cons(lcSQL)
 
-    let loPadre = [], loHijo = [], lnDepe = 0
+    let loPadre = [], loHijo = [], lnDepe = 0, lcNombre = ''
     
     for(i = 0; i < rows.length; i++){
         if (lnDepe != rows[i].id_depe_padr){
@@ -1638,7 +1638,6 @@ const new_ord_servx2 = (async(req, res) => {
             WHERE id_depe IN (${req.body.lcAreas}) AND IFNULL(correo, '') <> ''
         `
     
-    console.log()
     const rows2 = await util.gene_cons(lcSQL)    
 
     //console.log(lcSQL)
@@ -1708,6 +1707,8 @@ const csg_sServx2 = (async (req, res) => {
         LEFT JOIN gen_otro_cent oc ON o.cent_proc = oc.id_cent AND o.tipo_depe = 2 
         WHERE s.oficio = 1 
     `
+    //WHERE FIND_IN_SET('24', s.id_depe) > 0
+
     console.log(lcSQL)
     const rows = await util.gene_cons(lcSQL)
 
@@ -1773,7 +1774,7 @@ const seg_oficx2 = (async (req, res) => {
     `
 
 
-    console.log(lcSQL)
+    //console.log(lcSQL)
     const rows = await util.gene_cons(lcSQL)
 
     return res.json({"error":false, "mensage":"El seguimiento se guardo correctamente"})
@@ -1816,14 +1817,14 @@ const adownload = (async (req, res) => {
         return res.json({"error":false, "mensage":"No se econtro el archivo en la base de datos"})
     }
 
-    console.log(rows)
+    //console.log(rows)
 
     
     const ruta_fisica = config.SERV_ARCH + 'OPARCHIVO/' + rows[0].ID_ARCH + path.extname(rows[0].DESCRIP);
     
     absolutePath = path.resolve(__dirname, 'uploads', ruta_fisica);
 
-    console.log(absolutePath)
+    //console.log(absolutePath)
 
     if (!fs.existsSync(absolutePath)) {
         return res.status(404).send("El archivo no existe en el servidor.");

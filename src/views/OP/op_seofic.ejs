@@ -282,7 +282,7 @@
 													view: "combo", id: "cmbStatus", name: "cmbStatus",
 													//value: "<% // Response.Write(IIF(pnId_cent = 4, 'DG HCG', ALLTRIM(cSoli.cve)))%>",
 													label: "Próximo status", width: 200,
-													value:"<%=rows3[0].id%>",
+													value:"<%=(rows3.length>1?rows3[0].id:'')%>",
 													labelPosition:"top",
 													required: true, invalidMessage: "Este campo no puede ir vacio",
 													options: {
@@ -305,7 +305,7 @@
 												},
 												{width: 80},
 												{label: "Nota estatus", view: "textarea", id: "txtStatus", name: "txtStatus", labelWidth: 95, labelPosition:"left", },
-												{ view: "button", css: "webix_primary", label: "Cambio de estatus", click: camb_stat, width: 120, id: "btncamb_stat", align: "right" },
+												{ view: "button", css: "webix_primary", label: "Cambio de estatus", click: camb_stat, width: 120, id: "btncamb_stat", align: "right", disabled: <%=(rows2[0].STATUS>3 || (rows2[0].STATUS==1 && rows6[0].titular != 1)?'true':'false')%> },
 											] 
 											
 										},

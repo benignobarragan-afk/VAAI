@@ -119,7 +119,7 @@ const op_reof0 = (async (req, res) => {
 
 const op_sofic = (async (req, res) => {
 
-    console.log(req.query.lnIden)
+    //console.log(req.query.lnIden)
     if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
@@ -135,7 +135,7 @@ const op_sofic = (async (req, res) => {
                 WHERE d.user_id = ${req.userId} AND o.id_iden = ${req.query.lnIden}
             `
             rows = await conn.query(lcSQL, [1]);
-            console.log(rows);
+            //console.log(rows);
 
         } catch (err) {
             console.log(err)
@@ -152,7 +152,7 @@ const op_sofic = (async (req, res) => {
     }
     const laQuery = req.query
     
-    console.log(req.query)
+    //console.log(req.query)
 
     return res.render("op/op_sofic", {laQuery})
 });
@@ -160,7 +160,7 @@ const op_sofic = (async (req, res) => {
 const op_seofic = (async (req, res) => {
 
     let lcSQL = ''
-    console.log(req.query.lnIden)
+    //console.log(req.query.lnIden)
     if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
@@ -186,12 +186,12 @@ const op_seofic = (async (req, res) => {
     
     const rows2 = await util.gene_cons(lcSQL)
 
-    console.log(rows2)
+    //console.log(rows2)
 
     lcSQL = `
         SELECT STATUS AS id, descrip, titular 
             FROM gen_ofic_stat 
-            WHERE STATUS = ${rows2[0].STATUS}+1 OR STATUS = 99 
+            WHERE STATUS = ${rows2[0].STATUS}+1 ${(rows2[0].STATUS<4?' OR STATUS = 99 ': '')}  
             ORDER BY status 
     `
 
@@ -221,9 +221,16 @@ const op_seofic = (async (req, res) => {
     `
     
     const rows5 = await util.gene_cons(lcSQL)
-    console.log(rows5)
+    //console.log(rows5)
 
-    return res.render("op/op_seofic", {rows2, rows3, rows4, rows5})
+    lcSQL = `
+    SELECT titular 
+        FROM gen_dere_ofic
+        WHERE user_id = '2315513' AND cve = 'VAAI'
+    `
+    const rows6 = await util.gene_cons(lcSQL)
+
+    return res.render("op/op_seofic", {rows2, rows3, rows4, rows5, rows6})
 });
 
 const op_plan = ((req, res) => {
@@ -276,7 +283,7 @@ const op_nplanti = (async (req, res) => {
         rows2 = await util.gene_cons(lcSQL)
     }
 
-    console.log(rows2)
+    //console.log(rows2)
     return res.render("op/op_nplanti", {rows, id: req.query.lnID, rows2})
 });
 
@@ -407,7 +414,7 @@ const op_pend = (async (req, res) => {
     
     const rows = await util.gene_cons(lcSQL)
 
-    console.log(req.query)
+    //console.log(req.query)
 
     
     return res.render("op/op_pend", {lcCVE:req.query.lcCVE})
@@ -428,7 +435,7 @@ const op_ingr = (async (req, res) => {
     
     const rows = await util.gene_cons(lcSQL)
     //console.log(req.query)
-    console.log(rows)
+    //console.log(rows)
     
     return res.render("op/op_ingr", {rows})
 });
@@ -477,7 +484,7 @@ const detalle_ofic_No = (async (req, res) => {
         return res.render("sin_derecho")
     }
 
-    console.log(req.query)
+    //console.log(req.query)
     lcSQL = `
         SELECT id_cent, cve, depen, clave 
             FROM GEN_TIPO_OFIC 
@@ -524,7 +531,7 @@ const new_ord__serv = (async (req, res) => {
     loDepe = req.query.loDepe
     loTexto = req.query.loTexto
 
-    console.log(req.query)
+    //console.log(req.query)
     //console.log(lnOficio)
 
     return res.render("op/new_ord__serv", {lnOficio})
