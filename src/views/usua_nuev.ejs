@@ -15,6 +15,7 @@
 				APARTADO: "<%=rows[i].APARTADO%>",
 				GROUP: "<%=rows[i].GROUP%>",
 				DESCRIP: `<%=rows[i].DESCRIP%>`,
+				MODI_GROU: "<%=rows[i].MODI_GROU%>",
 			 },
 			<%}%>
 		]
@@ -116,6 +117,15 @@
 				{ id: "APARTADO", header: ["Apartado", { content: "selectFilter" }], width: 240, sort: "string", css: { 'text-align': 'left' } },
 				{ id: "GROUP", header: ["Groups", { content: "textFilter" }], width: 240, sort: "string", css: { 'text-align': 'left' } },
 				{ id: "DESCRIP", header: ["Descripción", { content: "textFilter" }], width: 800, sort: "string", css: { 'text-align': 'left' } },
+				{ id: "MODI_GROU", header: "", width: 50,
+					template: function(obj) {
+						// Si el dato 'adjunto' existe y no está vacío, mostramos el icono
+						if (obj.MODI_GROU) {
+							return "<span class='webix_icon wxi-search buscar_detalles' style='cursor:pointer;'></span>";
+						}
+						return ""; // Si no hay dato, queda vacía
+					}
+				}
 			],
 			footer: true, scrollY: true, scrollX: true, resizeColumn: true, resizeRow: true, navigation: true,
 			editable: true, 
@@ -127,7 +137,22 @@
 					//this.adjustRowHeight("nomb_serv", true);
 					this.render();
 				},
+				
 			},
+			onClick: {
+				// Esta función se dispara solo cuando haces clic en la clase CSS que definimos arriba
+				"buscar_detalles": function(ev, id) {
+					var item = this.getItem(id); // Obtenemos el registro completo
+					
+					// Aquí pones la lógica de lo que quieras que haga la lupa
+					webix.message("Buscando detalles de: " + item.MODI_GROU);
+					
+					// Ejemplo: Abrir una ventana o cargar datos en un formulario
+					abrirVentanaDetalles(item.MODI_GROU);
+					
+					return false; // Evita que se disparen otros eventos de la fila
+				}
+			}
 		},
 	]
 

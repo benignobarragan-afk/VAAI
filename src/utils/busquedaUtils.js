@@ -392,6 +392,7 @@ const gene_gogl_plan = async (urlScript, loJson) => {
     }
 }
 
+
 module.exports = {
     construirClausulaBusqueda,
     gene_cons,
@@ -401,6 +402,6 @@ module.exports = {
     construirClausulaBusquedaP,
     BuscaOficio,
     gene_gogl_plan,
-    cade_busc
+    cade_busc,
 
 }

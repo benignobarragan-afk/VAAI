@@ -119,6 +119,7 @@ const cmb_controlw = (async (req, res) => {
         ORDER BY anio desc, nume_cont, o.cve LIMIT 20
     `
 
+    console.log(lcSQL)
     const rows = await util.gene_cons(lcSQL)
     return res.json(rows)
 });
@@ -305,7 +306,8 @@ const op_noficx5 = (async (req, res) => {
     let lnDirigido = 0
 
     for (var i = 0; i < laDeta.length; i++) {
-        if (!laDeta[i].nombre || !laDeta[i].ocupacion || !laDeta[i].correo){
+//        if (!laDeta[i].nombre || !laDeta[i].ocupacion || !laDeta[i].correo){
+        if (!laDeta[i].nombre || !laDeta[i].ocupacion){
             llError = true;
             break;
         }
@@ -527,9 +529,6 @@ const op_gofic = (async (req, res) => {
             mensaje: `QR generado para: https://www.ejemplo.com`
         });
     */
-
-
-
 });
 
 
@@ -1003,6 +1002,18 @@ const op_soficx = (async (req, res) => {
 
     //console.log(lcSQL)
     const rows3 = await util.gene_cons(lcSQL);
+
+    if (req.body.lnStatus = 2){                                         //si el estatus es firmado cambia el derecho a solo lectura
+
+        loJson = {
+            "theArg1": rows[0].GDOC, 
+            "theArg2": 2,
+            "theArg3": config.url_logs,
+            "theArg4": rows[0].OFICIO
+        }
+        util.gene_gogl_doc(config.camb_dere, loJson);
+    }
+    
 
     return res.json({"status": true, "message": "Se guardaron los cambios"})
 
@@ -1695,6 +1706,24 @@ const csg_sServx2 = (async (req, res) => {
         return res.render("sin_derecho")
     }
 
+    let lcSQL = `
+    SELECT id_depe 
+        FROM ser_depen 
+        WHERE codigo = ${req.codigo}
+    `
+    const asigna = await util.gene_cons(lcSQL)
+
+    if (asigna.length <= 0){
+        return res.json([])    
+    }
+
+    let lcWhere = ""
+
+    for(i = 0; i < asigna.length; i++){
+        lcWhere = lcWhere + (lcWhere.length > 0?' OR ':'') + "FIND_IN_SET('" + asigna[i].id_depe + "', s.id_depe) > 0"
+    }
+
+    lcWhere = " s.oficio = 1 AND (" + lcWhere + ")"
     lcSQL = `
     SELECT s.id_serv_pk as id, o.descrip as oficio, o.nomb_remi, CASE o.tipo_depe WHEN 1 THEN c.descrip ELSE oc.descrip END as area_remi
         , s.descrip as nota, o.asunto, DATE_FORMAT(o.fech_ofic, '%d/%m/%Y %H:%i') AS fech_ofic, o.nomb_dest, p.nombre as realizo, s.id_oficio
@@ -1705,9 +1734,8 @@ const csg_sServx2 = (async (req, res) => {
         INNER JOIN passfile p ON o.usuario = p.user_id 
         LEFT JOIN gen_centros c ON o.cent_proc = c.id_cent AND o.tipo_depe = 1
         LEFT JOIN gen_otro_cent oc ON o.cent_proc = oc.id_cent AND o.tipo_depe = 2 
-        WHERE s.oficio = 1 
+        WHERE ${lcWhere}
     `
-    //WHERE FIND_IN_SET('24', s.id_depe) > 0
 
     console.log(lcSQL)
     const rows = await util.gene_cons(lcSQL)
