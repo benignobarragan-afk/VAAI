@@ -426,7 +426,9 @@ const op_gofic = (async (req, res) => {
     const loUsuario = await util.gene_cons("SELECT IFNULL(apepat, '') as apepat, IFNULL(apemat, '') as apemat, IFNULL(nombre, '') as nombre FROM gen_personas WHERE codigo = " + req.codigo);
 
     lcSQL = `
-        SELECT o.cve, o.idoficio, o.fecha, o.oficio, o.concepto as oConcepto, IFNULL(o.Diri_nomb, space(70)) as Pnombre, IFNULL(d.corto, '') as area_rh
+    SET lc_time_names = 'es_MX';
+
+    SELECT o.cve, o.idoficio, DATE_FORMAT(o.fecha, 'a %e de %M de %Y') as fecha, o.oficio, o.concepto as oConcepto, IFNULL(o.Diri_nomb, space(70)) as Pnombre, IFNULL(d.corto, '') as area_rh
             ,IFNULL(o.diri_carg, space(70)) AS Pcargo, IFNULL(o.Aten_nomb, space(70)) as Anombre, IFNULL(o.Aten_carg, space(70)) as Acargo, o.Clav_Soli
             ,o.clave, o.clav_ofic  , IFNULL(o.gdoc,'' ) AS GDOC, YEAR(o.fecha) as anio, IFNULL(o.pers_firma, 0) AS pers_firma
         FROM gen_oficio o LEFT JOIN gen_centros c ON o.clave = c.clave 

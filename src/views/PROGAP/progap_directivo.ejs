@@ -1,20 +1,15 @@
 <%- include('../partials/header'); %>
 
-<body onLoad="doOnLoad();">
-    <div align="center" id="cuerpo">
-        <form name="form1" id="form1" method="post" action="/<% // Response.Write(config.ruta)%>/op_bgrup.fwx">
-            <div id="view_ui"></div>
-        </form>
-    </div>
+<body>
     <script>
-        var tip = 0<% // Response.write(lnTipo)%>;
+        var tip = 0;
         var w1;
         var mygrid;
 
         //alert(tip);
 
-        function doOnLoad() {
-
+        //function doOnLoad() {
+        webix.ready(function(){
 
             webix.ui.datafilter.rowCount = webix.extend({
                 refresh: function (master, node, value) {
@@ -204,7 +199,7 @@
 	          });
 
             genera();
-        }
+        });
 
         function genera() {
             $$("dtable").clearAll();

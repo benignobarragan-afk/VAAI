@@ -2,6 +2,7 @@
 //require('dotenv').config();
 
 const express = require("express")
+const helmet = require('helmet');
 const morgan = require("morgan")
 const cookieParser = require("cookie-parser")
 const jwt = require("jsonwebtoken");
@@ -11,6 +12,41 @@ const pool = require('./db')
 const outil = require('./utils/other_utils');
 
 const app = express();
+// Esto activa las protecciones básicas que pide ZAP
+/* app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "'https://rawgit.com'"], // Webix a veces requiere unsafe-eval
+      styleSrc: ["'self'", "'unsafe-inline'", 
+            "https://cdn.webix.com",
+            "'unsafe-inline'", 
+            "https://cdn.materialdesignicons.com", 
+            "https://cdnjs.cloudflare.com",
+
+      ],
+      "font-src": ["'self'", "https://cdn.materialdesignicons.com", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https://*"],
+    },
+  },
+})); */
+
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: [
+        "'self'", 
+        "'unsafe-inline'", 
+        "'unsafe-eval'"
+      ], 
+      styleSrc: ["'self'", "'unsafe-inline'"], 
+      fontSrc: ["'self'"], 
+      imgSrc: ["'self'", "data:"],
+    },
+  },
+}));
+
 app.set('trust proxy', 'loopback');
 
 morgan.token('user-id', function (req, res) {

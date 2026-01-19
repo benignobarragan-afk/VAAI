@@ -20,11 +20,11 @@ const usua_nuevx = (async (req, res) => {
         SELECT p.*, SUBSTRING_INDEX(SUBSTRING_INDEX(p.DN, '"', 3), '"', -1) AS apellidos, SUBSTRING_INDEX(p.DN, '"', -1) AS nombre, 
                 concat('(', IFNULL(c.clave,''), ') ',  c.dependen) as value
             FROM passfile p LEFT JOIN gen_centros c ON p.id_cent = c.id_cent
-            WHERE codigo = ${req.body.txtCodigo} 
+            WHERE codigo = ? 
         `
-    const passfile = await util.gene_cons(lcSQL)
+    const passfile = await util.gene_cons(lcSQL, [req.body.txtCodigo])
 
-    //console.log(passfile);
+    console.log(passfile);
 
     if (passfile.length > 0){
 

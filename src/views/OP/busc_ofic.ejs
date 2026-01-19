@@ -1,80 +1,13 @@
-<!DOCTYPE html>
-<html>
-
-<head>
-
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<meta http-equiv="X-UA-Compatible" content="ie=edge">
-	<title></title>
-
-	<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
-		integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous">
-	</script>
-	<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
-		integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous">
-	</script>
-	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
-		integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
-		integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous">
-	</script>
-
-	<script src="/webix/codebase/webix.js"></script>
-	<script src="/js/funciones_webix.js"></script>
-	<script src="/webix/codebase/locale.js"></script>
-	<link rel="stylesheet" type="text/css" href="/webix/codebase/webix.css" />
-	<link rel="stylesheet" href="https://cdn.materialdesignicons.com/2.7.94/css/materialdesignicons.css?v=6.3.5" type="text/css" charset="utf-8">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
-	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.0.0/animate.min.css" />
-	<script src="/js/momentjs.js"></script>
-	<%
-    /*
-	LOCAL llError, lcCentro, lcPie, llAplicar, lnOficio, lcOficio, lcPrevio, lnMens_usua
-	LOCAL llNBusca, lcCVE, lcIniciales, lnIden, lcRuta_tabl
-	LOCAL lcDiri_nomb, lnDiri_codi, lcDiri_carg, lcAten_nomb, lnAten_codi, lcAten_carg, llNBusca2, lnCant_ofic
-
-	  
-	lnID = VAL(Request.QueryString("lnID"))
+<%- include('../partials/header'); %>
 
 
-
-	lcCve = ALLTRIM(cSoli.cve)
-
-	IF SQLEXEC(lnCone_cgce, "SELECT * FROM gen_op_grupo WHERE id_grupo = ?lnID", "cGrupo") != 1
-		a=Aerror(Mat)
-		?SQLDISCONNECT(0)
-		Response.write(Mat(2) + " Linea: 67")
-		return
-	ENDIF
-
-	IF SQLEXEC(lnCone_cgce, "SELECT * FROM opc_op_config", "op_config") != 1
-		a=Aerror(Mat)
-		SQLDISCONNECT(0)
-		sdsd
-	ENDIF
-
-	lcSQL = "SELECT id_depe,cve, depen, corto FROM ser_depen c WHERE id_depe in (SELECT DISTINCT id_depe FROM ser_pers_serv WHERE user_id = ?pcUser) AND cve = 'CGRH' "
-
-	IF SQLEXEC(lnCone_cgce, lcSQL, "cArea_rh") != 1
-		a=Aerror(Mat)
-		SQLDISCONNECT(0)
-		Response.write(Mat(2))
-		return 
-	ENDIF
-
-	SQLDISCONNECT(0)
-    */
-%>
-</head>
-
-<body onLoad="doOnLoad();">
+<body>
 	<div id="div_atencion" style="background-color: #F4F4F4;"></div>
 	<script>
 		const validaFecha = (text, format)=>{
 			return moment(text, format,true).isValid();
 		}
-		function doOnLoad() {
+		webix.ready(function(){
 
 			webix.ui.datafilter.rowCount = webix.extend({
 				refresh: function (master, node, value) {
@@ -206,12 +139,17 @@
                                             {
                                                 id: "detalle", width: 40,sort: "int", css: { 'text-align': 'center' }, 
                                                 header: [{text:"",css:"my_style"}, {text:""}],
-                                                template:(obj)=>{
+                                                /* template:(obj)=>{
                                                     return `
                                                         <a href="#" onClick="window.parent.deta_ingr(${obj.idoficio});">
                                                             <i style='font-size:26px;color:#2b96cc;' class='fa-solid fa-magnifying-glass'></i>
                                                         </a>`
-                                                }
+                                                } */
+											   template: (obj) => {
+													// Solo el icono con una clase para identificar el clic
+													return `<i style='font-size:26px;color:#2b96cc;cursor:pointer;' 
+															class='fa-solid fa-magnifying-glass btn_ver_detalle'></i>`;
+												},
                                             },
                                             {
                                                 id: "rank", width: 70,sort: "int", css: { 'text-align': 'center' }, 
@@ -271,6 +209,22 @@
                                                 }],
                                             },
                                             ],
+											onClick: {
+												// Esta función se activa cuando se hace clic en cualquier elemento con esta clase
+												"btn_ver_detalle": function(ev, id) {
+													// 'id' es el ID de la fila en Webix
+													const obj = this.getItem(id); 
+													
+													// Ejecutamos tu función original de forma segura
+													if (window.parent && typeof window.parent.deta_sali === "function") {
+														//window.parent.deta_sali(obj.cve, obj.idoficio, obj.anio, obj.id_iden, '/op/op_reof0');
+														window.parent.deta_ingr(obj.idoficio);
+													}
+													
+													// Evita comportamientos extraños del navegador
+													return false; 
+												}
+											}
                                         }
 									]
 								}
@@ -303,7 +257,7 @@
 			});
  */
 
-		}
+		});
 
 		function genera() {
             let form = $$("form_busc").getValues()

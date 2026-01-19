@@ -84,7 +84,7 @@ const construirClausulaBusqueda = (lcDepe, lnTipo) => {
     return lcBusca;
 }
 
-const cade_busc = (lcCampo, lcCade_busq) => {
+/* const cade_busc = (lcCampo, lcCade_busq) => {                    //código vulnerable 
     
     // Equivalente a IF !EMPTY(lcDepe)
     if ((!lcCampo || lcCampo.trim() === '') || (!lcCade_busq || lcCade_busq.trim() === '')) {
@@ -126,8 +126,37 @@ const cade_busc = (lcCampo, lcCade_busq) => {
 
     // Devolver la cadena de búsqueda SQL
     return lcBusca;
-}
+} */
 
+const cade_busc = (lcCampo, lcCade_busq) => {                       //código mejorado con gemini
+    // 1. Validaciones iniciales
+    if ((!lcCampo || lcCampo.trim() === '') || (!lcCade_busq || lcCade_busq.trim() === '')) {
+        return { sql: "1=1", params: [] }; // Retornamos algo que no rompa el WHERE
+    }
+    
+    let clausulas = [];
+    let params = [];
+    let lcCadena = lcCade_busq.trim() + ' '; 
+
+    while (lcCadena.trim() !== '') {
+        const posEspacio = lcCadena.indexOf(' ');
+        let palabra = (posEspacio === -1) ? lcCadena.trim() : lcCadena.substring(0, posEspacio);
+        
+        if (palabra.length > 0) {
+            // En lugar de meter la palabra al string, metemos un "?"
+            clausulas.push(`CONCAT(${lcCampo}) LIKE ?`);
+            // Metemos el valor con sus comodines al arreglo de parámetros
+            params.push(`%${palabra}%`);
+        }
+        lcCadena = lcCadena.substring(posEspacio + 1).trimStart() + ' ';
+    }
+
+    // Unimos todas las cláusulas con AND
+    return {
+        sql: clausulas.join(" AND "),
+        params: params
+    };
+}
 
 const gene_id_11 = () => {
 

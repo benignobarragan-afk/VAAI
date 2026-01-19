@@ -1,32 +1,4 @@
-<!DOCTYPE html>
-<html>
-<head>
-	<title></title>
-	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-<!--
-	<link rel="stylesheet" href="/style.css" type="text/css" media="screen" />
-	<link rel="stylesheet" type="text/css" href="skins/terrace/dhtmlx.css"/>
--->
-	
-	<script src="/webix_8.4.0/codebase/webix.js"></script>
-	<script src="/js/funciones_webix.js"></script>
-	<script src="/webix_8.4.0/codebase/locale.js"></script>
-
-	<link rel="stylesheet" type="text/css" href="/webix_8.4.0/codebase/webix.css" />
-
-	<link rel="stylesheet" href="https://cdn.materialdesignicons.com/2.7.94/css/materialdesignicons.css?v=6.0.7" type="text/css" charset="utf-8">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
-	<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-
-
-	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
-	
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.0.0/animate.min.css" />
-<!--
-	<link rel="stylesheet" type="text/css" href="skins/web/dhtmlx.css" />
--->
-	<script src="/codebase/dhtmlx.js"></script>
-
+<%- include('../partials/header'); %>
 
 <%
     /*
@@ -96,7 +68,7 @@
 				},
 
 				columns:[
-				{
+/* 				{
 					id: "detalle", width: 40,sort: "int", css: { 'text-align': 'center' }, 
 					header: [{text:"",css:"my_style"}, {text:""}],
 					template:(obj)=>{
@@ -104,6 +76,16 @@
 							<a href="#" onClick="window.parent.deta_sali('${obj.cve}',${obj.idoficio},${obj.anio},${obj.id_iden},'op_reof0.fwx');">
 								<i style='font-size:26px;color:#2b96cc;' class='fa-solid fa-magnifying-glass'></i>
 							</a>`
+					}
+				}, */
+				{
+					id: "detalle", width: 40, sort: "int", 
+					css: { 'text-align': 'center' }, 
+					header: [{text:"", css:"my_style"}, {text:""}],
+					template: (obj) => {
+						// Solo el icono con una clase para identificar el clic
+						return `<i style='font-size:26px;color:#2b96cc;cursor:pointer;' 
+								class='fa-solid fa-magnifying-glass btn_ver_detalle'></i>`;
 					}
 				},
 				{
@@ -181,6 +163,21 @@
 					}],
 				},
 				],
+				onClick: {
+					// Esta función se activa cuando se hace clic en cualquier elemento con esta clase
+					"btn_ver_detalle": function(ev, id) {
+						// 'id' es el ID de la fila en Webix
+						const obj = this.getItem(id); 
+						
+						// Ejecutamos tu función original de forma segura
+						if (window.parent && typeof window.parent.deta_sali === "function") {
+							window.parent.deta_sali(obj.cve, obj.idoficio, obj.anio, obj.id_iden, '/op/op_reof0');
+						}
+						
+						// Evita comportamientos extraños del navegador
+						return false; 
+					}
+				}
 			},
 			{
 				height:30

@@ -1,27 +1,5 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Escáner de QR</title>
-    <style>
-        body {
-            color:white;
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin-top: 50px;
-        }
-        #preview {
-            width: 300px;
-            height: 250px;
-            border: 1px solid #ccc;
-        }
-        #result {
-            margin-top: 20px;
-            padding: 10px;
-            width: 300px;
-            font-size: 1.2em;
-        }
-    </style>
-</head>
+<%- include('../partials/header'); %>
+
 <body>
 
     <h2>Escáner de QR</h2>
@@ -29,8 +7,8 @@
     <br>
     <input type="text" id="result" placeholder="El resultado del escaneo aparecerá aquí...">
 
-    <script type="text/javascript" src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
-    
+    <!-- <script type="text/javascript" src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script> -->
+    <script src="/js/instascan.min.js"></script>
     <script>
         let scanner = new Instascan.Scanner({ video: document.getElementById('preview') });
         scanner.addListener('scan', function (content) {

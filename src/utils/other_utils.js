@@ -165,11 +165,11 @@ const envi_corr = (async (lnTipo, lcCorreo, laArreglo) => {
     const lcSQL = `
         SELECT * 
             FROM gen_correo
-            where id_corr = ${lnTipo}
+            where id_corr = ?
         `    
 
     //console.log(lcSQL)
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, [lnTipo])
 
     const miArreglo = rows[0].CAMPO.split(',');
 
@@ -258,9 +258,9 @@ const regi_even_segu = (async (userId, evento, ip) => {
     // 1. Insertar el evento actual
     let lcSQL = 
     `INSERT INTO logs_seguridad (user_id, evento, ip_address) 
-            VALUES ('${userId}', '${evento}', '${ip}')
+            VALUES (?, ?, ?)
     `
-    let rows = await util.gene_cons(lcSQL)
+    let rows = await util.gene_cons(lcSQL, [userId, evento, ip])
 
     // 2. Si es un duplicado, revisar cuántos lleva en la última hora
     if (evento === 'DUPLICADO') {
@@ -268,23 +268,26 @@ const regi_even_segu = (async (userId, evento, ip) => {
         lcSQL =
         `SELECT COUNT(*) as intentos 
              FROM logs_seguridad 
-             WHERE user_id = '${userId}' AND evento = 'DUPLICADO' 
+             WHERE user_id = ? AND evento = 'DUPLICADO' 
              AND fecha > DATE_SUB(NOW(), INTERVAL 1 HOUR)
         `
 
-        rows = await util.gene_cons(lcSQL)
+        rows = await util.gene_cons(lcSQL, [userId])
 
         if (rows[0].intentos >= 4) {
             // 3. Bloquear al usuario
             lcSQL = `
             UPDATE passfile SET bloqueada = 1, bloq_MOTI = "Bloqueo automático por 4 intentos de sesión duplicada en una hora",
                     cambios = CONCAT(IFNULL(cambios, ''), "BLOQUEO_AUTO-DUPLICADO", DATE_FORMAT(NOW(), "%d/%m/%Y %h:%i")) 
-                WHERE user_id = '${userId}';
-
-            INSERT INTO logs_seguridad (user_id, evento, ip, detalles) 
-                VALUES (${userId}, 'BLOQUEO_AUTO', ${ip}, 'Bloqueo automático por 4 intentos de sesión duplicada')
+                WHERE user_id = ?
             `
-            const bloqueo = await util.gene_cons(lcSQL)
+            const update = await util.gene_cons(lcSQL, [userId])
+            
+            lcSQL = `
+            INSERT INTO logs_seguridad (user_id, evento, ip, detalles) 
+                VALUES (?, 'BLOQUEO_AUTO', ?, 'Bloqueo automático por 4 intentos de sesión duplicada')
+            `
+            const bloqueo = await util.gene_cons(lcSQL, [userId, ip])
 
             // 5. con el return true Limpiar caché para que el bloqueo sea inmediato
             //cacheUsuarios.delete(userId);

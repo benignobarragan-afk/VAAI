@@ -1,33 +1,5 @@
-<!DOCTYPE html>
-<html>
+<%- include('../partials/header'); %>
 
-<head>
-
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<meta http-equiv="X-UA-Compatible" content="ie=edge">
-	<title></title>
-
-	<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
-		integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous">
-	</script>
-	<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
-		integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous">
-	</script>
-	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
-		integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
-		integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous">
-	</script>
-
-	<script src="/webix/codebase/webix.js"></script>
-	<script src="/js/funciones_webix.js"></script>
-	<script src="/webix/codebase/locale.js"></script>
-	<link rel="stylesheet" type="text/css" href="/webix/codebase/webix.css" />
-	<link rel="stylesheet" href="https://cdn.materialdesignicons.com/2.7.94/css/materialdesignicons.css?v=6.3.5" type="text/css" charset="utf-8">
-
-	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.0.0/animate.min.css" />
-	<script src="/js/momentjs.js"></script>
 	<%
     /*
 	LOCAL llError, lcCentro, lcPie, llAplicar, lnOficio, lcOficio, lcPrevio, lnMens_usua
@@ -112,13 +84,13 @@
 	</style>
 </head>
 
-<body onLoad="doOnLoad();">
+<body>
 	<div id="div_atencion" style="background-color: #F4F4F4;"></div>
 	<script>
 		const validaFecha = (text, format)=>{
 			return moment(text, format,true).isValid();
 		}
-		function doOnLoad() {
+		webix.ready(function(){
 
 			webix.ui.datafilter.rowCount = webix.extend({
 				refresh: function (master, node, value) {
@@ -439,7 +411,7 @@
 			});
 			*/
 
-		}
+		});
 
 		function mues_soli() {
 			var cve = $$("cmbStatus").getValue()

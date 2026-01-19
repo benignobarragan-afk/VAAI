@@ -34,7 +34,7 @@
     }
 
 </style>
-<body onLoad="doOnLoad();">
+<body>
     <div align="center" id="cuerpo">
         <form name="form1" id="form1" method="post" action="/<% // Response.Write(config.ruta)%>/op_bgrup.fwx">
             <div id="view_ui"></div>
@@ -47,9 +47,8 @@
 
         //alert(tip);
 
-        function doOnLoad() {
-
-
+        //function doOnLoad() {
+        webix.ready(function(){
             webix.ui.datafilter.rowCount = webix.extend({
                 refresh: function (master, node, value) {
                     node.firstChild.innerHTML = "Total: " + master.count();
@@ -227,7 +226,7 @@
             });
  */
             genera();
-        }
+        });
 
         function genera() {
             $$("dtable").clearAll();

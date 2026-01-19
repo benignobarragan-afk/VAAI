@@ -28,14 +28,7 @@ const llNombramiento = lcDerecho.indexOf(",OP_NOMBRA,") > 0
 	<link rel="stylesheet" href="/style.css" type="text/css" media="screen" />
 
 	<link rel="stylesheet" type="text/css" href="/skins/terrace/dhtmlx.css" />
-<!--	<link rel="stylesheet" type="text/css" href="/skins/terrace/dhtmlx.css" />		-->
 	<link rel="stylesheet" type="text/css" href="/webix/codebase/webix.css" />
-<!--
-	<link rel="stylesheet" type="text/css" href="/webix/codebase/skins/material.css" />
--->
-	<link rel="stylesheet" href="https://cdn.materialdesignicons.com/2.7.94/css/materialdesignicons.css?v=6.0.7"
-		type="text/css" charset="utf-8">
-
 	<script src="/codebase/dhtmlx.js"></script>
 	<script src="/webix/codebase/webix.js"></script>
 
@@ -77,6 +70,11 @@ const llNombramiento = lcDerecho.indexOf(",OP_NOMBRA,") > 0
 
 </head>
 <script>
+
+webix.ready(function(){
+	sacaPendientes();
+	mues_noti();
+});
 
 	var xx = 0;
 	var ultimoSeleccionado = "";
@@ -495,7 +493,8 @@ const llNombramiento = lcDerecho.indexOf(",OP_NOMBRA,") > 0
 	}
 </script>
 
-<body onresize="redimensionaVentanas()" onload="<%// IF llDere_ofic%>sacaPendientes();mues_noti();<%// ENDIF%> <%// REsponse.write(IIF(!EMPTY(lnOficio),lcDetalle,''))%>" >
+<!-- <body onresize="redimensionaVentanas()" onload="<%// IF llDere_ofic%>sacaPendientes();mues_noti();<%// ENDIF%> <%// REsponse.write(IIF(!EMPTY(lnOficio),lcDetalle,''))%>" > -->
+<body> </body>
 	<script>
 		var myLayout = new dhtmlXLayoutObject(document.body, "2U");
 
