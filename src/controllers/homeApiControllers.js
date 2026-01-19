@@ -20,9 +20,9 @@ const usua_nuevx = (async (req, res) => {
         SELECT p.*, SUBSTRING_INDEX(SUBSTRING_INDEX(p.DN, '"', 3), '"', -1) AS apellidos, SUBSTRING_INDEX(p.DN, '"', -1) AS nombre, 
                 concat('(', IFNULL(c.clave,''), ') ',  c.dependen) as value
             FROM passfile p LEFT JOIN gen_centros c ON p.id_cent = c.id_cent
-            WHERE codigo = ${req.body.txtCodigo} 
+            WHERE codigo = ? 
         `
-    const passfile = await util.gene_cons(lcSQL)
+    const passfile = await util.gene_cons(lcSQL, [req.body.txtCodigo])
 
     //console.log(passfile);
 
@@ -49,9 +49,9 @@ const usua_nuevx = (async (req, res) => {
             lcSQL = `
             SELECT CONCAT(apepat, ' ', apemat) AS apellidos, nombre 
                 FROM gen_personas 
-                WHERE codigo = ${req.body.txtCodigo} 
+                WHERE codigo = ?
             `    
-            const rows = await util.gene_cons(lcSQL)
+            const rows = await util.gene_cons(lcSQL, [req.body.txtCodigo])
             
             if(rows.length <= 0){
                 return res.json({"error":true, "mensage":"No se contro el código en la base de la U. de G."})
@@ -79,34 +79,42 @@ const usua_nuevx2 = (async (req, res) => {
     let lcSQL = `
         SELECT * 
             FROM passfile 
-            WHERE user_id = '${req.body.txtUser_id}'
+            WHERE user_id = ?
         `    
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, [req.body.txtUser_id])
 
-    let lcMensaje = ""
+    let lcMensaje = "", parameters = []
 
     if(rows.length > 0){
         lcSQL = `
-        UPDATE passfile SET password = '${req.body.txtPassword}', codigo = ${req.body.txtCodigo}, id_cent = ${(!req.body.txtServicio ? '0' : req.body.txtServicio)}, 
-            nombre = '${req.body.txtApellidos + ' ' + req.body.txtNombre}', dn = '"DN "${req.body.txtApellidos + ' "DN "' + req.body.txtNombre}', 
-            \`groups\` = '${(!req.body.txtDerecho ? '' : req.body.txtDerecho)}', correo = '${(!req.body.txtCorreo ? '' : req.body.txtCorreo)}', 
-            cambios = CONCAT(IFNULL(cambios,''),CHAR(13,10),'UPDATE|${req.userId}|',DATE_FORMAT(NOW(), '%m/%d/%Y %H:%I')) WHERE user_id = ${req.body.txtUser_id}
+        UPDATE passfile SET password = ?, codigo = ?, id_cent = ?, nombre = ?, dn = ?, \`groups\` = ?, correo = ?, 
+            cambios = CONCAT(IFNULL(cambios,''),CHAR(13,10),'UPDATE|',?,'|',DATE_FORMAT(NOW(), '%m/%d/%Y %H:%I')) WHERE user_id = ?
         `
         lcMensaje = "El usuario se actualizo correctamente"
+
+        parameters = [req.body.txtPassword, req.body.txtCodigo, (!req.body.txtServicio ? '0' : req.body.txtServicio),
+            req.body.txtApellidos + ' ' + req.body.txtNombre, '"DN "' + req.body.txtApellidos + ' "DN "' + req.body.txtNombre,
+            (!req.body.txtDerecho ? '' : req.body.txtDerecho), (!req.body.txtCorreo ? '' : req.body.txtCorreo), req.userId, req.body.txtUser_id
+        ]
+
     }
     else 
     {
         lcSQL = `
         INSERT INTO passfile (user_id, password, codigo, id_cent, nombre, dn, \`groups\`, correo, acceso)
-            VALUES ('${req.body.txtUser_id}', '${req.body.txtPassword}', ${req.body.txtCodigo}, ${(!req.body.txtServicio ? '0' : req.body.txtServicio)},
-            '${req.body.txtApellidos + ' ' + req.body.txtNombre}', '"DN "${req.body.txtApellidos + ' "DN "' + req.body.txtNombre}',
-            '${(!req.body.txtDerecho ? '' : req.body.txtDerecho)}', '${(!req.body.txtCorreo ? '' : req.body.txtCorreo)}', UUID())
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, UUID())
         `
         lcMensaje = "El usuario se registro exitomente"
+
+        parameters = [req.body.txtUser_id, req.body.txtPassword, req.body.txtCodigo, (!req.body.txtServicio ? '0' : req.body.txtServicio), 
+            req.body.txtApellidos + ' ' + req.body.txtNombre, '"DN "' + req.body.txtApellidos + ' "DN "' + req.body.txtNombre, 
+            (!req.body.txtDerecho ? '' : req.body.txtDerecho), (!req.body.txtCorreo ? '' : req.body.txtCorreo)
+        ]
     }
 
+    const insert = await util.gene_cons(lcSQL, parameters)
     //console.log(lcSQL)
-    const insert = await util.gene_cons(lcSQL)
+    
     
     if (rows.length <= 0 && req.body.txtCorreo.length > 0){
 

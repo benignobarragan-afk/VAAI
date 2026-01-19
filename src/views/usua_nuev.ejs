@@ -9,7 +9,7 @@
 		const loDere = [
 			<%for (var i = 0; i < rows.length; i++) {%>
 			{ 
-				ID: 0,
+				ID: "<%=rows[i].ID%>",
 				ORDEN: "<%=rows[i].ORDEN%>",
 				SISTEMA: "<%=rows[i].SISTEMA%>",
 				APARTADO: "<%=rows[i].APARTADO%>",

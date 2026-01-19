@@ -15,19 +15,22 @@ const progap_usuariox = (async (req, res) => {
     {
         return res.render("sin_derecho")
     }
-
-    const lcSQL = `
+    let parameters = []
+    let lcSQL = `
     SELECT ROW_NUMBER() OVER (ORDER BY CONCAT(u.nombre, ' ', u.apellido_paterno, ' ', u.apellido_materno)) AS rank, u.id, u.usuario, CONCAT(u.nombre, ' ', u.apellido_paterno, ' ', u.apellido_materno) AS nombre,
 	        if(u.id_tipo_usuario = 1, "Administrador", if(u.id_tipo_usuario = 2, "Revisor", if(u.id_tipo_usuario = 3, "Secretario Academico", 
             if(u.id_tipo_usuario = 4, "Coordinador de posgrado", if(u.id_tipo_usuario = 5, "Estudiante", "Sin definir"))))) AS tipo,
 	        u.correo, d.siglas, if(estado = 1, "Activo", "Inactivo") AS status
 	    FROM progap_usuarios u LEFT JOIN progap_nivel_estudios e ON u.id_nivel_estudios = e.id
 		    LEFT JOIN progap_dependencias d ON u.id_centro_universitario = d.id
-            ${(!req.query.lnConv?'':'WHERE id_convocatoria = '+ req.query.lnConv)}
-        ORDER BY u.nombre, u.apellido_paterno,u.apellido_materno
     `
+    if (!!req.query.lnConv){
+        lcSQL = lcSQL + " WHERE id_convocatoria = ? "
+        parameters.push(req.query.lnConv);
+    }
+    lcSQL = lcSQL + " ORDER BY u.nombre, u.apellido_paterno,u.apellido_materno "
 
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, parameters)
     return res.json(rows)
 });
 
