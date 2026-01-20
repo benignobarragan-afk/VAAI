@@ -18,11 +18,11 @@ const op_cucsx2 = (async (req, res) => {
             (SELECT COUNT(*) as total FROM gen_oficio WHERE cve = t.cve AND IFNULL(status,0) < 3) as cant,
             (SELECT COUNT(*) AS MODI FROM gen_oficio WHERE cve = t.cve AND IFNULL(status,0) < 3 AND modificado = 1) AS modificado 
         FROM gen_tipo_ofic t
-        WHERE cve in (SELECT DISTINCT cve FROM gen_dere_ofic WHERE user_id = ${req.userId})
+        WHERE cve in (SELECT DISTINCT cve FROM gen_dere_ofic WHERE user_id = ?)
         ORDER BY cve
     `
 
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, [req.userId])
     return res.json(rows)
 
 });
@@ -40,9 +40,9 @@ const op_oficx5 = (async (req, res) => {
     if (req.query.t != 1){
         lcSQL = `SELECT cve 
             FROM gen_dere_ofic 
-            WHERE user_id = '${req.userId}' AND cve = '${req.query.cve}'
+            WHERE user_id = ? AND cve = ?
         `
-        const llDere = await util.gene_cons(lcSQL)
+        const llDere = await util.gene_cons(lcSQL, [req.userId, req.query.cve])
 
         if (!llDere || llDere.length <= 0)        //si no tiene derechos
         {
@@ -51,6 +51,7 @@ const op_oficx5 = (async (req, res) => {
 
     }
     
+    let parameters = []
 
     lcSQL = `
     SELECT ROW_NUMBER() OVER (ORDER BY o.fecha desc) AS rank, o.depe_envi AS centros,
@@ -78,25 +79,27 @@ const op_oficx5 = (async (req, res) => {
     
     lcSQL = lcSQL + `
         WHERE 
-            IFNULL(o.status, 0) < 3 AND o.cve = '${req.query.cve}' 
+            IFNULL(o.status, 0) < 3 AND o.cve = ? 
     `
+    parameters = [req.query.cve]
     }
     else {
     lcSQL = lcSQL + `
         WHERE 
-            o.solicito = ${req.userId} AND IFNULL(o.status, 0) < 4 AND o.cve IN ( 
+            o.solicito = ? AND IFNULL(o.status, 0) < 4 AND o.cve IN ( 
                 SELECT cve 
                 FROM GEN_DERE_OFIC 
-                WHERE user_id = ${req.userId} 
+                WHERE user_id = ?
             )
     `
+    parameters = [req.userId, req.userId]
     }
     lcSQL = lcSQL + ` 
         ORDER BY 
         o.fecha DESC 
     `
     //console.log(lcSQL)
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, parameters)
     return res.json(rows)
 });
 
@@ -133,11 +136,11 @@ const op_bplanx = (async (req, res) => {
     const lcSQL = `
     SELECT g.id_plantilla_pk as id, 0 as marcar, g.nombre, g.descrip  
         FROM gen_ofic_plan g 
-        WHERE g.id_cent = ${req.query.lnId_cent} 
+        WHERE g.id_cent = ?
         ORDER BY 3
     `
     
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, [req.query.lnId_cent])
     return res.json(rows)
 
     
@@ -150,22 +153,25 @@ const op_nplantix = (async (req, res) => {
         return res.render("sin_derecho")
     }
 
-    let lcSQL 
+    let lcSQL, parameters = []
     if (req.body.id > 0){
     lcSQL = `
         UPDATE gen_ofic_plan 
-            SET nombre = "${req.body.nombre}", descrip = "${req.body.descrip}", cambios = CONCAT(IFNULL(cambios,''),CHAR(13,10),'UPDATE|',
-            '${req.userId}','|',DATE_FORMAT(NOW(), '%m/%d/%Y %H:%I')) WHERE id_plantilla_pk = ${req.body.id}; 
+            SET nombre = ?, descrip = ?, cambios = CONCAT(IFNULL(cambios,''),CHAR(13,10),'UPDATE|',
+            ?,'|',DATE_FORMAT(NOW(), '%m/%d/%Y %H:%I')) WHERE id_plantilla_pk = ?; 
         `
+        parameters = [req.body.nombre, req.body.descrip, req.userId, req.body.id]
     }
     else {
     lcSQL = `
         INSERT INTO gen_ofic_plan (nombre, descrip, id_cent, cambios) 
-            VALUES("${req.body.nombre}", "${req.body.descrip}", ${req.body.id_cent}, CONCAT('ALTA|','${req.userId}','|',DATE_FORMAT(NOW(), '%m/%d/%Y %H:%I'))); 
+            VALUES(?, ?, ?, CONCAT('ALTA|',?,'|',DATE_FORMAT(NOW(), '%m/%d/%Y %H:%I'))); 
         `
+
+        parameters =  [req.body.nombre, req.body.descrip, req.body.id_cent, req.userId]
     }
     
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, parameters)
     //console.log(rows)
     
     return res.json({"error":false, "message":rows})
@@ -179,7 +185,7 @@ const op_noficx4 = (async (req, res) => {
     }
 
     //console.log(req.query.lnTipo == 1)
-    let lcSQL = {}
+    let lcSQL = "", parameters = []
     if (req.query.laId <= 0){
         return res.json({"error":true, "mensage":"Falto seleccionar un id"})
     }
@@ -189,25 +195,27 @@ const op_noficx4 = (async (req, res) => {
             SELECT  d.id_grup_deta, d.id_cent as servicio, d.nombre, d.cargo as ocupacion, d.correo, d.tipo, d.tipo_depe, IFNULL(c.descrip, '') as nomb_serv, IFNULL(d.copias, '') as copias 
                 FROM GEN_OP_GRUP_DETA d 
                 LEFT JOIN GEN_CENTROS c ON d.id_cent = c.ID_CENT 
-                WHERE tipo_depe = 1 AND id_grupo IN (${req.query.laId})  
+                WHERE tipo_depe = 1 AND id_grupo IN (?)  
         UNION ( 
             SELECT d.id_grup_deta, d.id_cent as servicio, d.nombre, d.cargo as ocupacion, d.correo, d.tipo, d.tipo_depe, IFNULL(c.descrip, '') as nomb_serv, IFNULL(d.copias, '') as copias 
                 FROM GEN_OP_GRUP_DETA d 
                 LEFT JOIN GEN_OTRO_CENT c ON d.id_cent = c.ID_CENT  
-                WHERE tipo_depe = 2  AND id_grupo IN (${req.query.laId})  ) 
+                WHERE tipo_depe = 2  AND id_grupo IN (?)  ) 
         UNION ( 
             SELECT d.id_grup_deta, 0 as servicio, d.nombre, d.cargo as ocupacion, d.correo, d.tipo, d.tipo_depe, SPACE(70) as nomb_serv, IFNULL(d.copias, '') as copias  
-                FROM GEN_OP_GRUP_DETA d  WHERE tipo_depe = 0  AND id_grupo IN (${req.query.laId}) ) ) Datos 
+                FROM GEN_OP_GRUP_DETA d  WHERE tipo_depe = 0  AND id_grupo IN (?) ) ) Datos 
             order by id_grup_deta        `
+        parameters = [req.query.laId, req.query.laId, req.query.laId]
     }
     else {
         lcSQL = `
             SELECT descrip
                 FROM GEN_OFIC_PLAN 
-                WHERE id_plantilla_pk = ${req.query.laId} 
+                WHERE id_plantilla_pk = ? 
         `
+        parameters = [req.query.laId]
     }
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, parameters)
     //console.log(rows)
     return res.json(rows)
 
@@ -224,11 +232,11 @@ const op_noficx6 = (async (req, res) => {
     lcSQL = `
         SELECT id_ofic as id, nume_cont as value, 1 as open 
             from opc_oficio 
-            WHERE id_ofic = ${req.query.lnOfic}  
+            WHERE id_ofic = ?  
             ORDER BY id_ofic DESC LIMIT 1
         `
     
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, [req.query.lnOfic])
     //console.log(rows)
     return res.json(rows)
 
@@ -250,13 +258,13 @@ const op_noficx7 = (async (req, res) => {
     const lcSQL = `    
     SELECT ROW_NUMBER() OVER (ORDER BY COUNT(*) desc) AS id, diri_nomb AS value, diri_carg as cargo, corr_ofic, COUNT(*) AS copias
         FROM gen_doficio 
-        WHERE id_cent = ${req.query.id} and diri_nomb not in ("N/A", "NA", "-")
+        WHERE id_cent = ? and diri_nomb not in ("N/A", "NA", "-")
         group BY 2,3,4
         ORDER BY 5 DESC 
         LIMIT 30
     `
 
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, [req.query.id])
     //console.log(rows)
     return res.json(rows)
 
@@ -277,12 +285,12 @@ const op_bgrupx = (async (req, res) =>{
                             ORDER BY d.nombre ASC) AS personas
             FROM
                 gen_op_grupo g INNER JOIN gen_op_grup_deta d ON g.id_grupo = d.id_grupo
-            WHERE g.id_cent = ${req.query.lnId_cent}
+            WHERE g.id_cent = ?
             GROUP BY
                 g.nombre_grupo
             ORDER BY 2
     `
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, [req.query.lnId_cent])
     //console.log(rows)
     return res.json(rows)
 
@@ -345,15 +353,17 @@ const op_noficx5 = (async (req, res) => {
     const lcOficio = config.ante_ofic + (!laDepen[0].PREVIO ? '' : laDepen[0].PREVIO) + laDepen[0].CVE + '/' + laID[0][0].nextid + '/' + new Date().getFullYear().toString();
     const lcclav_ofic = util.gene_id_11()
     lcSQL = `
-        INSERT INTO gen_oficio (idOficio, cve, oficio, fecha, clave, concepto, referencia, anexo, 
-                solicito, usuario, clav_soli, lud, tipo_depe, clav_ofic, cent_soli, soli_ofic, soli_moti, area_rh, nombra, pers_firma, id_seccion) 
-            VALUES (${laID[0][0].nextid}, '${laDepen[0].CVE}', '${lcOficio}', NOW(), '${laDepen[0].CLAVE}', '${req.body.txtConcepto}', '${req.body.txtRefe}', '${req.body.txtAnexo}', 
-            '${req.userId}', '${req.userId}', '${req.centro}', NOW(), ${laDeta[0].tipo_depe}, '${lcclav_ofic}', ${req.id_cent}, '${req.body.cmbSoli_ofic}', '${req.body.txtSoli_moti}', 
-            ${!req.body.cmbTipoFormatoRH ? 0 : req.body.cmbTipoFormatoRH}, ${!req.body.nombramiento ? 0 : req.body.nombramiento}, ${!req.body.firma ? 0 : req.body.firma}, 
-                ${!req.body.seccion ? 0 : req.body.seccion})
+        INSERT INTO gen_oficio (idOficio, cve, oficio, fecha, clave, concepto, referencia, anexo, solicito, usuario, clav_soli, lud, 
+                tipo_depe, clav_ofic, cent_soli, soli_ofic, soli_moti, area_rh, nombra, pers_firma, id_seccion) 
+            VALUES (?, ?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
+    let parameters = [laID[0][0].nextid, laDepen[0].CVE, lcOficio, laDepen[0].CLAVE, req.body.txtConcepto, req.body.txtRefe, req.body.txtAnexo,
+        req.userId, req.userId, req.centro, laDeta[0].tipo_depe, lcclav_ofic, req.id_cent, req.body.cmbSoli_ofic, req.body.txtSoli_moti,
+        (!req.body.cmbTipoFormatoRH ? 0 : req.body.cmbTipoFormatoRH), (!req.body.nombramiento ? 0 : req.body.nombramiento), 
+        (!req.body.firma ? 0 : req.body.firma), (!req.body.seccion ? 0 : req.body.seccion)
+    ]
     //console.log(lcSQL)
-    const laInsert = await util.gene_cons(lcSQL)            //inserta el oficio
+    const laInsert = await util.gene_cons(lcSQL, parameters)            //inserta el oficio
     
     if (!laInsert.insertId){
         return res.json({"status" : false, "message": "No se pudo registrar el oficio, por favor comentelo con el administrador"});
@@ -361,19 +371,22 @@ const op_noficx5 = (async (req, res) => {
 
     laStatus = `
         INSERT INTO GEN_STAT_OFIC (idOficio, cve, usuario, inicio, nota, anio, id_iden) 
-            VALUES (${laID[0][0].nextid}, '${laDepen[0].CVE}', '${req.userId}', NOW(), '${req.body.txtStatus}', Right(Year(NOW()),2), ${laInsert.insertId})
+            VALUES (?, ?, ?, NOW(), ?, Right(Year(NOW()),2), ?)
     `
-    const laInsertStat = await util.gene_cons(laStatus)
+    const laInsertStat = await util.gene_cons(laStatus, [laID[0][0].nextid, laDepen[0].CVE, req.userId, req.body.txtStatus, laInsert.insertId])
     //console.log(laInsertStat)
 
     for (var i = 0; i < laDeta.length; i++) {                   //inserta el detalle del oficio
         const lcDeta = `
         INSERT INTO gen_doficio (id_iden, id_cent, corr_ofic, Diri_nomb, diri_carg, tipo_depe, tipo, clav_ofic, cambios, copias) 
-            VALUES(${laInsert.insertId}, ${laDeta[i].servicio}, '${laDeta[i].correo}', '${laDeta[i].nombre}', '${laDeta[i].ocupacion}', ${laDeta[i].tipo_depe}, 
-            ${laDeta[i].tipo}, '${lcclav_ofic}', 'ALTA|${req.userId}|${new Date().toISOString()}', '${laDeta[i].copias}')
+            VALUES(?, ?, ?, ?, ?, ?, ?, ?, CONCAT('ALTA|',?,'|',DATE_FORMAT(NOW(), '%m/%d/%Y %H:%I')), ?')
         `
         //console.log(lcDeta)
-        const laInsertDeta = await util.gene_cons(lcDeta)
+
+        parameters = [laInsert.insertId, laDeta[i].servicio, laDeta[i].correo, laDeta[i].nombre, laDeta[i].ocupacion, laDeta[i].tipo_depe, 
+            laDeta[i].tipo, lcclav_ofic, req.userId, laDeta[i].copias
+        ]
+        const laInsertDeta = await util.gene_cons(lcDeta, parameters)
         //console.log(laInsertDeta)
     }
 
@@ -385,17 +398,17 @@ const op_noficx5 = (async (req, res) => {
             FROM (
                 SELECT d.id_iden, c.DEPENDEN FROM gen_doficio d 
                 INNER JOIN gen_centros c ON d.id_cent = c.id_cent
-                WHERE d.tipo_depe = 1 AND D.id_iden = ${laInsert.insertId}
+                WHERE d.tipo_depe = 1 AND D.id_iden = ?
                 UNION ALL
                 
                 SELECT d.id_iden, c.DEPENDEN FROM gen_doficio d 
                 INNER JOIN gen_otro_cent c ON d.id_cent = c.id_cent
-                WHERE d.tipo_depe = 2 AND D.id_iden = ${laInsert.insertId}
+                WHERE d.tipo_depe = 2 AND D.id_iden = ?
             ) datos)
-            WHERE id_iden = ${laInsert.insertId}
+            WHERE id_iden = ?
     `
 
-    const laDepe_actu = await util.gene_cons(lcSQL)
+    const laDepe_actu = await util.gene_cons(lcSQL, [laInsert.insertId, laInsert.insertId, laInsert.insertId])
 
     //liga los oficio de ingreso con la nueva salida
     loTree = JSON.parse(req.body.txtTree);  
@@ -404,9 +417,9 @@ const op_noficx5 = (async (req, res) => {
     
     for (var i = 0; i < loTree.length; i++){
         lcSQL = `
-        INSERT INTO opc_liga_ofic (ofic_in, ofic_out, tipo, tipo_docu) VALUES(${loTree[i].id} , ${laInsert.insertId}, 1, 0)
+        INSERT INTO opc_liga_ofic (ofic_in, ofic_out, tipo, tipo_docu) VALUES(? , ?, 1, 0)
         `
-        loLiga = await util.gene_cons(lcSQL)
+        loLiga = await util.gene_cons(lcSQL, [loTree[i].id, laInsert.insertId])
     }    
 
     
@@ -433,10 +446,10 @@ const op_gofic = (async (req, res) => {
             ,o.clave, o.clav_ofic  , IFNULL(o.gdoc,'' ) AS GDOC, YEAR(o.fecha) as anio, IFNULL(o.pers_firma, 0) AS pers_firma
         FROM gen_oficio o LEFT JOIN gen_centros c ON o.clave = c.clave 
             LEFT JOIN ser_depen d ON o.area_rh = d.id_depe 
-        WHERE o.id_iden = ${req.body.lnIden}
+        WHERE o.id_iden = ?
         ORDER BY o.fecha DESC
     `
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, [req.body.lnIden])
 
     lcSQL = `
         SELECT t.iniciales, t.plantilla, t.nomb_firm, t.carg_firm, c.dependen 
@@ -546,23 +559,23 @@ const op_sdoficx = (async (req, res) =>{
                     , IFNULL(DATE_FORMAT(fech_auto, '%d/%m/%Y %H:%i'),'') as fech_auto, IFNULL(DATE_FORMAT(fech_envi_auto, '%d/%m/%Y %H:%i'),'') as fech_tenvi  
                     , IFNULL(DATE_FORMAT(fech_envi, '%d/%m/%Y %H:%i'),'') as fech_senvi, IFNULL(DATE_FORMAT(fech_acus, '%d/%m/%Y %H:%i'),'') as fech_acus 
                 FROM gen_doficio d LEFT JOIN GEN_CENTROS c ON d.id_cent = c.ID_CENT 
-                WHERE tipo_depe = 1 AND id_iden = ${req.query.lnIden}
+                WHERE tipo_depe = 1 AND id_iden = ?
 	            UNION ALL  
                 SELECT d.id_doficio_pk as id, d.id_cent as servicio, diri_nomb, diri_carg, d.corr_ofic, d.tipo, tipo_depe, c.descrip as nomb_serv, IFNULL(d.copias, '') as copias 
                         , IFNULL(DATE_FORMAT(fech_auto, '%d/%m/%Y %H:%i'),'') as fech_auto, IFNULL(DATE_FORMAT(fech_envi_auto, '%d/%m/%Y %H:%i'),'') as fech_tenvi   
                         , IFNULL(DATE_FORMAT(fech_envi, '%d/%m/%Y %H:%i'),'') as fech_senvi, IFNULL(DATE_FORMAT(fech_acus, '%d/%m/%Y %H:%i'),'') as fech_acus 
                     FROM gen_doficio d LEFT JOIN GEN_OTRO_CENT c ON d.id_cent = c.ID_CENT 
-	                WHERE tipo_depe = 2 AND id_iden = ${req.query.lnIden}
+	                WHERE tipo_depe = 2 AND id_iden = ?
                 UNION ALL  
                     SELECT d.id_doficio_pk as id, 0 as servicio, diri_nomb, diri_carg, d.corr_ofic, d.tipo, 
                             tipo_depe, SPACE(70) as nomb_serv, IFNULL(d.copias, '') as copias, IFNULL(DATE_FORMAT(fech_auto, '%d/%m/%Y %H:%i'),'') as fech_auto 
                             , IFNULL(DATE_FORMAT(fech_envi_auto, '%d/%m/%Y %H:%i'),'') as fech_tenvi 
                             , IFNULL(DATE_FORMAT(fech_envi, '%d/%m/%Y %H:%i'),'') as fech_senvi, IFNULL(DATE_FORMAT(fech_acus, '%d/%m/%Y %H:%i'),'') as fech_acus 
                         FROM gen_doficio d 
-                        WHERE tipo_depe = 0 AND id_iden = ${req.query.lnIden}
+                        WHERE tipo_depe = 0 AND id_iden = ?
                         order by tipo, diri_nomb
     `
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, [req.query.lnIden, req.query.lnIden, req.query.lnIden])
     //console.log(rows)
     return res.json(rows)
 
@@ -574,7 +587,7 @@ const op_admix2 = (async (req, res) => {
     {
         return res.render("sin_derecho")
     }
-
+    let parameters = []
     lcSQL = `
         SELECT cve as id, cve, depen, nomb_firm, carg_firm, iniciales, correo_area, correo_copia, plantilla, 
                     CASE WHEN titular = 1 THEN 'SI' ELSE 'NO' END as titular, IFNULL(cve_compartir, '') AS compartir
@@ -582,11 +595,12 @@ const op_admix2 = (async (req, res) => {
     `
     if (req.query.servicio > 0){
         lcSQL = lcSQL + `        
-            WHERE id_cent = ${req.query.servicio} AND IFNULL(cve_compartir, '') = ''
+            WHERE id_cent = ? AND IFNULL(cve_compartir, '') = ''
     `
+    parameters = [req.query.servicio]
     }
     //console.log(lcSQL)
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, parameters)
     //console.log(rows)
     return res.json(rows)
 
@@ -606,11 +620,11 @@ const op_ningrx2 = (async (req, res) => {
     ` */
     lcSQL = `
         SELECT IFNULL(MAX(nume_cont), 0) + 1 as control FROM opc_oficio 
-			WHERE cve = '${req.query.cve}' AND anio = ${req.query.anio} 
+			WHERE cve = ? AND anio = ?
     `
 
     //console.log(lcSQL)
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, [req.query.cve, req.query.anio])
     //console.log(rows)
     //return res.json(rows)
     return res.json({status:true, nume_cont : rows[0].control})
@@ -630,19 +644,19 @@ const op_ningrx3 = (async (req, res) => {
         FROM (
                 (SELECT nomb_remi, carg_remi, '' AS nomb_dest, '' AS carg_dest  
                 FROM opc_oficio 
-                WHERE cent_proc = ${req.query.id}
+                WHERE cent_proc = ?
                 ORDER BY id_ofic DESC LIMIT 1)
                 
                 UNION ALL
                 
                 (SELECT '', '', nomb_dest, carg_dest
                 FROM opc_oficio
-                WHERE cve = '${req.query.cve}'
+                WHERE cve = ?
                 ORDER BY id_ofic DESC LIMIT 1)
                 ) datos
     `
     //console.log(lcSQL)
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, [req.query.id, req.query.cve])
     //console.log(rows)
     //return res.json(rows)
     return res.json(rows)
@@ -728,13 +742,13 @@ const op_ningrx = (async (req, res) => {
         res.json([{"status":false, "message":"El numero de control no puede estar vacío o ser cero"}]);
     }
 
-    let lnNuev_cent = 0
+    let lnNuev_cent = 0, parameters = []
     if (req.body.rbDepe === '2' && !req.body.id_cent && req.body.txtDepen != ''){        //si es una dependencia nueva tipo no udg
         lcSQL = `
             INSERT INTO GEN_OTRO_CENT (descrip, dependen, orden) VALUES 
-		        ('${req.body.txtDepen}', '${req.body.txtDepen}', 0)
+		        (?, ?, 0)
         `
-        const rows = await util.gene_cons(lcSQL);
+        const rows = await util.gene_cons(lcSQL, [req.body.txtDepen, req.body.txtDepen]);
         lnNuev_cent = rows.insertId;
         const rows2 = await util.gene_cons('UPDATE gen_otro_cent set clave = id_cent WHERE ifnull(clave,0) != id_cent');
         //console.log(lnNuev_cent);
@@ -743,9 +757,9 @@ const op_ningrx = (async (req, res) => {
     lcSQL = `
         SELECT IFNULL(MAX(nume_cont), 0) as control 
             FROM opc_oficio 
-            WHERE cve = '${req.body.cve}' AND anio = YEAR(now()) 
+            WHERE cve = ? AND anio = YEAR(now()) 
     `
-    const rows3 = await util.gene_cons(lcSQL);
+    const rows3 = await util.gene_cons(lcSQL, [req.body.cve]);
     
     //console.log(rows3)
     lnNume_cont = parseInt(rows3[0].control) + 1
@@ -754,29 +768,33 @@ const op_ningrx = (async (req, res) => {
     lcSQL = `
         INSERT INTO opc_oficio (clave, fech_ofic, nume_cont, fecha, descrip, tipo_depe, cent_proc, clv_proc, nomb_proc, ligado_a
                 , id_tiof, id_clof, asunto, codi_remi, nomb_remi, carg_remi, codi_dest, nomb_dest, nota, usuario, lud, anio
-                , id_refe_in, id_refe_ou,pendiente, tipo, carg_dest, tele_dest, cve, id_cent, asignado, status, doc_firma, info_sens, segu_pra, letra
+                , id_refe_in, id_refe_ou, pendiente, tipo, carg_dest, tele_dest, cve, id_cent, asignado, status, doc_firma, info_sens, segu_pra, letra
                 , tipo_info, tipo_ingr, BIS, id_seccion) 
-            VALUES ('${req.centro}', '${outil.form_fechSQL(req.body.fech_ofic)}', ${lnNume_cont}, NOW(), '${req.body.nume_ofic}', ${req.body.rbLiga}, ${req.body.dependen}, '${req.body.clav_proc}', '${req.body.txtDepen}', '${req.body.ligado_a}'
-                ,${req.body.tipo_ofic}, ${req.body.clase}, '${req.body.asunto}', 0, '${req.body.remi_nomb}', '${req.body.remi_carg}', 0, '${req.body.dest_nomb}', '${req.body.nota}', '${req.userId}', now(), ${req.body.anio_ingr}
-                ,'${req.body.liga_sali}', '${req.body.liga_entr}', 0, ${req.body.tipo_ingr},  '${req.body.dest_carg}', '', '${req.body.cve}', ${req.id_cent}, 0, 1, 0, ${req.body.info_sens}, 0, ''
-                , ${req.body.tipo_info}, ${req.body.tipo_ingr}, 0, ${req.body.seccion === '' ? 0 : req.body.seccion});
+            VALUES (?, ?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, 0, ?, ?, ?, now(), ? ,?, ?, 0, ?, ?, '', ?, ?, 0, 1, 0, ?, 0, '' , ?, ?, 0, ?);
     `
+    console.log(req.body.info_sens)
+
+    parameters = [req.centro, outil.form_fechSQL(req.body.fech_ofic), lnNume_cont, req.body.nume_ofic, req.body.rbLiga, req.body.dependen, req.body.clav_proc,
+        req.body.txtDepen, req.body.ligado_a, req.body.tipo_ofic, req.body.clase, req.body.asunto, req.body.remi_nomb, req.body.remi_carg, req.body.dest_nomb,
+        req.body.nota, req.userId, req.body.anio_ingr, req.body.liga_sali, req.body.liga_entr, req.body.tipo_ingr, req.body.dest_carg, req.body.cve, req.id_cent, 
+        (req.body.info_sens = 0?false:true),req.body.tipo_info, req.body.tipo_ingr, (req.body.seccion === '' ? 0 : req.body.seccion)
+    ]
     //console.log(lcSQL)
-    const rows4 = await util.gene_cons(lcSQL);
+    const rows4 = await util.gene_cons(lcSQL, parameters);
 
     lcSQL = `
-        INSERT INTO opc_segu_ofic(id_ofic, fecha, status, USER_ID, nombre) VALUES(${rows4.insertId}, now(), 1, '${req.userId}', '${req.nom_usu}')
+        INSERT INTO opc_segu_ofic(id_ofic, fecha, status, USER_ID, nombre) VALUES(?, now(), 1, ?, ?)
     `
-    const rows5 = await util.gene_cons(lcSQL);
+    const rows5 = await util.gene_cons(lcSQL, [rows4.insertId, req.userId, req.nom_usu]);
 
     if (!!req.body.liga_sali){                       //aplica oficios de salidada ligados
         lcSQL = `
         SELECT id_iden as ID
             FROM gen_oficio 
-            where status < 9 and id_iden in (${req.body.liga_sali})
+            where status < 9 and id_iden in (?)
         `
 
-        const loLigaS = await util.gene_cons(lcSQL)
+        const loLigaS = await util.gene_cons(lcSQL, [req.body.liga_sali])
 
         //console.log(loLigaS)
         let loLigaSa 
@@ -784,11 +802,11 @@ const op_ningrx = (async (req, res) => {
 
         for (var i = 0; i < loLigaS.length; i++){
             lcSQL = `
-            INSERT INTO opc_liga_ofic (ofic_in, ofic_out, tipo, tipo_docu) VALUES(${loLigaS[i].ID}, ${rows4.insertId}, 3, 0)
+            INSERT INTO opc_liga_ofic (ofic_in, ofic_out, tipo, tipo_docu) VALUES(?, ?, 3, 0)
             `
 
             //console.log(lcSQL)
-            loLigaSa = await util.gene_cons(lcSQL)
+            loLigaSa = await util.gene_cons(lcSQL, [loLigaS[i].ID, rows4.insertId])
             //console.log(loLigaSa)
         }
     }
@@ -798,10 +816,10 @@ const op_ningrx = (async (req, res) => {
         lcSQL = `
         SELECT id_ofic as ID
             FROM opc_oficio 
-            where status < 8 and id_ofic in (${req.body.liga_entr})
+            where status < 8 and id_ofic in (?)
         `
 
-        const loLigaI = await util.gene_cons(lcSQL)
+        const loLigaI = await util.gene_cons(lcSQL, [req.body.liga_entr])
 
         //console.log(loLigaI)
         let loLigaIa
@@ -809,11 +827,11 @@ const op_ningrx = (async (req, res) => {
 
         for (var i = 0; i < loLigaI.length; i++){
             lcSQL = `
-            INSERT INTO opc_liga_ofic (ofic_in, ofic_out, tipo, tipo_docu) VALUES(${rows4.insertId}, ${loLigaI[i].ID}, 2, 0)
+            INSERT INTO opc_liga_ofic (ofic_in, ofic_out, tipo, tipo_docu) VALUES(?, ?, 2, 0)
             `
 
             //console.log(lcSQL)
-            loLigaIa = await util.gene_cons(lcSQL)
+            loLigaIa = await util.gene_cons(lcSQL, [rows4.insertId, loLigaI[i].ID])
         
             //console.log(loLigaIa)
         }
@@ -1073,11 +1091,11 @@ const op_hoficx = (async (req, res) => {
         LEFT JOIN 
             gen_doficio d ON d.id_iden = o.ID_IDEN AND d.tipo = 1 
         WHERE 
-            o.cve = '${req.query.cve}' AND YEAR(o.fecha) = ${req.query.anio} AND MONTH(o.fecha) BETWEEN ${(!req.query.mesi?1:req.query.mesi)} AND ${(!req.query.mesf?12:req.query.mesf)}
+            o.cve = ? AND YEAR(o.fecha) = ? AND MONTH(o.fecha) BETWEEN ? AND ?
         ORDER BY 
         o.fecha DESC 
     `
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, [req.query.cve, req.query.anio, (!req.query.mesi?1:req.query.mesi), (!req.query.mesf?12:req.query.mesf)])
     return res.json(rows)
 });
 
@@ -1099,12 +1117,12 @@ const op_ingrx2 = (async (req, res) => {
             LEFT JOIN OPC_CLAS_OFIC cl on o.ID_CLOF = cl.ID_CLOF 
         LEFT JOIN OPC_TIPO_DOCU td ON td.id_pk = IFNULL(o.tipo, 0) 
         LEFT JOIN ser_soli_serv ss ON o.id_ofic = ss.id_oficio 
-        WHERE o.cve = '${req.query.cve}' AND asignado = 0 AND o.status NOT IN(8,9) 
+        WHERE o.cve = ? AND asignado = 0 AND o.status NOT IN(8,9) 
         ORDER BY o.anio DESC, o.nume_cont DESC   
     `
 
     //console.log(lcSQL)
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, [req.query.cve])
     return res.json(rows)
 });
 
@@ -1144,20 +1162,19 @@ const op_ngrupx = (async (req, res) => {
     //console.log(loDeta)
     const lcSQL = `
     INSERT INTO gen_op_grupo (nombre_grupo, id_cent, cambios)
-        values ('${req.body.nombre_grupo}', ${req.id_cent}, CONCAT('ALTA|${req.userId}|',DATE_FORMAT(NOW(), '%m/%d/%Y %H:%I')))
+        values (?, ?, CONCAT('ALTA|',?,'|',DATE_FORMAT(NOW(), '%m/%d/%Y %H:%I')))
     `
     //console.log(lcSQL)
-    const laInsert = await util.gene_cons(lcSQL)
+    const laInsert = await util.gene_cons(lcSQL, [req.body.nombre_grupo, req.id_cent, req.userId])
 
     //console.log(laInsert)
 
     for (var i = 0; i < loDeta.length; i++) {                   //inserta el detalle del oficio
         const lcDeta = `
         INSERT INTO gen_op_grup_deta(id_grupo, id_Cent, nombre, cargo, correo, tipo, tipo_depe, copias) 
-            VALUES(${laInsert.insertId}, ${loDeta[i].servicio}, '${loDeta[i].nombre}', '${loDeta[i].ocupacion}', '${loDeta[i].correo}', 
-                ${loDeta[i].tipo}, ${loDeta[i].tipo_depe}, '${loDeta[i].copias}')        
+            VALUES(?, ?, ?, ?, ?, ?, ?, ?)        
         `
-        const laInsertDeta = await util.gene_cons(lcDeta)
+        const laInsertDeta = await util.gene_cons(lcDeta, [laInsert.insertId, loDeta[i].servicio, loDeta[i].nombre, loDeta[i].ocupacion, loDeta[i].correo, loDeta[i].tipo, loDeta[i].tipo_depe, loDeta[i].copias])
         //console.log(laInsertDeta)
     }
 
@@ -1178,10 +1195,10 @@ const op_reof0x = (async (req, res) => {
 
     let lcSQL = `SELECT cve 
         FROM gen_dere_ofic 
-        WHERE user_id = '${req.userId}' AND cve = '${form.cmbSoli}'
+        WHERE user_id = ? AND cve = ?
     `
     
-    const llDere = await util.gene_cons(lcSQL)
+    const llDere = await util.gene_cons(lcSQL, [req.userId, form.cmbSoli])
 
     //console.log(llDere)
 
@@ -1292,17 +1309,17 @@ const op_rgrafx = (async (req, res) => {
     SELECT mes, SUM(egreso) AS egreso, SUM(ingreso) AS ingreso, SUM(no_asignado) AS no_asignado
         FROM (SELECT DATE_FORMAT(fecha, '%b') AS mes, MONTH(fecha) AS nmes, COUNT(*) AS egreso, 0 AS ingreso, 0 AS no_asignado
                     FROM gen_oficio
-                    WHERE cve = '${req.query.lcCVE}' AND YEAR(fecha) = ${req.query.lnAnio}
+                    WHERE cve = ? AND YEAR(fecha) = ?
                     group BY 1,2
                     UNION ALL 
                     (SELECT DATE_FORMAT(fecha, '%b') AS mes, MONTH(fecha) AS nmes, 0, COUNT(*), ifnull(SUM(if(IFNULL(asignado,0) = 0, 1, 0)), 0)
                         FROM opc_oficio 
-                        WHERE cve = '${req.query.lcCVE}' AND ANIO = ${req.query.lnAnio}
+                        WHERE cve = ? AND ANIO = ?
                         group BY 1,2)) datos
         group BY 1
         ORDER BY nMes
     `
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, [req.query.lcCVE, req.query.lnAnio, req.query.lcCVE, req.query.lnAnio])
     return res.json(rows)
 
 });
@@ -1320,17 +1337,17 @@ const op_rgrafx2 = (async (req, res) => {
     SELECT mes, SUM(ingreso+egreso) AS oficio
         FROM (SELECT DATE_FORMAT(fecha, '%b') AS mes, MONTH(fecha) AS nmes, COUNT(*) AS egreso, 0 AS ingreso
                     FROM gen_oficio
-                    WHERE cve = '${req.query.lcCVE}' AND YEAR(fecha) = ${req.query.lnAnio}
+                    WHERE cve = ? AND YEAR(fecha) = ?
                     group BY 1,2
                     UNION ALL 
                     (SELECT DATE_FORMAT(fecha, '%b') AS mes, MONTH(fecha) AS nmes, 0, COUNT(*)
                         FROM opc_oficio 
-                        WHERE cve = '${req.query.lcCVE}' AND ANIO = ${req.query.lnAnio}
+                        WHERE cve = ? AND ANIO = ?
                         group BY 1,2)) datos
         group BY 1
         ORDER BY nMes
     `
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, [req.query.lcCVE, req.query.lnAnio, req.query.lcCVE, req.query.lnAnio])
     return res.json(rows)
 
 });
@@ -1352,12 +1369,12 @@ const op_rgrafx3 = (async (req, res) => {
 		FROM gen_oficio o INNER JOIN gen_doficio d ON o.id_iden = d.id_iden
 			LEFT JOIN gen_centros c ON d.id_cent = c.id_cent
 			LEFT JOIN gen_otro_cent oc ON d.id_cent = oc.id_cent
-			WHERE d.tipo = 1 AND o.cve = '${req.query.lcCVE}' AND YEAR(o.fecha) = ${req.query.lnAnio}
+			WHERE d.tipo = 1 AND o.cve = ? AND YEAR(o.fecha) = ?
 		group BY 1,2
 		ORDER BY 4 DESC 
 		LIMIT 10
     `
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, [req.query.lcCVE, req.query.lnAnio])
 
     let loDatos = []
     for (i = 0; i < rows.length; i++){
@@ -1398,15 +1415,15 @@ const op_rgrafx4 = (async (req, res) => {
 	FROM (SELECT ifnull(SUM(if(IFNULL(status,0) < 4, 1, 0)),0) AS ependiente, ifnull(SUM(if(IFNULL(status,0) = 4 and IFNULL(status,0) < 8, 1, 0)),0) AS efinalizado, 
                 ifnull(SUM(if(IFNULL(status,0) > 8, 1, 0)),0) AS ecancelado, 0 as ipendiente, 0 AS ifinalizado, 0 AS icancelado
 				FROM gen_oficio
-				WHERE cve = '${req.query.lcCVE}' AND YEAR(fecha) = ${req.query.lnAnio}
+				WHERE cve = ? AND YEAR(fecha) = ?
 				UNION ALL 
 				(SELECT 0,0,0, ifnull(SUM(if(IFNULL(asignado,0) = 0 and IFNULL(status,0) < 8, 1, 0)),0), ifnull(SUM(if(IFNULL(asignado,0) = 1 and IFNULL(status,0) < 8, 1, 0)),0), 
                     ifnull(SUM(if(IFNULL(status,0) > 8, 1, 0)),0)
 					FROM opc_oficio 
-					WHERE cve = '${req.query.lcCVE}' AND ANIO = ${req.query.lnAnio})
+					WHERE cve = ? AND ANIO = ?)
 					) datos
     `
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, [req.query.lcCVE, req.query.lnAnio, req.query.lcCVE, req.query.lnAnio])
 
     return res.json(rows)
 
@@ -1426,10 +1443,10 @@ const busc_oficx = (async (req, res) => {
 
     let lcSQL = `SELECT cve 
         FROM gen_dere_ofic 
-        WHERE user_id = '${req.userId}' AND cve = '${form.cmbSoli}'
+        WHERE user_id = ? AND cve = ?
     `
     
-    const llDere = await util.gene_cons(lcSQL)
+    const llDere = await util.gene_cons(lcSQL, [req.userId, form.cmbSoli])
 
     //console.log(llDere)
 
@@ -1529,9 +1546,9 @@ const new_ord__servx = (async (req, res) => {
     lcSQL = `   
     SELECT o.cve, IFNULL(s.id_depe, '') AS id_depe 
         FROM opc_oficio o LEFT JOIN ser_soli_serv s ON o.ID_OFIC = s.id_oficio 
-        WHERE o.id_ofic = ${req.query.lnOficio}
+        WHERE o.id_ofic = ?
     `
-    const loSeek = await util.gene_cons(lcSQL)
+    const loSeek = await util.gene_cons(lcSQL, [req.query.lnOficio])
     
 /*     lcSQL = `
 
@@ -1553,15 +1570,15 @@ const new_ord__servx = (async (req, res) => {
    lcSQL = `
     SELECT s.cve, s.id_depe, if(ifnull(s.id_depe_padr, 0) = 0, s.id_depe, s.id_depe_padr) AS id_depe_padr, s.depen, s.piso, s.jefe_cargo, 
 			s.codigo, CONCAT(p.apepat, ' ', p.apemat, ' ', p.nombre) AS nombre,
-            if(LOCATE(CONCAT(',',s.id_depe,','), ',${loSeek[0].id_depe},') > 0, "true", "") AS marcado
+            if(LOCATE(CONCAT(',',s.id_depe,','), ',?,') > 0, "true", "") AS marcado
         FROM ser_depen s LEFT JOIN gen_personas p ON s.codigo = p.codigo
-            WHERE cve IN (SELECT cve FROM opc_oficio WHERE id_ofic = ${req.query.lnOficio})
+            WHERE cve IN (SELECT cve FROM opc_oficio WHERE id_ofic = ?)
         ORDER BY if(ifnull(s.id_depe_padr, 0) = 0, s.id_depe, s.id_depe_padr), s.depen, p.APEPAT, p.apemat
     `
 
     //console.log(lcSQL)
 
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, [loSeek[0].id_depe, req.query.lnOficio])
 
     let loPadre = [], loHijo = [], lnDepe = 0, lcNombre = ''
     
@@ -1612,46 +1629,49 @@ const new_ord_servx2 = (async(req, res) => {
             WHERE id_oficio = ${req.body.lnOficio}
     `
     const loSeek = await util.gene_cons(lcSQL)
+    let parameters = []
     //console.log(loSeek)
 
     if (loSeek.length > 0){
         lcInsert = `
-            UPDATE ser_soli_serv SET id_depe = '${req.body.lcAreas}', descrip = '${(!loForm.txtDescrip? '': loForm.txtDescrip)}',  
-            cambios = CONCAT(cambios, CHAR(13,10), 'MODIFICADO|${req.userId}|', DATE_FORMAT(NOW(), '%d/%m/%Y %h:%i %p')) 
+            UPDATE ser_soli_serv SET id_depe = ?, descrip = ?,  
+            cambios = CONCAT(cambios, CHAR(13,10), 'MODIFICADO|',?,'|', DATE_FORMAT(NOW(), '%d/%m/%Y %h:%i %p')) 
             WHERE id_oficio = ${req.body.lnOficio}
     `
+    parameters = [req.body.lcAreas, (!loForm.txtDescrip? '': loForm.txtDescrip), req.userId]
     }
     else {
     lcInsert = `
         INSERT INTO ser_soli_serv (id_cent, id_oficio, id_depe, fecha, descrip, oficio, usua_alta, fech_alta, cambios) 
-            VALUES(${req.id_cent}, ${req.body.lnOficio}, '${req.body.lcAreas}', NOW(), '${(!loForm.txtDescrip? '': loForm.txtDescrip)}', 1, '${req.userId}', 
-            NOW(), CONCAT('ALTA|${req.userId}|', DATE_FORMAT(NOW(), '%d/%m/%Y %h:%i %p')));
+            VALUES(?, ?, ?', NOW(), ?, 1, ?, 
+            NOW(), CONCAT('ALTA|',?,'|', DATE_FORMAT(NOW(), '%d/%m/%Y %h:%i %p')));
 
         UPDATE opc_oficio SET asignado = 1 
-            WHERE id_ofic = ${req.body.lnOficio};
+            WHERE id_ofic = ?;
     `
+    parameters = [req.id_cent, req.body.lnOficio, req.body.lcAreas, (!loForm.txtDescrip? '': loForm.txtDescrip), req.userId, req.userId, req.body.lnOficio]
     }
     
     //console.log(lcInsert)
-    const rowsi = await util.gene_cons(lcInsert)
+    const rowsi = await util.gene_cons(lcInsert, parameters)
 
     lcSQL = `
         SELECT * 
             FROM opc_oficio 
-            WHERE id_ofic = ${req.body.lnOficio}
+            WHERE id_ofic = ?
         `
     
-    const rows = await util.gene_cons(lcSQL)    
+    const rows = await util.gene_cons(lcSQL, [req.body.lnOficio]) 
 
     
     lcSQL = `
         SELECT s.*, (SELECT correo FROM ser_depen WHERE id_depe = s.id_depe_padr LIMIT 1) AS corr_jefe,
                 (SELECT depen FROM ser_depen WHERE id_depe = s.id_depe_padr LIMIT 1) AS depe_titu
             FROM ser_depen s
-            WHERE id_depe IN (${req.body.lcAreas}) AND IFNULL(correo, '') <> ''
+            WHERE id_depe IN (?) AND IFNULL(correo, '') <> ''
         `
     
-    const rows2 = await util.gene_cons(lcSQL)    
+    const rows2 = await util.gene_cons(lcSQL, [req.body.lcAreas])
 
     //console.log(lcSQL)
 
@@ -1693,10 +1713,10 @@ const detalle_ofic_Nox = (async(req,res) =>{
                 c.dependen as txtDepen, o.nomb_dest as dest_nomb, ifnull(o.carg_dest, '') as dest_carg, o.tipo_depe as rbDepe, o.id_tiof as tipo_ofic, o.id_clof as clase, 
                 o.asunto, IFNULL(o.nota, '') as nota, IFNULL(o.info_sens, 0) as info_sens
             FROM opc_oficio o left join gen_centros c on o.id_cent = c.id_cent
-            WHERE id_ofic = ${req.query.lnOficio}
+            WHERE id_ofic = ?
     `
     //console.log(lcSQL)
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, [req.query.lnOficio])
 
     return res.json(rows)
 });
@@ -1758,12 +1778,12 @@ const seg_oficx = (async (req, res) => {
     SELECT s.ID_OFIC, DATE_FORMAT(s.fecha, "%d/%m/%Y %H:%i") AS FECHA, IF(STATUS = 1, "EN PROCESO", IF(STATUS = 8, "APLICADO", "CANCELADO")) AS STATUS,
 		    p.NOMBRE, s.NOTA, s.ID_TRAM
 	    FROM opc_segu_ofic s LEFT JOIN passfile p ON s.user_id = p.user_id
-        WHERE id_ofic = ${req.query.lnOficio}
+        WHERE id_ofic = ?
         ORDER BY s.fecha DESC
 
     `
     //console.log(lcSQL)
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, [req.query.lnOficio])
 
     return res.json(rows)
 
@@ -1817,12 +1837,12 @@ const recu_arch = (async (req, res) => {
     lcSQL = `
     SELECT UID AS id, DESCRIP as nombre
 	    FROM opc_archivo 
-        WHERE id_ofic = ${req.query.lnOficio} ${(!req.query.out?'':' and ofic_out = 1')}
+        WHERE id_ofic = ? ?
         ORDER BY fecha DESC
 
     `
     //console.log(lcSQL)
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, [req.query.lnOficio, (!req.query.out?'':' and ofic_out = 1')])
 
     return res.json(rows)
 
@@ -1838,10 +1858,10 @@ const adownload = (async (req, res) => {
     lcSQL = `
     SELECT *
 	    FROM opc_archivo 
-        WHERE UID = '${req.query.id}'
+        WHERE UID = ?
     `
     //console.log(lcSQL)
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, [req.query.id])
 
     if (!rows){
         return res.json({"error":false, "mensage":"No se econtro el archivo en la base de datos"})
@@ -1881,9 +1901,9 @@ const op_nareax = (async (req, res) => {
     lcSQL = `
     SELECT id_depe AS id,cve, depen AS value, piso, desc_piso 
         FROM ser_depen c 
-        WHERE cve in (SELECT DISTINCT cve FROM GEN_DERE_OFIC WHERE user_id = '${req.userId}')
+        WHERE cve in (SELECT DISTINCT cve FROM GEN_DERE_OFIC WHERE user_id = ?)
     `
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, [req.userId])
 
     return res.json(rows)
 });
@@ -1901,10 +1921,10 @@ const op_uoficio = (async (req, res) => {
     //inserta el registro para guardar el archivo de la oficialía
     let lcSQL = `
     INSERT INTO opc_archivo (id_ofic, descrip, fecha, usuario, ofic_out, uid) 
-        VALUES (${req.body.idOficio}, '${req.file.originalname}', now(), '${req.userId}', ${(!req.body.out?0:1)}, '${util.gene_id_11()}')
+        VALUES (?, ?, now(), ?, ?, ?)
     `
 
-    const laInsert = await util.gene_cons(lcSQL)
+    const laInsert = await util.gene_cons(lcSQL, [req.body.idOficio, req.file.originalname, req.userId, (!req.body.out?0:1), util.gene_id_11()])
     //console.log(laInsert)
 
     const lfOriginal  = path.join(__dirname, "../uploads/", req.file.filename)
@@ -1919,18 +1939,18 @@ const op_uoficio = (async (req, res) => {
         if (!fs.existsSync(lfDestino)) {
             
             lcSQL = `
-    DELETE FROM opc_archivo WHERE id_arch = ${laInsert.insertId}
+    DELETE FROM opc_archivo WHERE id_arch = ?
     `
-            const laDelete = await util.gene_cons(lcSQL)
+            const laDelete = await util.gene_cons(lcSQL, [laInsert.insertId])
             return res.json({"status" : false, "message": "Error al guardar el archivo"});
         }
         //console.log('¡Archivo copiado con éxito!');
     } catch (err) {
         //console.log(err);
         lcSQL = `
-    DELETE FROM opc_archivo WHERE id_arch = ${laInsert.insertId}
+    DELETE FROM opc_archivo WHERE id_arch = ?
     `
-        const laDelete = await util.gene_cons(lcSQL)
+        const laDelete = await util.gene_cons(lcSQL, [laInsert.insertId])
         return res.json({"status" : false, "message": "Error al guardar el archivo"});
     }
 
