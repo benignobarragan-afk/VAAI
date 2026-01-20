@@ -439,9 +439,9 @@ const op_gofic = (async (req, res) => {
     const loUsuario = await util.gene_cons("SELECT IFNULL(apepat, '') as apepat, IFNULL(apemat, '') as apemat, IFNULL(nombre, '') as nombre FROM gen_personas WHERE codigo = " + req.codigo);
 
     lcSQL = `
-    SET lc_time_names = 'es_MX';
-
-    SELECT o.cve, o.idoficio, DATE_FORMAT(o.fecha, 'a %e de %M de %Y') as fecha, o.oficio, o.concepto as oConcepto, IFNULL(o.Diri_nomb, space(70)) as Pnombre, IFNULL(d.corto, '') as area_rh
+    SELECT o.cve, o.idoficio, CONCAT('a ', DAY(o.fecha), ' de ', 
+        ELT(MONTH(o.fecha), 'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'), 
+        ' de ', YEAR(o.fecha)) as fecha, o.oficio, o.concepto as oConcepto, IFNULL(o.Diri_nomb, space(70)) as Pnombre, IFNULL(d.corto, '') as area_rh
             ,IFNULL(o.diri_carg, space(70)) AS Pcargo, IFNULL(o.Aten_nomb, space(70)) as Anombre, IFNULL(o.Aten_carg, space(70)) as Acargo, o.Clav_Soli
             ,o.clave, o.clav_ofic  , IFNULL(o.gdoc,'' ) AS GDOC, YEAR(o.fecha) as anio, IFNULL(o.pers_firma, 0) AS pers_firma
         FROM gen_oficio o LEFT JOIN gen_centros c ON o.clave = c.clave 
@@ -451,14 +451,18 @@ const op_gofic = (async (req, res) => {
     `
     const rows = await util.gene_cons(lcSQL, [req.body.lnIden])
 
+    //console.log(rows)
+
     lcSQL = `
         SELECT t.iniciales, t.plantilla, t.nomb_firm, t.carg_firm, c.dependen 
             FROM gen_tipo_ofic t left join gen_centros c on t.ID_CENT = c.id_cent 
-            WHERE cve = '${rows[0].cve}'
+            WHERE cve = ?
     `
-    const loFirma = await util.gene_cons(lcSQL)
+    const loFirma = await util.gene_cons(lcSQL, [rows[0].cve])
 
-    const loQR = await util.generarQrBase64("https://www.ejemplo.com")
+    //console.log(loFirma)
+
+    const loQR = await util.generarQrBase64("https://siva.udg.mx?valida=")
     
     let lnQR = loQR
     if (loQR.indexOf(",") > 0){
@@ -470,13 +474,13 @@ const op_gofic = (async (req, res) => {
     //console.log(rows)
     let lodirigido = {}, locopia = {}, loautoriza = {}, lovobo = {}, loatencion = {}
 
-    lodirigido = await util.gene_cons("SELECT diri_nomb AS nombre, diri_carg AS cargo FROM gen_doficio WHERE tipo = 1 AND id_iden = " + req.body.lnIden);
-    locopia = await util.gene_cons("SELECT diri_nomb AS nombre, diri_carg AS cargo FROM gen_doficio WHERE tipo = 2 AND id_iden = " + req.body.lnIden);
-    loautoriza = await util.gene_cons("SELECT diri_nomb AS nombre, diri_carg AS cargo FROM gen_doficio WHERE tipo = 3 AND id_iden = " + req.body.lnIden);
-    lovobo = await util.gene_cons("SELECT diri_nomb AS nombre, diri_carg AS cargo FROM gen_doficio WHERE tipo = 4 AND id_iden = " + req.body.lnIden);
-    loatencion = await util.gene_cons("SELECT diri_nomb AS nombre, diri_carg AS cargo FROM gen_doficio WHERE tipo = 5 AND id_iden = " + req.body.lnIden);
+    lodirigido = await util.gene_cons("SELECT diri_nomb AS nombre, diri_carg AS cargo FROM gen_doficio WHERE tipo = 1 AND id_iden = ?", [req.body.lnIden]);
+    locopia = await util.gene_cons("SELECT diri_nomb AS nombre, diri_carg AS cargo FROM gen_doficio WHERE tipo = 2 AND id_iden = ?", [req.body.lnIden]);
+    loautoriza = await util.gene_cons("SELECT diri_nomb AS nombre, diri_carg AS cargo FROM gen_doficio WHERE tipo = 3 AND id_iden = ?", [req.body.lnIden]);
+    lovobo = await util.gene_cons("SELECT diri_nomb AS nombre, diri_carg AS cargo FROM gen_doficio WHERE tipo = 4 AND id_iden = ?", [req.body.lnIden]);
+    loatencion = await util.gene_cons("SELECT diri_nomb AS nombre, diri_carg AS cargo FROM gen_doficio WHERE tipo = 5 AND id_iden = ?", [req.body.lnIden]);
     
-    //console.log(!lodirigido)
+    //console.log(loatencion)
 
     let loCuerpo = {"folio": rows[0].oficio,
                 "fecha": rows[0].fecha,
@@ -517,16 +521,20 @@ const op_gofic = (async (req, res) => {
     //console.log(googleDoc)
 
     if (googleDoc.length > 0){
-        const lcInserta = `
-        UPDATE gen_stat_ofic SET fin = NOW() WHERE cve = '${rows[0].cve}' AND idOficio = ${rows[0].idoficio} AND anio = '${rows[0].fecha.getFullYear().toString().slice(-2)}' AND IFNULL(status,0) = 0 ;
-        
+        let lcInserta = `
+        UPDATE gen_stat_ofic SET fin = NOW() WHERE cve = ? AND idOficio = ? AND anio = ? AND IFNULL(status,0) = 0 ;
+        `
+        let loFinal = await util.gene_cons(lcInserta, [rows[0].cve, rows[0].idoficio, rows[0].fecha.slice(-2)]);
+        lcInserta = `
         INSERT INTO gen_stat_ofic (idOficio, cve, anio, status, inicio, usuario, id_iden) 
-			VALUES (${rows[0].idoficio}, '${rows[0].cve}', '${rows[0].fecha.getFullYear().toString().slice(-2)}', 1, NOW(), '${req.userId}', ${req.body.lnIden});
-
-		UPDATE gen_oficio SET status = 1, gdoc = '${googleDoc}' WHERE id_iden = ${req.body.lnIden}
+			VALUES (?, ?, ?, 1, NOW(), ?, ?);
+        `
+        loFinal = await util.gene_cons(lcInserta, [rows[0].idoficio, rows[0].cve, rows[0].fecha.slice(-2), req.userId, req.body.lnIden]);
+        lcInserta = `
+		UPDATE gen_oficio SET status = 1, gdoc = ? WHERE id_iden = ?
         `
         //console.log(lcInserta)
-        loFinal = await util.gene_cons(lcInserta);
+        loFinal = await util.gene_cons(lcInserta, [googleDoc, req.body.lnIden]);
         //console.log(loFinal)
 
         return res.json({"status": true, "message":"El documento se creó correctamente"})
@@ -1818,14 +1826,16 @@ const seg_oficx2 = (async (req, res) => {
     //return res.json([])
     lcSQL = `
     INSERT INTO opc_segu_ofic (id_ofic, fecha, STATUS, nota, user_id, id_tram) 
-        VALUES (${req.body.lnOficio}, now(), ${loForm.cmbStatus}, '${loForm.txtNota}', '${req.userId}', ${(!loForm.txtTramite?0:loForm.txtTramite)});
-    
-    UPDATE opc_oficio SET status = ${loForm.cmbStatus} WHERE id_ofic = ${req.body.lnOficio}
+        VALUES (?, now(), ?, ?, ?, ?);
     `
-
+    let rows = await util.gene_cons(lcSQL, [req.body.lnOficio, loForm.cmbStatus, loForm.txtNota, req.userId, (!loForm.txtTramite?0:loForm.txtTramite)])
+    lcSQL = `
+    UPDATE opc_oficio SET status = ? WHERE id_ofic = ?
+    `
+    rows = await util.gene_cons(lcSQL, [loForm.cmbStatus, req.body.lnOficio])
 
     //console.log(lcSQL)
-    const rows = await util.gene_cons(lcSQL)
+    
 
     return res.json({"error":false, "mensage":"El seguimiento se guardo correctamente"})
 

@@ -35,14 +35,15 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: [
-        "'self'", 
-        "'unsafe-inline'", 
-        "'unsafe-eval'"
-      ], 
-      styleSrc: ["'self'", "'unsafe-inline'"], 
-      fontSrc: ["'self'"], 
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      // ESTA LÍNEA ES LA QUE TE FALTA PARA LOS EVENTOS INLINE
+      scriptSrcAttr: ["'unsafe-inline'"], 
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      // Para solucionar el error de appendChild (image_5a8b56)
+      styleSrcAttr: ["'unsafe-inline'"], 
       imgSrc: ["'self'", "data:"],
+      fontSrc: ["'self'"],
+      upgradeInsecureRequests: [] // Esto evita conflictos si aún no tienes SSL
     },
   },
 }));

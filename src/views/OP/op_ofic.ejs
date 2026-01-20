@@ -100,8 +100,9 @@
 						//	</a>`
 						return `<div class='webix_el_button' style='cursor: pointer;' align='center'><a href='${obj.doc}' target='_blank'><i style='font-size:32px;color:#2b96cc;' class='far fa-file-word'></i></a></div>`
 						}else{
-							return `<input type="button" name="btnGenera" id="btnGenera" value="Generar" 
-								onclick="gene_gdoc('${obj.cve.trim()}','${obj.idoficio}','${obj.anio}','${obj.id}' );">`
+							/* return `<input type="button" name="btnGenera" id="btnGenera" value="Generar" 
+								onclick="gene_gdoc('${obj.cve.trim()}','${obj.idoficio}','${obj.anio}','${obj.id}' );">` */
+							return `<input type="button" style='cursor: pointer;' class="btn_generar_word" value="Generar">`;
 						}
 					},
 				},
@@ -175,6 +176,18 @@
 						}
 						
 						// Evita comportamientos extraños del navegador
+						return false; 
+					},
+
+					"btn_generar_word": function(ev, id) {
+						// 1. Obtenemos los datos de la fila clicada
+						const obj = this.getItem(id);
+						
+						// 2. Ejecutamos tu función original de forma segura
+						// Usamos .trim() igual que lo tenías antes
+						gene_gdoc(obj.cve.trim(), obj.idoficio, obj.anio, obj.id);
+						
+						// 3. Evitamos que el evento haga cosas raras
 						return false; 
 					}
 				}
