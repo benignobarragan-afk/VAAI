@@ -509,10 +509,10 @@ const busc_ofic = (async (req, res) => {
     let lcSQL = `
         SELECT id_cent, cve, depen, clave 
             FROM GEN_TIPO_OFIC 
-            WHERE cve in (SELECT DISTINCT cve FROM GEN_DERE_OFIC WHERE user_id = ${req.userId}) 
+            WHERE cve in (SELECT DISTINCT cve FROM GEN_DERE_OFIC WHERE user_id = ?) 
         `
     
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, [req.userId])
     //console.log(req.query)
     //console.log(rows)
     
@@ -526,15 +526,18 @@ const new_ord__serv = (async (req, res) => {
         return res.render("sin_derecho")
     }
 
-    lnOficio = req.query.lnOficio
-    loClave = req.query.loClave
-    loDepe = req.query.loDepe
-    loTexto = req.query.loTexto
 
+    lnOficio = req.query.lnOficio
     //console.log(req.query)
     //console.log(lnOficio)
+    let lcSQL = `
+    SELECT id_serv_pk, descrip, usua_alta, fech_alta, usua_cerr, fech_cerr
+        FROM ser_soli_serv 
+        WHERE id_oficio = ?
+    `
+    const rows = await util.gene_cons(lcSQL, [lnOficio])
 
-    return res.render("op/new_ord__serv", {lnOficio})
+    return res.render("op/new_ord__serv", {lnOficio, loTexto:rows[0].descrip})
 })
 
 const seg_ofic = (async (req, res) => {

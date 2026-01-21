@@ -782,7 +782,7 @@ const op_ningrx = (async (req, res) => {
     `
     console.log(req.body.info_sens)
 
-    parameters = [req.centro, outil.form_fechSQL(req.body.fech_ofic), lnNume_cont, req.body.nume_ofic, req.body.rbLiga, req.body.dependen, req.body.clav_proc,
+    parameters = [req.centro, outil.form_fechSQL(req.body.fech_ofic), lnNume_cont, req.body.nume_ofic, req.body.rbLiga, (lnNuev_cent>0?lnNuev_cent:req.body.dependen), req.body.clav_proc,
         req.body.txtDepen, req.body.ligado_a, req.body.tipo_ofic, req.body.clase, req.body.asunto, req.body.remi_nomb, req.body.remi_carg, req.body.dest_nomb,
         req.body.nota, req.userId, req.body.anio_ingr, req.body.liga_sali, req.body.liga_entr, req.body.tipo_ingr, req.body.dest_carg, req.body.cve, req.id_cent, 
         (req.body.info_sens = 0?false:true),req.body.tipo_info, req.body.tipo_ingr, (req.body.seccion === '' ? 0 : req.body.seccion)
@@ -1668,9 +1668,12 @@ const new_ord_servx2 = (async(req, res) => {
     rowsi = await util.gene_cons(lcInsert, [req.body.lnOficio])
 
     lcSQL = `
-        SELECT * 
-            FROM opc_oficio 
-            WHERE id_ofic = ?
+        SELECT o.*, p.nombre as envio, c.dependen as depe_envi
+            FROM opc_oficio o LEFT JOIN opc_segu_ofic s ON o.id_ofic = s.id_ofic
+            	LEFT JOIN passfile p ON s.user_id = p.user_id
+            	LEFT JOIN gen_centros c ON p.id_cent = c.id_cent
+            WHERE o.id_ofic = ?
+
         `
     
     const rows = await util.gene_cons(lcSQL, [req.body.lnOficio]) 
@@ -1689,7 +1692,16 @@ const new_ord_servx2 = (async(req, res) => {
 
     //console.log(rows2)
     //console.log(rows)
-
+    const opciones = { 
+        weekday: 'short', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false 
+    };
+    
     for(i=0; i < rows2.length; i++){
         //[RESPONSABLE],[UNIDAD],[NUME_OFIC],[FECHA],[ORIGEN],[ASUNTO],[NUME_CONT]
         let loCampo = []
@@ -1697,10 +1709,11 @@ const new_ord_servx2 = (async(req, res) => {
         loCampo.push(rows2[i].jefe_cargo)
         loCampo.push((!rows2[i].DEPEN?rows2[i].depe_titu:rows2[i].DEPEN))
         loCampo.push(rows[0].DESCRIP)
-        loCampo.push(rows[0].FECHA)
+        loCampo.push(new Intl.DateTimeFormat('es-MX', opciones).format(rows[0].FECHA))
         loCampo.push(rows[0].NOMB_PROC)
         loCampo.push(rows[0].ASUNTO)
         loCampo.push(rows[0].NUME_CONT)
+        loCampo.push(rows[0].envio.toLowerCase().replace(/\b\w/g, s => s.toUpperCase()) + ' (' + rows[0].depe_envi + ')')
 
         //console.log(rows2[i].jefe_cargo)
         lcResp = outil.envi_corr(3, rows2[i].CORREO+(!rows2[i].corr_jefe, '', ';'+rows2[i].corr_jefe), loCampo);
@@ -1865,11 +1878,31 @@ const recu_arch = (async (req, res) => {
 
 const adownload = (async (req, res) => {
 
-    if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
-    {
-        return res.render("sin_derecho")
-    }
+    let lcSQL = ''
+    
+    if (req.groups.indexOf(",OP_TOTA,") < 0){
+        if (req.groups.indexOf(",OFICIO,") < 0){        //si no tiene derechos
+            return res.render("sin_derecho")
+        }
+        else {
+            lcSQL = `
+        SELECT * 
+            FROM ser_depen 
+            WHERE locate(id_depe, (SELECT id_depe 
+                                                FROM ser_soli_serv 
+                                                WHERE id_oficio = ? LIMIT 1)) AND codigo = ?
+        `
+            console.log(lcSQL)
+            const dere = await util.gene_cons(lcSQL, [req.query.id, req.userId])
 
+            console.log(dere)
+
+            if (!dere || dere.length <= 0){
+                return res.render("sin_derecho")
+            }
+        }
+    }
+        
     lcSQL = `
     SELECT *
 	    FROM opc_archivo 
@@ -1878,8 +1911,8 @@ const adownload = (async (req, res) => {
     //console.log(lcSQL)
     const rows = await util.gene_cons(lcSQL, [req.query.id])
 
-    if (!rows){
-        return res.json({"error":false, "mensage":"No se econtro el archivo en la base de datos"})
+    if (!rows || rows.length <= 0){
+        return res.send("No se econtro el archivo en la base de datos")
     }
 
     //console.log(rows)
@@ -1900,8 +1933,6 @@ const adownload = (async (req, res) => {
             console.error("Error en la descarga:", err);
         }
     });
-
-
 });
 
 const op_nareax = (async (req, res) => {
@@ -1971,10 +2002,7 @@ const op_uoficio = (async (req, res) => {
 
     return res.json({"status" : "server", "message": "El archivo se cargo correctamente"});
 
-
-
 });
-
 
 module.exports = {
     op_cucsx2,

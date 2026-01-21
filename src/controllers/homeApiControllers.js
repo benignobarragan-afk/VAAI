@@ -192,13 +192,21 @@ const usuariosx = (async (req, res) => {
         return res.render("sin_derecho")
     }
 
-    console.log(req.query)
-    let lcWhere = (!req.query.txtCodigo?'':" user_id like '%" + req.query.txtCodigo + "%'")
+    let lcWhere = '', parameters = []
+    if(!!req.query.txtCodigo){
+        lcWhere += (lcWhere.length > 0 ? " AND " : "") + "p.user_id LIKE ?";
+        parameters.push(`%${req.query.txtCodigo}%`);
+    }
+
     if (!!req.query.txtNombre){
-        lcWhere = lcWhere + (lcWhere.length > 0?" AND ":"") + util.cade_busc("p.nombre", req.query.txtNombre)
+        /* lcWhere = lcWhere + (lcWhere.length > 0?" AND ":"") + util.cade_busc("p.nombre", req.query.txtNombre) */
+        lcWhere += (lcWhere.length > 0 ? " AND " : "") + "p.nombre LIKE ?";
+        parameters.push(`%${req.query.txtNombre}%`);
     }
     if (!!req.query.txtDepen){
-        lcWhere = lcWhere + (lcWhere.length > 0?" AND ":"") + util.cade_busc("c.dependen", req.query.txtDepen)
+        /* lcWhere = lcWhere + (lcWhere.length > 0?" AND ":"") + util.cade_busc("c.dependen", req.query.txtDepen) */
+        lcWhere += (lcWhere.length > 0 ? " AND " : "") + "c.dependen LIKE ?";
+        parameters.push(`%${req.query.txtDepen}%`);
     }
 
     const lcSQL = `
@@ -207,7 +215,7 @@ const usuariosx = (async (req, res) => {
         ${(lcWhere.length > 0?'WHERE ' + lcWhere:'')}
     `
     console.log(lcSQL)
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, parameters)
     return res.json(rows)
 
 });

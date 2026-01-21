@@ -163,7 +163,7 @@ const gene_id_11 = () => {
     // 1. Generar 8 bytes de datos aleatorios (64 bits)
     // Usamos 8 bytes porque 8 bytes * 8 bits/byte = 64 bits. 
     // Al codificar 64 bits en Base64, obtenemos ~11 caracteres.
-    const buffer = crypto.randomBytes(8); 
+    const buffer = crypto.randomBytes(12); 
 
     // 2. Codificar el buffer binario en Base64 URL-Safe
     //    'base64url' es mejor porque reemplaza los caracteres '+' y '/' 

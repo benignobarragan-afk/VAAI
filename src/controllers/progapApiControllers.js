@@ -198,6 +198,9 @@ const progap_form01 = ( async (req, res) => {
     `
     const laAlumno = await util.gene_cons(lcSQL)
 
+    const qrData = "https://progap/validador/" + util.gene_id_11();
+    const qrImage = await util.generarQrBase64(qrData);
+
     if (!laAlumno[1][0]){
         return res.render("sin_derecho")
     }
@@ -209,7 +212,7 @@ const progap_form01 = ( async (req, res) => {
     doc.pipe(res);                                       // HTTP response
 
     doc.fontSize(11);
-    doc.moveDown(3);
+    doc.moveDown(1);
     doc.font('Helvetica-Bold');
     doc.text(`${config.VICERRECTOR}`, { continued: true });
     doc.font('Helvetica');
@@ -281,6 +284,7 @@ ${laAlumno[1][0].fecha_texto}`, {align: 'center'});
     .stroke();
     doc.moveDown(1);
    doc.text ( `${laAlumno[1][0].nombre}`, {align: 'center'});
+   doc.image(qrImage, 450, 50, { width: 80 });
     doc.end();
 });
 
