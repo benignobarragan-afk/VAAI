@@ -91,10 +91,8 @@
                             id: "detalle", width: 50,sort: "int", css: { 'text-align': 'center' }, 
                             header: [{text:"",css:"my_style", rowspan:2}, {text:""}],
                             template:(obj)=>{
-                                return `
-                                    <a href="#" onClick="window.parent.parent.deta_sali('${obj.cve}',${obj.idoficio},${obj.anio},${obj.id_iden},'op_reof0.fwx');">
-                                        <i style='font-size:26px;color:#2b96cc;' class='fa-solid fa-magnifying-glass'></i>
-                                    </a>`
+                                return `<i style='font-size:26px;color:#2b96cc;cursor:pointer;' 
+                                        class='fa-solid fa-magnifying-glass btn_ver_detalle'></i>`;
                             }
                         },
                         {
@@ -170,6 +168,15 @@
                             }],
                         },
                         ],
+                        onClick: {
+                            // Esta función se activa al hacer clic en cualquier elemento con la clase 'btn_ver_grupo'
+                            "btn_ver_detalle": function(ev, id) {
+                                // Obtenemos el objeto de la fila seleccionada
+                                const obj = this.getItem(id); 
+                                deta_grup(obj.id);
+                                return false; 
+                            }
+                        }
                     },
                 ]
             });

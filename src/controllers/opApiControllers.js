@@ -1557,6 +1557,7 @@ const new_ord__servx = (async (req, res) => {
         WHERE o.id_ofic = ?
     `
     const loSeek = await util.gene_cons(lcSQL, [req.query.lnOficio])
+    console.log(loSeek)
     
 /*     lcSQL = `
 
@@ -1578,15 +1579,15 @@ const new_ord__servx = (async (req, res) => {
    lcSQL = `
     SELECT s.cve, s.id_depe, if(ifnull(s.id_depe_padr, 0) = 0, s.id_depe, s.id_depe_padr) AS id_depe_padr, s.depen, s.piso, s.jefe_cargo, 
 			s.codigo, CONCAT(p.apepat, ' ', p.apemat, ' ', p.nombre) AS nombre,
-            if(LOCATE(CONCAT(',',s.id_depe,','), ',?,') > 0, "true", "") AS marcado
+            if(LOCATE(CONCAT(',',s.id_depe,','), ',${loSeek[0].id_depe},') > 0, "true", "") AS marcado
         FROM ser_depen s LEFT JOIN gen_personas p ON s.codigo = p.codigo
             WHERE cve IN (SELECT cve FROM opc_oficio WHERE id_ofic = ?)
         ORDER BY if(ifnull(s.id_depe_padr, 0) = 0, s.id_depe, s.id_depe_padr), s.depen, p.APEPAT, p.apemat
     `
 
-    //console.log(lcSQL)
+    console.log(lcSQL)
 
-    const rows = await util.gene_cons(lcSQL, [loSeek[0].id_depe, req.query.lnOficio])
+    const rows = await util.gene_cons(lcSQL, [req.query.lnOficio])
 
     let loPadre = [], loHijo = [], lnDepe = 0, lcNombre = ''
     
@@ -1617,7 +1618,7 @@ const new_ord_servx2 = (async(req, res) => {
         return res.render("sin_derecho")
     }
 
-    let lcInsert, lcSQL 
+    let lcInsert = '', lcSQL = ''
     //console.log(req.body);
 
     const loForm = JSON.parse(req.body.form)
@@ -1645,23 +1646,26 @@ const new_ord_servx2 = (async(req, res) => {
             UPDATE ser_soli_serv SET id_depe = ?, descrip = ?,  
             cambios = CONCAT(cambios, CHAR(13,10), 'MODIFICADO|',?,'|', DATE_FORMAT(NOW(), '%d/%m/%Y %h:%i %p')) 
             WHERE id_oficio = ${req.body.lnOficio}
-    `
-    parameters = [req.body.lcAreas, (!loForm.txtDescrip? '': loForm.txtDescrip), req.userId]
+        `
+        parameters = [req.body.lcAreas, (!loForm.txtDescrip? '': loForm.txtDescrip), req.userId]
     }
     else {
-    lcInsert = `
-        INSERT INTO ser_soli_serv (id_cent, id_oficio, id_depe, fecha, descrip, oficio, usua_alta, fech_alta, cambios) 
-            VALUES(?, ?, ?', NOW(), ?, 1, ?, 
-            NOW(), CONCAT('ALTA|',?,'|', DATE_FORMAT(NOW(), '%d/%m/%Y %h:%i %p')));
+        lcInsert = `
+            INSERT INTO ser_soli_serv (id_cent, id_oficio, id_depe, fecha, descrip, oficio, usua_alta, fech_alta, cambios) 
+                VALUES(?, ?, ?, NOW(), ?, 1, ?, 
+                NOW(), CONCAT('ALTA|',?,'|', DATE_FORMAT(NOW(), '%d/%m/%Y %h:%i %p')));
+        `
+        parameters = [req.id_cent, req.body.lnOficio, req.body.lcAreas, (!loForm.txtDescrip? '': loForm.txtDescrip), req.userId, req.userId]
+    }
 
+    let rowsi = await util.gene_cons(lcInsert, parameters)
+    
+    lcInsert = `
         UPDATE opc_oficio SET asignado = 1 
             WHERE id_ofic = ?;
     `
-    parameters = [req.id_cent, req.body.lnOficio, req.body.lcAreas, (!loForm.txtDescrip? '': loForm.txtDescrip), req.userId, req.userId, req.body.lnOficio]
-    }
-    
     //console.log(lcInsert)
-    const rowsi = await util.gene_cons(lcInsert, parameters)
+    rowsi = await util.gene_cons(lcInsert, [req.body.lnOficio])
 
     lcSQL = `
         SELECT * 
@@ -1698,6 +1702,7 @@ const new_ord_servx2 = (async(req, res) => {
         loCampo.push(rows[0].ASUNTO)
         loCampo.push(rows[0].NUME_CONT)
 
+        //console.log(rows2[i].jefe_cargo)
         lcResp = outil.envi_corr(3, rows2[i].CORREO+(!rows2[i].corr_jefe, '', ';'+rows2[i].corr_jefe), loCampo);
         
     }
@@ -1719,7 +1724,7 @@ const detalle_ofic_Nox = (async(req,res) =>{
         SELECT o.cve, o.anio as anio_ingr, o.nume_cont, DATE_FORMAT(o.fech_ofic, '%d/%m/%Y') as fech_ofic, DATE_FORMAT(o.fecha, '%d/%m/%Y') AS fech_rece, 
                 DATE_FORMAT(o.fecha, '%H:%i') AS hora_rece, o.descrip as nume_ofic, o.nomb_remi as remi_nomb, o.carg_remi as remi_carg, ifnull(o.tipo_info, 0) as tipo_info, 
                 c.dependen as txtDepen, o.nomb_dest as dest_nomb, ifnull(o.carg_dest, '') as dest_carg, o.tipo_depe as rbDepe, o.id_tiof as tipo_ofic, o.id_clof as clase, 
-                o.asunto, IFNULL(o.nota, '') as nota, IFNULL(o.info_sens, 0) as info_sens
+                o.asunto, IFNULL(o.nota, '') as nota, IFNULL(o.info_sens, 0) as info_sens, o.tipo_ingr
             FROM opc_oficio o left join gen_centros c on o.id_cent = c.id_cent
             WHERE id_ofic = ?
     `

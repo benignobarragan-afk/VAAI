@@ -31,7 +31,7 @@ const app = express();
   },
 })); */
 
-app.use(helmet({
+/* app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
@@ -43,10 +43,11 @@ app.use(helmet({
       styleSrcAttr: ["'unsafe-inline'"], 
       imgSrc: ["'self'", "data:"],
       fontSrc: ["'self'"],
+      frameSrc: ["'self'"],
       upgradeInsecureRequests: [] // Esto evita conflictos si aún no tienes SSL
     },
   },
-}));
+})); */
 
 app.set('trust proxy', 'loopback');
 

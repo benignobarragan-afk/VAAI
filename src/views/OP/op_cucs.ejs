@@ -42,11 +42,12 @@ const llNombramiento = lcDerecho.indexOf(",OP_NOMBRA,") > 0
 			overflow: hidden;
 		}
 
-		.mi_toolbar_color {
-/*			background-color: #F0F8FF !important; /* Color Azul Pálido */
-/*			color: #000000; /* Color del texto dentro del toolbar */
-		}
-
+/* 		.mi_toolbar_color {
+			background-color: #F0F8FF !important; /* Color Azul Pálido 
+			color: #000000; /* Color del texto dentro del toolbar 
+ 		} 
+*/
+ 
 		.div_pend {
 			width: 25px;
 			height: 16px;
@@ -55,7 +56,7 @@ const llNombramiento = lcDerecho.indexOf(",OP_NOMBRA,") > 0
 			font-size: 11px;
 			vertical-align: middle;
 			text-align: center;
-			/*background-color: rgb(243, 74, 74);*/
+			background-color: rgb(243, 74, 74);
 			display: inline-block;
 		}
 
@@ -66,6 +67,7 @@ const llNombramiento = lcDerecho.indexOf(",OP_NOMBRA,") > 0
 		.con_pend {
 			background-color: rgb(243, 74, 74);
 		}
+
 	</style>
 
 </head>
@@ -90,7 +92,8 @@ webix.ready(function(){
 					view: "toolbar", id: "toolbar2" + xx,
 					cols: [
 						{ view: "label", label: "Detalle del oficio" },
-						{ view: "icon", icon: 'mdi mdi-fullscreen', click:()=>{
+						{ view: "icon", icon: 'mdi mdi-fullscreen', 
+						click:()=>{
 							var ventana = $$('w2' + xx)
 							ventana.config.move = !ventana.config.move
 						  ventana.config.fullscreen = !ventana.config.fullscreen;
@@ -106,8 +109,7 @@ webix.ready(function(){
 				}
 			}).show();
 		}
-	function deta_ingr(oficio, asignado = 0) {		
-		console.log(oficio)
+	function deta_ingr(oficio, asignado = 0) {	
 		xx++;
 		webix.ui({
 			view: "window", id: "w3" + xx,
@@ -128,8 +130,8 @@ webix.ready(function(){
 			},
 			body: {
 				view: "iframe",
-				src: "/op/op_detalle?xx=" + xx + "&lnOficio=" + oficio + "&lnAsignado=" + asignado 
-			}
+				src: "/op/op_detalle?xx=" + xx + "&lnOficio=" + oficio + "&lnAsignado=" + asignado
+			},
 		}).show();
 	}
 	function deta_sali(cve, oficio, anio, id_iden, padre) {
@@ -247,10 +249,11 @@ webix.ready(function(){
 					{ view: "icon", icon: 'mdi mdi-fullscreen', click:()=>{
 						var ventana = $$('op_admi' + xx)
 						ventana.config.move = !ventana.config.move
-					  ventana.config.fullscreen = !ventana.config.fullscreen;
-					  ventana.setPosition(0,0)
-					  ventana.resize();
-					} },
+						ventana.config.fullscreen = !ventana.config.fullscreen;
+						ventana.setPosition(0,0)
+						ventana.resize();
+						} 
+					},
 					{ view: "icon", icon: 'mdi mdi-close', click: "$$('op_admi" + xx + "').close();" }
 				]
 			},
