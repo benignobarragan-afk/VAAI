@@ -1,115 +1,217 @@
-<!DOCTYPE html>
-<html>
-<%
-/*
-llOP_total = derechos("OP_TOTA", .t.)
-llDirectorio = derechos("DIRE_RECT", .t.)
-llLibro		= DERECHOS("OP_LIBRO", .t.)
-llRecon		= DERECHOS("RECONOMIENTO", .t.)
-llContrato = DERECHOS("OP_CONTRATO", .t.)
-llLlamada = DERECHOS("OP_LLAMADA", .t.)
-llConvenio = DERECHOS("OP_CONVENIO", .t.)
-llNombramiento = DERECHOS("OP_NOMBRA", .T.)
-*/
+<%- include('../partials/header'); %>
 
-const llOP_total    = lcDerecho.indexOf(",OP_TOTA,") > 0 
-const llDirectorio  = lcDerecho.indexOf(",DIRE_RECT,") > 0 
-const llLibro	    = lcDerecho.indexOf(",OP_LIBRO,") > 0 
-const llRecon		= lcDerecho.indexOf(",RECONOMIENTO,") > 0
-const llContrato    = lcDerecho.indexOf(",OP_CONTRATO,") > 0 
-const llLlamada     = lcDerecho.indexOf(",OP_LLAMADA,") > 0 
-const llConvenio    = lcDerecho.indexOf(",OP_CONVENIO,") > 0 
-const llNombramiento = lcDerecho.indexOf(",OP_NOMBRA,") > 0 
-%>
-<head>
+<style>
+  /* Clase base para los círculos */
+  .tree_badge {
+    border-radius: 12px;
+    padding: 2px 6px;
+    font-size: 10px;
+    font-weight: bold;
+    color: white;
+    margin-left: 5px;
+    min-width: 18px;
+    display: inline-block;
+    text-align: center;
+  }
+  .bg_azul { background: #2a8dff; }
+  .bg_rojo { background: #f34a4a; }
+</style>
 
-	<title></title>
-	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-	<link rel="stylesheet" href="/style.css" type="text/css" media="screen" />
-
-	<link rel="stylesheet" type="text/css" href="/skins/terrace/dhtmlx.css" />
-	<link rel="stylesheet" type="text/css" href="/webix/codebase/webix.css" />
-	<script src="/codebase/dhtmlx.js"></script>
-	<script src="/webix/codebase/webix.js"></script>
-
-	<style>
-		html,
-		body {
-			width: 100%;
-			height: 100%;
-			margin: 0px;
-			padding: 0px;
-			overflow: hidden;
-		}
-
-/* 		.mi_toolbar_color {
-			background-color: #F0F8FF !important; /* Color Azul Pálido 
-			color: #000000; /* Color del texto dentro del toolbar 
- 		} 
-*/
- 
-		.div_pend {
-			width: 25px;
-			height: 16px;
-			color: white;
-			border-radius: 50px;
-			font-size: 11px;
-			vertical-align: middle;
-			text-align: center;
-			background-color: rgb(243, 74, 74);
-			display: inline-block;
-		}
-
-		.sin_pend {
-			background-color: rgb(42, 141, 255);
-		}
-
-		.con_pend {
-			background-color: rgb(243, 74, 74);
-		}
-
-	</style>
-
-</head>
 <script>
-
 webix.ready(function(){
-	sacaPendientes();
-	mues_noti();
+  webix.ui({  
+    view:"accordion",
+    multi:true, // Permite tener varios paneles abiertos o cerrados
+    cols:[
+      { 
+        header:"Menu Oficialía", 
+        width:300,
+        // El body debe ser un objeto directo, no un array []
+        body:{
+          rows:[
+            {
+              view:"toolbar", height:66,
+              cols:[
+                { view:"button", type:"iconTop", icon:"mdi mdi-file-document-arrow-right-outline", label:"Ofic. sal.", click: function() {
+					cargarPagina('2a');
+					var col = $$("columna_principal");
+                    col.define("header", "Oficialía: Nuevo oficio" );
+                    col.refresh();
+				} },
+                { view:"button", type:"iconTop", icon:"mdi mdi-inbox-arrow-down-outline", label:"Ofic ent.", click: function() {
+					cargarPagina('3a');
+					var col = $$("columna_principal");
+                    col.define("header", "Oficialía: Ingresar documento" );
+                    col.refresh();
+				} },
+                { view:"button", type:"iconTop", icon:"mdi mdi-account-cog-outline", label:"Administrar", click: function() {
+					cargarPagina('5a');
+					var col = $$("columna_principal");
+                    col.define("header", "Oficialía: Administra las oficialias" );
+                    col.refresh();
+				} },
+              ]
+            },
+            {
+              view:"toolbar", height:66,
+              cols:[
+                { view:"button", type:"iconTop", icon:"mdi mdi-text-box-search-outline", label:"Buscar sal.", click: function() {
+					cargarPagina('4a');
+					var col = $$("columna_principal");
+                    col.define("header", "Oficialía: Buscar oficios salida" );
+                    col.refresh();
+				} },
+                { view:"button", type:"iconTop", icon:"mdi mdi-clipboard-text-search-outline", label:"Buscar ent.", click: function() {
+					cargarPagina('4c');
+					var col = $$("columna_principal");
+                    col.define("header", "Oficialía: Buscar oficios entrada" );
+                    col.refresh();
+				} },
+                { view:"button", type:"iconTop", icon:"mdi mdi-video", label:"Videos", click: function() {
+					cargarPagina('5b');
+					var col = $$("columna_principal");
+                    col.define("header", "Oficialía: Videos tutoriales" );
+                    col.refresh();
+				} },
+              ]
+            },
+            {
+            // Aquí podrías agregar el Tree que teníamos antes
+            view:"tree",
+            id: "myTree",
+            //width:300,
+            type: {
+                template: function(obj, common) {
+                // 1. Iconos de control (+/-) e icono de la rama
+                let html = common.icon(obj, common);
+                
+                if (obj.icon) {
+                    html += "<span class='webix_icon " + obj.icon + "' style='color:#2b96cc; margin-right:5px;'></span>";
+                } else {
+                    html += "<span class='webix_icon fas fa-folder' style='color:#f1c40f; margin-right:5px;'></span>";
+                }
+
+                // 2. Lógica de Colores: Rojo si > 0, Azul si es 0
+                if (obj.cant !== undefined) {
+                    let colorCant = (parseInt(obj.cant) > 0) ? "bg_rojo" : "bg_azul";
+                    html += `<span class="tree_badge ${colorCant}">${obj.cant}</span>`;
+                }
+
+                if (obj.modi !== undefined) {
+                    let colorModi = (parseInt(obj.modi) > 0) ? "bg_rojo" : "bg_azul";
+                    html += `<span class="tree_badge ${colorModi}">${obj.modi}</span>`;
+                }
+
+                // 3. Texto del nodo
+                html += "<span style='margin-left:3px; vertical-align:middle;'>" + obj.value + "</span>";
+
+                return html;
+                }
+            },
+              data: [
+				//{ id: "1", value: "Oficialía de partes", icon: "mdi mdi-book-open-outline", open: true, data: [
+                    { id: "2", value: "Oficialía de salida", icon:"mdi mdi-file-document-arrow-right-outline", open: true, data: [
+                        { id: "2a", icon:"mdi mdi-plus-circle-outline", value: "Nuevo oficio" },
+                        { id: "2b", icon:"mdi mdi-history", value: "Histórico de oficio" },
+                        { id: "2c", icon:"mdi mdi-account-multiple", value: "Gurpos" },
+                        { id: "2d", value: "Pendientes de enviar", icon:"mdi mdi-send-clock-outline", open: true, data: [
+                        <%for(i=0; i<rows.length; i++){%>
+                            { id: "<%=rows[i].cve%>", icon:"mdi mdi-home-city-outline", value: "(<%=rows[i].cve%>) <%=rows[i].descrip%>", cant:<%=rows[i].cant%>, modi:<%=rows[i].modificado%>},
+                        <%}%>
+                    ]},
+                      ]},
+                  { id: "3", icon:"mdi mdi-inbox-arrow-down-outline", value: "Oficialía de entrada", open: true, data:[
+                        { id: "3a", icon:"mdi mdi-location-enter", value: "Ingresar documento" },
+                        { id: "3b", icon:"mdi mdi-content-cut", value: "Corte de entrega" },
+                        { id: "3c", icon:"mdi mdi-clipboard-account-outline", value: "Oficios asignados" },
+                  ]},
+                  { id: "4", icon:"mdi mdi-inbox-arrow-down-outline", value: "Reportes", open: true, data:[
+                        { id: "4a", icon:"mdi mdi-text-box-search-outline", value: "Buscar oficios salida" },
+                        { id: "4b", icon:"mdi mdi-hand-back-left-outline", value: "Oficios Solicitados" },
+                        { id: "4c", icon:"mdi mdi-clipboard-text-search-outline", value: "Buscar oficios entrada" },
+                        { id: "4d", icon:"mdi mdi-chart-bar", value: "Estadísticos" },
+                  ]}
+				//]}
+            ],
+            on: {
+                onItemClick: function(id) {
+                        
+                    var item = this.getItem(id);
+                    // Verificamos que no sea una "carpeta" madre sin ruta
+                    if (this.getItem(id).$count) {
+                        this.open(id); // Si tiene hijos, solo lo abrimos
+                    } else {
+                        //console.log(item.value)
+                        cargarPagina(id); // Si es un nodo final, cargamos la página
+
+                        var col = $$("columna_principal");
+                        col.define("header", "Oficialía: " + item.value);
+                        col.refresh();
+                    }
+                }}
+            }
+          ]
+        }
+      },
+      { view:"resizer" }, // Opcional: para ajustar el ancho manualmente
+      { 
+        header:"Oficialia de partes", id: "columna_principal",
+        body:{ 
+            view:"iframe", 
+            id:"frame_principal", 
+            src:"/op/op_ofic" 
+        } 
+      },
+    ]
+  });
+  <%if(lnOficio>0){%>
+  deta_ingr(<%=lnOficio%>);
+  <%}%>
+
 });
 
-	var xx = 0;
-	var ultimoSeleccionado = "";
-	setInterval(mues_noti, 600000);
-	setInterval(veri_vent, 110000);
+// Mapa de navegación
+const rutasSistema = {
+    "2a": "/op/op_nofic",
+    "2b": "/op/op_hofic",
+    "2c": "/op/op_grup?t=2",
+    "3a": "/op/op_ningr",
+    "3b": "/op/op_cort",
+    "3c": "/op/op_aingr",
+    "4a": "/op/op_reof0",
+    "4b": "/op/op_reof2",
+    "4c": "/op/busc_ofic",
+    "4d": "/op/op_rgraf",
+    "5a": "/op/op_admi",
+    "5b": "/op/op_vide",
+    "default": "/op/op_pend?lcCVE="   // Página inicial
+};
 
-		function digitaliza(oficio, out, corte, tipo) {
-			xx++;
-			webix.ui({
-				view: "window", id: "w2" + xx,
-				move: true, left: 150, top: 0, width: 850, height: 550, resize: true,
-				head: {
-					view: "toolbar", id: "toolbar2" + xx,
-					cols: [
-						{ view: "label", label: "Detalle del oficio" },
-						{ view: "icon", icon: 'mdi mdi-fullscreen', 
-						click:()=>{
-							var ventana = $$('w2' + xx)
-							ventana.config.move = !ventana.config.move
-						  ventana.config.fullscreen = !ventana.config.fullscreen;
-						  ventana.setPosition(0,0)
-						  ventana.resize();
-						} },
-						{ view: "icon", icon: 'mdi mdi-close', click: "$$('w2" + xx + "').close();" }
-					]
-				},
-				body: {
-					view: "iframe",
-					src: "/digi_docu.fwx?lnOficio=" + oficio + "&llOut=" + out + "&llCorte=" + corte + "&lnTipo=" + tipo
-				}
-			}).show();
-		}
-	function deta_ingr(oficio, asignado = 0) {	
+let xx = 0;
+
+
+
+/*
+            if (id == 1) { myTabbar.tabs("a1").attachURL("/op/op_reof0"); }
+			if (id == 2) { myTabbar.tabs("a1").attachURL("/op/op_nofic"); }
+			if (id == 3) { myTabbar.tabs("a1").attachURL("/op/op_ningr"); }
+			if (id == 4) { myTabbar.tabs("a1").attachURL("/op/arch_muer"); }
+			if (id == 5) { myTabbar.tabs("a1").attachURL("/op/op_admi"); }
+			if (id == 6) { myTabbar.tabs("a1").attachURL("/op/op_vide"); }
+			if (id == 7) { myTabbar.tabs("a1").attachURL("/op/op_area"); }
+ */
+
+function cargarPagina(id) {
+    // 1. Buscamos la URL en nuestro mapa
+    let url = rutasSistema[id] || rutasSistema["default"] + (/^\d/.test(id)?'':id);
+    
+    //console.log(url + (/^\d/.test(id)?'':id))
+    if ($$("frame_principal")) {
+        $$("frame_principal").load(url);
+    }
+}
+
+function deta_ingr(oficio, asignado = 0) {	
 		xx++;
 		webix.ui({
 			view: "window", id: "w3" + xx,
@@ -395,8 +497,8 @@ webix.ready(function(){
 			if (id == "13a") { myTabbar.tabs("a1").attachURL("/op_nombra.fwx"); }
 			
 			<% //IF llDirectorio 
-            if (llDirectorio)
-            {
+            //if (llDirectorio)
+            //{
             %>
 			if (id == "9a") { myTabbar.tabs("a1").attachURL("/op_libr.fwx?lugar=1"); }
 			if (id == "9b") { myTabbar.tabs("a1").attachURL("/op_libr.fwx?lugar=2"); }
@@ -407,14 +509,14 @@ webix.ready(function(){
 			if (id == "14c") { myTabbar.tabs("a1").attachURL("/op_eventos.fwx?case=3") }
 			if (id == "14d") { myTabbar.tabs("a1").attachURL("/op_eventos.fwx?case=4") }
 			<%
-            } 
-            else
-            { 
+            //} 
+            //else
+            //{ 
             %>
-			if (id == "9b") { myTabbar.tabs("a1").attachURL("/op_libr.fwx") }
+			//if (id == "9b") { myTabbar.tabs("a1").attachURL("/op_libr.fwx") }
 			<% 
             //ENDIF
-             }
+            // }
               %>
 			//if ( id == 3)
 			//	myTabbar.tabs('a1').progressOn();
@@ -486,160 +588,7 @@ webix.ready(function(){
 		if ($$('w1') != undefined)
 			$$('w1').close();
 	}
-
-	function redimensionaVentanas() {
-		for(var i in webix.ui.views){
-	    if(webix.ui.views[i].name === "window")
-	    	if(webix.ui.views[i].config.fullscreen)
-	    		webix.ui.views[i].resize();
-	  }
-	}
 </script>
-
-<!-- <body onresize="redimensionaVentanas()" onload="<%// IF llDere_ofic%>sacaPendientes();mues_noti();<%// ENDIF%> <%// REsponse.write(IIF(!EMPTY(lnOficio),lcDetalle,''))%>" > -->
-<body> </body>
-	<script>
-		var myLayout = new dhtmlXLayoutObject(document.body, "2U");
-
-		myLayout.cells("a").setText("Oficialia de partes");
-		myLayout.cells("a").setWidth(300);
-		//myLayout.cells("a").hideHeader();
-		//myLayout.cells("b").hideHeader();
-
-		myTabbar = myLayout.cells("b").attachTabbar({
-			tabs: [
-				{ id: "a1", text: "Oficialia de partes", active: true, hideTab: false }
-			]
-		});
-
-		var data = {
-			parent: "ribbonObj",
-			icons_path: "/imagenes/boton/",
-			items: [
-			
-				{
-					type: 'block', text: 'Oficialia', mode: 'cols',
-					list: [
-						{ id: 1, type: 'button', text: 'Buscar<br>Oficios', isbig: true, img: "page_find.png" },
-						{ id: 2, type: 'button', text: 'Nvo. ofic.', img: "hoja-nuevo.png" },
-						{ id: 3, type: 'button', text: 'Ingr. ofic.', img: "document-new.png" },
-						{ id: 4, type: 'button', text: 'Archivo', img: "archivo.png" },
-						//{ id: 5, type: 'button', <%// response.write(IIF(llOP_total, '', 'disable: true,')) %> text: 'Administ.', img: "control.png"},
-                        { id: 5, type: 'button', <%= !llOP_total ? 'disable: true,' : '' %> text: 'Administ.', img: "control.png"},
-                        
-						{ id: 6, type: 'button', text: 'Videos', img: "movie.png" },
-						{ id: 7, type: 'button', <%= !llOP_total ? 'disable: true,' : '' %> text: 'Areas', img: "asignar.png" },
-					]
-				}
-			]
-		};
-		<%// IF llDere_ofic %>
-		myRibbon = myLayout.cells("a").attachRibbon(data);
-		myRibbon.setSkin('dhx_terrace');
-		//myRibbon.setSkin('dhx_dark');
-
-		myRibbon.attachEvent("onClick", function (id) {
-			if (id == 1) { myTabbar.tabs("a1").attachURL("/op/op_reof0"); }
-			if (id == 2) { myTabbar.tabs("a1").attachURL("/op/op_nofic"); }
-			if (id == 3) { myTabbar.tabs("a1").attachURL("/op/op_ningr"); }
-			if (id == 4) { myTabbar.tabs("a1").attachURL("/op/arch_muer"); }
-			if (id == 5) { myTabbar.tabs("a1").attachURL("/op/op_admi"); }
-			if (id == 6) { myTabbar.tabs("a1").attachURL("/op/op_vide"); }
-			if (id == 7) { myTabbar.tabs("a1").attachURL("/op/op_area"); }
-		});
-		<%// ENDIF %>
-		myTree = myLayout.cells("a").attachTree();
-		myTree.setImagePath("/imagenes/boton/");
-		myTree.setSkin('dhx_web');
-
-		myTree.insertNewItem(0, "1", "Oficialia de partes", 0, "folder_closed.png", "folder-open.png", "folder_closed.png");
-
-
-		
-		<%// IF llDere_ofic %>
-			myTree.insertNewItem(1, "2", "Oficialia de salida", 0, "folder_closed.png", "folder-open.png", "folder_closed.png", 'SELECT');
-		myTree.insertNewItem(2, "2a", "Nuevo oficio", 0, "hoja-nuevo2.png", "hoja-nuevo2.png", "hoja-nuevo2.png");
-		myTree.insertNewItem(2, "2b", "Historico de oficios", 0, "historico.png", "historico.png", "historico.png");
-		myTree.insertNewItem(2, "2f", "Grupos", 0, "data.png", "data.png", "data.png");
-		<%// IF.F.%>
-			myTree.insertNewItem(2, "2c", "Paquetes", 0, "paquete.png", "paquete.png", "paquete.png");
-		<%// ENDIF %>
-			myTree.insertNewItem(2, "7", "Pendientes enviar", 0, "sand-clock.png", "sand-clock.png", "sand-clock.png");
-		<%// IF RECCOUNT("cDere_soli") > 0 %>
-			myTree.insertNewItem(2, "2e", "Area solicitante", 0, "oficios.png", "oficios.png", "oficios.png");
-		<%// ENDIF %>
-		<%// ENDIF %>
-
-			myTree.insertNewItem(1, "3", "Oficialia de entrada", 0, "folder_closed.png", "folder-open.png", "folder_closed.png");
-		<%// IF llDere_ofic %>
-			myTree.insertNewItem(3, "3a", "Ingresar documento", 0, "document-new2.png", "document-new2.png", "document-new2.png");
-		myTree.insertNewItem(3, "3b", "Corte de entrega", 0, "corte.png", "corte.png", "corte.png");
-		myTree.insertNewItem(3, "3c", "Manejo de oficios", 0, "data.png", "data.png", "data.png");
-		<%// ENDIF %>
-			myTree.insertNewItem(3, "3d", "Oficios asignados", 0, "oficios.png", "oficios.png", "oficios.png");
-		//myTree.insertNewItem(3, "3e", "Oficios delegados", 0, "oficios.png", "oficios.png", "oficios.png");
-		<%// IF llDere_ofic %>
-			myTree.insertNewItem(1, "4", "Reportes", 0, "folder_closed.png", "folder-open.png", "folder_closed.png");
-		myTree.insertNewItem(4, "4a", "Buscar oficios", 0, "search.png", "search.png", "search.png");
-		myTree.insertNewItem(4, "4c", "Oficios Solicitados", 0, "oficios.png", "oficios.png", "oficios.png");
-		myTree.insertNewItem(4, "4d", "Buscar oficios ingresados<br>&nbsp;por oficialia de partes", 0, "search-ingreso.png", "search-ingreso.png", "search-ingreso.png");
-		myTree.insertNewItem(4, "4e", "Archivo", 0, "archivo2.png", "archivo2.png", "archivo2.png");
-		myTree.insertNewItem(4, "4f", "Estad&iacute;stico", 0, "proceso.png", "proceso.png", "proceso.png");
-		<%// ENDIF %>
-		<%if (llDirectorio)     // IF llDirectorio 
-        {%>
-			myTree.insertNewItem(0, "5", "<%// Response.write(op_config.direccion)%>", 0, "folder_closed.png", "folder-open.png", "folder_closed.png");
-		myTree.insertNewItem(5, "5a", "Directorio <%// Response.write(op_config.direccion)%>", 0, "directory.png", "directory.png", "directory.png");
-		myTree.insertNewItem(5, "5b", "Llamadas", 0, "telephone.png", "telephone.png", "telephone.png");
-		<%// IF llLlamada%>
-		myTree.insertNewItem(5, "5c", "Llamadas de DG", 0, "call.png", "call.png", "call.png");
-		<%// ENDIF%>
-		//myTree.insertNewItem(5, "5c", "Informe", 0, "ico_txt_18.gif", "ico_txt_18.gif", "ico_txt_18.gif");
-		<%}// ENDIF %>
-		<%if (llRecon)  // IF llRecon 
-        {%>
-		myTree.insertNewItem(0, "6", "Reconocimiento", 0, "folder_closed.png", "folder-open.png", "folder_closed.png");
-		myTree.insertNewItem(6, "6a", "Reconocimiento <%// Response.write(op_config.direccion)%>", 0, "directory.png", "directory.png", "directory.png");
-		<%}         // ENDIF %>
-
-		//myTree.insertNewItem(0, "8", "Documentos", 0, "folder_closed.png", "folder-open.png", "folder_closed.png");
-		//myTree.insertNewItem(8, "8a", "Ingresar doc.", 0, "document-new.png", "document-new.png", "document-new.png");
-		//myTree.insertNewItem(8, "8b", "Buscar doc.", 0, "search.png", "search.png", "search.png");
-		<%if (llContrato || llLlamada || llConvenio)     // IF llContrato OR llLlamada OR llConvenio
-        {%>
-		myTree.insertNewItem(0, "12", "Contratos, convenios y basificaci�n", 0, "folder_closed.png", "folder-open.png", "folder_closed.png");
-		myTree.insertNewItem(12, "12a", "Contratos", 0, "contract2.png", "contract2.png", "contract2.png");
-		myTree.insertNewItem(12, "12b", "Convenios, protocolos, contratos y cartas de acuerdo", 0, "licensing.png", "licensing.png", "licensing.png");
-		<%if (llLlamada)            // IF llLlamada
-        {%>
-		myTree.insertNewItem(12, "12c", "Basificaci�n", 0, "contact-new.png", "contact-new.png", "contact-new.png");
-		<%}     // ENDIF
-		}       // ENDIF%>
-		<%if (llLibro)      // IF llLibro 
-        {%>		
-		myTree.insertNewItem(0, "9", "Registro de libros", 0, "folder_closed.png", "folder-open.png", "folder_closed.png");
-		myTree.insertNewItem(9, "9a", "Despacho DG", 0, "directory.png", "directory.png", "directory.png");
-		myTree.insertNewItem(9, "9b", "Despacho CA - Registro de libros, Lefort y Documentos", 0, "directory.png", "directory.png", "directory.png");
-		myTree.insertNewItem(9, "9c", "Bodega", 0, "directory.png", "directory.png", "directory.png");
-
-		<%
-        }       // ENDIF %>
-		<%if (llNombramiento)       // IF llNombramiento
-        {%>
-		myTree.insertNewItem(0, "13", "Personal", 0, "folder_closed.png", "folder-open.png", "folder_closed.png");
-		myTree.insertNewItem(13, "13a", "Nombramientos", 0, "directory.png", "directory.png", "directory.png");
-		<%}         // ENDIF%>
-		<%if (llDirectorio)             // IF llDirectorio 
-        {%>
-		myTree.insertNewItem(0, "14", "Reuniones y eventos", 0, "folder_closed.png", "folder-open.png", "folder_closed.png");
-		myTree.insertNewItem(14, "14a", "Reuniones", 0, "directory.png", "directory.png", "directory.png");
-		myTree.insertNewItem(14, "14b", "Eventos", 0, "directory.png", "directory.png", "directory.png");
-		myTree.insertNewItem(14, "14c", "Junta gobierno", 0, "directory.png", "directory.png", "directory.png");
-		myTree.insertNewItem(14, "14d", "Comit�", 0, "directory.png", "directory-open.png", "directory.png");
-		myTree.insertNewItem(0, "10", "Archivo", 0, "folder_closed.png", "folder-open.png", "folder_closed.png");
-		<%}         // ENDIF %>
-		myTabbar.tabs("a1").attachURL("/op/op_ofic");
-	</script>
 </body>
 
 </html>

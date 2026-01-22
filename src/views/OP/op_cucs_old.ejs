@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html>
+<%
+/*
+llOP_total = derechos("OP_TOTA", .t.)
+llDirectorio = derechos("DIRE_RECT", .t.)
+llLibro		= DERECHOS("OP_LIBRO", .t.)
+llRecon		= DERECHOS("RECONOMIENTO", .t.)
+llContrato = DERECHOS("OP_CONTRATO", .t.)
+llLlamada = DERECHOS("OP_LLAMADA", .t.)
+llConvenio = DERECHOS("OP_CONVENIO", .t.)
+llNombramiento = DERECHOS("OP_NOMBRA", .T.)
+*/
+
+const llOP_total    = lcDerecho.indexOf(",OP_TOTA,") > 0 
+const llDirectorio  = lcDerecho.indexOf(",DIRE_RECT,") > 0 
+const llLibro	    = lcDerecho.indexOf(",OP_LIBRO,") > 0 
+const llRecon		= lcDerecho.indexOf(",RECONOMIENTO,") > 0
+const llContrato    = lcDerecho.indexOf(",OP_CONTRATO,") > 0 
+const llLlamada     = lcDerecho.indexOf(",OP_LLAMADA,") > 0 
+const llConvenio    = lcDerecho.indexOf(",OP_CONVENIO,") > 0 
+const llNombramiento = lcDerecho.indexOf(",OP_NOMBRA,") > 0 
+%>
+<head>
+
+	<title></title>
+	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+	<link rel="stylesheet" href="/style.css" type="text/css" media="screen" />
+
+	<link rel="stylesheet" type="text/css" href="/skins/terrace/dhtmlx.css" />
+	<link rel="stylesheet" type="text/css" href="/webix/codebase/webix.css" />
+	<script src="/codebase/dhtmlx.js"></script>
+	<script src="/webix/codebase/webix.js"></script>
+
+	<style>
+		html,
+		body {
+			width: 100%;
+			height: 100%;
+			margin: 0px;
+			padding: 0px;
+			overflow: hidden;
+		}
+
+/* 		.mi_toolbar_color {
+			background-color: #F0F8FF !important; /* Color Azul Pálido 
+			color: #000000; /* Color del texto dentro del toolbar 
+ 		} 
+*/
+ 
+		.div_pend {
+			width: 25px;
+			height: 16px;
+			color: white;
+			border-radius: 50px;
+			font-size: 11px;
+			vertical-align: middle;
+			text-align: center;
+			background-color: rgb(243, 74, 74);
+			display: inline-block;
+		}
+
+		.sin_pend {
+			background-color: rgb(42, 141, 255);
+		}
+
+		.con_pend {
+			background-color: rgb(243, 74, 74);
+		}
+
+	</style>
+
+</head>
+<script>
+
+webix.ready(function(){
+	sacaPendientes();
+	mues_noti();
+});
+
+	var xx = 0;
+	var ultimoSeleccionado = "";
+	setInterval(mues_noti, 600000);
+	setInterval(veri_vent, 110000);
+
+		function digitaliza(oficio, out, corte, tipo) {
+			xx++;
+			webix.ui({
+				view: "window", id: "w2" + xx,
+				move: true, left: 150, top: 0, width: 850, height: 550, resize: true,
+				head: {
+					view: "toolbar", id: "toolbar2" + xx,
+					cols: [
+						{ view: "label", label: "Detalle del oficio" },
+						{ view: "icon", icon: 'mdi mdi-fullscreen', 
+						click:()=>{
+							var ventana = $$('w2' + xx)
+							ventana.config.move = !ventana.config.move
+						  ventana.config.fullscreen = !ventana.config.fullscreen;
+						  ventana.setPosition(0,0)
+						  ventana.resize();
+						} },
+						{ view: "icon", icon: 'mdi mdi-close', click: "$$('w2" + xx + "').close();" }
+					]
+				},
+				body: {
+					view: "iframe",
+					src: "/digi_docu.fwx?lnOficio=" + oficio + "&llOut=" + out + "&llCorte=" + corte + "&lnTipo=" + tipo
+				}
+			}).show();
+		}
+	function deta_ingr(oficio, asignado = 0) {	
+		xx++;
+		webix.ui({
+			view: "window", id: "w3" + xx,
+			move: true, left: 0, top: 0, width: 1000, height: 550, resize: true, fullscreen:true,
+			head: {
+				view: "toolbar", id: "toolbar3" + xx,
+				cols: [
+					{ view: "label", label: "Detalle del oficio" },
+					{ view: "icon", icon: 'mdi mdi-fullscreen', click:()=>{
+						var ventana = $$('w3' + xx)
+						ventana.config.move = !ventana.config.move
+					  ventana.config.fullscreen = !ventana.config.fullscreen;
+					  ventana.setPosition(0,0)
+					  ventana.resize();
+					} },
+					{ view: "icon", icon: 'mdi mdi-close', click: "$$('w3" + xx + "').close();" }
+				]
+			},
+			body: {
+				view: "iframe",
+				src: "/op/op_detalle?xx=" + xx + "&lnOficio=" + oficio + "&lnAsignado=" + asignado
+			},
+		}).show();
+	}
+	function deta_sali(cve, oficio, anio, id_iden, padre) {
+		xx++;
+		webix.ui({
+			view: "window", id: "w4" + xx,
+			move: false, left: 0, top: 0, width: 1000, height: 600, resize: true, fullscreen:true,
+			head: {
+				view: "toolbar", id: "toolbar4" + xx, css: "mi_toolbar_color",
+				cols: [
+					{ view: "label", label: "Detalle del oficio" },
+					{ view: "icon", icon: 'mdi mdi-fullscreen', click:()=>{
+						var ventana = $$('w4' + xx)
+						ventana.config.move = !ventana.config.move
+					  ventana.config.fullscreen = !ventana.config.fullscreen;
+					  ventana.setPosition(0,0)
+					  ventana.resize();
+					} },
+					{ view: "icon", icon: 'mdi mdi-close', click: "$$('w4" + xx + "').close();" }
+				]
+			},
+			body: {
+				view: "iframe",
+				src: "/op/op_sofic?lcCVE=" + cve + "&lnOfic=" + oficio + "&lnAnio=" + anio + "&lnIden=" + id_iden + "&pd=" + padre
+			}
+		}).show();
+	}
+	function deta_libr(libro) {
+		xx++;
+		webix.ui({
+			view: "window", id: "w5" + xx,
+			move: true, left: 150, top: 0, width: 1250, height: 650, resize: true,
+			head: {
+				view: "toolbar", id: "toolbar5" + xx,
+				cols: [
+					{ view: "label", label: "Detalle del libro" },
+					{ view: "icon", icon: 'mdi mdi-fullscreen', click:()=>{
+						var ventana = $$('w5' + xx)
+						ventana.config.move = !ventana.config.move
+					  ventana.config.fullscreen = !ventana.config.fullscreen;
+					  ventana.setPosition(0,0)
+					  ventana.resize();
+					} },
+					{ view: "icon", icon: 'mdi mdi-close', click: "$$('w5" + xx + "').close();" }
+				]
+			},
+			body: {
+				view: "iframe",
+				src: "/op_dlibr.fwx?lnLibro=" + libro
+			}
+		}).show();
+	}
+
+	function nuev_cont(lcID) {
+		xx++;
+		var w6 = webix.ui({
+			view: "window", id: "w6" + xx,
+			move: true, left: 150, top: 0, width: 1250, height: 650, resize: true,
+			head: {
+				view: "toolbar", id: "toolbar6" + xx,
+				cols: [
+					{ view: "label", label: (lcID != 0) ? "Modifica Registro" : "Nuevo Registro" },
+					{ view: "icon", icon: 'mdi mdi-fullscreen', click:()=>{
+						var ventana = $$('w6' + xx)
+						ventana.config.move = !ventana.config.move
+					  	ventana.config.fullscreen = !ventana.config.fullscreen;
+					  	ventana.setPosition(0,0)
+					  	ventana.resize();
+					} },
+					{ view: "icon", icon: 'mdi mdi-close', click: "$$('w6" + xx + "').close();" }
+				]
+			},
+			body: {
+				view: "iframe",
+				src: '/rect_llam.fwx?lnVisi=' + lcID
+			}
+		}).show();
+	}
+
+	function mues_grupo(cent) {
+		xx++;
+		webix.ui({
+			view: "window", id: "mues_grup" + xx,
+			move: true, left: 150, top: 0, width: 1250, height: 650, resize: true,
+			head: {
+				view: "toolbar", id: "grupo" + xx,
+				cols: [
+					{ view: "label", label: "Detalle del libro" },
+					{ view: "icon", icon: 'mdi mdi-fullscreen', click:()=>{
+							var ventana = $$('mues_grup' + xx)
+							ventana.config.move = !ventana.config.move
+						  ventana.config.fullscreen = !ventana.config.fullscreen;
+						  ventana.setPosition(0,0)
+						  ventana.resize();
+						} },
+					{ view: "icon", icon: 'mdi mdi-close', click: "$$('w5" + xx + "').close();" }
+				]
+			},
+			body: {
+				view: "iframe",
+				src: "/op_dlibr.fwx?lnLibro=" + libro
+			}
+		}).show();
+	}
+
+	function deta_ofic(cve) {
+		xx++;
+		webix.ui({
+			view: "window", id: "op_admi" + xx,
+			move: true, left: 150, top: 0, width: 800, height: 600, 
+			head: {
+				view: "toolbar", id: "admi" + xx,
+				cols: [
+					{ view: "label", label: "Detalle de la oficialia" },
+					{ view: "icon", icon: 'mdi mdi-fullscreen', click:()=>{
+						var ventana = $$('op_admi' + xx)
+						ventana.config.move = !ventana.config.move
+						ventana.config.fullscreen = !ventana.config.fullscreen;
+						ventana.setPosition(0,0)
+						ventana.resize();
+						} 
+					},
+					{ view: "icon", icon: 'mdi mdi-close', click: "$$('op_admi" + xx + "').close();" }
+				]
+			},
+			body: {
+				view: "iframe",
+				src: "/op_nadmi.fwx?lcID=" + cve
+			}
+		}).show();
+	}
+
+	function nuev_llam(id) {
+		xx++;
+		var w7 = webix.ui({
+			view: "window", id: "w7" + xx,
+			move: true, left: 80, top: 0, width: 1250, height: 650, resize: true,
+			head: {
+				view: "toolbar", id: "toolbar7" ,
+				cols: [
+					{ view: "label", label: (id != 0 && id != undefined) ? "Modifica Registro" : "Nuevo Registro" },
+					{ view: "icon", icon: 'mdi mdi-fullscreen', click:() => {
+						
+						var ventana = $$('w7' + xx)
+						ventana.config.move = !ventana.config.move
+					  	ventana.config.fullscreen = !ventana.config.fullscreen;
+					  	ventana.setPosition(0,0)
+					  	ventana.resize();
+					} },
+					{ view: "icon", icon: 'mdi mdi-close', click: "$$('w7" + xx + "').close();" }
+				]
+			},
+			body: {
+				view: "iframe",
+				src: "/rect_adire.fwx?lnDire=" + id
+			}
+		}).show();
+
+	}
+
+	function cierra_ventana(id) {
+		$$("toolbar" + id).getParentView().close()
+
+	}
+	function sacaPendientes() {
+
+		var items = [];
+		webix.ajax()
+			.post("/api/op/op_cucsx2")
+			.then(function (res) {
+				if (res.json().length > 0) {
+
+					for (var i = 0; i < res.json().length; i++) {
+						items.push({
+							cve: res.json()[i].cve,
+							descrip: res.json()[i].descrip,
+							cant: res.json()[i].cant,
+							modi: res.json()[i].modificado
+						});
+					}
+
+					//Eliminar los hijos de pendientes
+					myTree.deleteChildItems(7);
+
+					//Vuelve a agregar a pendientes
+					items.forEach(function (elem) {
+						//console.log(elem)
+						var modif = "<div class= 'div_pend " + (elem.modi == 0 ? "sin_pend'>" : "con_pend'>") + elem.modi + "</div>";
+						var txtCantidad = "<div class= 'div_pend " + (elem.cant == 0 ? "sin_pend'>" : "con_pend'>") + elem.cant + "</div>";
+						myTree.insertNewItem(7, "7" + elem.cve, modif + txtCantidad + " (" + elem.cve + ") " + elem.descrip, 0, "building.png", "building.png", "building.png");
+					});
+					/*for (var i = 0; i < items.length; i++) {
+						var elem = items[i];
+						var txtCantidad = "<div class= 'div_pend " + (elem.cant == 0 ? "sin_pend'>" : "con_pend'>") + elem.cant + "</div>";
+						myTree.insertNewItem(7, "7" + elem.cve, txtCantidad + " (" + elem.cve + ") " + elem.descrip, 0, "building.png", "building.png", "building.png");
+					}*/
+
+					ligaURLs(items);
+
+				}
+			});
+
+	}
+
+
+	function ligaURLs(items) {
+		myTree.attachEvent("onClick", function (id) {
+			ultimoSeleccionado = id;
+			if (id == 2) {
+				myTabbar.tabs("a1").attachURL("/op/op_ofic");
+				//myTabbar.tabs('a1').progressOn();
+			}
+			if (id == "2a") { myTabbar.tabs("a1").attachURL("/op/op_nofic"); }
+			if (id == "2b") { myTabbar.tabs("a1").attachURL("/op/op_hofic"); }
+			if (id == "2c") { myTabbar.tabs("a1").attachURL("/op_pofic.fwx"); }
+			if (id == "2d") { myTabbar.tabs("a1").attachURL("/op/op_pend"); }
+			if (id == "2e") { myTabbar.tabs("a1").attachURL("/op/op_nsoli"); }
+			if (id == "2f") { myTabbar.tabs("a1").attachURL("/op/op_grup?t=2"); }
+			if (id == 3) {
+				myTabbar.tabs("a1").attachURL("/op/op_ingr");
+				//myTabbar.tabs('a1').progressOn();
+			}
+			if (items != null) {
+
+				/*for(var i = 0; i < items.length; i++)
+				{
+					var elem = items[i];
+					if(id == "7"+elem.cve)//String.fromCharCode(xx))
+					{
+						myTabbar.tabs("a1").attachURL("/op_pend.fwx?lcCVE="+elem.cve);
+						//myTabbar.tabs('a1').progressOn();
+					}
+				}*/
+				items.forEach(function (elem) {
+					if (id == "7" + elem.cve)//String.fromCharCode(xx))
+						myTabbar.tabs("a1").attachURL("/op/op_pend?lcCVE=" + elem.cve);
+
+				});
+			}
+
+			if (id == "3a") { myTabbar.tabs("a1").attachURL("/op/op_ningr"); }
+			if (id == "3b") { myTabbar.tabs("a1").attachURL("/op_cort.fwx"); }
+			if (id == "3c") { myTabbar.tabs("a1").attachURL("/op_mingr.fwx"); }
+			if (id == "3d") { myTabbar.tabs("a1").attachURL("/op/op_aingr"); }
+			if (id == "4a") { myTabbar.tabs("a1").attachURL("/op/op_reof0"); }
+			if (id == "4c") { myTabbar.tabs("a1").attachURL("/op_reof2.fwx"); }
+			if (id == "4d") { myTabbar.tabs("a1").attachURL("/op/busc_ofic"); }
+			if (id == "4e") { myTabbar.tabs("a1").attachURL("/opc_arch_muer.fwx"); }
+			if (id == "4f") { myTabbar.tabs("a1").attachURL("/op/op_rgraf"); }
+			if (id == "5a") { myTabbar.tabs("a1").attachURL("/rect_adirep.fwx"); }
+			if (id == "5b") { myTabbar.tabs("a1").attachURL("/rect_llamp.fwx"); }
+			if (id == "5c") { myTabbar.tabs("a1").attachURL("/op_llama.fwx"); }
+			if (id == "6a") { myTabbar.tabs("a1").attachURL("/rect_reco.fwx"); }
+			if (id == 8) { myTabbar.tabs("a1").attachURL("/repo_digi.fwx"); }
+			if (id == "8a") { myTabbar.tabs("a1").attachURL("/digi_nuev.fwx"); }
+			if (id == "8b") { myTabbar.tabs("a1").attachURL("/digi_busc.fwx"); }
+			
+			if (id == "12a") { myTabbar.tabs("a1").attachURL("/op_contrato.fwx"); }
+			if (id == "12b") { myTabbar.tabs("a1").attachURL("/op_conv.fwx"); }
+			if (id == "12c") { myTabbar.tabs("a1").attachURL("/op_basi.fwx"); }
+			if (id == "13a") { myTabbar.tabs("a1").attachURL("/op_nombra.fwx"); }
+			
+			<% //IF llDirectorio 
+            if (llDirectorio)
+            {
+            %>
+			if (id == "9a") { myTabbar.tabs("a1").attachURL("/op_libr.fwx?lugar=1"); }
+			if (id == "9b") { myTabbar.tabs("a1").attachURL("/op_libr.fwx?lugar=2"); }
+			if (id == "9c") { myTabbar.tabs("a1").attachURL("/op_libr.fwx?lugar=3"); }
+			if (id == "10") { myTabbar.tabs("a1").attachURL("/op_archdg.fwx") }
+			if (id == "14a") { myTabbar.tabs("a1").attachURL("/op_eventos.fwx?case=1") }
+			if (id == "14b") { myTabbar.tabs("a1").attachURL("/op_eventos.fwx?case=2") }
+			if (id == "14c") { myTabbar.tabs("a1").attachURL("/op_eventos.fwx?case=3") }
+			if (id == "14d") { myTabbar.tabs("a1").attachURL("/op_eventos.fwx?case=4") }
+			<%
+            } 
+            else
+            { 
+            %>
+			if (id == "9b") { myTabbar.tabs("a1").attachURL("/op_libr.fwx") }
+			<% 
+            //ENDIF
+             }
+              %>
+			//if ( id == 3)
+			//	myTabbar.tabs('a1').progressOn();
+			//else
+			//	myTabbar.tabs('a1').progrsessOff();
+
+		});
+		if (ultimoSeleccionado == "" || ultimoSeleccionado == null) {
+			//
+		} else {
+			myTree.selectItem(ultimoSeleccionado, false, false);
+		}
+
+
+	}
+
+	function mues_noti() {
+
+		webix.ajax()
+			.post('/op_notix.fwx', { clave: '<%// Response.Write(pnId_cent)%>' })
+			.then(function (result) {
+
+				if (result.json().status == 'server') {
+					webix.ui({
+						view: "window",
+						id: "w1",
+						move: true,
+						left: 350,
+						top: 100,
+						width: 800,
+						height: 550,
+						resize: true,
+						head: {
+							view: "toolbar",
+							cols: [{
+								view: "label",
+								label: "Vencimientos de folios",
+								css: { "color": "#D90416 !important" }
+							},
+							{ 
+								view: "icon", icon: 'mdi mdi-fullscreen', click:()=>{
+									var ventana = $$('w1')
+									ventana.config.move = !ventana.config.move
+								  ventana.config.fullscreen = !ventana.config.fullscreen;
+								  ventana.setPosition(0,0)
+								  ventana.resize();
+								} 
+							},
+							{
+								view: "icon",
+								icon: 'mdi mdi-close',
+								click: "$$('w1').close();"
+							}
+							]
+						},
+						body: {
+							view: "iframe",
+							id:"ifrm1", 
+							src: "/op_noti.fwx"
+						}
+					}).show();
+				}
+
+			});
+
+	}
+
+	function veri_vent() {
+		if ($$('w1') != undefined)
+			$$('w1').close();
+	}
+
+	function redimensionaVentanas() {
+		for(var i in webix.ui.views){
+	    if(webix.ui.views[i].name === "window")
+	    	if(webix.ui.views[i].config.fullscreen)
+	    		webix.ui.views[i].resize();
+	  }
+	}
+</script>
+
+<!-- <body onresize="redimensionaVentanas()" onload="<%// IF llDere_ofic%>sacaPendientes();mues_noti();<%// ENDIF%> <%// REsponse.write(IIF(!EMPTY(lnOficio),lcDetalle,''))%>" > -->
+<body> </body>
+	<script>
+		var myLayout = new dhtmlXLayoutObject(document.body, "2U");
+
+		myLayout.cells("a").setText("Oficialia de partes");
+		myLayout.cells("a").setWidth(300);
+		//myLayout.cells("a").hideHeader();
+		//myLayout.cells("b").hideHeader();
+
+		myTabbar = myLayout.cells("b").attachTabbar({
+			tabs: [
+				{ id: "a1", text: "Oficialia de partes", active: true, hideTab: false }
+			]
+		});
+
+		var data = {
+			parent: "ribbonObj",
+			icons_path: "/imagenes/boton/",
+			items: [
+			
+				{
+					type: 'block', text: 'Oficialia', mode: 'cols',
+					list: [
+						{ id: 1, type: 'button', text: 'Buscar<br>Oficios', isbig: true, img: "page_find.png" },
+						{ id: 2, type: 'button', text: 'Nvo. ofic.', img: "hoja-nuevo.png" },
+						{ id: 3, type: 'button', text: 'Ingr. ofic.', img: "document-new.png" },
+						{ id: 4, type: 'button', text: 'Archivo', img: "archivo.png" },
+						//{ id: 5, type: 'button', <%// response.write(IIF(llOP_total, '', 'disable: true,')) %> text: 'Administ.', img: "control.png"},
+                        { id: 5, type: 'button', <%= !llOP_total ? 'disable: true,' : '' %> text: 'Administ.', img: "control.png"},
+                        
+						{ id: 6, type: 'button', text: 'Videos', img: "movie.png" },
+						{ id: 7, type: 'button', <%= !llOP_total ? 'disable: true,' : '' %> text: 'Areas', img: "asignar.png" },
+					]
+				}
+			]
+		};
+		<%// IF llDere_ofic %>
+		myRibbon = myLayout.cells("a").attachRibbon(data);
+		myRibbon.setSkin('dhx_terrace');
+		//myRibbon.setSkin('dhx_dark');
+
+		myRibbon.attachEvent("onClick", function (id) {
+			if (id == 1) { myTabbar.tabs("a1").attachURL("/op/op_reof0"); }
+			if (id == 2) { myTabbar.tabs("a1").attachURL("/op/op_nofic"); }
+			if (id == 3) { myTabbar.tabs("a1").attachURL("/op/op_ningr"); }
+			if (id == 4) { myTabbar.tabs("a1").attachURL("/op/arch_muer"); }
+			if (id == 5) { myTabbar.tabs("a1").attachURL("/op/op_admi"); }
+			if (id == 6) { myTabbar.tabs("a1").attachURL("/op/op_vide"); }
+			if (id == 7) { myTabbar.tabs("a1").attachURL("/op/op_area"); }
+		});
+		<%// ENDIF %>
+		myTree = myLayout.cells("a").attachTree();
+		myTree.setImagePath("/imagenes/boton/");
+		myTree.setSkin('dhx_web');
+
+		myTree.insertNewItem(0, "1", "Oficialia de partes", 0, "folder_closed.png", "folder-open.png", "folder_closed.png");
+
+
+		
+		<%// IF llDere_ofic %>
+			myTree.insertNewItem(1, "2", "Oficialia de salida", 0, "folder_closed.png", "folder-open.png", "folder_closed.png", 'SELECT');
+		myTree.insertNewItem(2, "2a", "Nuevo oficio", 0, "hoja-nuevo2.png", "hoja-nuevo2.png", "hoja-nuevo2.png");
+		myTree.insertNewItem(2, "2b", "Historico de oficios", 0, "historico.png", "historico.png", "historico.png");
+		myTree.insertNewItem(2, "2f", "Grupos", 0, "data.png", "data.png", "data.png");
+		<%// IF.F.%>
+			myTree.insertNewItem(2, "2c", "Paquetes", 0, "paquete.png", "paquete.png", "paquete.png");
+		<%// ENDIF %>
+			myTree.insertNewItem(2, "7", "Pendientes enviar", 0, "sand-clock.png", "sand-clock.png", "sand-clock.png");
+		<%// IF RECCOUNT("cDere_soli") > 0 %>
+			myTree.insertNewItem(2, "2e", "Area solicitante", 0, "oficios.png", "oficios.png", "oficios.png");
+		<%// ENDIF %>
+		<%// ENDIF %>
+
+			myTree.insertNewItem(1, "3", "Oficialia de entrada", 0, "folder_closed.png", "folder-open.png", "folder_closed.png");
+		<%// IF llDere_ofic %>
+			myTree.insertNewItem(3, "3a", "Ingresar documento", 0, "document-new2.png", "document-new2.png", "document-new2.png");
+		myTree.insertNewItem(3, "3b", "Corte de entrega", 0, "corte.png", "corte.png", "corte.png");
+		myTree.insertNewItem(3, "3c", "Manejo de oficios", 0, "data.png", "data.png", "data.png");
+		<%// ENDIF %>
+			myTree.insertNewItem(3, "3d", "Oficios asignados", 0, "oficios.png", "oficios.png", "oficios.png");
+		//myTree.insertNewItem(3, "3e", "Oficios delegados", 0, "oficios.png", "oficios.png", "oficios.png");
+		<%// IF llDere_ofic %>
+			myTree.insertNewItem(1, "4", "Reportes", 0, "folder_closed.png", "folder-open.png", "folder_closed.png");
+		myTree.insertNewItem(4, "4a", "Buscar oficios", 0, "search.png", "search.png", "search.png");
+		myTree.insertNewItem(4, "4c", "Oficios Solicitados", 0, "oficios.png", "oficios.png", "oficios.png");
+		myTree.insertNewItem(4, "4d", "Buscar oficios ingresados<br>&nbsp;por oficialia de partes", 0, "search-ingreso.png", "search-ingreso.png", "search-ingreso.png");
+		myTree.insertNewItem(4, "4e", "Archivo", 0, "archivo2.png", "archivo2.png", "archivo2.png");
+		myTree.insertNewItem(4, "4f", "Estad&iacute;stico", 0, "proceso.png", "proceso.png", "proceso.png");
+		<%// ENDIF %>
+		<%if (llDirectorio)     // IF llDirectorio 
+        {%>
+			myTree.insertNewItem(0, "5", "<%// Response.write(op_config.direccion)%>", 0, "folder_closed.png", "folder-open.png", "folder_closed.png");
+		myTree.insertNewItem(5, "5a", "Directorio <%// Response.write(op_config.direccion)%>", 0, "directory.png", "directory.png", "directory.png");
+		myTree.insertNewItem(5, "5b", "Llamadas", 0, "telephone.png", "telephone.png", "telephone.png");
+		<%// IF llLlamada%>
+		myTree.insertNewItem(5, "5c", "Llamadas de DG", 0, "call.png", "call.png", "call.png");
+		<%// ENDIF%>
+		//myTree.insertNewItem(5, "5c", "Informe", 0, "ico_txt_18.gif", "ico_txt_18.gif", "ico_txt_18.gif");
+		<%}// ENDIF %>
+		<%if (llRecon)  // IF llRecon 
+        {%>
+		myTree.insertNewItem(0, "6", "Reconocimiento", 0, "folder_closed.png", "folder-open.png", "folder_closed.png");
+		myTree.insertNewItem(6, "6a", "Reconocimiento <%// Response.write(op_config.direccion)%>", 0, "directory.png", "directory.png", "directory.png");
+		<%}         // ENDIF %>
+
+		//myTree.insertNewItem(0, "8", "Documentos", 0, "folder_closed.png", "folder-open.png", "folder_closed.png");
+		//myTree.insertNewItem(8, "8a", "Ingresar doc.", 0, "document-new.png", "document-new.png", "document-new.png");
+		//myTree.insertNewItem(8, "8b", "Buscar doc.", 0, "search.png", "search.png", "search.png");
+		<%if (llContrato || llLlamada || llConvenio)     // IF llContrato OR llLlamada OR llConvenio
+        {%>
+		myTree.insertNewItem(0, "12", "Contratos, convenios y basificaci�n", 0, "folder_closed.png", "folder-open.png", "folder_closed.png");
+		myTree.insertNewItem(12, "12a", "Contratos", 0, "contract2.png", "contract2.png", "contract2.png");
+		myTree.insertNewItem(12, "12b", "Convenios, protocolos, contratos y cartas de acuerdo", 0, "licensing.png", "licensing.png", "licensing.png");
+		<%if (llLlamada)            // IF llLlamada
+        {%>
+		myTree.insertNewItem(12, "12c", "Basificaci�n", 0, "contact-new.png", "contact-new.png", "contact-new.png");
+		<%}     // ENDIF
+		}       // ENDIF%>
+		<%if (llLibro)      // IF llLibro 
+        {%>		
+		myTree.insertNewItem(0, "9", "Registro de libros", 0, "folder_closed.png", "folder-open.png", "folder_closed.png");
+		myTree.insertNewItem(9, "9a", "Despacho DG", 0, "directory.png", "directory.png", "directory.png");
+		myTree.insertNewItem(9, "9b", "Despacho CA - Registro de libros, Lefort y Documentos", 0, "directory.png", "directory.png", "directory.png");
+		myTree.insertNewItem(9, "9c", "Bodega", 0, "directory.png", "directory.png", "directory.png");
+
+		<%
+        }       // ENDIF %>
+		<%if (llNombramiento)       // IF llNombramiento
+        {%>
+		myTree.insertNewItem(0, "13", "Personal", 0, "folder_closed.png", "folder-open.png", "folder_closed.png");
+		myTree.insertNewItem(13, "13a", "Nombramientos", 0, "directory.png", "directory.png", "directory.png");
+		<%}         // ENDIF%>
+		<%if (llDirectorio)             // IF llDirectorio 
+        {%>
+		myTree.insertNewItem(0, "14", "Reuniones y eventos", 0, "folder_closed.png", "folder-open.png", "folder_closed.png");
+		myTree.insertNewItem(14, "14a", "Reuniones", 0, "directory.png", "directory.png", "directory.png");
+		myTree.insertNewItem(14, "14b", "Eventos", 0, "directory.png", "directory.png", "directory.png");
+		myTree.insertNewItem(14, "14c", "Junta gobierno", 0, "directory.png", "directory.png", "directory.png");
+		myTree.insertNewItem(14, "14d", "Comit�", 0, "directory.png", "directory-open.png", "directory.png");
+		myTree.insertNewItem(0, "10", "Archivo", 0, "folder_closed.png", "folder-open.png", "folder_closed.png");
+		<%}         // ENDIF %>
+		myTabbar.tabs("a1").attachURL("/op/op_ofic");
+	</script>
+</body>
+
+</html>
