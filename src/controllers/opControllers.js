@@ -3,14 +3,24 @@ const pool = require(path.join(__dirname, "..", "db"))
 const config = require(path.join(__dirname, "..", "config"));
 const util = require(path.join(__dirname, "..", "utils/busquedaUtils"));
 
-const op_cucs = ((req, res) => {
+const op_cucs = (async (req, res) => {
     if (req.groups.indexOf(",OFICIO,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
-
+    const lcSQL = `
+    SELECT cve, depen as descrip, clave,
+            (SELECT COUNT(*) as total FROM gen_oficio WHERE cve = t.cve AND IFNULL(status,0) < 3) as cant,
+            (SELECT COUNT(*) AS MODI FROM gen_oficio WHERE cve = t.cve AND IFNULL(status,0) < 3 AND modificado = 1) AS modificado 
+        FROM gen_tipo_ofic t
+        WHERE cve in (SELECT DISTINCT cve FROM gen_dere_ofic WHERE user_id = ?)
+        ORDER BY cve
+    `
+    const rows = await util.gene_cons(lcSQL, [req.userId])
     const lcDerecho = req.groups;
-    res.render("op/op_cucs", {lcDerecho})
+    const lnOficio = req.query.lnOficio;
+
+    res.render("op/op_cucs", {lcDerecho, rows, lnOficio})
 });
 
 const op_ofic = ((req, res) => {
@@ -34,11 +44,11 @@ const op_aingr = (async (req, res) => {
     const lcSQL = `
         SELECT id_depe, corto, cve 
             FROM ser_depen 
-            WHERE ID_DEPE IN (SELECT id_Depe FROM ser_pers_serv WHERE USER_ID = ${req.userId}) 
+            WHERE ID_DEPE IN (SELECT id_Depe FROM ser_pers_serv WHERE USER_ID = ?) 
             ORDER BY cve,corto
         `
 
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, [req.userId])
     //console.log(rows)
     return res.render("op/op_aingr", {rows})
 });

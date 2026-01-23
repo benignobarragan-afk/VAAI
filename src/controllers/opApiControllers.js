@@ -1714,6 +1714,7 @@ const new_ord_servx2 = (async(req, res) => {
         loCampo.push(rows[0].ASUNTO)
         loCampo.push(rows[0].NUME_CONT)
         loCampo.push(rows[0].envio.toLowerCase().replace(/\b\w/g, s => s.toUpperCase()) + ' (' + rows[0].depe_envi + ')')
+        loCampo.push(rows[0].ID_OFIC)
 
         //console.log(rows2[i].jefe_cargo)
         lcResp = outil.envi_corr(3, rows2[i].CORREO+(!rows2[i].corr_jefe, '', ';'+rows2[i].corr_jefe), loCampo);
