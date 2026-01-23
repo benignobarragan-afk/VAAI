@@ -157,7 +157,7 @@ const cade_busc = (lcCampo, lcCade_busq) => {                       //código me
         params: params
     };
 }
-
+ 
 const gene_id_11 = () => {
 
     // 1. Generar 8 bytes de datos aleatorios (64 bits)

@@ -19,61 +19,73 @@
 
 <script>
 webix.ready(function(){
-  webix.ui({  
+webix.ui({  
     view:"accordion",
     multi:true, // Permite tener varios paneles abiertos o cerrados
     cols:[
-      { 
+    { 
         header:"Menu Oficialía", 
         width:300,
         // El body debe ser un objeto directo, no un array []
         body:{
-          rows:[
+        rows:[
             {
-              view:"toolbar", height:66,
-              cols:[
+            view:"toolbar", height:66,
+            cols:[
                 { view:"button", type:"iconTop", icon:"mdi mdi-file-document-arrow-right-outline", label:"Ofic. sal.", click: function() {
 					cargarPagina('2a');
-					var col = $$("columna_principal");
-                    col.define("header", "Oficialía: Nuevo oficio" );
-                    col.refresh();
+					var header = $$("columna_principal"); 
+
+					if (header) {
+						header.setHTML("Oficialía: Nuevo oficio");
+					}
 				} },
                 { view:"button", type:"iconTop", icon:"mdi mdi-inbox-arrow-down-outline", label:"Ofic ent.", click: function() {
 					cargarPagina('3a');
-					var col = $$("columna_principal");
-                    col.define("header", "Oficialía: Ingresar documento" );
-                    col.refresh();
+					var header = $$("columna_principal"); 
+
+					if (header) {
+						header.setHTML("Oficialía: Ingresar documento");
+					}
 				} },
                 { view:"button", type:"iconTop", icon:"mdi mdi-account-cog-outline", label:"Administrar", click: function() {
 					cargarPagina('5a');
-					var col = $$("columna_principal");
-                    col.define("header", "Oficialía: Administra las oficialias" );
-                    col.refresh();
+					var header = $$("columna_principal"); 
+
+					if (header) {
+						header.setHTML("Oficialía: Administra las oficialias");
+					}
 				} },
-              ]
+            ]
             },
             {
-              view:"toolbar", height:66,
-              cols:[
+			view:"toolbar", height:66,
+            cols:[
                 { view:"button", type:"iconTop", icon:"mdi mdi-text-box-search-outline", label:"Buscar sal.", click: function() {
 					cargarPagina('4a');
-					var col = $$("columna_principal");
-                    col.define("header", "Oficialía: Buscar oficios salida" );
-                    col.refresh();
+					var header = $$("columna_principal"); 
+
+					if (header) {
+						header.setHTML("Oficialía: Buscar oficios salida");
+					}
 				} },
                 { view:"button", type:"iconTop", icon:"mdi mdi-clipboard-text-search-outline", label:"Buscar ent.", click: function() {
 					cargarPagina('4c');
-					var col = $$("columna_principal");
-                    col.define("header", "Oficialía: Buscar oficios entrada" );
-                    col.refresh();
+					var header = $$("columna_principal"); 
+
+					if (header) {
+						header.setHTML("Oficialía: Buscar oficios entrada");
+					}
 				} },
                 { view:"button", type:"iconTop", icon:"mdi mdi-video", label:"Videos", click: function() {
 					cargarPagina('5b');
-					var col = $$("columna_principal");
-                    col.define("header", "Oficialía: Videos tutoriales" );
-                    col.refresh();
+					var header = $$("columna_principal"); 
+
+					if (header) {
+						header.setHTML("Oficialía: Videos tutoriales");
+					}
 				} },
-              ]
+			]
             },
             {
             // Aquí podrías agregar el Tree que teníamos antes
@@ -108,7 +120,7 @@ webix.ready(function(){
                 return html;
                 }
             },
-              data: [
+            data: [
 				//{ id: "1", value: "Oficialía de partes", icon: "mdi mdi-book-open-outline", open: true, data: [
                     { id: "2", value: "Oficialía de salida", icon:"mdi mdi-file-document-arrow-right-outline", open: true, data: [
                         { id: "2a", icon:"mdi mdi-plus-circle-outline", value: "Nuevo oficio" },
@@ -118,19 +130,19 @@ webix.ready(function(){
                         <%for(i=0; i<rows.length; i++){%>
                             { id: "<%=rows[i].cve%>", icon:"mdi mdi-home-city-outline", value: "(<%=rows[i].cve%>) <%=rows[i].descrip%>", cant:<%=rows[i].cant%>, modi:<%=rows[i].modificado%>},
                         <%}%>
+						]},
                     ]},
-                      ]},
-                  { id: "3", icon:"mdi mdi-inbox-arrow-down-outline", value: "Oficialía de entrada", open: true, data:[
+					{ id: "3", icon:"mdi mdi-inbox-arrow-down-outline", value: "Oficialía de entrada", open: true, data:[
                         { id: "3a", icon:"mdi mdi-location-enter", value: "Ingresar documento" },
                         { id: "3b", icon:"mdi mdi-content-cut", value: "Corte de entrega" },
                         { id: "3c", icon:"mdi mdi-clipboard-account-outline", value: "Oficios asignados" },
-                  ]},
-                  { id: "4", icon:"mdi mdi-inbox-arrow-down-outline", value: "Reportes", open: true, data:[
+					]},
+					{ id: "4", icon:"mdi mdi-inbox-arrow-down-outline", value: "Reportes", open: true, data:[
                         { id: "4a", icon:"mdi mdi-text-box-search-outline", value: "Buscar oficios salida" },
                         { id: "4b", icon:"mdi mdi-hand-back-left-outline", value: "Oficios Solicitados" },
                         { id: "4c", icon:"mdi mdi-clipboard-text-search-outline", value: "Buscar oficios entrada" },
                         { id: "4d", icon:"mdi mdi-chart-bar", value: "Estadísticos" },
-                  ]}
+					]}
 				//]}
             ],
             on: {
@@ -144,29 +156,40 @@ webix.ready(function(){
                         //console.log(item.value)
                         cargarPagina(id); // Si es un nodo final, cargamos la página
 
-                        var col = $$("columna_principal");
-                        col.define("header", "Oficialía: " + item.value);
-                        col.refresh();
+                        // Localiza el componente por su ID (asegúrate de que el header tenga este ID)
+						var header = $$("columna_principal"); 
+
+						if (header) {
+							header.setHTML("Oficialía: " + item.value);
+						}
                     }
                 }}
             }
-          ]
+		]
         }
-      },
+    },
       { view:"resizer" }, // Opcional: para ajustar el ancho manualmente
-      { 
-        header:"Oficialia de partes", id: "columna_principal",
-        body:{ 
-            view:"iframe", 
-            id:"frame_principal", 
-            src:"/op/op_ofic" 
-        } 
-      },
+    {
+		// Esta parte es un layout normal, NO tiene flechas de cierre
+		rows: [
+			{ 
+				view: "template", 
+				template: "Oficialía de partes", 
+				type: "header",
+				id: "columna_principal", // Usaremos este ID para cambiar el título
+			},
+			{ 
+				view: "iframe", 
+				id: "frame_principal", 
+				src: "/op/op_ofic" 
+			}
+		]
+	}
     ]
-  });
-  <%if(lnOficio>0){%>
-  deta_ingr(<%=lnOficio%>);
-  <%}%>
+});
+<%if(lnOficio>0){%>
+deta_ingr(<%=lnOficio%>);
+<%}%>
 
 });
 
@@ -190,17 +213,6 @@ const rutasSistema = {
 let xx = 0;
 
 
-
-/*
-            if (id == 1) { myTabbar.tabs("a1").attachURL("/op/op_reof0"); }
-			if (id == 2) { myTabbar.tabs("a1").attachURL("/op/op_nofic"); }
-			if (id == 3) { myTabbar.tabs("a1").attachURL("/op/op_ningr"); }
-			if (id == 4) { myTabbar.tabs("a1").attachURL("/op/arch_muer"); }
-			if (id == 5) { myTabbar.tabs("a1").attachURL("/op/op_admi"); }
-			if (id == 6) { myTabbar.tabs("a1").attachURL("/op/op_vide"); }
-			if (id == 7) { myTabbar.tabs("a1").attachURL("/op/op_area"); }
- */
-
 function cargarPagina(id) {
     // 1. Buscamos la URL en nuestro mapa
     let url = rutasSistema[id] || rutasSistema["default"] + (/^\d/.test(id)?'':id);
@@ -223,9 +235,9 @@ function deta_ingr(oficio, asignado = 0) {
 					{ view: "icon", icon: 'mdi mdi-fullscreen', click:()=>{
 						var ventana = $$('w3' + xx)
 						ventana.config.move = !ventana.config.move
-					  ventana.config.fullscreen = !ventana.config.fullscreen;
-					  ventana.setPosition(0,0)
-					  ventana.resize();
+						ventana.config.fullscreen = !ventana.config.fullscreen;
+						ventana.setPosition(0,0)
+						ventana.resize();
 					} },
 					{ view: "icon", icon: 'mdi mdi-close', click: "$$('w3" + xx + "').close();" }
 				]
@@ -248,9 +260,9 @@ function deta_ingr(oficio, asignado = 0) {
 					{ view: "icon", icon: 'mdi mdi-fullscreen', click:()=>{
 						var ventana = $$('w4' + xx)
 						ventana.config.move = !ventana.config.move
-					  ventana.config.fullscreen = !ventana.config.fullscreen;
-					  ventana.setPosition(0,0)
-					  ventana.resize();
+						ventana.config.fullscreen = !ventana.config.fullscreen;
+						ventana.setPosition(0,0)
+						ventana.resize();
 					} },
 					{ view: "icon", icon: 'mdi mdi-close', click: "$$('w4" + xx + "').close();" }
 				]
@@ -273,9 +285,9 @@ function deta_ingr(oficio, asignado = 0) {
 					{ view: "icon", icon: 'mdi mdi-fullscreen', click:()=>{
 						var ventana = $$('w5' + xx)
 						ventana.config.move = !ventana.config.move
-					  ventana.config.fullscreen = !ventana.config.fullscreen;
-					  ventana.setPosition(0,0)
-					  ventana.resize();
+						ventana.config.fullscreen = !ventana.config.fullscreen;
+						ventana.setPosition(0,0)
+						ventana.resize();
 					} },
 					{ view: "icon", icon: 'mdi mdi-close', click: "$$('w5" + xx + "').close();" }
 				]
@@ -299,9 +311,9 @@ function deta_ingr(oficio, asignado = 0) {
 					{ view: "icon", icon: 'mdi mdi-fullscreen', click:()=>{
 						var ventana = $$('w6' + xx)
 						ventana.config.move = !ventana.config.move
-					  	ventana.config.fullscreen = !ventana.config.fullscreen;
-					  	ventana.setPosition(0,0)
-					  	ventana.resize();
+						ventana.config.fullscreen = !ventana.config.fullscreen;
+						ventana.setPosition(0,0)
+						ventana.resize();
 					} },
 					{ view: "icon", icon: 'mdi mdi-close', click: "$$('w6" + xx + "').close();" }
 				]
@@ -325,9 +337,9 @@ function deta_ingr(oficio, asignado = 0) {
 					{ view: "icon", icon: 'mdi mdi-fullscreen', click:()=>{
 							var ventana = $$('mues_grup' + xx)
 							ventana.config.move = !ventana.config.move
-						  ventana.config.fullscreen = !ventana.config.fullscreen;
-						  ventana.setPosition(0,0)
-						  ventana.resize();
+							ventana.config.fullscreen = !ventana.config.fullscreen;
+							ventana.setPosition(0,0)
+							ventana.resize();
 						} },
 					{ view: "icon", icon: 'mdi mdi-close', click: "$$('w5" + xx + "').close();" }
 				]
@@ -379,9 +391,9 @@ function deta_ingr(oficio, asignado = 0) {
 						
 						var ventana = $$('w7' + xx)
 						ventana.config.move = !ventana.config.move
-					  	ventana.config.fullscreen = !ventana.config.fullscreen;
-					  	ventana.setPosition(0,0)
-					  	ventana.resize();
+						ventana.config.fullscreen = !ventana.config.fullscreen;
+						ventana.setPosition(0,0)
+						ventana.resize();
 					} },
 					{ view: "icon", icon: 'mdi mdi-close', click: "$$('w7" + xx + "').close();" }
 				]
@@ -398,140 +410,7 @@ function deta_ingr(oficio, asignado = 0) {
 		$$("toolbar" + id).getParentView().close()
 
 	}
-	function sacaPendientes() {
 
-		var items = [];
-		webix.ajax()
-			.post("/api/op/op_cucsx2")
-			.then(function (res) {
-				if (res.json().length > 0) {
-
-					for (var i = 0; i < res.json().length; i++) {
-						items.push({
-							cve: res.json()[i].cve,
-							descrip: res.json()[i].descrip,
-							cant: res.json()[i].cant,
-							modi: res.json()[i].modificado
-						});
-					}
-
-					//Eliminar los hijos de pendientes
-					myTree.deleteChildItems(7);
-
-					//Vuelve a agregar a pendientes
-					items.forEach(function (elem) {
-						//console.log(elem)
-						var modif = "<div class= 'div_pend " + (elem.modi == 0 ? "sin_pend'>" : "con_pend'>") + elem.modi + "</div>";
-						var txtCantidad = "<div class= 'div_pend " + (elem.cant == 0 ? "sin_pend'>" : "con_pend'>") + elem.cant + "</div>";
-						myTree.insertNewItem(7, "7" + elem.cve, modif + txtCantidad + " (" + elem.cve + ") " + elem.descrip, 0, "building.png", "building.png", "building.png");
-					});
-					/*for (var i = 0; i < items.length; i++) {
-						var elem = items[i];
-						var txtCantidad = "<div class= 'div_pend " + (elem.cant == 0 ? "sin_pend'>" : "con_pend'>") + elem.cant + "</div>";
-						myTree.insertNewItem(7, "7" + elem.cve, txtCantidad + " (" + elem.cve + ") " + elem.descrip, 0, "building.png", "building.png", "building.png");
-					}*/
-
-					ligaURLs(items);
-
-				}
-			});
-
-	}
-
-
-	function ligaURLs(items) {
-		myTree.attachEvent("onClick", function (id) {
-			ultimoSeleccionado = id;
-			if (id == 2) {
-				myTabbar.tabs("a1").attachURL("/op/op_ofic");
-				//myTabbar.tabs('a1').progressOn();
-			}
-			if (id == "2a") { myTabbar.tabs("a1").attachURL("/op/op_nofic"); }
-			if (id == "2b") { myTabbar.tabs("a1").attachURL("/op/op_hofic"); }
-			if (id == "2c") { myTabbar.tabs("a1").attachURL("/op_pofic.fwx"); }
-			if (id == "2d") { myTabbar.tabs("a1").attachURL("/op/op_pend"); }
-			if (id == "2e") { myTabbar.tabs("a1").attachURL("/op/op_nsoli"); }
-			if (id == "2f") { myTabbar.tabs("a1").attachURL("/op/op_grup?t=2"); }
-			if (id == 3) {
-				myTabbar.tabs("a1").attachURL("/op/op_ingr");
-				//myTabbar.tabs('a1').progressOn();
-			}
-			if (items != null) {
-
-				/*for(var i = 0; i < items.length; i++)
-				{
-					var elem = items[i];
-					if(id == "7"+elem.cve)//String.fromCharCode(xx))
-					{
-						myTabbar.tabs("a1").attachURL("/op_pend.fwx?lcCVE="+elem.cve);
-						//myTabbar.tabs('a1').progressOn();
-					}
-				}*/
-				items.forEach(function (elem) {
-					if (id == "7" + elem.cve)//String.fromCharCode(xx))
-						myTabbar.tabs("a1").attachURL("/op/op_pend?lcCVE=" + elem.cve);
-
-				});
-			}
-
-			if (id == "3a") { myTabbar.tabs("a1").attachURL("/op/op_ningr"); }
-			if (id == "3b") { myTabbar.tabs("a1").attachURL("/op_cort.fwx"); }
-			if (id == "3c") { myTabbar.tabs("a1").attachURL("/op_mingr.fwx"); }
-			if (id == "3d") { myTabbar.tabs("a1").attachURL("/op/op_aingr"); }
-			if (id == "4a") { myTabbar.tabs("a1").attachURL("/op/op_reof0"); }
-			if (id == "4c") { myTabbar.tabs("a1").attachURL("/op_reof2.fwx"); }
-			if (id == "4d") { myTabbar.tabs("a1").attachURL("/op/busc_ofic"); }
-			if (id == "4e") { myTabbar.tabs("a1").attachURL("/opc_arch_muer.fwx"); }
-			if (id == "4f") { myTabbar.tabs("a1").attachURL("/op/op_rgraf"); }
-			if (id == "5a") { myTabbar.tabs("a1").attachURL("/rect_adirep.fwx"); }
-			if (id == "5b") { myTabbar.tabs("a1").attachURL("/rect_llamp.fwx"); }
-			if (id == "5c") { myTabbar.tabs("a1").attachURL("/op_llama.fwx"); }
-			if (id == "6a") { myTabbar.tabs("a1").attachURL("/rect_reco.fwx"); }
-			if (id == 8) { myTabbar.tabs("a1").attachURL("/repo_digi.fwx"); }
-			if (id == "8a") { myTabbar.tabs("a1").attachURL("/digi_nuev.fwx"); }
-			if (id == "8b") { myTabbar.tabs("a1").attachURL("/digi_busc.fwx"); }
-			
-			if (id == "12a") { myTabbar.tabs("a1").attachURL("/op_contrato.fwx"); }
-			if (id == "12b") { myTabbar.tabs("a1").attachURL("/op_conv.fwx"); }
-			if (id == "12c") { myTabbar.tabs("a1").attachURL("/op_basi.fwx"); }
-			if (id == "13a") { myTabbar.tabs("a1").attachURL("/op_nombra.fwx"); }
-			
-			<% //IF llDirectorio 
-            //if (llDirectorio)
-            //{
-            %>
-			if (id == "9a") { myTabbar.tabs("a1").attachURL("/op_libr.fwx?lugar=1"); }
-			if (id == "9b") { myTabbar.tabs("a1").attachURL("/op_libr.fwx?lugar=2"); }
-			if (id == "9c") { myTabbar.tabs("a1").attachURL("/op_libr.fwx?lugar=3"); }
-			if (id == "10") { myTabbar.tabs("a1").attachURL("/op_archdg.fwx") }
-			if (id == "14a") { myTabbar.tabs("a1").attachURL("/op_eventos.fwx?case=1") }
-			if (id == "14b") { myTabbar.tabs("a1").attachURL("/op_eventos.fwx?case=2") }
-			if (id == "14c") { myTabbar.tabs("a1").attachURL("/op_eventos.fwx?case=3") }
-			if (id == "14d") { myTabbar.tabs("a1").attachURL("/op_eventos.fwx?case=4") }
-			<%
-            //} 
-            //else
-            //{ 
-            %>
-			//if (id == "9b") { myTabbar.tabs("a1").attachURL("/op_libr.fwx") }
-			<% 
-            //ENDIF
-            // }
-              %>
-			//if ( id == 3)
-			//	myTabbar.tabs('a1').progressOn();
-			//else
-			//	myTabbar.tabs('a1').progrsessOff();
-
-		});
-		if (ultimoSeleccionado == "" || ultimoSeleccionado == null) {
-			//
-		} else {
-			myTree.selectItem(ultimoSeleccionado, false, false);
-		}
-
-
-	}
 
 	function mues_noti() {
 
@@ -560,9 +439,9 @@ function deta_ingr(oficio, asignado = 0) {
 								view: "icon", icon: 'mdi mdi-fullscreen', click:()=>{
 									var ventana = $$('w1')
 									ventana.config.move = !ventana.config.move
-								  ventana.config.fullscreen = !ventana.config.fullscreen;
-								  ventana.setPosition(0,0)
-								  ventana.resize();
+									ventana.config.fullscreen = !ventana.config.fullscreen;
+									ventana.setPosition(0,0)
+									ventana.resize();
 								} 
 							},
 							{

@@ -55,16 +55,17 @@ const cmb_progap_depe = (async (req, res) => {
     const lcBusca = req.query['filter[value]']
     
     const lcWhere = util.cade_busc('siglas,dependencia', lcBusca)
-    console.log(lcWhere)
+    //console.log(lcWhere)
 
     const lcSQL = `
         SELECT  id, siglas, dependencia, concat('(',siglas ,') ',  dependencia) as value 
             FROM progap_dependencias
-            WHERE id_antecesor = 0 and ${lcWhere}
+            WHERE id_antecesor = 0 and ${lcWhere.sql}
             LIMIT 20
     ` 
-    //console.log(lcSQL)   
-    const rows = await util.gene_cons(lcSQL)
+    //console.log(lcSQL)  
+    //console.log(lcWhere.params) 
+    const rows = await util.gene_cons(lcSQL, lcWhere.params)
     //console.log(rows)
     res.json(rows)
 });
@@ -77,16 +78,16 @@ const cmb_progap_prog = (async (req, res) => {
     const lcBusca = req.query['filter[value]']
     
     const lcWhere = util.cade_busc('nivel,programa', lcBusca)
-    console.log(lcWhere)
+    //console.log(lcWhere)
 
     const lcSQL = `
         SELECT  id, clave_cgipv, programa, concat('(',clave_cgipv ,') ', programa) as value 
             FROM progap_programa
-            WHERE ${lcWhere}
+            WHERE ${lcWhere.sql}
             LIMIT 20
     ` 
     //console.log(lcSQL)   
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, lcWhere.params)
     //console.log(rows)
     res.json(rows)
 });
