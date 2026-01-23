@@ -11,5 +11,6 @@ const router = express.Router()
 
 router.post("/tools_pdfx", midd.verifyToken, upload.single('upload'), toolCtrl.tools_pdfx);
 router.post("/tools_qrx", midd.verifyToken, upload.single('upload'), toolCtrl.tools_qrx);
+router.post("/tools_qrx2", midd.verifyToken, upload.single('upload'), toolCtrl.tools_qrx2);
 
 module.exports = router

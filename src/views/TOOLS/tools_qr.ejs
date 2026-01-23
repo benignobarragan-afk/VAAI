@@ -10,8 +10,36 @@
             cols:[
             { 
             view: "uploader", value: "Seleeciona un imagen con QR", accept:"image/png, image/gif, image/jpg", width:240, 
+            name:"fileIMG", id:"fileIMG", 
+            link:"list1",  upload:"/api/tools/tools_qrx",
+                on:{
+                        onUploadComplete:(response)=>{
+
+                        //console.log(response);
+                        //console.log(response.message);
+                        //console.log(response.url)
+                        $$("formQR").enable();
+                        $$("textoPDF").setValue(response.message);
+                        if(!!response.url)
+                        {
+                            $$("validador").load(response.url);
+                        }
+                    },
+                    onBeforeFileAdd: function (item) {
+                      //$$("formPDF").showProgress();
+                      
+                      $$("formQR").disable(); 
+                      $$("textoPDF").setValue("Subiendo y procesando archivo...");
+                      webix.message({ type:"info", text:"Subiendo y procesando archivo...", id:"loadingMsg" });
+    
+                      return true;
+                    },
+                }
+            },
+            { 
+            view: "uploader", value: "Seleeciona un PDF QR", accept:"application/pdf", width:240, 
             name:"filePDF", id:"filePDF", 
-            link:"list1",  upload:"/api/tools/tools_QRx",
+            link:"list1",  upload:"/api/tools/tools_qrx2",
                 on:{
                         onUploadComplete:(response)=>{
 

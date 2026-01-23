@@ -317,15 +317,33 @@
  */
 		});
 
-		function genera() {
+/* 		function genera() {
             let form = $$("form_busc").getValues()
 
             //console.log(form)
 			webix.extend($$("dtable"), webix.ProgressBar)
             $$("dtable").clearAll()
             $$("dtable").load("/api/op/op_reof0x?loForm=" + JSON.stringify(form))
-		}
+		} */
+	function genera() {
+		let form = $$("form_busc").getValues();
+		let dtable = $$("dtable");
 
+		// Activamos la barra de progreso
+		webix.extend(dtable, webix.ProgressBar);
+		dtable.showProgress({ type: "icon" });
+		dtable.clearAll();
+
+		// Usamos AJAX con POST para mayor seguridad y capacidad
+		webix.ajax().post("/api/op/op_reof0x", form).then(function(data) {
+			// Parseamos los resultados a la tabla
+			dtable.parse(data.json());
+			dtable.hideProgress();
+		}).fail(function(err) {
+			dtable.hideProgress();
+			webix.message({ type: "error", text: "Error al realizar la búsqueda" });
+		});
+	}
 	</script>
 </body>
 

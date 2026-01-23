@@ -602,7 +602,7 @@
 				.get("/api/op/op_noficx7", {id})
 				.then(function (data) {
 
-					console.log(data)
+					//console.log(data)
 					let res = data.json()[0]
 
 					$$("precargado").getPopup().getList().clearAll();
@@ -619,9 +619,6 @@
 					//console.log(res.corr_ofic)
 					}
 				})
-
-
-
 		}
 
 		function buscaFirma(cve) {
@@ -710,7 +707,7 @@
 				.then(function (data) {
 					$$("btnGuardar").enable();
 					let res = data.json()
-					console.log(res)
+					//console.log(res)
 					Swal.fire({
 						title:res.message, icon:res.status?"success":"error"
 					}).then(()=>{
@@ -726,7 +723,7 @@
 		}
 
 		function carg_grupo(aGrupo) {
-			console.log(typeof aGrupo)
+			//console.log(typeof aGrupo)
 			if (aGrupo != ""){
 				$$("dtable").load("/api/op/op_noficx4?lnTipo=1&laId=" + aGrupo);
 			}

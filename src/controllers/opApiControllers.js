@@ -109,6 +109,9 @@ const cmb_controlw = (async (req, res) => {
     let lcGROUPS = req.groups
 
     const lcBusca = req.query['filter[value]']
+
+    let lcWhere = util.cade_busc("o.nume_cont,' ',o.descrip", lcBusca)
+    lcWhere.params.push(req.userId)
     
     const lcSQL = `
     SELECT id_ofic as id
@@ -117,13 +120,14 @@ const cmb_controlw = (async (req, res) => {
                 , IFNULL(t.descrip,'Ingreso') as   tipo, IFNULL(o.letra, '') as letra 
         FROM opc_oficio o
         LEFT JOIN OPC_TIPO_docu t oN t.id_pk = o.TIPO
-        WHERE nume_cont > 0 AND RTRIM(LTRIM(nume_cont))  LIKE '%${lcBusca}%'
-            and cve in (SELECT CVE FROM GEN_DERE_OFIC WHERE USER_ID = ${req.userId}) 
+        WHERE nume_cont > 0 AND ${lcWhere.sql}
+            and cve in (SELECT CVE FROM GEN_DERE_OFIC WHERE USER_ID = ?) 
         ORDER BY anio desc, nume_cont, o.cve LIMIT 20
     `
 
     console.log(lcSQL)
-    const rows = await util.gene_cons(lcSQL)
+    console.log(lcWhere.params)
+    const rows = await util.gene_cons(lcSQL, lcWhere.params)
     return res.json(rows)
 });
 
@@ -335,7 +339,7 @@ const op_noficx5 = (async (req, res) => {
 
     //console.log(req.body)
 
-    const laDepen = await util.gene_cons("select * from gen_tipo_ofic where cve = '" + req.body.cmbSoli + "'")
+    const laDepen = await util.gene_cons("select * from gen_tipo_ofic where cve = ?", [req.body.cmbSoli])
     //console.log(laDepen)
 
     if (!laDepen){
@@ -344,7 +348,7 @@ const op_noficx5 = (async (req, res) => {
 
     //console.log(laDepen[0].CVE)
     //console.log("'" + (!laDepen[0].cve_compartir ?laDepen[0].CVE : laDepen[0].cve_compartir) + "'")
-    const laID = await util.gene_cons("CALL SP_NEWID ('" + (!laDepen[0].cve_compartir ?laDepen[0].CVE : laDepen[0].cve_compartir) + "', '')")
+    const laID = await util.gene_cons("CALL SP_NEWID (?, '')", [(!laDepen[0].cve_compartir ?laDepen[0].CVE : laDepen[0].cve_compartir)])
 
     if (!laID[0][0].nextid){
         return res.json({"status" : false, "message": "Hay problema al obtener el folio"});
@@ -359,10 +363,10 @@ const op_noficx5 = (async (req, res) => {
     `
     let parameters = [laID[0][0].nextid, laDepen[0].CVE, lcOficio, laDepen[0].CLAVE, req.body.txtConcepto, req.body.txtRefe, req.body.txtAnexo,
         req.userId, req.userId, req.centro, laDeta[0].tipo_depe, lcclav_ofic, req.id_cent, req.body.cmbSoli_ofic, req.body.txtSoli_moti,
-        (!req.body.cmbTipoFormatoRH ? 0 : req.body.cmbTipoFormatoRH), (!req.body.nombramiento ? 0 : req.body.nombramiento), 
-        (!req.body.firma ? 0 : req.body.firma), (!req.body.seccion ? 0 : req.body.seccion)
-    ]
+        (!req.body.cmbTipoFormatoRH ? 0 : req.body.cmbTipoFormatoRH), (req.body.nombramiento == 1 ? 1 : 0), 
+        (!req.body.firma ? 0 : req.body.firma), (!req.body.seccion ? 0 : req.body.seccion)]
     //console.log(lcSQL)
+    //console.log(parameters)
     const laInsert = await util.gene_cons(lcSQL, parameters)            //inserta el oficio
     
     if (!laInsert.insertId){
@@ -379,13 +383,15 @@ const op_noficx5 = (async (req, res) => {
     for (var i = 0; i < laDeta.length; i++) {                   //inserta el detalle del oficio
         const lcDeta = `
         INSERT INTO gen_doficio (id_iden, id_cent, corr_ofic, Diri_nomb, diri_carg, tipo_depe, tipo, clav_ofic, cambios, copias) 
-            VALUES(?, ?, ?, ?, ?, ?, ?, ?, CONCAT('ALTA|',?,'|',DATE_FORMAT(NOW(), '%m/%d/%Y %H:%I')), ?')
+            VALUES(?, ?, ?, ?, ?, ?, ?, ?, CONCAT('ALTA|',?,'|',DATE_FORMAT(NOW(), '%m/%d/%Y %H:%I')), ?)
         `
-        //console.log(lcDeta)
-
         parameters = [laInsert.insertId, laDeta[i].servicio, laDeta[i].correo, laDeta[i].nombre, laDeta[i].ocupacion, laDeta[i].tipo_depe, 
             laDeta[i].tipo, lcclav_ofic, req.userId, laDeta[i].copias
         ]
+
+        console.log(lcDeta)
+        console.log(parameters)
+
         const laInsertDeta = await util.gene_cons(lcDeta, parameters)
         //console.log(laInsertDeta)
     }
@@ -417,7 +423,7 @@ const op_noficx5 = (async (req, res) => {
     
     for (var i = 0; i < loTree.length; i++){
         lcSQL = `
-        INSERT INTO opc_liga_ofic (ofic_in, ofic_out, tipo, tipo_docu) VALUES(? , ?, 1, 0)
+        INSERT INTO opc_liga_ofic (ofic_in, ofic_out, tipo, tipo_docu) VALUES(?, ?, 1, 0)
         `
         loLiga = await util.gene_cons(lcSQL, [loTree[i].id, laInsert.insertId])
     }    
@@ -436,7 +442,7 @@ const op_gofic = (async (req, res) => {
         return res.render("sin_derecho")
     }
 
-    const loUsuario = await util.gene_cons("SELECT IFNULL(apepat, '') as apepat, IFNULL(apemat, '') as apemat, IFNULL(nombre, '') as nombre FROM gen_personas WHERE codigo = " + req.codigo);
+    const loUsuario = await util.gene_cons("SELECT IFNULL(apepat, '') as apepat, IFNULL(apemat, '') as apemat, IFNULL(nombre, '') as nombre FROM gen_personas WHERE codigo = ?", [req.codigo]);
 
     lcSQL = `
     SELECT o.cve, o.idoficio, CONCAT('a ', DAY(o.fecha), ' de ', 
@@ -679,24 +685,29 @@ const cmb_control2W = (async (req, res) => {
     }
 
     const lcBusca = req.query['filter[value]']
-    
-    const lcWhere = util.construirClausulaBusqueda(lcBusca,'3')
+    /* const lcWhere = util.construirClausulaBusqueda(lcBusca,'3') */
+    let lcWhere = util.cade_busc('o.descrip', lcBusca)
 
-    let lcWhereT = ''
-    lcWhereT = (!req.query.cve ? '' : "o.status < 8 AND o.cve = '" + req.query.cve + "'") + (!req.query.cve ? '' : ' and ') + (!lcWhere ? '' : lcWhere)
-    lcWhereT = (!lcWhereT ? '' : 'WHERE ' + lcWhereT)
+    if (!!req.query.cve){
+        lcWhere.sql = lcWhere.sql + " AND o.status < 8 AND o.cve = ? "
+        lcWhere.params.push(req.query.cve)
+    }else {
+        lcWhere.sql = lcWhere.sql + " AND o.status < 8 "
+    }
+    
 
     //console.log(lcWhereT)
 
     lcSQL = `
         SELECT o.id_ofic as id, LEFT(o.descrip,254) as value 
             FROM opc_oficio o INNER JOIN OPC_TIPO_DOCU t ON t.id_pk = o.tipo
-            ${lcWhereT} 
+            WHERE ${lcWhere.sql} 
             GROUP BY o.id_ofic, o.descrip
             ORDER BY o.id_ofic desc LIMIT 20
     `
     //console.log(lcSQL)
-    const rows = await util.gene_cons(lcSQL)
+    //console.log(lcWhere.params)
+    const rows = await util.gene_cons(lcSQL, lcWhere.params)
     //console.log(rows)
     return res.json(rows)
     //return res.json({status:true, nume_cont : rows[0].control})
@@ -712,22 +723,31 @@ const cmb_control3W = (async (req, res) => {
 
     const lcBusca = req.query['filter[value]']
     
-    const lcWhere = util.construirClausulaBusqueda(lcBusca,'4')
+    /* const lcWhere = util.construirClausulaBusqueda(lcBusca,'4') */
+    let lcWhere = util.cade_busc('o.oficio', lcBusca)
 
-    let lcWhereT = ''
+    if (!!req.query.cve){
+        lcWhere.sql = lcWhere.sql + " AND o.status < 8 AND o.cve = ? "
+        lcWhere.params.push(req.query.cve)
+    }else {
+        lcWhere.sql = lcWhere.sql + " AND o.status < 8 "
+    }
+    
+/*     let lcWhereT = ''
     lcWhereT = (!req.query.cve ? '' : "o.status < 8 AND o.cve = '" + req.query.cve + "'") + (!req.query.cve ? '' : ' and ') + (!lcWhere ? '' : lcWhere)
-    lcWhereT = (!lcWhereT ? '' : 'WHERE ' + lcWhereT)
-
+    lcWhereT = (!lcWhereT ? '' : 'WHERE ' + lcWhereT) */
+ 
     //console.log(lcWhereT)
 
     lcSQL = `
         SELECT o.id_iden as id, o.oficio as value 
             FROM gen_oficio o
-            ${lcWhereT} 
+            WHERE ${lcWhere.sql} 
             ORDER BY o.id_iden desc LIMIT 20
     `
-    //console.log(lcSQL)
-    const rows = await util.gene_cons(lcSQL)
+    console.log(lcSQL)
+    console.log(lcWhere.params)
+    const rows = await util.gene_cons(lcSQL, lcWhere.params)
     //console.log(rows)
     return res.json(rows)
     //return res.json({status:true, nume_cont : rows[0].control})
@@ -859,7 +879,7 @@ const op_admix = (async (req, res) => {
         return res.render("sin_derecho")
     }
 
-    let lcSQL = ''
+    let lcSQL = '', parameters = []
 
     //console.log(req.body)
 
@@ -870,10 +890,10 @@ const op_admix = (async (req, res) => {
     lcSQL = `
         SELECT CVE 
             FROM gen_tipo_ofic 
-            WHERE cve = '${req.body.clave}'
+            WHERE cve = ?
     `
 
-    const rows = await util.gene_cons(lcSQL);
+    const rows = await util.gene_cons(lcSQL, [req.body.clave]);
 
     if (rows.length > 0){
         return res.json({"status": false, "message": "La clave de la oficialia ya se encuentra registrada"})
@@ -882,9 +902,9 @@ const op_admix = (async (req, res) => {
     lcSQL = `
         SELECT *  
             FROM gen_id 
-            WHERE \`table\` = '${req.body.clave}'
+            WHERE \`table\` = ?
     `
-    const rows2 = await util.gene_cons(lcSQL);
+    const rows2 = await util.gene_cons(lcSQL, [req.body.clave]);
 
     if (rows2.length > 0){
         return res.json({"status": false, "message": "No se puede usar la clave de oficialia ingresada, intenta con otra"})
@@ -893,9 +913,9 @@ const op_admix = (async (req, res) => {
     lcSQL = `
         SELECT *  
             FROM gen_id 
-            WHERE \`table\` = 'R_${req.body.clave}'
+            WHERE \`table\` = ?
     `
-    const rows3 = await util.gene_cons(lcSQL);
+    const rows3 = await util.gene_cons(lcSQL, ['R_'+req.body.clave]);
 
     if (rows3.length > 0){
         return res.json({"status": false, "message": "No se puede usar la clave de oficialia ingresada, intenta con otra"})
@@ -904,10 +924,10 @@ const op_admix = (async (req, res) => {
     lcSQL = `
         SELECT clave, RTRIM(LTRIM(dependen)) as dependen, descrip 
             FROM gen_centros 
-            WHERE id_cent = ${req.body.cmbServicio}
+            WHERE id_cent = ?
     `
 
-    const rows4 = await util.gene_cons(lcSQL);
+    const rows4 = await util.gene_cons(lcSQL, [req.body.cmbServicio]);
 
     if (rows4.length <= 0){
         return res.json({"status": false, "message": "No se pudo localizar la dependencia"})
@@ -917,12 +937,16 @@ const op_admix = (async (req, res) => {
 
     lcSQL = `
         INSERT INTO gen_tipo_ofic (cve, depen, clave, id_cent, previo, iniciales, nomb_firm, carg_firm, plantilla, codigo, correo_area, correo_copia, cve_compartir) 
-            VALUES ('${req.body.clave}', '${rows4[0].dependen}', '${rows4[0].clave}', ${req.body.cmbServicio}, '${req.body.previo}', '${req.body.firm_inic}', '${req.body.firm_nomb}', '${req.body.firm_carg}', '', ${req.body.firm_rud}, '${req.body.correo_area}', '${req.body.correo_copia}', '${req.body.compartir}');
-
-        INSERT INTO GEN_ID (\`table\`, nextid, reset) VALUES ('${req.body.clave}', ${lnProximo}, 1), ('R_${req.body.clave}', 1, 0)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, '', ?, ?, ?, ?);
     `
+    parameters = [req.body.clave, rows4[0].dependen, rows4[0].clave, req.body.cmbServicio, req.body.previo, req.body.firm_inic, req.body.firm_nomb, req.body.firm_carg, req.body.firm_rud, req.body.correo_area, req.body.correo_copia, req.body.compartir]
+    
+    const rows5 = await util.gene_cons(lcSQL, parameters);
 
-    const rows5 = await util.gene_cons(lcSQL);
+    lcSQL = `
+        INSERT INTO GEN_ID (\`table\`, nextid, reset) VALUES (?, ?, 1), (?, 1, 0)
+    `
+    const rows6 = await util.gene_cons(lcSQL, [req.body.clave, lnProximo, 'R_'+req.body.clave]);
     
     return res.json({"status": true, "message": "Se guardaron los cambios"})
 });
@@ -937,10 +961,10 @@ const op_nplan = ( async (req, res) => {
     lcSQL = `
         SELECT * 
             FROM gen_tipo_ofic 
-            WHERE cve = '${req.body.lcCve}'
+            WHERE cve = ?
     `
 
-    const rows = await util.gene_cons(lcSQL);
+    const rows = await util.gene_cons(lcSQL, [req.body.lcCve]);
 
     if (rows[0].PLANTILLA != ''){
         return res.json({"status": "error", "message": "El oficio ya cuenta con una plantilla"})
@@ -968,10 +992,10 @@ const op_nplan = ( async (req, res) => {
     
     if (googleDoc.length > 0){
         const lcInserta = `
-        UPDATE gen_tipo_ofic SET plantilla = '${googleDoc}' WHERE cve = '${req.body.lcCve}'  ;
+        UPDATE gen_tipo_ofic SET plantilla = ? WHERE cve = ?  ;
         `
         //console.log(lcInserta)
-        loFinal = await util.gene_cons(lcInserta);
+        loFinal = await util.gene_cons(lcInserta, [googleDoc, req.body.lcCve]);
         //console.log(loFinal)
 
         return res.json({"status": true, "message":"La plantilla se creó correctamente"})
@@ -994,10 +1018,10 @@ const op_soficx = (async (req, res) => {
     lcSQL = `
         SELECT * 
             FROM gen_oficio 
-            WHERE id_iden = ${req.body.lnIDIden}
+            WHERE id_iden = ?
     `
 
-    const rows = await util.gene_cons(lcSQL);
+    const rows = await util.gene_cons(lcSQL, [req.body.lnIDIden]);
     if (rows.length <= 0){
         return res.json({"status": false, "message": "No se econtro el oficio"})
     }
@@ -1011,25 +1035,23 @@ const op_soficx = (async (req, res) => {
     lcSQL = `
         SELECT *
             FROM gen_dere_ofic 
-            WHERE user_id = '${req.userId}' AND cve = '${rows[0].CVE}' AND titular >= (SELECT titular FROM gen_ofic_stat WHERE STATUS = ${req.body.lnStatus})
+            WHERE user_id = ? AND cve = ? AND titular >= (SELECT titular FROM gen_ofic_stat WHERE STATUS = ?)
     ` 
-    const rows2 = await util.gene_cons(lcSQL);
+    const rows2 = await util.gene_cons(lcSQL, [req.userId, rows[0].CVE, req.body.lnStatus]);
     if (rows2.length <= 0 || rows[0].STATUS >= req.body.lnStatus){
         return res.json({"status": false, "message": "No cuentas con derechos para aplicar el estatus o el status ya fue aplicado"})
     }
 
-    lcSQL = `
-        UPDATE GEN_STAT_OFIC SET fin = NOW() where id_iden = ${req.body.lnIDIden} and IFNULL(status,0) = ${rows[0].STATUS} ;
-        
+    let rows3 = await util.gene_cons("UPDATE GEN_STAT_OFIC SET fin = NOW() where id_iden = ? and IFNULL(status,0) = ? ;", [req.body.lnIDIden, rows[0].STATUS]);
+    lcSQL = `                
         INSERT INTO GEN_STAT_OFIC (idOficio, cve, usuario, inicio, nota, anio, id_iden, status) 
-            VALUES (${rows[0].IDOFICIO}, '${rows[0].CVE}', '${req.userId}', NOW(), '${req.body.lcStatus}', Right(Year(NOW()),2), ${req.body.lnIDIden}, ${req.body.lnStatus});
-
-        UPDATE gen_oficio SET status = ${req.body.lnStatus}
-            WHERE id_iden = ${req.body.lnIDIden}
+            VALUES (?, ?, ?, NOW(), ?, Right(Year(NOW()),2), ?, ?);
     `
 
     //console.log(lcSQL)
-    const rows3 = await util.gene_cons(lcSQL);
+    rows3 = await util.gene_cons(lcSQL, [rows[0].IDOFICIO, rows[0].CVE, req.userId, req.body.lcStatus, req.body.lnIDIden, req.body.lnStatus]);
+
+    rows3 = await util.gene_cons("UPDATE gen_oficio SET status = ? WHERE id_iden = ?", [req.body.lnStatus, req.body.lnIDIden])
 
     if (req.body.lnStatus = 2){                                         //si el estatus es firmado cambia el derecho a solo lectura
 
@@ -1056,10 +1078,10 @@ const op_hoficx = (async (req, res) => {
 
     let lcSQL = `SELECT cve 
         FROM gen_dere_ofic 
-        WHERE user_id = '${req.userId}' AND cve = '${req.query.cve}'
+        WHERE user_id = ? AND cve = ?
     `
     
-    const llDere = await util.gene_cons(lcSQL)
+    const llDere = await util.gene_cons(lcSQL, [req.userId, req.query.cve])
 
     if (!llDere || llDere.length <= 0)        //si no tiene derechos
     {
@@ -1197,8 +1219,9 @@ const op_reof0x = (async (req, res) => {
         return res.render("sin_derecho")
     }
 
-    //console.log(req.query)
-    const form = JSON.parse(req.query.loForm)
+    //console.log(req.body)
+    //const form = JSON.parse(req.body.loForm)
+    const form = req.body
     //console.log(form)
 
     let lcSQL = `SELECT cve 
@@ -1210,55 +1233,94 @@ const op_reof0x = (async (req, res) => {
 
     //console.log(llDere)
 
-    if (!llDere || llDere.length <= 0)        //si no tiene derechos
+    if (!llDere || llDere.length <= 0 || !form.cmbSoli)        //si no tiene derechos o no se tiene dependencia
     {
         return res.render("sin_derecho")
     }
 
-    lcWhere = " o.cve = '" + form.cmbSoli + "'" + " AND YEAR(o.fecha) = " + form.cmbAnio
+    let lcWhereT = ''
+    let lcParamerT = []
+    /* lcWhere = " o.cve = '" + form.cmbSoli + "'" + " AND YEAR(o.fecha) = " + form.cmbAnio */
+
+    lcWhereT = " o.cve = ? AND YEAR(o.fecha) = ? "
+    lcParamerT.push(form.cmbSoli)
+    lcParamerT.push(form.cmbAnio)
 
     if (form.txtNOficio > 0){
-        lcWhere = lcWhere + " AND o.idoficio >= " + form.txtNOficio
+        /* lcWhere = lcWhere + " AND o.idoficio >= " + form.txtNOficio */
+        lcWhereT = lcWhereT + " AND o.idoficio >= ? "
+        lcParamerT.push(form.txtNOficio)
     }
 
     if (form.txtNOficio2 > 0){
-        lcWhere = lcWhere + " AND o.idoficio <= " + form.txtNOficio2
+/*         lcWhere = lcWhere + " AND o.idoficio <= " + form.txtNOficio2 */
+        lcWhereT = lcWhereT + " AND o.idoficio <= ? "
+        lcParamerT.push(form.txtNOficio2)
     }
 
     if (!!form.txtFec_ini){
-        lcWhere = lcWhere + " AND o.fecha >= '" + form.txtFec_ini.substring(0, 10) + "'"
+        /* lcWhere = lcWhere + " AND o.fecha >= '" + form.txtFec_ini.substring(0, 10) + "'" */
+        lcWhereT = lcWhereT + " AND o.fecha >= ? "
+        lcParamerT.push(form.txtFec_ini.substring(0, 10))
     }
 
     if (!!form.txtFec_fin){
-        lcWhere = lcWhere + " AND o.fecha <= '" + form.txtFec_fin.substring(0, 10) + "'"
+        /* lcWhere = lcWhere + " AND o.fecha <= '" + form.txtFec_fin.substring(0, 10) + "'" */
+        lcWhereT = lcWhereT + " AND o.fecha <= ? "
+        lcParamerT.push(form.txtFec_fin.substring(0, 10))
     }
 
     if (form.txtDepen.length > 0){
-        lcWhere = lcWhere + " AND " + util.cade_busc("o.depe_envi", form.txtDepen)
+        lcWhere = util.cade_busc("o.depe_envi", form.txtDepen)
+
+        lcWhereT = lcWhereT + ' AND ' + lcWhere.sql
+        lcParamerT = lcParamerT.concat(lcWhere.params)
     }
 
     if (form.txtConcepto.length > 0){
-        lcWhere = lcWhere + " AND " + util.cade_busc("o.concepto", form.txtConcepto)
+        /* lcWhere = lcWhere + " AND " + util.cade_busc("o.concepto", form.txtConcepto) */
+        lcWhere = util.cade_busc("o.concepto", form.txtConcepto)
+        
+        lcWhereT = lcWhereT + ' AND ' + lcWhere.sql
+        lcParamerT = lcParamerT.concat(lcWhere.params)
     }
 
     if (form.txtRefe.length > 0){
-        lcWhere = lcWhere + " AND " + util.cade_busc("o.referencia", form.txtRefe)
+        /* lcWhere = lcWhere + " AND " + util.cade_busc("o.referencia", form.txtRefe) */
+        lcWhere = util.cade_busc("o.referencia", form.txtRefe)
+
+        lcWhereT = lcWhereT + ' AND ' + lcWhere.sql
+        lcParamerT = lcParamerT.concat(lcWhere.params)
     }
 
     if (form.txtAnexo.length > 0){
-        lcWhere = lcWhere + " AND " + util.cade_busc("o.anexo", form.txtAnexo)
+        /* lcWhere = lcWhere + " AND " + util.cade_busc("o.anexo", form.txtAnexo) */
+        lcWhere = util.cade_busc("o.anexo", form.txtAnexo)
+
+        lcWhereT = lcWhereT + ' AND ' + lcWhere.sql
+        lcParamerT = lcParamerT.concat(lcWhere.params)
     }
 
     if (form.txtPersona.length > 0){
-        lcWhere = lcWhere + " AND o.id_iden in (SELECT id_iden FROM gen_doficio WHERE " + util.cade_busc("diri_nomb, diri_carg", form.txtPersona) 
+        /* lcWhere = lcWhere + " AND o.id_iden in (SELECT id_iden FROM gen_doficio WHERE " + util.cade_busc("diri_nomb, diri_carg", form.txtPersona)  */
+        lcWhere = util.cade_busc("diri_nomb, diri_carg", form.txtPersona) 
+
+        lcWhereT = lcWhereT + " AND o.id_iden in (SELECT id_iden FROM gen_doficio WHERE " + lcWhere.sql
+        lcParamerT = lcParamerT.concat(lcWhere.params)
+
         if (form.cmbTipo > 0){
-            lcWhere = lcWhere + " AND tipo = " + form.cmbTipo 
+            /* lcWhere = lcWhere + " AND tipo = " + form.cmbTipo  */
+            lcWhereT = lcWhereT + " AND tipo = ?"
+            lcParamerT.push(form.cmbTipo)
         }
-        lcWhere = lcWhere + ") " 
+        /* lcWhere = lcWhere + ") "  */
+        lcWhereT = lcWhereT + ") "
     }
 
     if (form.cmbStatus > -1){
         lcWhere = lcWhere + " AND o.status = " + form.cmbStatus
+        lcWhereT = lcWhereT + " AND o.status = ? "
+        lcParamerT.push(form.cmbTipo)
     }
 
 
@@ -1296,13 +1358,18 @@ const op_reof0x = (async (req, res) => {
         LEFT JOIN 
             gen_doficio d ON d.id_iden = o.ID_IDEN AND d.tipo = 1 
         WHERE 
-            ${lcWhere}
+            ${lcWhereT}
         ORDER BY 
         o.fecha DESC 
     `
-    const rows = await util.gene_cons(lcSQL)
+    //console.log(lcSQL)
+    //console.log(lcWhereT)
+    //console.log(lcParamerT)
+
+    const rows = await util.gene_cons(lcSQL, lcParamerT)
     return res.json(rows)
 });
+
 
 const op_rgrafx = (async (req, res) => {
     
@@ -1445,7 +1512,8 @@ const busc_oficx = (async (req, res) => {
     }
 
     //console.log(req.query)
-    const form = JSON.parse(req.query.loForm)
+    //const form = JSON.parse(req.query.loForm)
+    const form = req.body
     //console.log(form)
     //return res.json([]);
 
@@ -1463,38 +1531,75 @@ const busc_oficx = (async (req, res) => {
         return res.render("sin_derecho")
     }
 
-    lcWhere = " o.cve = '" + form.cmbSoli + "'" + " AND YEAR(o.fecha) = " + form.cmbAnio
+    let lcWhereT = ''
+    let lcParamerT = []
+
+/*     lcWhere = " o.cve = '" + form.cmbSoli + "'" + " AND YEAR(o.fecha) = " + form.cmbAnio */
+
+    lcWhereT = " o.cve = ? AND YEAR(o.fecha) = ? "
+    lcParamerT.push(form.cmbSoli)
+    lcParamerT.push(form.cmbAnio)
 
     if (form.txtNOficio > 0){
-        lcWhere = lcWhere + " AND o.descrip >= " + form.txtNOficio
+/*         lcWhere = lcWhere + " AND o.descrip >= " + form.txtNOficio */
+        lcWhereT = lcWhereT + " AND o.descrip like ?"
+        lcParamerT.push(`%${form.txtNOficio}%`)
+
     }
 
     if (form.txtControl > 0){
-        lcWhere = lcWhere + " AND o.nume_cont <= " + form.txtNOficio2
+/*         lcWhere = lcWhere + " AND o.nume_cont <= " + form.txtNOficio2 */
+        lcWhereT = lcWhereT + " AND o.nume_cont = ? "
+        lcParamerT.push(form.txtControl)
     }
 
     if (!!form.txtFec_ini){
-        lcWhere = lcWhere + " AND o.fecha >= '" + form.txtFec_ini.substring(0, 10) + "'"
+        /* lcWhere = lcWhere + " AND o.fecha >= '" + form.txtFec_ini.substring(0, 10) + "'" */
+        lcWhereT = lcWhereT + " AND o.fecha >= ? "
+        lcParamerT.push(form.txtFec_ini.substring(0, 10))
+
     }
 
     if (!!form.txtFec_fin){
-        lcWhere = lcWhere + " AND o.fecha <= '" + form.txtFec_fin.substring(0, 10) + "'"
+        /* lcWhere = lcWhere + " AND o.fecha <= '" + form.txtFec_fin.substring(0, 10) + "'" */
+        lcWhereT = lcWhereT + " AND o.fecha <= ? "
+        lcParamerT.push(form.txtFec_fin.substring(0, 10))
     }
 
 /*     if (form.txtDepen.length > 0){
         lcWhere = lcWhere + " AND " + util.cade_busc("c.dependen", form.txtDepen)
     }
  */
+
+    if (form.txtDepen.length > 0){
+        lcWhere = util.cade_busc("if(o.tipo_depe = 1, c.dependen, oc.dependen)", form.txtDepen)
+
+        lcWhereT = lcWhereT + ' AND ' + lcWhere.sql
+        lcParamerT = lcParamerT.concat(lcWhere.params)
+    }
+
     if (form.txtAsunto.length > 0){
-        lcWhere = lcWhere + " AND " + util.cade_busc("o.asunto", form.txtAsunto)
+        /* lcWhere = lcWhere + " AND " + util.cade_busc("o.asunto", form.txtAsunto) */
+        lcWhere = util.cade_busc("o.asunto", form.txtAsunto)
+
+        lcWhereT = lcWhereT + ' AND ' + lcWhere.sql
+        lcParamerT = lcParamerT.concat(lcWhere.params)
     }
 
     if (form.txtNota.length > 0){
-        lcWhere = lcWhere + " AND " + util.cade_busc("o.nota", form.txtNota)
+        /* lcWhere = lcWhere + " AND " + util.cade_busc("o.nota", form.txtNota) */
+        lcWhere = util.cade_busc("o.nota", form.txtNota)
+
+        lcWhereT = lcWhereT + ' AND ' + lcWhere.sql
+        lcParamerT = lcParamerT.concat(lcWhere.params)
     }
 
     if (form.txtRemitente.length > 0){
-        lcWhere = lcWhere + " AND " + util.cade_busc("o.nomb_remi", form.txtRemitente)
+        /* lcWhere = lcWhere + " AND " + util.cade_busc("o.nomb_remi", form.txtRemitente) */
+        lcWhere = util.cade_busc("o.nomb_remi", form.txtRemitente)
+
+        lcWhereT = lcWhereT + ' AND ' + lcWhere.sql
+        lcParamerT = lcParamerT.concat(lcWhere.params)
     }
 
     /* if (form.txtPersona.length > 0){
@@ -1507,6 +1612,9 @@ const busc_oficx = (async (req, res) => {
  */
     if (form.cmbStatus > -1){
         lcWhere = lcWhere + " AND o.status = " + form.cmbStatus
+
+        lcWhereT = lcWhereT + " AND o.status = ? "
+        lcParamerT.push(form.cmbStatus)
     }
 
     //console.log(lcWhere)
@@ -1522,13 +1630,14 @@ const busc_oficx = (async (req, res) => {
         LEFT JOIN 
             gen_otro_cent oc ON o.ID_CENT = oc.ID_CENT 
         WHERE 
-            ${lcWhere}
+            ${lcWhereT}
         ORDER BY 
         o.fecha DESC 
     `
-    //console.log(lcSQL)
+    console.log(lcSQL)
+    console.log(lcParamerT)
     //return res.json([]);
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, lcParamerT)
     return res.json(rows)
 });
 
@@ -1635,9 +1744,9 @@ const new_ord_servx2 = (async(req, res) => {
     lcSQL = `
         SELECT * 
             FROM ser_soli_serv
-            WHERE id_oficio = ${req.body.lnOficio}
+            WHERE id_oficio = ?
     `
-    const loSeek = await util.gene_cons(lcSQL)
+    const loSeek = await util.gene_cons(lcSQL, [req.body.lnOficio])
     let parameters = []
     //console.log(loSeek)
 
@@ -1755,12 +1864,14 @@ const csg_sServx2 = (async (req, res) => {
         return res.render("sin_derecho")
     }
 
+    let lcParamerT = []
+
     let lcSQL = `
     SELECT id_depe 
         FROM ser_depen 
-        WHERE codigo = ${req.codigo}
+        WHERE codigo = ?
     `
-    const asigna = await util.gene_cons(lcSQL)
+    const asigna = await util.gene_cons(lcSQL, [req.codigo])
 
     if (asigna.length <= 0){
         return res.json([])    
@@ -1773,6 +1884,18 @@ const csg_sServx2 = (async (req, res) => {
     }
 
     lcWhere = " s.oficio = 1 AND (" + lcWhere + ")"
+
+    if (!!req.query.inicio){
+        lcWhere = lcWhere + " AND o.fech_ofic >= ? "
+        lcParamerT.push(req.query.inicio.substring(0, 10))
+    }
+
+    if (!!req.query.fin){
+        lcWhere = lcWhere + " AND o.fech_ofic <= ? "
+        lcParamerT.push(req.query.fin.substring(0, 10))
+    }
+
+    console.log(lcWhere)
     lcSQL = `
     SELECT s.id_serv_pk as id, o.descrip as oficio, o.nomb_remi, CASE o.tipo_depe WHEN 1 THEN c.descrip ELSE oc.descrip END as area_remi
         , s.descrip as nota, o.asunto, DATE_FORMAT(o.fech_ofic, '%d/%m/%Y %H:%i') AS fech_ofic, o.nomb_dest, p.nombre as realizo, s.id_oficio
@@ -1786,8 +1909,9 @@ const csg_sServx2 = (async (req, res) => {
         WHERE ${lcWhere}
     `
 
-    console.log(lcSQL)
-    const rows = await util.gene_cons(lcSQL)
+    //console.log(lcSQL)
+    //console.log(lcParamerT)
+    const rows = await util.gene_cons(lcSQL, lcParamerT)
 
     return res.json(rows)
 
@@ -1829,9 +1953,9 @@ const seg_oficx2 = (async (req, res) => {
     lcSQL = `
         SELECT id_ofic, status 
         FROM opc_oficio 
-        WHERE id_ofic = ${req.body.lnOficio}
+        WHERE id_ofic = ?
     `
-    const loSeek = await util.gene_cons(lcSQL)
+    const loSeek = await util.gene_cons(lcSQL, [req.body.lnOficio])
 
     if (loSeek[0].status > 1){
         return res.json({"error":true, "mensage":"El oficio se encuentra cerrado, ya no se puede dar seguimiento"})

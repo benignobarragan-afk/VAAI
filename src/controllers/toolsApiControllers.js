@@ -3,7 +3,11 @@ const path = require("path")
 const pool = require(path.join(__dirname, "..", "db"))
 const config = require(path.join(__dirname, "..", "config"));
 const other_utils = require(path.join(__dirname, "..", "utils/other_utils"));
-
+/* const { PDFDocument } = require('pdf-lib');
+const pdf = require('pdf-parse');
+const jsqr = require('jsqr');
+const { Jimp } = require('jimp'); */
+const fs = require('fs');
 
 const tools_pdfx = ( async (req, res) => {
     
@@ -97,8 +101,43 @@ const tools_qrx = ( async (req, res) => {
 
 });
 
+const tools_qrx2 = (async (req, res) => {
+
+    const laArchivo = req.file.originalname;
+    const laExtencion = laArchivo.substring(laArchivo.lastIndexOf(".")+1).toUpperCase() ;
+    //console.log(laExtencion);
+
+    if(laExtencion != 'PDF'){
+        res.json({"status" : false, "message": "No envió un archivo valido", "data":{}})
+    }
+
+    rutaPdf  = path.join(__dirname, "../uploads/", req.file.filename)
+
+    console.log(rutaPdf)
+
+    try {
+        const dataBuffer = fs.readFileSync(rutaPdf);
+        
+        // Intentamos extraer texto primero por si el QR es texto oculto
+        const data = await pdf(dataBuffer);
+        console.log("Contenido extraído:", data.text);
+
+        // Si necesitamos buscar el QR visualmente:
+        const image = await Jimp.read(dataBuffer);
+        const qr = jsqr(new Uint8ClampedArray(image.bitmap.data), image.bitmap.width, image.bitmap.height);
+        
+        return qr ? qr.data : null;
+    } catch (err) {
+        // Si Jimp falla por el formato PDF, confirmamos que necesitamos
+        // procesar la imagen de la página primero.
+        console.error("Error en el proceso:", err.message);
+    }
+
+});
+
 
 module.exports = {
     tools_pdfx,
-    tools_qrx
+    tools_qrx,
+    tools_qrx2
 }

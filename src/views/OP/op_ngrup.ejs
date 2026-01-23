@@ -1,5 +1,5 @@
 <%- include('../partials/header'); %>
-
+ 
 <%
     /*
 	LOCAL llError, lcCentro, lcPie, llAplicar, lnOficio, lcOficio, lcPrevio, lnMens_usua
@@ -168,9 +168,17 @@
 						},
 						keyPressTimeout: 1000,
 						body: {
-							fitMaster: false, width: 550, template: "#value#", dataFeed: "/api/gen/cmb_depew"
+							fitMaster: false, width: 550, template: "#value#", dataFeed: "/api/gen/cmb_depew?lnTipo=1"
 						},
 					},
+					on: {
+						onChange: function (id) {
+						//console.log(id);
+						mues_dato(id);
+						//dirigido(id);
+						obtenerSeccion();
+						}
+					}
 				},
 				{
 					view: "text", id: "cmbAjena", name: "cmbAjena", labelPosition: "top", labelAlign: "left",
@@ -400,18 +408,27 @@
 					return
 				}
 
-				if(lnTipo_cont == 1 && (!$$("corr_ofic").getValue() || !$$("cmbPers").getValue() || !$$("cargo").getValue())){
+/* 				if(lnTipo_cont == 1 && (!$$("corr_ofic").getValue() || !$$("cmbPers").getValue() || !$$("cargo").getValue())){
 					webix.message("Debes de llenar los campos correo, nombre y cargo para continuar", "error", 3000)
 					return
-				}
+				} */
 
+				if(lnTipo_cont == 1 && (!$$("cmbPers").getValue() || !$$("cargo").getValue())){
+					webix.message("Debes de llenar los campos nombre y cargo para continuar", "error", 3000)
+					return
+				}
 				// if (lnTipo_cont == 1 && ((lnDepe == 1 && $$("cmbServicio").getValue() == "") || (lnDepe == 2 && $$("cmbAjena").getValue() == "") || $$("corr_ofic").getValue() == "" || $$("cmbPers").getValue() == "" || $$("cargo").getValue() == "")) {
 				// 	webix.alert("Tienes que llenar todos los campos para poder agregar una persona de tipo 'Dirigido a'");
 				// 	return
 				// }
 
-				if ((lnTipo_cont == 2 || lnTipo_cont == 3 || lnTipo_cont == 4) && ($$("corr_ofic").getValue() == "" || $$("cmbPers").getValue() == "")) {
+/* 				if ((lnTipo_cont == 2 || lnTipo_cont == 3 || lnTipo_cont == 4) && ($$("corr_ofic").getValue() == "" || $$("cmbPers").getValue() == "")) {
 					webix.message("Tienes que por lo menos el nombre y correo para los tipos de persona 'Con copia', 'Autoriza', 'Vo. Bo.'", "error", 3000);
+					return
+				} */
+
+				if ((lnTipo_cont == 2 || lnTipo_cont == 3 || lnTipo_cont == 4) && ($$("cmbPers").getValue() == "")) {
+					webix.message("Tienes que por lo menos el nombre para los tipos de persona 'Con copia', 'Autoriza', 'Vo. Bo.'", "error", 3000);
 					return
 				}
 
@@ -420,11 +437,11 @@
 					return
 				}
 
-				if (!veri_corr($$("corr_ofic").getValue())) {
+/* 				if (!veri_corr($$("corr_ofic").getValue())) {
 					webix.message("El correo tiene un formato invalido", "error", 3000);
 					return
 				}
-
+ */
 				$$("dtable").add({
 					servicio: lnServicio ,
 					nomb_serv: lcText_depe ,
@@ -511,7 +528,7 @@
 					
 		}
 
-		function mues_dato(id){
+/* 		function mues_dato(id){
 			webix.ajax()
 				.get("/api/op/op_noficx7", {id})
 				.then(function (data) {
@@ -527,9 +544,53 @@
 					//console.log(res.corr_ofic)
 					}
 				})
+		}
+ */
+		function mues_dato(id){
+			webix.ajax()
+				.get("/api/op/op_noficx7", {id})
+				.then(function (data) {
 
+					//console.log(data)
+					let res = data.json()[0]
 
+					$$("precargado").getPopup().getList().clearAll();
+					$$("precargado").getPopup().getList().parse(data);
+					$$("precargado").setValue(1);
+					
+					//console.log("si entro")
+					//console.log(typeof res)
+					
+					if (typeof res != undefined){
+						$$("txtCorr_ofic").setValue(res.corr_ofic);
+						$$("cmbPers").setValue(res.value);
+						$$("txtDiri_carg").setValue(res.cargo);
+					//console.log(res.corr_ofic)
+					}
+				})
+		}
 
+		function obtenerSeccion(){
+			return false;			//lo canselo por que no hay series 
+			try{
+				let id = $$("cmbSoli").getValue();
+				let item = $$("cmbSoli").getPopup().getList().getItem(id);
+				let cve = item && item.value ? item.value : "";
+
+				let resultado = cve.replace(/^\s*\(.*?\)\s*/, "");
+				
+				webix.ajax().post("/<% // Response.write(config.ruta)%>/op_combox.fwx", {
+					cveOfic: resultado
+				}).then(function (response) {
+				 	var data = response.json();
+				 	if (data.status && data.padre) {
+				 		$$("seccion").getPopup().getList().clearAll();
+				 		$$("seccion").getPopup().getList().parse(data.padre);
+					} 
+				 });
+			}catch(error){
+				console.log(error)
+			}
 		}
 
 	</script>

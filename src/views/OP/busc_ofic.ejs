@@ -88,21 +88,6 @@
 											cols: [
                                                 { view: "text", id: "txtRemitente", name: "txtRemitente", label:"Remitente", labelPosition:"top"},
                                                 { maxWidth: 15 },
-												{
-													view: "select", label: "Tipo", id: "cmbTipo", name: "cmbTipo", value: 0, width: 120,
-													labelPosition: "top", labelAlign: "left", options: [
-													    { id: 0, value: "TODOS" },	
-                                                        { id: 1, value: "Dirigido a" },
-														{ id: 2, value: "Con copia" },
-														/*
-														{ id: 3, value: "Autoriza" },
-														{ id: 4, value: "Vo. Bo." },
-														*/
-														{ id: 5, value: "Atenci&oacute;n a" },
-														
-													]
-												},
-                                                { maxWidth: 15 },
                                                 {
 													view: "select", label: "Estatus", id: "cmbStatus", name: "cmbStatus", value: -1, width: 200,
 													labelPosition: "top", labelAlign: "left", options: [
@@ -259,14 +244,34 @@
 
 		});
 
-		function genera() {
+/* 		function genera() {
             let form = $$("form_busc").getValues()
 
             console.log(form)
 			webix.extend($$("dtable"), webix.ProgressBar)
             $$("dtable").clearAll()
             $$("dtable").load("/api/op/busc_oficx?loForm=" + JSON.stringify(form))
-		}
+		} */
+
+		function genera() {
+		let form = $$("form_busc").getValues();
+		let dtable = $$("dtable");
+
+		// Activamos la barra de progreso
+		webix.extend(dtable, webix.ProgressBar);
+		dtable.showProgress({ type: "icon" });
+		dtable.clearAll();
+
+		// Usamos AJAX con POST para mayor seguridad y capacidad
+		webix.ajax().post("/api/op/busc_oficx", form).then(function(data) {
+			// Parseamos los resultados a la tabla
+			dtable.parse(data.json());
+			dtable.hideProgress();
+		}).fail(function(err) {
+			dtable.hideProgress();
+			webix.message({ type: "error", text: "Error al realizar la búsqueda" });
+		});
+	}
 
 	</script>
 </body>

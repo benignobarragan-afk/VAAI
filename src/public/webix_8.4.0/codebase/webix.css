@@ -8490,6 +8490,7 @@ legend.webix_forminput_label_top {
   -moz-box-sizing: border-box;
   -webkit-box-sizing: border-box;
   box-sizing: border-box;
+  background-color: #174f77;
 }
 .webix_treemap_header {
   padding: 0 10px;
