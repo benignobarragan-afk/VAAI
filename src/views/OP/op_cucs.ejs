@@ -68,6 +68,31 @@ const llNombramiento = lcDerecho.indexOf(",OP_NOMBRA,") > 0
 			background-color: rgb(243, 74, 74);
 		}
 
+		/* Esto obliga al icono a tener tamaño, color y estar al frente */
+		.webix_icon.wxi-close {
+			color: #2b96cc !important; /* El azul que usas */
+			font-size: 20px !important;
+			width: 30px !important;
+			height: 30px !important;
+			display: flex !important;
+			align-items: center;
+			justify-content: center;
+			visibility: visible !important;
+			opacity: 1 !important;
+		}
+
+		/* Asegura que los botones en la toolbar de las ventanas no se encimen */
+		.webix_el_button_close {
+			background-color: #d9534f !important;
+			color: white !important;
+			font-weight: bold;
+		}
+
+		/* Forzar visibilidad de la toolbar */
+		.webix_win_head .webix_toolbar {
+			overflow: visible !important;
+		}
+
 	</style>
 
 </head>
@@ -100,7 +125,17 @@ webix.ready(function(){
 						  ventana.setPosition(0,0)
 						  ventana.resize();
 						} },
-						{ view: "icon", icon: 'mdi mdi-close', click: "$$('w2" + xx + "').close();" }
+						/* { view: "icon", icon: 'mdi mdi-close', click: "$$('w2" + xx + "').close();" } */
+						{
+							view: "button", 
+							label: "Cerrar", // Es mejor usar label que icon si la fuente falla
+							width: 70,
+							css: "webix_danger", // Clase nativa de Webix para botones rojos
+							click: function() {
+								// Esta forma es más segura que el string que tenías
+								$$("w2" + xx).close();
+							}
+						}
 					]
 				},
 				body: {

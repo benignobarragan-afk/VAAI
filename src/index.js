@@ -31,7 +31,7 @@ const app = express();
   },
 })); */
 
-/* app.use(helmet({
+app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
@@ -47,7 +47,7 @@ const app = express();
       upgradeInsecureRequests: [] // Esto evita conflictos si aún no tienes SSL
     },
   },
-})); */
+}));
 
 app.set('trust proxy', 'loopback');
 
