@@ -2129,6 +2129,7 @@ const op_uoficio = (async (req, res) => {
 
 });
 
+
 module.exports = {
     op_cucsx2,
     op_oficx5,

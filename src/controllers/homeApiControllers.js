@@ -220,10 +220,52 @@ const usuariosx = (async (req, res) => {
 
 });
 
+const prin_ca_pax = (async (req, res) => {
+
+    let lcSQL = `
+    SELECT nombre, correo, dn, password 
+        FROM passfile 
+        WHERE user_id = ?
+    `
+
+    const rows = await util.gene_cons(lcSQL, [req.userId])
+
+    if (rows.length <= 0){
+        return res.json([{"status":false, "message":"No se pudo localizar el usuario"}])
+    }
+
+    if(req.body.txtPassword_old != rows[0].password){
+        return res.json([{"status":false, "message":"El password no es igual al actual"}])
+    }
+
+    //console.log(req.body.txtPassword_new)
+    //console.log(rows[0].nombre)
+
+    const result = await outil.vali_Pass(req.body.txtPassword_new, rows[0].nombre)
+
+    //console.log(result)
+    
+    if (!result.valida){
+        return res.json([{"status":false, "message":result.mensaje}])
+    }
+
+    lcSQL = `
+    UPDATE passfile 
+        SET password = ?
+        WHERE user_id = ?
+    `
+
+    const update = await util.gene_cons(lcSQL, [req.body.txtPassword_new, req.userId])
+
+    return res.json([{"status":true, "message":"El password se cambio correctamente"}])
+
+});
+
 module.exports = {
     usua_nuevx,
     usua_nuevx2,
     usua_nuevx3,
     gene_menu,
     usuariosx,
+    prin_ca_pax,
 }

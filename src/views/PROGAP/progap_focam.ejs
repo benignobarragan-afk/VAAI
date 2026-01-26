@@ -142,7 +142,7 @@
                             header: [{text:"",css:"my_style"}, {text:""}],
                             template:(obj)=>{
                                 return `
-                                    <a href="#" onClick="window.parent.parent.deta_sali('${obj.cve}',${obj.idoficio},${obj.anio},${obj.id_iden},'op_reof0.fwx');">
+                                    <a href="#" onClick="deta_grup(${obj.id});">
                                         <i style='font-size:26px;color:#2b96cc;' class='fa-solid fa-magnifying-glass'></i>
                                     </a>`
                             }
@@ -228,17 +228,17 @@
         }
 
         function deta_grup(id) {
-            window.parent.parent.$$("tbView").addView({
+            window.parent.$$("tbView").addView({
                 header: "<span class='webix_icon mdi mdi-file-document-outline'></span>" + (id == undefined ? "Nuevo" : "Modifica") + " FOCAM",
                 body: {
-                    view: "iframe", src: "/op/op_ngrup?lnID=" + id,
+                    view: "iframe", src: "/progap/progap_nfocam?lnID=" + id,
                     type: {
                         height: 60
                     }
                 },
                 close: true
             });
-            window.parent.parent.$$("tbView").getTabbar().setValue(window.parent.parent.$$("tbView").getTabbar().data.options[window.parent.parent.$$("tbView").getTabbar().data.options.length - 1].id);
+            window.parent.$$("tbView").getTabbar().setValue(window.parent.$$("tbView").getTabbar().data.options[window.parent.$$("tbView").getTabbar().data.options.length - 1].id);
         }
 
         function eliminaGrupo(id) {

@@ -1449,6 +1449,83 @@ const progap_nprograx = (async (req, res) => {
     }
 });
 
+const progap_nfocamx = (async (req, res) => {
+
+    const laArchivo = req.file.originalname;
+    const laExtencion = laArchivo.substring(laArchivo.lastIndexOf(".")+1).toUpperCase() ;
+
+    if(laExtencion != 'PDF'){
+        return res.json({"status" : false, "message": "Sólo se permiten archivos con extención PDF", "data":{}})
+    }
+
+    laComando = path.join(__dirname, "../APIPython", "leeQR2.py") 
+    laArgs  = path.join(__dirname, "../uploads/", req.file.filename)
+
+    console.log(laComando)
+    console.log(laArgs)
+
+    try {
+        // 5. ESPERAR a que la Promesa de Python se resuelva
+        const resultadoPython = await other_utils.ejecutarPython(laComando, laArgs);
+
+        // 6. Ahora que tenemos el resultado, respondemos al cliente
+        res.json({
+            "status": "server", 
+            "message":resultadoPython,
+//            texto_extraido: resultadoPython,
+//            ruta_procesada: laArgs
+        });
+
+    } catch (error) {
+        console.error("Error al procesar el archivo:", error);
+        res.status(500).json({ 
+            status: "error", 
+            message: "Fallo al procesar el archivo con Python.",
+            detalle: error.message
+        });
+    }
+    
+    return res.json({"status" : false, "message": "Paso el primer filtro", "data":{}})
+    //inserta el registro para guardar el archivo de la oficialía
+    let lcSQL = `
+    INSERT INTO opc_archivo (id_ofic, descrip, fecha, usuario, ofic_out, uid) 
+        VALUES (?, ?, now(), ?, ?, ?)
+    `
+
+    const laInsert = await util.gene_cons(lcSQL, [req.body.idOficio, req.file.originalname, req.userId, (!req.body.out?0:1), util.gene_id_11()])
+    //console.log(laInsert)
+
+    const lfOriginal  = path.join(__dirname, "../uploads/", req.file.filename)
+    const lfDestino = config.SERV_ARCH  + 'OPARCHIVO\\' + laInsert.insertId + '.' + laExtencion 
+
+    //console.log(lfOriginal)
+    //console.log(lfDestino)
+
+    try {
+        //await fs.copyFile(lfOriginal, lfDestino);
+        await fs.promises.copyFile(lfOriginal, lfDestino);
+        if (!fs.existsSync(lfDestino)) {
+            
+            lcSQL = `
+    DELETE FROM opc_archivo WHERE id_arch = ?
+    `
+            const laDelete = await util.gene_cons(lcSQL, [laInsert.insertId])
+            return res.json({"status" : false, "message": "Error al guardar el archivo"});
+        }
+        //console.log('¡Archivo copiado con éxito!');
+    } catch (err) {
+        //console.log(err);
+        lcSQL = `
+    DELETE FROM opc_archivo WHERE id_arch = ?
+    `
+        const laDelete = await util.gene_cons(lcSQL, [laInsert.insertId])
+        return res.json({"status" : false, "message": "Error al guardar el archivo"});
+    }
+
+    return res.json({"status" : "server", "message": "El archivo se cargo correctamente"});
+
+});
+
 module.exports = {
     progap_usuariox,
     progap_directivox,
@@ -1470,5 +1547,6 @@ module.exports = {
     progap_nestudiax,
     progap_ndirectivox,
     progap_nusuariox,
-    progap_nprograx
+    progap_nprograx,
+    progap_nfocamx
 }

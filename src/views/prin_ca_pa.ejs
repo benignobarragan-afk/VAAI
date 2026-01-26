@@ -1,0 +1,236 @@
+<%- include('partials/header'); %>
+
+	<script language="JavaScript">
+
+
+		var form_elements = [{
+			view: "label", id:"lblTitulo", class: { "font-weight": "bold", "font-size": 14, "text-align": "center" }, align: "center", label: "ESTAS SEGURO DE CAMBIAR TU PASSWORD: <%=rows[0].nombre%>"
+		},
+		{
+			cols: [
+			{
+				view: "text", type: "password", id: "txtPassword_old", name: "txtPassword_old", labelPosition: "top", label: "Password actual", value: "",  
+                attributes: {
+                    maxlength: 25  
+                }
+			
+			},
+			{ maxWidth: 15 },
+			{
+				view: "text", id: "txtPassword_new", name: "txtPassword_new", labelPosition: "top", label: "Nuevo password", value: "",
+                attributes: {
+                    maxlength: 25  
+                },
+                on: {
+                    onTimedKeyPress: function() { checarIgualdad(); }
+                }
+			},
+			{ maxWidth: 15 },
+			{
+				view: "text", id: "txtPassword_newR", name: "txtPassword_newR", labelPosition: "top", label: "Repite nuevo password", value: "",
+                attributes: {
+                    maxlength: 25  
+                },
+                on: {
+                    onTimedKeyPress: function() { checarIgualdad(); }
+                }
+			},
+            {
+				view: "text", id: "txtNombre", name: "txtNombre", labelPosition: "top", label: "Nombre de usuario", value: "<%=rows[0].nombre%>", hidden: true,
+			},
+            
+			]
+		},
+        {
+            cols: [
+            {},
+            {
+                view: "button", id:"cmdGuardar", name:"cmdGuardar", label: "Aplicar cambio", width: 170,
+                on: {
+                    onItemClick: function () { guardar(); }
+                }
+            }],
+        },
+        {
+            view: "template",
+            css: "reglas_password",
+            template: `
+                    <strong>Para hacer el cambio de password tienes que tomar en cuenta las siguientes reglas:</strong>
+                    <ul style="margin-top:10px; line-height:1.5;">
+                        <li>No contener el nombre de cuenta del usuario o partes del nombre completo del usuario en más de dos caracteres consecutivos.</li>
+                        <li>Tener una longitud mínima de ocho caracteres.</li>
+                        <li>Incluir caracteres de tres de las siguientes categorías:</li>
+                        <ul>
+                            <li>Mayúsculas (de la A a la Z)</li>
+                            <li>Minúsculas (de la a a la z)</li>
+                            <li>Dígitos de base 10 (del 0 al 9)</li>
+                            <li>Caracteres no alfanuméricos (ejemplo: !, $, #, %)</li>
+                        </ul>
+                    </ul>
+            `
+        },
+	]
+
+		webix.ready(function () {
+			webix.ui({
+				view: "layout",
+				responsive: true,
+				rows: [{
+					view: "scrollview",
+					body: {
+						rows: [{
+							view: "form", id: "form_usua",
+							elements: form_elements,
+							rules: {
+								"txtPassword_old": webix.rules.isNotEmpty,
+								"txtPassword_new": webix.rules.isNotEmpty,
+								"txtPassword_newR": webix.rules.isNotEmpty,
+							},
+						}]
+					}
+				}]
+			});
+
+		});
+
+
+
+
+		//functions
+
+
+
+		function vali_Pass(password, nombreCompleto) {
+            // 1. Longitud mínima de ocho caracteres
+            if (password.length < 8) {
+                return { valida: false, mensaje: "La contraseña debe tener al menos 8 caracteres." };
+            }
+
+            // 2. Categorías (Ahora incluimos Especiales)
+            let categoriasCumplidas = 0;
+            const tieneMayus = /[A-Z]/.test(password);
+            const tieneMinus = /[a-z]/.test(password);
+            const tieneNumeros = /[0-9]/.test(password);
+            const tieneEspeciales = /[^a-zA-Z0-9]/.test(password); // Caracteres no alfanuméricos
+
+            if (tieneMayus) categoriasCumplidas++;
+            if (tieneMinus) categoriasCumplidas++;
+            if (tieneNumeros) categoriasCumplidas++;
+            if (tieneEspeciales) categoriasCumplidas++;
+
+            // Validamos que cumpla al menos 3 de las 4 categorías
+            // (O puedes cambiarlo a 4 de 4 si quieres máxima seguridad en la VAAI)
+            if (categoriasCumplidas < 3) {
+                return { 
+                    valida: false, 
+                    mensaje: "Debe incluir al menos 3 categorías: Mayúsculas, Minúsculas, Números o Especiales (!, $, #, %)." 
+                };
+            }
+
+            // 3. No contener partes del nombre completo (> 2 caracteres consecutivos)
+            const limpiarTexto = (t) => t.toLowerCase().split(/[\s,.-]+/);
+            const partesProhibidas = [...limpiarTexto(nombreCompleto)];
+
+            for (let parte of partesProhibidas) {
+                if (parte.length < 3) continue;
+                
+                for (let i = 0; i <= parte.length - 3; i++) {
+                    let subcadena = parte.substring(i, i + 3);
+                    if (password.toLowerCase().includes(subcadena)) {
+                        return { 
+                            valida: false, 
+                            mensaje: "La contraseña no puede contener partes de tu nombre." 
+                        };
+                    }
+                }
+            }
+
+            return { valida: true, mensaje: "Contraseña segura." };
+        }
+
+        function guardar() {
+		
+			if (!$$("form_usua").validate()) {
+				webix.message({ text: "Los campos que se marcan en rojo son obligatorios", type: "error", expire: 3000 })
+				return 
+			}
+
+            if ($$("txtPassword_new").getValue() != $$("txtPassword_newR").getValue()) {
+				webix.message({ text: "El nuevo password no coincide", type: "error", expire: 3000 })
+				return 
+			}
+
+            const pass = $$("txtPassword_new").getValue();
+            const nomb = $$("txtNombre").getValue()
+
+            resultado = vali_Pass(pass, nomb)
+
+            //console.log(resultado)
+
+            if (!resultado.valida){
+                Swal.fire({
+                icon: "error",
+                title: resultado.mensaje,
+                });
+                return false;
+            }
+            
+			Swal.fire({
+				text: "", title: 'Seguro de guardar el nuevo password?', icon: 'question', showCancelButton: true,  confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Si', cancelButtonText:"No",
+			}).then((result) => {
+				if(result.isConfirmed){
+					//$$("btnGuardar").disable()  MIENTRAS LO ARREGLO
+					let form = $$("form_usua").getValues();
+					form.oficio = <% // Response.write(lnID_iden)%>
+					webix.ajax().post("/api/prin_ca_pax", form).then(function (response) {
+						//$$("btnGuardar").enable();
+						try{
+							var respuesta = response.json()[0];
+							Swal.fire({text:respuesta.message, icon:respuesta.status ? "success":"error"}).then(()=>{
+								if (respuesta.status) {
+
+									//window.location.href = '/op/op_ningr?lnNum_ofi=' + response.oficio + '&lnOficio='+ respuesta.id;
+									//window.location.href = '/op/op_detalle?lnOficio='+respuesta.id;
+                                    parent.$$("<%=winId%>").close();
+								}
+							})
+
+						}catch(err){
+							Swal.fire({text:"Ocurrio un error, intenta mas tarde", icon:"error"}).then(()=>{
+							})
+						}
+					})
+				}
+			})
+		}
+
+        function checarIgualdad() {
+            const p1 = $$("txtPassword_new").getValue();
+            const p2 = $$("txtPassword_newR").getValue();
+            const btn = $$("cmdGuardar");
+            const inputP2 = $$("txtPassword_newR").getInputNode();
+
+            // Si son iguales y no están vacíos, habilitamos el botón
+            if (p1 === p2 && p1.length > 0) {
+                btn.enable();
+                // Opcional: poner el campo en verde
+                webix.html.addCss(inputP2, "webix_invalid_success"); 
+                inputP2.style.borderColor = "#27ae60"; // Verde Hospital / VAAI
+                inputP2.style.backgroundColor = "#4c6657";
+            } else {
+                btn.disable();
+                webix.html.removeCss(inputP2, "webix_invalid_success");
+                inputP2.style.borderColor = "#e63946";
+                inputP2.style.backgroundColor = "#503e40";
+                
+            }
+        }
+		
+	</script>
+</head>
+
+<body>
+</body>
+
+</html>
+

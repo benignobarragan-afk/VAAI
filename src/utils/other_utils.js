@@ -300,6 +300,55 @@ const regi_even_segu = (async (userId, evento, ip) => {
     }
 });
 
+
+    const vali_Pass = (async (password, nombreCompleto) => {
+            // 1. Longitud mínima de ocho caracteres
+            if (password.length < 8) {
+                return { valida: false, mensaje: "La contraseña debe tener al menos 8 caracteres." };
+            }
+
+            // 2. Categorías (Ahora incluimos Especiales)
+            let categoriasCumplidas = 0;
+            const tieneMayus = /[A-Z]/.test(password);
+            const tieneMinus = /[a-z]/.test(password);
+            const tieneNumeros = /[0-9]/.test(password);
+            const tieneEspeciales = /[^a-zA-Z0-9]/.test(password); // Caracteres no alfanuméricos
+
+            if (tieneMayus) categoriasCumplidas++;
+            if (tieneMinus) categoriasCumplidas++;
+            if (tieneNumeros) categoriasCumplidas++;
+            if (tieneEspeciales) categoriasCumplidas++;
+
+            // Validamos que cumpla al menos 3 de las 4 categorías
+            // (O puedes cambiarlo a 4 de 4 si quieres máxima seguridad en la VAAI)
+            if (categoriasCumplidas < 3) {
+                return { 
+                    valida: false, 
+                    mensaje: "Debe incluir al menos 3 categorías: Mayúsculas, Minúsculas, Números o Especiales (!, $, #, %)." 
+                };
+            }
+
+            // 3. No contener partes del nombre completo (> 2 caracteres consecutivos)
+            const limpiarTexto = (t) => t.toLowerCase().split(/[\s,.-]+/);
+            const partesProhibidas = [...limpiarTexto(nombreCompleto)];
+
+            for (let parte of partesProhibidas) {
+                if (parte.length < 3) continue;
+                
+                for (let i = 0; i <= parte.length - 3; i++) {
+                    let subcadena = parte.substring(i, i + 3);
+                    if (password.toLowerCase().includes(subcadena)) {
+                        return { 
+                            valida: false, 
+                            mensaje: "La contraseña no puede contener partes de tu nombre." 
+                        };
+                    }
+                }
+            }
+
+            return { valida: true, mensaje: "Contraseña segura." };
+        });
+
 module.exports = {
     ejecutarPython,
     form_fechSQL,
@@ -308,6 +357,7 @@ module.exports = {
     envi_corr,
     exit_arch,
     leer_excel,
-    regi_even_segu
+    regi_even_segu,
+    vali_Pass
 
 }

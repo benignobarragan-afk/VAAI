@@ -79,7 +79,25 @@ const otro_equi = (async(req, res) => {
     return res.render("otro_equi")
 });
 
+const prin_ca_pa = (async (req, res) => {
+    
+    lcSQL = `
+    SELECT nombre, correo, dn 
+        FROM passfile 
+        WHERE user_id = ?
+    `
 
+    const rows = await util.gene_cons(lcSQL, [req.userId])
+
+    if (rows.length <= 0){
+        return res.render("sin_derecho");
+    }
+    const winId = req.query.winId;
+    
+    console.log(winId)
+    res.render("prin_ca_pa", {rows, winId})
+    
+});
 
 module.exports = {
     logout,
@@ -89,4 +107,5 @@ module.exports = {
     usuarios,
     usua_nuev,
     otro_equi,
+    prin_ca_pa,
 }

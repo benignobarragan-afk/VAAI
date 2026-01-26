@@ -32,5 +32,6 @@ router.post("/progap_nestudiax", midd.verifyToken, upload.single('upload'), prog
 router.post("/progap_ndirectivox", midd.verifyToken, upload.single('upload'), progapCtrl.progap_ndirectivox);
 router.post("/progap_nusuariox", midd.verifyToken, upload.single('upload'), progapCtrl.progap_nusuariox);
 router.post("/progap_nprograx", midd.verifyToken, upload.single('upload'), progapCtrl.progap_nprograx);
+router.post("/progap_nfocamx", midd.verifyToken, upload.single('upload'), progapCtrl.progap_nfocamx);
 
 module.exports = router

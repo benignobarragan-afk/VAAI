@@ -166,7 +166,7 @@
 							},
 							*/
 							{
-								view: "label", label: "Cambiar password", css: "cursor", id: "prin_ca_pa.fwx",
+								view: "label", label: "Cambiar password", css: "cursor", id: "prin_ca_pa",
 								on: {
 									onItemClick: function (id) {
 //										Swal.fire({title: "A continuación se te abrirá una ventana nueva, puede que te pida iniciar sesión de nuevo.", icon: 'warning'}).then(()=>{
@@ -660,7 +660,7 @@
 			}
 
 
-			function showWindow(pagina = "", nombreHeader = "Cuenta pasnet") {
+			function showWindow(pagina, nombreHeader) {
                     
                     xx++;
                     var window = webix.ui({
@@ -681,7 +681,7 @@
                         body: {
                             view: "iframe",
                             id: "frame-body" + xx,
-                            src: "/" + pagina,
+                            src: "/" + pagina + "?winId=my_win" + xx
                         }
                     }).show();
                 }
