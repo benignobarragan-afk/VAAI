@@ -2043,12 +2043,12 @@ const adownload = (async (req, res) => {
     //console.log(rows)
 
     //const ruta_fisica = config.SERV_ARCH + 'OPARCHIVO/' + rows[0].ID_ARCH + path.extname(rows[0].DESCRIP);
-    const nombreArchivo = rows[0].ID_ARCH + path.extname(rows[0].DESCRIP);
+    const nombreArchivo = rows[0].ID_ARCH + path.extname(rows[0].DESCRIP).toUpperCase();
     const ruta_fisica = path.join(config.SERV_ARCH, 'OPARCHIVO', nombreArchivo);
     
     //absolutePath = path.resolve(__dirname, 'uploads', ruta_fisica);
     const absolutePath = path.resolve(ruta_fisica);
-    //console.log(absolutePath)
+    console.log(absolutePath)
 
     if (!fs.existsSync(absolutePath)) {
         return res.status(404).send("El archivo no existe en el servidor.");
