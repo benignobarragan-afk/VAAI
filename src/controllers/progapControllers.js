@@ -13,7 +13,7 @@ const progap = ((req, res) => {
         return res.render("sin_derecho")
     }
 
-    res.render("PROGAP/progap", {lcDerecho})
+    res.render("progap/progap", {lcDerecho})
 });
 
 const progap_dashboard = (async (req, res) => {
