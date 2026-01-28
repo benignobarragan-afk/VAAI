@@ -537,7 +537,7 @@ const new_ord__serv = (async (req, res) => {
     }
 
 
-    lnOficio = req.query.lnOficio
+    const lnOficio = req.query.lnOficio
     //console.log(req.query)
     //console.log(lnOficio)
     let lcSQL = `
@@ -546,8 +546,8 @@ const new_ord__serv = (async (req, res) => {
         WHERE id_oficio = ?
     `
     const rows = await util.gene_cons(lcSQL, [lnOficio])
-
-    return res.render("op/new_ord__serv", {lnOficio, loTexto:rows[0].descrip})
+    
+    return res.render("op/new_ord__serv", {lnOficio, loTexto:(rows.length==0?'':rows[0].descrip)})
 })
 
 const seg_ofic = (async (req, res) => {

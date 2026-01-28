@@ -1453,6 +1453,7 @@ const progap_nfocamx = (async (req, res) => {
 
     const laArchivo = req.file.originalname;
     const laExtencion = laArchivo.substring(laArchivo.lastIndexOf(".")+1).toUpperCase() ;
+    let idExtraido = ''
 
     if(laExtencion != 'PDF'){
         return res.json({"status" : false, "message": "Sólo se permiten archivos con extención PDF", "data":{}})
@@ -1464,17 +1465,18 @@ const progap_nfocamx = (async (req, res) => {
     console.log(laComando)
     console.log(laArgs)
 
+
+
     try {
         // 5. ESPERAR a que la Promesa de Python se resuelva
         const resultadoPython = await other_utils.ejecutarPython(laComando, laArgs);
-
-        // 6. Ahora que tenemos el resultado, respondemos al cliente
-        res.json({
-            "status": "server", 
-            "message":resultadoPython,
-//            texto_extraido: resultadoPython,
-//            ruta_procesada: laArgs
-        });
+        
+        console.log(resultadoPython)
+        
+        if (resultadoPython.substring(0,13) == "Contenido QR:"){
+            idExtraido = resultadoPython.split('/').pop();
+            console.log(idExtraido); 
+        }
 
     } catch (error) {
         console.error("Error al procesar el archivo:", error);
@@ -1485,7 +1487,7 @@ const progap_nfocamx = (async (req, res) => {
         });
     }
     
-    return res.json({"status" : false, "message": "Paso el primer filtro", "data":{}})
+    return res.json({"status" : false, "message": idExtraido, "data":{}})
     //inserta el registro para guardar el archivo de la oficialía
     let lcSQL = `
     INSERT INTO opc_archivo (id_ofic, descrip, fecha, usuario, ofic_out, uid) 
