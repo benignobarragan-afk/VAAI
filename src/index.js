@@ -1,5 +1,7 @@
-// Carga las variables del archivo .env al objeto process.env
-//require('dotenv').config();
+//Carga las variables del archivo .env al objeto process.env
+require('dotenv').config();
+const isProduction = process.env.NODE_ENV === 'production';
+const port = process.env.PORT || 3000;
 
 const express = require("express")
 const helmet = require('helmet');
@@ -12,24 +14,54 @@ const pool = require('./db')
 const outil = require('./utils/other_utils');
 
 const app = express();
-// Esto activa las protecciones básicas que pide ZAP
-/* app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "'https://rawgit.com'"], // Webix a veces requiere unsafe-eval
-      styleSrc: ["'self'", "'unsafe-inline'", 
-            "https://cdn.webix.com",
-            "'unsafe-inline'", 
-            "https://cdn.materialdesignicons.com", 
-            "https://cdnjs.cloudflare.com",
 
-      ],
-      "font-src": ["'self'", "https://cdn.materialdesignicons.com", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "https://*"],
+// Esto activa las protecciones básicas que pide ZAP
+/* app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        
+        // Solo permitimos scripts de nuestro propio servidor ('self')
+        // Mantenemos 'unsafe-inline' y 'unsafe-eval' solo porque Webix los requiere internamente
+        "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+
+        // Permite que Webix maneje eventos en los atributos de los elementos
+        "script-src-attr": ["'unsafe-inline'"],
+
+        // Estilos solo locales
+        "style-src": ["'self'", "'unsafe-inline'"],
+
+        // Fuentes (FontAwesome) solo locales
+        "font-src": ["'self'"],
+
+        // Bloqueamos cualquier conexión externa accidental
+        "connect-src": ["'self'"],
+        
+        // Imagenes locales y datos base64
+        "img-src": ["'self'", "data:"],
+      },
     },
-  },
-})); */
+  })
+); */
+
+//cuando van a utilizar mi ip otro compañero
+/* app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        // Si no es producción, permite HTTP y evita el error de SSL
+        "upgrade-insecure-requests": isProduction ? [] : null, 
+        "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        "script-src-attr": ["'unsafe-inline'"],
+      },
+    },
+    // Desactivamos protecciones de HTTPS solo en desarrollo
+    hsts: isProduction,
+    crossOriginOpenerPolicy: isProduction ? { policy: "same-origin" } : false,
+  })
+); */
 
 /* app.use(helmet({
   contentSecurityPolicy: {
@@ -133,8 +165,6 @@ app.use("/api/gen", GenApiRoutes)
 app.use("/api/tools", ToolsApiRoutes)
 app.use("/api/progap", ProgapApiRoutes)
 
-//app.use(UserRoutes)
-const puerto = process.env.PORT || 3000
 
-app.listen(puerto)
-console.log(`Servidor corriendo en el puerto ${puerto}`)
+app.listen(port)
+console.log(`Servidor corriendo en el puerto ${port}`)
