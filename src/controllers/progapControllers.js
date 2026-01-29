@@ -51,7 +51,7 @@ const progap_cata = ((req, res) => {
         return res.render("sin_derecho")
     }
 
-    res.render("PROGAP/progap_cata", {lcDerecho})
+    res.render("progap/progap_cata", {lcDerecho})
 });
 
 const progap_usuario = (async (req, res) => {

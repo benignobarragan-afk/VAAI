@@ -1487,14 +1487,15 @@ const progap_nfocamx = (async (req, res) => {
         });
     }
     
-    return res.json({"status" : false, "message": idExtraido, "data":{}})
-    //inserta el registro para guardar el archivo de la oficialía
+    //return res.json({"status" : false, "message": idExtraido, "data":{}})
+    
     let lcSQL = `
-    INSERT INTO opc_archivo (id_ofic, descrip, fecha, usuario, ofic_out, uid) 
-        VALUES (?, ?, now(), ?, ?, ?)
+    SELECT * 
+        FROM progap_tram_focam 
+        WHERE uid = ?
     `
 
-    const laInsert = await util.gene_cons(lcSQL, [req.body.idOficio, req.file.originalname, req.userId, (!req.body.out?0:1), util.gene_id_11()])
+    const loTramite = await util.gene_cons(lcSQL, [idExtraido])
     //console.log(laInsert)
 
     const lfOriginal  = path.join(__dirname, "../uploads/", req.file.filename)
