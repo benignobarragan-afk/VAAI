@@ -519,6 +519,50 @@
 				}]
 			}
 		}, {
+			view: "fieldset", label: "Con copia",
+				body: {
+				cols: [{
+					view: "text", id: "nomb_copi", name: "nomb_copi", label: "<span class='obligatorio'>*</span>Nombre", labelWidth: 120, labelPosition: "top",
+					attributes:{ autocomplete :"off" },
+					suggest: {
+						filter: function (item, value) {
+							if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+								return true;
+							return false;
+						},
+						keyPressTimeout: 500,
+						body: {
+							fitMaster: false,
+							template: "#value#",
+							dataFeed: "/api/gen/cmb_persw?lnTipo=11"
+						},
+						on: {
+							"onValueSuggest": function (obj) {
+								//cargaCargo('remi_carg', obj.id, obj.value)
+								$$("remi_carg").setValue(obj.cargo);
+
+							}
+						}
+					},
+				}, {
+					view: "text", id: "carg_copi", name: "carg_copi", label: "Cargo", labelPosition: "top",
+					attributes:{ autocomplete :"off" },
+					suggest: {
+						filter: function (item, value) {
+							if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+								return true;
+							return false;
+						},
+						keyPressTimeout: 500,
+						body: {
+							fitMaster: false,
+							template: "#value#",
+							//dataFeed: "/<% // Response.Write(config.ruta)%>/cmb_opcargo.fwx"
+						},
+					}
+				}]
+			}
+		},{
 			cols: [{
 				view: "select", id: "tipo_ofic", name: "tipo_ofic", labelPosition: "top", label: "<span class='obligatorio'>*</span>Tipo oficio", value: 1, options: [
 					<% //  SELECT cTipo_ofic
@@ -590,6 +634,7 @@
 
 									//$$("formPDF").hideProgress();
 								},
+						
 								onBeforeFileAdd: function (item) {
 								//$$("formPDF").showProgress();
 

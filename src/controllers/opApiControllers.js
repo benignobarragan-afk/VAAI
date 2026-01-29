@@ -797,15 +797,15 @@ const op_ningrx = (async (req, res) => {
         INSERT INTO opc_oficio (clave, fech_ofic, nume_cont, fecha, descrip, tipo_depe, cent_proc, clv_proc, nomb_proc, ligado_a
                 , id_tiof, id_clof, asunto, codi_remi, nomb_remi, carg_remi, codi_dest, nomb_dest, nota, usuario, lud, anio
                 , id_refe_in, id_refe_ou, pendiente, tipo, carg_dest, tele_dest, cve, id_cent, asignado, status, doc_firma, info_sens, segu_pra, letra
-                , tipo_info, tipo_ingr, BIS, id_seccion) 
-            VALUES (?, ?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, 0, ?, ?, ?, now(), ? ,?, ?, 0, ?, ?, '', ?, ?, 0, 1, 0, ?, 0, '' , ?, ?, 0, ?);
+                , tipo_info, tipo_ingr, BIS, id_seccion, nomb_copi, carg_copi) 
+            VALUES (?, ?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, 0, ?, ?, ?, now(), ? ,?, ?, 0, ?, ?, '', ?, ?, 0, 1, 0, ?, 0, '' , ?, ?, 0, ?, ?, ?);
     `
     console.log(req.body.info_sens)
 
     parameters = [req.centro, outil.form_fechSQL(req.body.fech_ofic), lnNume_cont, req.body.nume_ofic, req.body.rbLiga, (lnNuev_cent>0?lnNuev_cent:req.body.dependen), req.body.clav_proc,
         req.body.txtDepen, req.body.ligado_a, req.body.tipo_ofic, req.body.clase, req.body.asunto, req.body.remi_nomb, req.body.remi_carg, req.body.dest_nomb,
         req.body.nota, req.userId, req.body.anio_ingr, req.body.liga_sali, req.body.liga_entr, req.body.tipo_ingr, req.body.dest_carg, req.body.cve, req.id_cent, 
-        (req.body.info_sens = 0?false:true),req.body.tipo_info, req.body.tipo_ingr, (req.body.seccion === '' ? 0 : req.body.seccion)
+        (req.body.info_sens = 0?false:true),req.body.tipo_info, req.body.tipo_ingr, (req.body.seccion === '' ? 0 : req.body.seccion), req.body.copi_nomb, req.body.copi_carg
     ]
     //console.log(lcSQL)
     const rows4 = await util.gene_cons(lcSQL, parameters);
@@ -1847,7 +1847,7 @@ const detalle_ofic_Nox = (async(req,res) =>{
         SELECT o.cve, o.anio as anio_ingr, o.nume_cont, DATE_FORMAT(o.fech_ofic, '%d/%m/%Y') as fech_ofic, DATE_FORMAT(o.fecha, '%d/%m/%Y') AS fech_rece, 
                 DATE_FORMAT(o.fecha, '%H:%i') AS hora_rece, o.descrip as nume_ofic, o.nomb_remi as remi_nomb, o.carg_remi as remi_carg, ifnull(o.tipo_info, 0) as tipo_info, 
                 c.dependen as txtDepen, o.nomb_dest as dest_nomb, ifnull(o.carg_dest, '') as dest_carg, o.tipo_depe as rbDepe, o.id_tiof as tipo_ofic, o.id_clof as clase, 
-                o.asunto, IFNULL(o.nota, '') as nota, IFNULL(o.info_sens, 0) as info_sens, o.tipo_ingr
+                o.asunto, IFNULL(o.nota, '') as nota, IFNULL(o.info_sens, 0) as info_sens, o.tipo_ingr, o.nomb_copi, o.carg_copi 
             FROM opc_oficio o left join gen_centros c on o.id_cent = c.id_cent
             WHERE id_ofic = ?
     `

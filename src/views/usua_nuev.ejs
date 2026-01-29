@@ -16,7 +16,7 @@
 				GROUP: "<%=rows[i].GROUP%>",
 				DESCRIP: `<%=rows[i].DESCRIP%>`,
 				MODI_GROU: "<%=rows[i].MODI_GROU%>",
-			 },
+			},
 			<%}%>
 		]
 
@@ -42,7 +42,7 @@
 			cols: [
 			{
 				view: "text", id: "txtCodigo", name: "txtCodigo", labelPosition: "top", label: "C&oacute;digo", value: "", 
-				 pattern:{ mask:"#######", allow:/[0-9]/g},
+				pattern:{ mask:"#######", allow:/[0-9]/g},
 			on:{
 				"onBlur":function(){
 					gene_pass();
@@ -218,9 +218,9 @@
 						$$("cmbServicio").getPopup().getList().clearAll();
 						
 						$$("cmbServicio").getPopup().getList().add({
-        				id: res.form.txtServicio, 
-        				value: res.form.txtValue 
-    					});
+						id: res.form.txtServicio, 
+						value: res.form.txtValue 
+						});
 
 						$$('dtable').filter();
 						const tabla = $$("dtable");
