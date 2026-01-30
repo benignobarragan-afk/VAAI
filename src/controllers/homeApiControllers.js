@@ -92,7 +92,7 @@ const usua_nuevx2 = (async (req, res) => {
         `
         lcMensaje = "El usuario se actualizo correctamente"
 
-        parameters = [req.body.txtPassword, req.body.txtCodigo, (!req.body.txtServicio ? '0' : req.body.txtServicio),
+        parameters = [req.body.txtPassword, req.body.txtCodigo, (!req.body.cmbServicio ? '0' : req.body.cmbServicio),
             req.body.txtApellidos + ' ' + req.body.txtNombre, '"DN "' + req.body.txtApellidos + ' "DN "' + req.body.txtNombre,
             (!req.body.txtDerecho ? '' : req.body.txtDerecho), (!req.body.txtCorreo ? '' : req.body.txtCorreo), req.userId, req.body.txtUser_id
         ]
@@ -106,7 +106,7 @@ const usua_nuevx2 = (async (req, res) => {
         `
         lcMensaje = "El usuario se registro exitomente"
 
-        parameters = [req.body.txtUser_id, req.body.txtPassword, req.body.txtCodigo, (!req.body.txtServicio ? '0' : req.body.txtServicio), 
+        parameters = [req.body.txtUser_id, req.body.txtPassword, req.body.txtCodigo, (!req.body.cmbServicio ? '0' : req.body.cmbServicio), 
             req.body.txtApellidos + ' ' + req.body.txtNombre, '"DN "' + req.body.txtApellidos + ' "DN "' + req.body.txtNombre, 
             (!req.body.txtDerecho ? '' : req.body.txtDerecho), (!req.body.txtCorreo ? '' : req.body.txtCorreo)
         ]
