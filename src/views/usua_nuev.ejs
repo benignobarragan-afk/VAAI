@@ -148,7 +148,8 @@
 					webix.message("Buscando detalles de: " + item.MODI_GROU);
 					
 					// Ejemplo: Abrir una ventana o cargar datos en un formulario
-					abrirVentanaDetalles(item.MODI_GROU);
+					//abrirVentanaDetalles(item.MODI_GROU);
+					showWindow(item.MODI_GROU, item.DESCRIP);
 					
 					return false; // Evita que se disparen otros eventos de la fila
 				}
@@ -338,7 +339,33 @@
 			})
 		}
 
+	let xx = 1;
+
+	function showWindow(pagina, nombreHeader) {
 		
+		xx++;
+		var window = webix.ui({
+			view: "window",
+			id: "my_win" + xx,
+			left: 150,
+			top: 20,
+			width: 920,
+			height: 450,
+			head: {
+				view: "toolbar", id: "toolbar" + xx,
+				cols: [
+					{ view: "label", label: nombreHeader, align: 'center' },
+					{ view: "icon", icon: 'mdi mdi-close', click: "$$('my_win" + xx + "').close();" }
+				]
+			},
+			close: true, 
+			body: {
+				view: "iframe",
+				id: "frame-body" + xx,
+				src: "/" + pagina + "?winId=my_win" + xx
+			}
+		}).show();
+	}
 	</script>
 </head>
 
