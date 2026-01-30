@@ -275,7 +275,8 @@ const construirClausulaBusquedaP = (lcDepe, lnTipo) => {
 
         default:
             lcCampo = "codigo as id, CONCAT('(',CAST(codigo AS CHAR),') ', IFNULL(apepat, ''), ' ', IFNULL(apemat, ''), ' ', IFNULL(nombre, '')) as value"
-            columnaPrincipal = "CONCAT(CAST(codigo AS CHAR), IFNULL(apepat, ''), IFNULL(apemat, ''), IFNULL(nombre, ''))"
+            //columnaPrincipal = "CONCAT(CAST(codigo AS CHAR), IFNULL(apepat, ''), IFNULL(apemat, ''), IFNULL(nombre, ''))"
+            columnaPrincipal = "CONCAT(codigo, IFNULL(apepat, ''), IFNULL(apemat, ''), IFNULL(nombre, ''))"
             lcTabla = "gen_personas"
             break
         }
