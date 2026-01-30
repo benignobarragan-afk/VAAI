@@ -1,15 +1,12 @@
 <%- include('../partials/header'); %>
 
-<style>
-.char_counter {
-    text-align: right;
-    font-size: 11px;
-    color: #666;
-    padding-top: 2px;
-    padding-right: 5px;
-    line-height: 15px; /* Ajusta la altura de línea para que pegue al input */
-}
-</style>
+<style type="text/css">
+		/* Definición del color verde para el texto */
+		.archivo-verde a {
+			color: #4CAF50 !important; /* Un tono de verde claro y visible */
+			font-weight: bold; /* Opcional: para que resalte más */
+		}
+	</style>
 
 <script>
 
@@ -34,56 +31,57 @@ webix.ready(function(){
             { cols:[
                 { view:"text", name:"id", label:"id", hidden: true },
                 { view:"text", name:"codigo", label:"Código de Estudiante *", placeholder:"Código de Estudiante", required:true, invalidMessage:"Requerido" },
-                { view:"text", type:"password", name:"contrasena", label:"Contraseña *", placeholder:"Contraseña:", required:true, invalidMessage:"Requerido" }
-            ]},
+                // CURP
+                { cols:[
+                    {
+                        view: "text",
+                        id: "curp",
+                        name: "curp",
+                        label: "CURP *",
+                        placeholder: "Escribe tu CURP",
+                        required: true,
+                        attributes: { maxlength: 18 },
+                        // Definimos la validación
+                        validate: function(value) {
+                            return validarCURP(value);
+                        },
+                        invalidMessage: "Formato de CURP incorrecto",
+                        on: {
+                            // Convertir automáticamente a mayúsculas mientras el usuario escribe
+                            onTimedKeyPress: function() {
+                                var value = this.getValue().toUpperCase();
+                                this.setValue(value);
 
-            // CURP
-            { cols:[
-                {
-                    view: "text",
-                    id: "curp",
-                    name: "curp",
-                    label: "CURP *",
-                    placeholder: "Escribe tu CURP",
-                    required: true,
-                    attributes: { maxlength: 18 },
-                    // Definimos la validación
-                    validate: function(value) {
-                        return validarCURP(value);
-                    },
-                    invalidMessage: "Formato de CURP incorrecto",
-                    on: {
-                        // Convertir automáticamente a mayúsculas mientras el usuario escribe
-                        onTimedKeyPress: function() {
-                            var value = this.getValue().toUpperCase();
-                            this.setValue(value);
+                                if($$("contador")){
+                                    $$("contador").setHTML(value.length + " / 18");
+                                    //$$("contador").setHTML(val.length + " / 18");
+                                }
 
-                            if($$("contador")){
-                                $$("contador").setHTML(value.length + " / 18");
-                                //$$("contador").setHTML(val.length + " / 18");
-                            }
-
-                            // 3. Opcional: Cambiar el color si se pasa de 18 (por seguridad)
-                            if (value.length < 18) {
-                                $$("contador").$view.style.color = "red";
-                            } else {
-                                $$("contador").$view.style.color = ""; // Color original
+                                // 3. Opcional: Cambiar el color si se pasa de 18 (por seguridad)
+                                if (value.length < 18) {
+                                    $$("contador").$view.style.color = "red";
+                                } else {
+                                    $$("contador").$view.style.color = ""; // Color original
+                                }
                             }
                         }
-                    }
-                },
-                { 
-                    view: "template", // Cambiado de label a template para mejor manejo de HTML
-                    id: "contador", 
-                    name: "contador", 
-                    template: "0 / 18", 
-                    borderless: true, // Para que no se vea el recuadro del template
-                    css: "char_counter", 
-                    height: 25,
-                    width: 50,
+                    },
+                    { 
+                        view: "template", // Cambiado de label a template para mejor manejo de HTML
+                        id: "contador", 
+                        name: "contador", 
+                        template: "0 / 18", 
+                        borderless: true, // Para que no se vea el recuadro del template
+                        css: "char_counter", 
+                        height: 25,
+                        width: 50,
 
-                },
+                    },
+                ]},
+                
             ]},
+
+            
             // Nombre Completo (3 columnas)
             { label:"Nombre completo *", view:"label" },
             { cols:[
@@ -176,7 +174,7 @@ webix.ready(function(){
 						name:"filePDF", id:"filePDF", width:300,
 						link:"list1",  upload:"/api/progap/progap_nfocamx",
 						formData: {
-							idFocam: <%=prog_id%>,
+							idFocam: <%=usuario[0].id%>,
 						},
 							on:{
 									onUploadComplete:(response, file)=>{
@@ -209,8 +207,66 @@ webix.ready(function(){
 						},
 				]},
                 <%}%>
-                {},
-                { view:"button", value:"<%=(usuario.length<1?'Crear usuario de estudiante':'Modificar estudiante')%>", css:"webix_primary", width:250, click:guardarEstudiante },
+                {rows: [
+                { view:"button", value:"<%=(usuario.length<1?'Crear usuario de estudiante':'Modificar estudiante')%>", css:"webix_primary", width:250, click:guardarEstudiante }
+                ],
+                },
+                {
+                rows: [
+                    {view:"label", label:"Archivos"},
+                    {
+                        view: "list",
+                        id: "archivos_adjuntos", name: "archivos_adjuntos",
+                        height: 100,
+                        header: "Archivos Adjuntos",
+                        scroll: "y",      // Permite scroll vertical si hay muchos
+                        
+                        // **CLAVE:** Este template define cómo se verá cada archivo
+                        template: function(obj) {
+                            // obj es el objeto de datos (e.g., {id: 1, nombre: "factura.pdf", ...})
+                            
+                            let html = "<div class='file-item archivo-verde'>";
+                            
+                            // Icono basado en la extensión (ejemplo)
+                            html += "<span class='webix_icon wxi-trash delete-file'></span> ";
+                            
+                            // Enlace de descarga (usa el ID o la ruta)
+                            html += "<a href='/api/progap/pdownload?id=" + obj.id + "' target='_blank'>";
+                            html += obj.nombre; // Muestra el nombre del archivo
+                            html += "</a>";
+                            
+                            // Botón de eliminar (con un evento para manejar la lógica de borrado)
+                            html += "<span class='webix_icon wxi-file' data-id='" + obj.id + "'></span>";
+                            
+                            html += "</div>";
+                            return html;
+                            },
+                        on: {
+                            onItemClick: function(id_item, e, node) {
+                                
+                                if (e.target.className.indexOf('delete-file') !== -1) {
+                                    
+                                    let id_archivo_a_borrar = id_item; 
+                                    alert("Se hizo clic en el bote de basura para el archivo con ID: " + id_archivo_a_borrar);
+                                    
+                                    // **Llama a la función de confirmación y eliminación**
+                                    //confirmarYEliminarArchivo(id_archivo_a_borrar);
+                                    
+                                    // Prevenir que el evento se propague si es necesario
+                                    return false; 
+                                }
+                            }
+                        },
+                        
+                        // Configuración para cargar datos del servidor (metadatos de MariaDB)
+                        /* data:[
+                            { "id": 1, "nombre": "factura_compra_01.pdf", "ruta": "/uploads/a3b1c2.pdf" },
+                            { "id": 2, "nombre": "contrato_firmado.docx", "ruta": "/uploads/x9y8z7.docx" }
+                            ] */
+                        url: "/api/progap/progap_recu_arch?lnTram=<%=usuario[0].id%>"
+                    }
+                ] 
+                },
                 
             ]}
         ],
@@ -252,6 +308,12 @@ function guardarEstudiante(){
 function validarCURP(valor) {
     const regexCURP = /^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[0-9A-Z]{1}[0-9]{1}$/;
     return regexCURP.test(valor.toUpperCase());
+}
+
+function carg_arch() {
+			
+    $$("archivos_adjuntos").clearAll()
+    $$("archivos_adjuntos").load("/api/progap/progap_recu_arch?lnTram=<%=usuario[0].id%>");
 }
 
 </script>

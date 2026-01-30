@@ -274,7 +274,7 @@ const construirClausulaBusquedaP = (lcDepe, lnTipo) => {
             break;
 
         default:
-            lcCampo = "codigo as id, CONCAT('(',CAST(codigo AS CHAR),') ', IFNULL(apepat, ''), ' ', IFNULL(apemat, ''), ' ', IFNULL(nombre, '')) as value"
+            lcCampo = "codigo as id, CONCAT('(',codigo,') ', IFNULL(apepat, ''), ' ', IFNULL(apemat, ''), ' ', IFNULL(nombre, '')) as value"
             //columnaPrincipal = "CONCAT(CAST(codigo AS CHAR), IFNULL(apepat, ''), IFNULL(apemat, ''), IFNULL(nombre, ''))"
             columnaPrincipal = "CONCAT(codigo, IFNULL(apepat, ''), IFNULL(apemat, ''), IFNULL(nombre, ''))"
             lcTabla = "gen_personas"
@@ -335,7 +335,7 @@ const BuscaOficio = (lcDepe) => {
     // Añadimos un espacio al final para asegurar que la última palabra sea procesada en el bucle
     let lcCadena = lcDepe.trim() + ' '; 
 
-    columnaPrincipal = "CONCAT(o.descrip, CAST(o.nume_cont AS CHAR))"
+    columnaPrincipal = "CONCAT(o.descrip, o.nume_cont)"
 
     // Equivalente a DO WHILE !EMPTY(lcCadena)
     while (lcCadena.trim() !== '') {

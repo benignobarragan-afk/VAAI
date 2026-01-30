@@ -160,18 +160,18 @@ const progap_form01 = ( async (req, res) => {
     let lcSQL = `
     SELECT COUNT(*) as total
         FROM log_visitas 
-        WHERE usuario_id = ${req.userId} AND LEFT(URL,18) = "/api/progap/progap_form01" 
+        WHERE usuario_id = ? AND LEFT(URL,18) = "/api/progap/progap_form01" 
             AND fecha_visita > DATE_SUB(NOW(), INTERVAL 1 HOUR)
     `
-    const rows = await util.gene_cons(lcSQL)
+    const rows = await util.gene_cons(lcSQL, [req.userId])
 
     if (rows[0].total > 20){
     lcSQL = `
     UPDATE passfile SET bloqueada = 1, bloq_MOTI = "Bloqueo por mas de 20 descargas de formato: '/api/progap/progap_form01' en una hora",
     		cambios = CONCAT(IFNULL(cambios, ''), "BLOQUEO_AUTO-/api/progap/progap_form01", DATE_FORMAT(NOW(), "%d/%m/%Y %h:%i")) 
-	    WHERE user_id = '${req.userId}'
+	    WHERE user_id = ?
     `
-    const bloqueo = await util.gene_cons(lcSQL)
+    const bloqueo = await util.gene_cons(lcSQL, [req.userId])
 
     // 5. Limpiar caché para que el bloqueo sea inmediato
     cacheUsuarios.delete(req.userId);
@@ -180,13 +180,11 @@ const progap_form01 = ( async (req, res) => {
     return res.render("cuen_bloq")
     } 
 
-    lcSQL =  `
-    SET lc_time_names = 'es_MX';
-
-    SELECT concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, curp, a.codigo, 
+/*     lcSQL =  `
+    SELECT u.id, concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, curp, a.codigo, 
             d.dependencia, CONCAT(p.clave_cgipv, ' - ', p.programa) AS programa, ci.nombre AS cicl_ingr, 
             cc.nombre AS cicl_curs, cco.nombre AS cicl_cond, a.correo_institucional, d.municipio, a.fecha_solicitud,
-            CONCAT(CONVERT(d.municipio USING utf8mb4), ', Jalisco, México, a ', DATE_FORMAT(a.fecha_solicitud, '%d de %M de %Y')) AS fecha_texto
+            d.municipio, a.fecha_solicitud, u.uid
         FROM progap_alumnos a 
         LEFT JOIN progap_usuarios u ON a.id_usuario = u.id
         LEFT JOIN progap_dependencias d ON u.id_centro_universitario = d.id
@@ -194,17 +192,34 @@ const progap_form01 = ( async (req, res) => {
         LEFT JOIN progap_ciclos ci ON a.id_ciclo_ingreso = ci.id
         LEFT JOIN progap_ciclos cc ON a.id_ciclo_curso = cc.id
         LEFT JOIN progap_ciclos cco ON a.id_ciclo_condonar = cco.id	
-        WHERE a.id = ${req.query.id}
+        WHERE a.id = ?
+    ` */
+    
+    lcSQL =  `
+    SELECT t.id, t.codigo, concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, a.curp, 
+            d.dependencia, CONCAT(p.clave_cgipv, ' - ', p.programa) AS programa, ci.nombre AS cicl_ingr, 
+            cc.nombre AS cicl_curs, cco.nombre AS cicl_cond, a.correo_institucional, d.municipio, a.fecha_solicitud, t.uid
+        FROM progap_tram_focam t LEFT JOIN progap_alumno a ON t.codigo = a.codigo
+            LEFT JOIN progap_dependencias d ON t.id_centro_universitario = d.id
+            LEFT JOIN progap_programa p ON t.id_programa = p.id
+            LEFT JOIN progap_ciclos ci ON t.id_ciclo_ingreso = ci.id
+        LEFT JOIN progap_ciclos cc ON t.id_ciclo_curso = cc.id
+        LEFT JOIN progap_ciclos cco ON t.id_ciclo_condonar = cco.id	
+        WHERE t.id = ?
     `
-    const laAlumno = await util.gene_cons(lcSQL)
 
-    const qrData = "https://progap/validador/" + util.gene_id_11();
+    const laAlumno = await util.gene_cons(lcSQL, [req.query.id])
+
+    const qrData = "https://progap/validador/" + laAlumno[0].uid
     const qrImage = await util.generarQrBase64(qrData);
 
-    if (!laAlumno[1][0]){
+    const opciones = { day: 'numeric', month: 'long', year: 'numeric' };
+    const fechaFormateada = laAlumno[0].fecha_solicitud.toLocaleDateString('es-MX', opciones);
+
+    if (!laAlumno[0]){
         return res.render("sin_derecho")
     }
-    //console.log(laAlumno[1][0])
+    //console.log(laAlumno[0])
 
     const doc = new PDFDocument({ size: 'letter' });
 
@@ -237,15 +252,15 @@ Presente
     const table = {
       headers: [{label:"Datos del solicitante"},{hideHeader: true}],
       rows: [
-        ["Nombre completo:",laAlumno[1][0].nombre],
-        ["CURP:",laAlumno[1][0].curp],
-        ["Código de estudiante:",laAlumno[1][0].codigo],
-        ["Centro universitario de adcripción:",laAlumno[1][0].dependencia],
-        ["Clave y nombre del programa académico:",laAlumno[1][0].programa],
-        ["Ciclo escolar de ingreso:",laAlumno[1][0].cicl_ingr],
-        ["Ciclo escolar en curso:",laAlumno[1][0].cicl_curs],
-        ["Ciclo escolar por condonar:",laAlumno[1][0].cicl_cond],
-        ["Correo institucional:",laAlumno[1][0].correo_institucional],
+        ["Nombre completo:",laAlumno[0].nombre],
+        ["CURP:",laAlumno[0].curp],
+        ["Código de estudiante:",laAlumno[0].codigo],
+        ["Centro universitario de adcripción:",laAlumno[0].dependencia],
+        ["Clave y nombre del programa académico:",laAlumno[0].programa],
+        ["Ciclo escolar de ingreso:",laAlumno[0].cicl_ingr],
+        ["Ciclo escolar en curso:",laAlumno[0].cicl_curs],
+        ["Ciclo escolar por condonar:",laAlumno[0].cicl_cond],
+        ["Correo institucional:",laAlumno[0].correo_institucional],
       ],
     };
 
@@ -277,13 +292,13 @@ Presente
     doc.moveDown(1);
     doc.text ( `
 Atentamente
-${laAlumno[1][0].fecha_texto}`, {align: 'center'});
+${laAlumno[0].municipio}, Jalisco, México, a ${fechaFormateada}`, {align: 'center'});
     doc.moveDown(4);
     doc.moveTo(180, doc.y)
     .lineTo(450, doc.y)
     .stroke();
     doc.moveDown(1);
-   doc.text ( `${laAlumno[1][0].nombre}`, {align: 'center'});
+   doc.text ( `${laAlumno[0].nombre}`, {align: 'center'});
    doc.image(qrImage, 450, 50, { width: 80 });
     doc.end();
 });
@@ -1453,18 +1468,17 @@ const progap_nfocamx = (async (req, res) => {
 
     const laArchivo = req.file.originalname;
     const laExtencion = laArchivo.substring(laArchivo.lastIndexOf(".")+1).toUpperCase() ;
-    let idExtraido = ''
+    let idExtraido = '', lcSQL = ''
 
     if(laExtencion != 'PDF'){
         return res.json({"status" : false, "message": "Sólo se permiten archivos con extención PDF", "data":{}})
     }
 
-    laComando = path.join(__dirname, "../APIPython", "leeQR2.py") 
+    laComando = path.join(__dirname, "../apipython", "leeQR2.py") 
     laArgs  = path.join(__dirname, "../uploads/", req.file.filename)
 
     console.log(laComando)
     console.log(laArgs)
-
 
 
     try {
@@ -1476,6 +1490,26 @@ const progap_nfocamx = (async (req, res) => {
         if (resultadoPython.substring(0,13) == "Contenido QR:"){
             idExtraido = resultadoPython.split('/').pop();
             console.log(idExtraido); 
+            
+            lcSQL = `
+            SELECT * 
+                FROM progap_tram_focam 
+                WHERE uid = ?
+            `
+            rows = await util.gene_cons(lcSQL, [idExtraido])
+
+            console.log(rows); 
+            
+            if (rows.length <= 0){
+                return res.json({"status" : false, "message": "El QR no se econtro en la base de datos", "data":{}})
+            }
+
+            if (rows[0].id != req.body.idFocam){
+                return res.json({"status" : false, "message": "El QR no pertenece a este estudiante", "data":{}})
+            }
+        }
+        else{
+            return res.json({"status" : false, "message": "No se econtro QR o no fue generado por el sistema", "data":{}})
         }
 
     } catch (error) {
@@ -1486,23 +1520,24 @@ const progap_nfocamx = (async (req, res) => {
             detalle: error.message
         });
     }
-    
-    //return res.json({"status" : false, "message": idExtraido, "data":{}})
-    
-    let lcSQL = `
-    SELECT * 
-        FROM progap_tram_focam 
-        WHERE uid = ?
+
+    //inserta el registro para guardar el archivo de la oficialía
+    lcSQL = `
+    INSERT INTO progap_archivo (id_orig, descrip, fecha, usuario, uid) 
+        VALUES (?, ?, now(), ?, ?)
     `
 
-    const loTramite = await util.gene_cons(lcSQL, [idExtraido])
+    const laInsert = await util.gene_cons(lcSQL, [req.body.idFocam, req.file.originalname, req.userId, util.gene_id_11()])
     //console.log(laInsert)
 
+    
     const lfOriginal  = path.join(__dirname, "../uploads/", req.file.filename)
-    const lfDestino = config.SERV_ARCH  + 'OPARCHIVO\\' + laInsert.insertId + '.' + laExtencion 
+    //const lfDestino = config.SERV_ARCH  + 'OPARCHIVO\\' + laInsert.insertId + '.' + laExtencion 
+    const lfDestino = path.join(config.SERV_ARCH, 'PROGAB', laInsert.insertId + '.' + laExtencion);
 
     //console.log(lfOriginal)
     //console.log(lfDestino)
+
 
     try {
         //await fs.copyFile(lfOriginal, lfDestino);
@@ -1510,7 +1545,7 @@ const progap_nfocamx = (async (req, res) => {
         if (!fs.existsSync(lfDestino)) {
             
             lcSQL = `
-    DELETE FROM opc_archivo WHERE id_arch = ?
+    DELETE FROM progap_archivo WHERE id_arch = ?
     `
             const laDelete = await util.gene_cons(lcSQL, [laInsert.insertId])
             return res.json({"status" : false, "message": "Error al guardar el archivo"});
@@ -1519,7 +1554,7 @@ const progap_nfocamx = (async (req, res) => {
     } catch (err) {
         //console.log(err);
         lcSQL = `
-    DELETE FROM opc_archivo WHERE id_arch = ?
+    DELETE FROM progap_archivo WHERE id_arch = ?
     `
         const laDelete = await util.gene_cons(lcSQL, [laInsert.insertId])
         return res.json({"status" : false, "message": "Error al guardar el archivo"});
@@ -1527,6 +1562,63 @@ const progap_nfocamx = (async (req, res) => {
 
     return res.json({"status" : "server", "message": "El archivo se cargo correctamente"});
 
+});
+
+const progap_recu_arch = (async (req, res) => {
+
+    //console.log(req.query.out)
+    lcSQL = `
+    SELECT UID AS id, DESCRIP as nombre
+        FROM progap_archivo 
+        WHERE id_orig = ?
+        ORDER BY fecha DESC
+
+    `
+    //console.log(lcSQL)
+    const rows = await util.gene_cons(lcSQL, [req.query.lnTram])
+
+    return res.json(rows)
+
+});
+
+const pdownload = (async (req, res) => {
+
+    let lcSQL = ''
+    
+    if (req.groups.indexOf(",ADMI_PROGAP,") < 0){
+        return res.render("sin_derecho")
+    }
+        
+    lcSQL = `
+    SELECT *
+        FROM progap_archivo 
+        WHERE UID = ?
+    `
+    //console.log(lcSQL)
+    const rows = await util.gene_cons(lcSQL, [req.query.id])
+
+    if (!rows || rows.length <= 0){
+        return res.send("No se econtro el archivo en la base de datos")
+    }
+
+
+    //const ruta_fisica = config.SERV_ARCH + 'OPARCHIVO/' + rows[0].ID_ARCH + path.extname(rows[0].DESCRIP);
+    const nombreArchivo = rows[0].ID_ARCH + path.extname(rows[0].DESCRIP).toUpperCase();
+    const ruta_fisica = path.join(config.SERV_ARCH, 'PROGAP', nombreArchivo);
+    
+    //absolutePath = path.resolve(__dirname, 'uploads', ruta_fisica);
+    const absolutePath = path.resolve(ruta_fisica);
+    console.log(absolutePath)
+
+    if (!fs.existsSync(absolutePath)) {
+        return res.status(404).send("El archivo no existe en el servidor.");
+    }
+
+    res.download(absolutePath, rows[0].DESCRIP, (err) => {
+        if (err) {
+            console.error("Error en la descarga:", err);
+        }
+    });
 });
 
 module.exports = {
@@ -1551,5 +1643,8 @@ module.exports = {
     progap_ndirectivox,
     progap_nusuariox,
     progap_nprograx,
-    progap_nfocamx
+    progap_nfocamx,
+    progap_recu_arch,
+    pdownload,
+
 }

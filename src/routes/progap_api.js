@@ -4,8 +4,8 @@ const path = require("path")
 const midd = require(path.join(__dirname,"..", "middlewares/authjwt.js"))
 const multer = require("multer")
 
-const upload = multer({ dest: 'src/uploads' })
-
+//const upload = multer({ dest: 'src/uploads' })
+const upload = multer({ dest: path.join(__dirname, '../uploads') }); 
 
 //const pool = require('../db')
 
@@ -33,5 +33,8 @@ router.post("/progap_ndirectivox", midd.verifyToken, upload.single('upload'), pr
 router.post("/progap_nusuariox", midd.verifyToken, upload.single('upload'), progapCtrl.progap_nusuariox);
 router.post("/progap_nprograx", midd.verifyToken, upload.single('upload'), progapCtrl.progap_nprograx);
 router.post("/progap_nfocamx", midd.verifyToken, upload.single('upload'), progapCtrl.progap_nfocamx);
+router.get("/progap_recu_arch", midd.verifyToken, progapCtrl.progap_recu_arch);
+router.get("/pdownload", midd.verifyToken, progapCtrl.pdownload);
+
 
 module.exports = router

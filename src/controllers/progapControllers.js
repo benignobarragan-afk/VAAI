@@ -429,15 +429,24 @@ const progap_nfocam = (async (req, res) => {
     let usuario = [], depe_id = '', depe_value = '', prog_id = '', prog_value = ''
 
     if (req.query.lnID > 0){
-    lcSQL = `
+/*     lcSQL = `
         SELECT a.id, a.codigo, u.contrasena, a.nombre, a.apellido_paterno, a.apellido_materno, a.curp, u.id_centro_universitario AS centro, 
                 a.id_programa AS programa, a.correo_institucional, a.id_ciclo_ingreso, a.id_ciclo_curso, a.id_ciclo_condonar, 
                 if(a.id_estado > 2, 1, 0) as id_estado 
             FROM progap_alumnos a LEFT JOIN progap_usuarios u ON a.id_usuario = u.id
             WHERE a.id = ${req.query.lnID}
 
+        ` */
+    lcSQL = `
+        SELECT t.id, t.codigo, a.nombre, a.apellido_paterno, a.apellido_materno, a.curp, t.id_centro_universitario AS centro, 
+                t.id_programa AS programa, a.correo_institucional, t.id_ciclo_ingreso, t.id_ciclo_curso, t.id_ciclo_condonar, 
+                if(a.id_estado > 2, 1, 0) as id_estado 
+            FROM progap_tram_focam t LEFT JOIN progap_alumno a ON t.codigo = a.codigo
+            WHERE t.id = ?
+
         `
-        usuario = await util.gene_cons(lcSQL)
+
+        usuario = await util.gene_cons(lcSQL, [req.query.lnID])
 
         //console.log(usuario)
         if(!!usuario[0].centro){                //verifica que exista la dependencia
