@@ -104,6 +104,8 @@ const progap_estudia = (async (req, res) => {
     `
 
     const rows = await util.gene_cons(lcSQL)
+
+    rows.push({id:0, anio:'TODOS'})
     
     return res.render("progap/progap_estudia", {rows})
 });
@@ -481,6 +483,16 @@ const progap_nfocam = (async (req, res) => {
     return res.render("progap/progap_nfocam", {rows, usuario, depe_id, depe_value, prog_id, prog_value})
 });
 
+const progap_actu_estu = ((req, res) => {
+
+    if (req.groups.indexOf(",ADMI_PROGAP,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+    
+    return res.render("progap/progap_actu_estu")
+});
+
 module.exports = {
     progap,
     progap_dashboard,
@@ -501,4 +513,5 @@ module.exports = {
     progap_nprogra,
     progap_dexacam,
     progap_nfocam,
+    progap_actu_estu,
 }

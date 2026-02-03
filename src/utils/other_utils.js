@@ -6,7 +6,8 @@ const nodemailer = require('nodemailer');
 const config = require(path.join(__dirname, "..", "config"));
 const util = require(path.join(__dirname, "..", "utils/busquedaUtils"));
 const fs = require('fs').promises;
-const XLSX = require('xlsx');
+//const XLSX = require('xlsx');
+const ExcelJS = require('exceljs');
 
 const ejecutarPython = (async (pythonScriptPath, args) => {
     return new Promise((resolve, reject) => {
@@ -227,7 +228,7 @@ const exit_arch = (async (lcArchivo) => {
 });
 
 
-const leer_excel = (loArchivo) => {
+/* const leer_excel = (loArchivo) => {
     try {
         // 1. Cargar el archivo (Workbook)
         // Si usas storage en disco: XLSX.readFile(req.file.path)
@@ -252,7 +253,55 @@ const leer_excel = (loArchivo) => {
     } catch (error) {
         return ({ status: "error", message: error.message });
     }
+}; */
+
+const leer_excel = async (loArchivo) => {
+    try {
+        const workbook = new ExcelJS.Workbook();
+        
+        // 1. Cargar el archivo
+        await workbook.xlsx.readFile(loArchivo);
+
+        // 2. Obtener la primera hoja (exceljs usa índice 1 para las hojas)
+        const worksheet = workbook.getWorksheet(1);
+        
+        const datos = [];
+        const encabezados = [];
+
+        // 3. Procesar las filas
+        worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
+            if (rowNumber === 1) {
+                // Guardamos los nombres de las columnas de la primera fila
+                row.eachCell({ includeEmpty: true }, (cell) => {
+                    encabezados.push(cell.value || "");
+                });
+            } else {
+                // Construimos el objeto para cada fila de datos
+                let filaObjeto = {};
+                encabezados.forEach((nombreColumna, index) => {
+                    // Obtenemos el valor de la celda (manejando si es fórmula o fecha)
+                    const celda = row.getCell(index + 1);
+                    let valor = celda.value;
+                    
+                    // Si la celda es una fórmula, extraemos el resultado
+                    if (valor && typeof valor === 'object' && valor.result !== undefined) {
+                        valor = valor.result;
+                    }
+                    
+                    filaObjeto[nombreColumna] = valor !== null ? valor : "";
+                });
+                datos.push(filaObjeto);
+            }
+        });
+
+        return { status: "server", datos };
+
+    } catch (error) {
+        console.error("Error al leer excel:", error);
+        return { status: "error", message: error.message };
+    }
 };
+
 
 const regi_even_segu = (async (userId, evento, ip) => {
     // 1. Insertar el evento actual

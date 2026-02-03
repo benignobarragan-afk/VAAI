@@ -9,6 +9,7 @@ const PDFDocument = require("pdfkit-table");
 const fs = require('fs');
 const { cacheUsuarios } = require("../middlewares/authjwt");
 
+
 const progap_usuariox = (async (req, res) => {
 
     if (req.groups.indexOf(",ADMI_PROGAP,") <= 0)        //si no tiene derechos
@@ -20,7 +21,7 @@ const progap_usuariox = (async (req, res) => {
     SELECT ROW_NUMBER() OVER (ORDER BY CONCAT(u.nombre, ' ', u.apellido_paterno, ' ', u.apellido_materno)) AS rank, u.id, u.usuario, CONCAT(u.nombre, ' ', u.apellido_paterno, ' ', u.apellido_materno) AS nombre,
 	        if(u.id_tipo_usuario = 1, "Administrador", if(u.id_tipo_usuario = 2, "Revisor", if(u.id_tipo_usuario = 3, "Secretario Academico", 
             if(u.id_tipo_usuario = 4, "Coordinador de posgrado", if(u.id_tipo_usuario = 5, "Estudiante", "Sin definir"))))) AS tipo,
-	        u.correo, d.siglas, if(estado = 1, "Activo", "Inactivo") AS status
+	        u.correo, d.siglas, if(a.estado = 1, "Activo", "Inactivo") AS status
 	    FROM progap_usuarios u LEFT JOIN progap_nivel_estudios e ON u.id_nivel_estudios = e.id
 		    LEFT JOIN progap_dependencias d ON u.id_centro_universitario = d.id
     `
@@ -61,13 +62,14 @@ const progap_estudiax = (async (req, res) => {
         return res.render("sin_derecho")
     }
 
+    let lcWhere = ''
 /*     const lcSQL = `
     SELECT ROW_NUMBER() OVER (ORDER BY nombre_completo) AS rank, id, codigo, nombre_completo AS nombre, correo, campus, if(estado = 1, "Activo", "Inactivo") AS status 
         FROM progap_accesos
         ${(!req.query.lnConv?'':'WHERE codigo IN (SELECT usuario FROM progap_usuarios WHERE id_convocatoria = '+ req.query.lnConv) + ')'}
         order by nombre_completo
     `
- */
+ 
     const lcSQL = `
     SELECT ROW_NUMBER() OVER (ORDER BY a.nombre, a.apellido_paterno, a.apellido_materno) as rank, a.id, a.codigo, CONCAT(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, a.correo_institucional,
             d.siglas, if(IFNULL(a.id_estado, 0) < 3, 'Inactivo', 'Activo') AS status
@@ -76,8 +78,25 @@ const progap_estudiax = (async (req, res) => {
         ${!req.query.lnConv?'':'WHERE a.id_convocatoria = ' + req.query.lnConv}
         ORDER BY a.nombre, a.apellido_paterno, a.apellido_materno
     `
+*/
+    if (req.query.lnConv > 0){
+        lcWhere = `WHERE a.codigo in 
+            (SELECT codigo 
+                FROM progap_tram_focam 
+                WHERE id_convocatoria = ?)
+        `
+    }
 
-    const rows = await util.gene_cons(lcSQL)
+    const lcSQL = `
+    SELECT ROW_NUMBER() OVER (ORDER BY a.nombre, a.apellido_paterno, a.apellido_materno) as rank, a.id, a.codigo, CONCAT(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, a.correo_institucional,
+            d.siglas, if(IFNULL(a.id_estado, 0) < 3, 'Inactivo', 'Activo') AS status
+        FROM progap_alumno a 
+            LEFT JOIN progap_dependencias d ON a.id_centro_universitario = d.id 
+            ${(lcWhere.length > 0?lcWhere:'')}
+        ORDER BY a.nombre, a.apellido_paterno, a.apellido_materno
+    `
+
+    const rows = await util.gene_cons(lcSQL, [req.query.lnConv])
     return res.json(rows)
 });
 
@@ -938,12 +957,13 @@ const progap_impo_progx = ( async (req, res) => {
         res.json({"status" : "error", "message": "El archivo no es un formato compatible", "data":{}})
     }
 
-    const loExcel = other_utils.leer_excel(req.file.path); 
+    const loExcel = await other_utils.leer_excel(req.file.path); 
 
     if (loExcel.status === "error"){
         return res.json(loExcel);
     }
 
+    //console.log(loExcel)
     let lcSQL = `
     SELECT p.clave_cgipv, d.siglas, p.nivel, p.programa, p.clave_911, IFNULL(p.duracion, '') as duracion, p.id, p.id_cu,
             0 as cambio, '' as camp_dife 
@@ -1041,7 +1061,7 @@ const progap_actu_progx = ( async (req, res) => {
         res.json({"status" : "error", "message": "El archivo no es un formato compatible", "data":{}})
     }
 
-    const loExcel = other_utils.leer_excel(req.file.path); 
+    const loExcel = await other_utils.leer_excel(req.file.path); 
 
     if (loExcel.status === "error"){
         return res.json(loExcel);
@@ -1621,6 +1641,108 @@ const pdownload = (async (req, res) => {
     });
 });
 
+const progap_actu_estux = ( async (req, res) => {
+    
+    //console.log(req.file)
+    
+    const laArchivo = req.file.originalname;
+    const laExtencion = laArchivo.substring(laArchivo.lastIndexOf(".")+1).toUpperCase() ;
+    //console.log(laExtencion);
+
+    if(laExtencion != 'XLS' && laExtencion != 'XLSX'){
+        res.json({"status" : "error", "message": "El archivo no es un formato compatible", "data":{}})
+    }
+
+    const loExcel = await other_utils.leer_excel(req.file.path); 
+
+    if (loExcel.status === "error"){
+        return res.json(loExcel);
+    }
+
+    let lcSQL = `
+    SELECT p.clave_cgipv, d.siglas, p.nivel, p.programa, p.clave_911, IFNULL(p.duracion, '') as duracion, p.id, p.id_cu,
+            0 as cambio, '' as camp_dife 
+        FROM progap_programa p LEFT JOIN progap_dependencias d ON p.id_cu = d.id
+        ORDER BY p.clave_cgipv
+`
+
+    const datosBD = await util.gene_cons(lcSQL)
+
+    // Creamos el mapa usando el ID como llave para búsqueda rápida
+    const mapaBD = new Map();
+    datosBD.forEach(reg => {
+        mapaBD.set(reg.clave_cgipv.toString(), reg);
+    });
+
+lcSQL = `
+    SELECT id, siglas, dependencia 
+        FROM progap_dependencias 
+        WHERE id_antecesor = 0 
+`
+
+    const depenBD = await util.gene_cons(lcSQL)
+
+    // Creamos el mapa usando el ID como llave para búsqueda rápida
+    const mdepeBD = new Map();
+    depenBD.forEach(reg => {
+        mdepeBD.set(reg.siglas.toString(), reg);
+    });
+    
+
+    datosExcel = loExcel.datos;
+    let lcUPDATE = "", lcORIGIN = "", laActualiza = []
+
+    datosExcel.forEach(fila => {
+        //console.log(fila)
+        //console.log(Object.values(fila)[0].toString());
+        const idExcel = Object.values(fila)[0].toString(); // Ajusta al nombre de tu columna en Excel
+        //const estatusExcel = fila["ESTATUS"];  // Ajusta al nombre de tu columna en Excel
+
+        // Si el ID existe en la BD
+        lcUPDATE = ""
+        lcORIGIN = ""
+        lnIDDepen = ''
+        if (mapaBD.has(idExcel)) {
+            const estatusActual = mapaBD.get(idExcel);
+            //console.log(fila)
+            //console.log(estatusActual)
+            for (i = 0; i < 6; i++){
+                if (Object.values(estatusActual)[i] != Object.values(fila)[i]){
+                    lcUPDATE = lcUPDATE + (lcUPDATE != ''? ', ': '') + Object.keys(estatusActual)[i] + "= '" + (!Object.values(fila)[i]?'':Object.values(fila)[i]) + "'"
+                    lcORIGIN = lcORIGIN + (lcORIGIN != ''? ', ': '') + Object.keys(estatusActual)[i] + "= '" + (!Object.values(estatusActual)[i]?'':Object.values(estatusActual)[i]) + "'"
+                }
+            }
+            if (lcUPDATE != ''){
+                if (mdepeBD.has(Object.values(fila)[1])) {
+                    lnIDDepen = mdepeBD.get(Object.values(fila)[1]).id
+                }
+            }
+
+            laActualiza.push({ marcar: (lcUPDATE!=''?1:0), id: Object.values(estatusActual)[6], clave_cgipv: Object.values(fila)[0], siglas: Object.values(fila)[1], 
+                nivel: Object.values(fila)[2], programa: Object.values(fila)[3], clave_911: Object.values(fila)[4], 
+                duracion: Object.values(fila)[5], actual: lcORIGIN, update: lcUPDATE, id_cu : lnIDDepen})
+
+            // Solo agregamos si el estatus es diferente
+            /* if (estatusActual !== estatusExcel) {
+                paraActualizar.push({ id: idExcel, nuevoEstatus: estatusExcel });
+            } */
+        }
+        else 
+        {
+            if (mdepeBD.has(Object.values(fila)[1])) {
+                lnIDDepen = mdepeBD.get(Object.values(fila)[1]).id
+            }
+            
+            laActualiza.push({marcar: 1, id: Object.values(fila)[0], clave_cgipv: Object.values(fila)[0], siglas: Object.values(fila)[1], 
+                    nivel: Object.values(fila)[2], programa: Object.values(fila)[3], clave_911: Object.values(fila)[4], 
+                    duracion: Object.values(fila)[5], actual: '', update: 'NUEVO', id_cu : lnIDDepen})
+        }
+    });
+
+    return res.json(laActualiza)
+
+});
+
 module.exports = {
     progap_usuariox,
     progap_directivox,
@@ -1646,5 +1768,6 @@ module.exports = {
     progap_nfocamx,
     progap_recu_arch,
     pdownload,
+    progap_actu_estux,
 
 }

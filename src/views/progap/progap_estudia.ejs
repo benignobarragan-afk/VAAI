@@ -1,5 +1,19 @@
 <%- include('../partials/header'); %>
 
+<style>
+    .mi-boton-azul .webix_button {
+        background-color: #0dc8ee !important;
+        color: white !important;
+        border-radius: 5px;
+    }
+
+    /* Opcional: Color al pasar el mouse (hover) */
+    .mi-boton-azul .webix_button:hover {
+        background-color: #16acce !important;
+    }
+
+</style>
+
 <body>
     <script>
         var tip = 0;
@@ -102,6 +116,20 @@
                                 on: {
                                     onChange: genera
 
+                                }
+                            },
+                            {
+                                view: "button",
+                                type: "icon",
+                                icon: "mdi mdi-upload",
+                                label: "Actualizar",
+                                tooltip: "Subir lista de programas existentes (Se actualizaran los ya existentes e insertaran los nuevos)",
+                                css: "mi-boton-azul", // Aplicamos la clase
+                                width: 130,
+                                on: {
+                                    onItemClick: function () { 
+                                        window.parent.parent.deta_impo(3);
+                                     }
                                 }
                             },
 

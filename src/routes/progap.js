@@ -27,6 +27,6 @@ router.get("/progap_nusuario", midd.verifyToken, progapCtrl.progap_nusuario);
 router.get("/progap_nprogra", midd.verifyToken, progapCtrl.progap_nprogra);
 router.get("/progap_dexacam", midd.verifyToken, progapCtrl.progap_dexacam);
 router.get("/progap_nfocam", midd.verifyToken, progapCtrl.progap_nfocam);
-
+router.get("/progap_actu_estu", midd.verifyToken, progapCtrl.progap_actu_estu);
 
 module.exports = router
