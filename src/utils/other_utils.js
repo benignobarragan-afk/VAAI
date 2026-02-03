@@ -13,7 +13,9 @@ const ejecutarPython = (async (pythonScriptPath, args) => {
     return new Promise((resolve, reject) => {
         
         // Inicia el proceso de Python (Asegúrate de que 'python' esté en el PATH o usa 'python3')
-        const pythonProcess = spawn('python', [pythonScriptPath, args]);
+        const pythonVenvPath = '/var/www/siva/VAAI/src/apipython/bin/python3';
+
+        const pythonProcess = spawn(pythonVenvPath, [pythonScriptPath, args]);
         let pythonResponse = '';
         let errorOutput = '';
 
