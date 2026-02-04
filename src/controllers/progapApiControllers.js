@@ -1660,10 +1660,12 @@ const progap_actu_estux = ( async (req, res) => {
     }
 
     let lcSQL = `
-    SELECT p.clave_cgipv, d.siglas, p.nivel, p.programa, p.clave_911, IFNULL(p.duracion, '') as duracion, p.id, p.id_cu,
-            0 as cambio, '' as camp_dife 
-        FROM progap_programa p LEFT JOIN progap_dependencias d ON p.id_cu = d.id
-        ORDER BY p.clave_cgipv
+    SELECT a.codigo, CONCAT(a.nombre, ' ', a.apellido_paterno, ' ', a.nombre) AS nombre, a.curp, a.correo_institucional,
+            d.siglas, p.clav_siia, p.programa, p.oferta, v.id_ciclo_ingreso, v.id_ciclo_curso, v.estatus, v.sus_desde, v.sus_hasta,
+            v.cred_obte, v.cred_carr, v.avance, p.clave_911
+    FROM progap_alumno a LEFT JOIN progap_alum_conv v ON a.codigo = v.codigo
+        LEFT JOIN progap_dependencias d ON v.id_centro_universitario = d.id
+        LEFT JOIN progap_programa p ON v.id_programa = p.id
 `
 
     const datosBD = await util.gene_cons(lcSQL)
