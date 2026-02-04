@@ -1830,7 +1830,7 @@ const new_ord_servx2 = (async(req, res) => {
         
     }
 
-    return res.json({"error":false, "message":"La asignación fue correcto y se empezarán a enviar los corros"})
+    return res.json({"error":false, "message":"La asignación fue correcto y se empezarán a enviar los correos"})
 
 });
 
