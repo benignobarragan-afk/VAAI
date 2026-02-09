@@ -403,9 +403,9 @@
 				confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Aceptar',
 			}).then((result) => {
 				if(result.isConfirmed){
-					parent.myTabbar.tabs('a1').progressOn();
+					//parent.myTabbar.tabs('a1').progressOn();
 					webix.ajax().post("/api/op/op_nplan", "lcCve=" + lcCve).then(function (res) {
-						parent.myTabbar.tabs('a1').progressOff();
+						//parent.myTabbar.tabs('a1').progressOff();
 						webix.message({ type: (res.json().status ? "success" : "error"), text: res.json().message, expire: 2500 });
 						if (res.json().status) {
 							$$("myform").clear();

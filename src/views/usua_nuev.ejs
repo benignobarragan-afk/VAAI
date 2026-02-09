@@ -144,12 +144,18 @@
 				"buscar_detalles": function(ev, id) {
 					var item = this.getItem(id); // Obtenemos el registro completo
 					
+					if (!$$("txtUser_id").getValue()){
+						webix.message("Primero debes seleccionar un usuario");
+						return false;
+					}
+				
+					//if ($$(txtUser_id).getValue())
 					// Aquí pones la lógica de lo que quieras que haga la lupa
 					webix.message("Buscando detalles de: " + item.MODI_GROU);
 					
 					// Ejemplo: Abrir una ventana o cargar datos en un formulario
 					//abrirVentanaDetalles(item.MODI_GROU);
-					showWindow(item.MODI_GROU, item.DESCRIP);
+					showWindow(item.MODI_GROU + '&userSerch=' + $$("txtUser_id").getValue(), item.DESCRIP);
 					
 					return false; // Evita que se disparen otros eventos de la fila
 				}

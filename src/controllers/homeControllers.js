@@ -99,6 +99,30 @@ const prin_ca_pa = (async (req, res) => {
     
 });
 
+const dere_unic = (async (req, res) => {
+    
+    if (req.groups.indexOf(",ALTA_USUA,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    lcSQL = `
+    SELECT cve, depen 
+	    FROM gen_tipo_ofic
+    `
+    const rows = await util.gene_cons(lcSQL)
+
+    lcSQL = `
+    SELECT o.cve, o.depen, if(d.titular = 1, "SI", "NO") AS titular
+        FROM gen_tipo_ofic o INNER JOIN gen_dere_ofic d ON o.cve = d.cve 
+        WHERE d.user_id = ?
+
+    `
+    const rowsd = await util.gene_cons(lcSQL, req.userId)
+
+    res.render("dere_unic", {rows, rowsd})
+});
+
 module.exports = {
     logout,
     intro,
@@ -108,4 +132,5 @@ module.exports = {
     usua_nuev,
     otro_equi,
     prin_ca_pa,
+    dere_unic,
 }

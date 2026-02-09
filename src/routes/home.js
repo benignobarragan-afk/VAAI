@@ -17,6 +17,7 @@ router.get("/principal", midd.verifyToken, homeCtrl.principal);
 router.get("/usuarios", midd.verifyToken, homeCtrl.usuarios);
 router.get("/usua_nuev", midd.verifyToken, homeCtrl.usua_nuev);
 router.get("/prin_ca_pa", midd.verifyToken, homeCtrl.prin_ca_pa);
+router.get("/dere_unic", midd.verifyToken, homeCtrl.dere_unic);
 
 
 module.exports = router
