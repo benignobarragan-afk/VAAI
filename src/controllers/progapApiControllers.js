@@ -1663,17 +1663,16 @@ const progap_actu_estux = ( async (req, res) => {
     SELECT a.codigo, CONCAT(a.nombre, ' ', a.apellido_paterno, ' ', a.nombre) AS nombre, a.curp, a.correo_institucional,
             d.siglas, p.clav_siia, p.programa, p.oferta, v.id_ciclo_ingreso, v.id_ciclo_curso, v.estatus, v.sus_desde, v.sus_hasta,
             v.cred_obte, v.cred_carr, v.avance, p.clave_911
-    FROM progap_alumno a LEFT JOIN progap_alum_conv v ON a.codigo = v.codigo
-        LEFT JOIN progap_dependencias d ON v.id_centro_universitario = d.id
-        LEFT JOIN progap_programa p ON v.id_programa = p.id
+        FROM progap_alumno a LEFT JOIN progap_alum_conv v ON a.codigo = v.codigo
+            LEFT JOIN progap_dependencias d ON v.id_centro_universitario = d.id
+            LEFT JOIN progap_programa p ON v.id_programa = p.id
 `
-
     const datosBD = await util.gene_cons(lcSQL)
 
     // Creamos el mapa usando el ID como llave para búsqueda rápida
     const mapaBD = new Map();
     datosBD.forEach(reg => {
-        mapaBD.set(reg.clave_cgipv.toString(), reg);
+        mapaBD.set(reg.codigo.toString(), reg);
     });
 
 lcSQL = `
