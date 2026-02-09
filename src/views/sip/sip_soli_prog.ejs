@@ -1,0 +1,278 @@
+<%- include('../partials/header'); %>
+
+<body>
+    <script>
+        var tip = 0
+        var w1;
+        var mygrid;
+
+        //alert(tip);
+
+        //function doOnLoad() {
+        webix.ready(function(){
+
+            webix.ui.datafilter.rowCount = webix.extend({
+                refresh: function (master, node, value) {
+                    node.firstChild.innerHTML = "Total: " + master.count();
+                }
+            }, webix.ui.datafilter.summColumn)
+
+
+            var ui = webix.ui({
+                space: "wide",
+                rows: [
+                    {
+                        view: "toolbar", padding: 3, borderless: true, elements: [
+                            {
+                                view: "button",
+                                type: "icon",
+                                icon: "mdi mdi-sync",
+                                align: "left",
+                                label: "",
+                                width: 40,
+                                on: {
+                                    onItemClick: genera
+                                }
+                            },
+                            {
+                                view: "button",
+                                type: "icon",
+                                icon: "mdi mdi-plus",
+                                label: "Crear solicitud",
+                                width: 130,
+                                on: {
+                                    onItemClick: function () { deta_grup() }
+                                }
+                            },
+                            {
+                                view: "button",
+                                type: "icon",
+                                icon: "mdi mdi-file-excel",
+                                label: "Descargar",
+                                width: 130,
+                                on: {
+                                    onItemClick: function () { 
+                                        webix.toExcel("dtable", {
+                                            //spans:true,
+                                            //styles:true
+                                        });
+                                     }
+                                }
+                            },
+                            {
+                                view: "button",
+                                type: "icon",
+                                icon: "mdi mdi-file-document",
+                                label: "Formato a firmar",
+                                width: 150,
+                                on: {
+                                    onItemClick: function () { 
+                                        const lnID = $$("dtable").getSelectedId()
+                                        if(lnID === undefined){
+                                            webix.message({type: "debug", text: "Selecciona un registro para generar el documentos", expire: 2500})
+                                        }
+                                        else {
+                                            window.open(`/api/progap/progap_form01?id=${lnID}`, '_blank');
+                                        }
+                                        
+                                        }
+                                     }
+
+                            },
+
+                            /* {
+                                view: "button",
+                                type: "icon",
+                                icon: "mdi mdi-plus",
+                                label: "Agregar grupo a oficio",  
+                                //disabled: tip == 2 ? true : false ,
+                                hidden: tip == 2 ? true : false,
+                                width: 200,
+                                on: {
+                                    onItemClick: agregar
+                                }
+                            }, */
+                            
+                            {}, {},
+                            {
+                                view: "combo", id: "cmbSoli", name: "cmbSoli", value: "<%=rows[0].id%>",
+                                width: 300,
+                                options: {
+                                    fitMaster: false,
+                                    width: 300,
+                                    body: {
+                                        data: [
+                                    <% // 
+                                    /*
+                                            SELECT cSoli
+                                    GO TOP
+                                    SCAN
+                                    */
+                                            %>
+                                    //        { id: <% //  Response.Write(cSoli.id_cent) %>, value: "<% // Response.Write(ALLTRIM(cSoli.depen))%>" },
+                                    <% //  ENDSCAN %>
+                                    <%for (var i = 0; i < rows.length; i++) {%>
+                                    { id: "<%= rows[i].id%>", value: "<%=rows[i].anio%>" },
+                                    <%}%>
+
+                                ]
+                                    }
+                                },
+                                on: {
+                                    onChange: genera
+
+                                }
+                            },
+
+                        ]
+                    },
+                    {
+                        view: "datatable",
+                        id: "dtable",
+                        select: true,
+                        footer: true,
+                        editable: true,
+                        minHeight: 500,
+                        scroll: true,
+                        resizeColumn: true,
+                        navigation: true,
+                        resizeRow: true,
+                        css: "celda_compacta",
+                        rightSplit: 1, // Mantiene la columna de fecha_crea fija a la derecha si lo deseas
+                        leftSplit: 2,  // Mantiene el botón de detalle y el número fijos a la izquierda
+                        columns: [
+                            {
+                                id: "detalle", width: 45, sort: "int", css: { 'text-align': 'center' },
+                                header: [{ text: "", css: "my_style" }, { text: "" }],
+                                template: (obj) => {
+                                    return `<a href="#" onClick="deta_grup(${obj.referencia});">
+                                                <i style='font-size:22px;color:#2b96cc;' class='fa-solid fa-magnifying-glass'></i>
+                                            </a>`;
+                                }
+                            },
+                            // 1. s.numero
+                            { id: "numero", width: 80, sort: "int", header: [{ text: "No.", css: "my_style" }, { content: "textFilter" }] },
+                            // 2. d.siglas
+                            { id: "siglas", width: 90, sort: "string", header: [{ text: "Sede", css: "my_style" }, { content: "selectFilter" }] },
+                            // 3. n.nivel
+                            { id: "nivel", width: 120, sort: "string", header: [{ text: "Nivel", css: "my_style" }, { content: "selectFilter" }] },
+                            // 4. m.modalidad
+                            { id: "modalidad", width: 130, sort: "string", header: [{ text: "Modalidad", css: "my_style" }, { content: "selectFilter" }] },
+                            // 5. s.revisor
+                            { id: "revisor", width: 120, sort: "string", header: [{ text: "Revisor", css: "my_style" }, { content: "selectFilter" }] },
+                            // 6. s.programa
+                            { id: "programa", width: 300, sort: "string", header: [{ text: "Programa", css: "my_style" }, { content: "textFilter" }] },
+                            // 7. s.sede_hosp
+                            { id: "sede_hosp", width: 120, sort: "string", header: [{ text: "Sede Hosp.", css: "my_style" }, { content: "textFilter" }] },
+                            // 8. np.nivel_pnpc
+                            { id: "nivel_pnpc", width: 130, sort: "string", header: [{ text: "Nivel SNP", css: "my_style" }, { content: "selectFilter" }] },
+                            // 9. s.vali_snp
+                            { id: "vali_snp", width: 120, sort: "string", header: [{ text: "Vali SNP", css: "my_style" }, { content: "selectFilter" }] },
+                            // 10. s.referencia
+                            { id: "referencia", width: 90, sort: "int", header: [{ text: "Ref.", css: "my_style" }, { content: "textFilter" }] },
+                            // 11. s.part_snp_2025
+                            { id: "part_snp_2025", width: 100, sort: "string", header: [{ text: "Part. SNP", css: "my_style" }, { content: "textFilter" }] },
+                            // 12. s.estado
+                            { id: "estado", width: 120, sort: "string", header: [{ text: "Estado", css: "my_style" }, { content: "selectFilter" }] },
+                            // 13. s.snp_2025
+                            { id: "snp_2025", width: 100, sort: "string", header: [{ text: "SNP 2025", css: "my_style" }, { content: "textFilter" }] },
+                            // 14. s.esta_letr
+                            { id: "esta_letr", width: 70, sort: "string", header: [{ text: "Letra", css: "my_style" }, { content: "textFilter" }] },
+                            // 15. s.grad_otor
+                            { id: "grad_otor", width: 250, sort: "string", header: [{ text: "Grado Otorga", css: "my_style" }, { content: "textFilter" }] },
+                            // 16. s.conv_cola
+                            { id: "conv_cola", width: 100, sort: "string", header: [{ text: "Conv. Cola.", css: "my_style" }, { content: "textFilter" }] },
+                            // 17. s.vigencia
+                            { id: "vigencia", width: 110, sort: "string", header: [{ text: "Vigencia", css: "my_style" }, { content: "textFilter" }] },
+                            // 18. s.area_disc
+                            { id: "area_disc", width: 200, sort: "string", header: [{ text: "Área Disc.", css: "my_style" }, { content: "textFilter" }] },
+                            // 19. s.duracion
+                            { id: "duracion", width: 150, sort: "string", header: [{ text: "Duración", css: "my_style" }, { content: "textFilter" }] },
+                            // 20. s.cale_crea
+                            { id: "cale_crea", width: 90, sort: "string", header: [{ text: "Ciclo Crea.", css: "my_style" }, { content: "textFilter" }] },
+                            // 21. s.dict_crea
+                            { id: "dict_crea", width: 150, sort: "string", header: [{ text: "Dictamen", css: "my_style" }, { content: "textFilter" }] },
+                            // 22. s.fech_crea
+                            { id: "fech_crea", width: 110, sort: "string", header: [{ text: "Fecha Crea.", css: "my_style" }, { content: "textFilter" }] }
+                        ]
+                    },
+                ]
+            });
+
+						webix.ui({
+	            view:"contextmenu", id:"cmenu", master:$$("dtable"), width:220,
+	            data:[
+	              {value:"Eliminar grupo", id:"eliminaGrupo"},
+	              
+	            ],
+	            on:{
+	              "onItemClick":function(id){
+	                var id_grup = $$("dtable").getSelectedId();
+	                if(id === "eliminaGrupo"){
+	                	console.log(id_grup)
+	                  eliminaGrupo(id_grup.id)
+	                }
+	                
+	              }
+	            }
+	          });
+
+            genera();
+        });
+
+        function genera() {
+            $$("dtable").clearAll();
+            $$("dtable").load("/api/sip/sip_soli_progx") 
+        }
+
+        function deta_grup(id) {
+            window.parent.$$("tbView").addView({
+                header: "<span class='webix_icon mdi mdi-file-document-outline'></span>" + (id == undefined ? "Nuevo" : "Modifica") + " Solicitud",
+                body: {
+                    view: "iframe", src: "/sip/sip_nsoli_prog?lnID=" + id,
+                    type: {
+                        height: 60
+                    }
+                },
+                close: true
+            });
+            window.parent.$$("tbView").getTabbar().setValue(window.parent.$$("tbView").getTabbar().data.options[window.parent.$$("tbView").getTabbar().data.options.length - 1].id);
+        }
+
+        function eliminaGrupo(id) {
+
+          Swal.fire({
+					  title: "", text: 'Seguro de eliminar el grupo?', icon: 'warning', showCancelButton: true,
+					  confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Si', cancelButtonText:"No",
+					}).then((result) => {
+						if(result.isConfirmed){
+							webix.ajax().post("/<% // Response.write(config.ruta)%>/op_ngrupx.fwx?t=1", {id:id}).then((res)=>{
+								res = res.json();
+								Swal.fire('', res.message, res.status?"success":"error").then(()=>{
+									if(res.status){
+										genera()
+									}
+								})
+							})
+						}
+					})
+        }
+
+
+
+        function agregar() {
+
+            var checked = [];
+            $$("dtable").data.each(function (obj) {
+                if (obj.marcar == 1) checked.push(obj.id);
+            });
+            
+            $$("dtable").remove(checked);
+            window.parent.parent.carg_grupo(checked.toString());
+        }
+
+    </script>
+</body>
+
+
+</html>

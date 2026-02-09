@@ -1,0 +1,137 @@
+<%- include('../partials/header'); %>
+
+<style type="text/css">
+		/* Definición del color verde para el texto */
+		.archivo-verde a {
+			color: #4CAF50 !important; /* Un tono de verde claro y visible */
+			font-weight: bold; /* Opcional: para que resalte más */
+		}
+	</style>
+
+<script>
+
+<%if(usuario.length>0){%>
+var datosIniciales = <%- JSON.stringify(usuario) %>;
+<%}%>
+
+webix.ready(function(){
+    webix.ui({
+        view:"form",
+        id:"form_registro",
+        scroll: "y",
+        elementsConfig:{
+            labelPosition:"top",
+            labelWidth:140,
+            bottomPadding: 15
+        },
+        elements:[
+            // ID oculto para edición (auto_increment)
+            { view: "text", name: "id", hidden: true },
+            
+            { margin: 10, cols: [
+                { view: "text", label: "Número", name: "numero" },
+                { view: "text", label: "Centro Univ.", name: "id_centro_universitario" }
+            ]},
+
+            { margin: 10, cols: [
+                { view: "text", label: "ID Nivel", name: "id_nivel" },
+                { view: "text", label: "ID Modalidad", name: "id_modalidad" },
+                { view: "text", label: "ID Orientación", name: "id_orientacion" }
+            ]},
+
+            { view: "text", label: "Revisor", name: "revisor" },
+            { view: "textarea", label: "Programa", name: "programa", height: 60 },
+            { view: "text", label: "Sede Hosp.", name: "sede_hosp" },
+            
+            { margin: 10, cols: [
+                { view: "text", label: "Nivel PNPC", name: "id_nivel_pnpc" },
+                { view: "text", label: "Vali SNP", name: "vali_snp" }
+            ]},
+
+            { margin: 10, cols: [
+                { view: "text", label: "Referencia", name: "referencia" },
+                { view: "text", label: "Part SNP 2025", name: "part_snp_2025" }
+            ]},
+
+            { view: "text", label: "Estado", name: "estado" },
+            
+            { margin: 10, cols: [
+                { view: "text", label: "SNP 2025", name: "snp_2025" },
+                { view: "text", label: "Esta Letr", name: "esta_letr" }
+            ]},
+
+            { view: "text", label: "Grad Otor", name: "grad_otor" },
+            { view: "text", label: "Conv Cola", name: "conv_cola" },
+            { view: "text", label: "Vigencia", name: "vigencia" },
+            { view: "text", label: "Área Disc", name: "area_disc" },
+            
+            { margin: 10, cols: [
+                { view: "text", label: "Área SNI", name: "area_sni" },
+                { view: "text", label: "Duración", name: "duracion" }
+            ]},
+
+            { view: "text", label: "Creación Orig", name: "creacion_orig" },
+            
+            { margin: 10, cols: [
+                { view: "text", label: "Año Crea", name: "anio_crea" },
+                { view: "text", label: "Cale Crea", name: "cale_crea" }
+            ]},
+
+            { margin: 10, cols: [
+                { view: "text", label: "Dict Crea", name: "dict_crea" },
+                { view: "datepicker", label: "Fecha Crea", name: "fech_crea", format: "%d/%m/%Y", stringResult: true }
+            ]},
+
+            { margin: 20, cols: [
+                {}, // Espaciador
+                { view: "button", value: "Cancelar", width: 120, click: function() { $$("form_programa_vaai").clear(); }},
+                { view: "button", value: "Guardar Datos", css: "webix_primary", width: 150, click:"" }
+            ]}
+        ],
+        <%if(usuario.length>0){%>
+        data: datosIniciales,
+        <%}%>
+    });
+});
+
+function guardarEstudiante(){
+    var form = $$("form_registro");
+    if(form.validate()){
+        var datos = form.getValues();
+        console.log("Datos listos para enviar:", datos);
+        
+        // Aquí usarías tu webix.ajax().post("/api/...", datos)
+        webix.message("Procesando registro...");
+        webix.ajax()
+				.post("/api/progap/progap_nestudiax", datos)
+				.then(function (data) {
+					//$$("btnGuardar").enable();
+					let res = data.json()
+					console.log(res)
+					Swal.fire({
+						title:res.message, icon:res.status=='error'?"error":"success"
+					}).then(()=>{
+						if(res.status=='server'){
+//							window.location = "/op/op_ofic";
+                        }
+					})
+					// webix.alert({ type: (data.json()[0].status ? "" : "alert-error"), text:  })
+					// if (data.json()[0].status)
+				})
+    } else {
+        webix.message({ type:"error", text:"Por favor llene los campos marcados en rojo" });
+    }
+}
+
+function validarCURP(valor) {
+    const regexCURP = /^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[0-9A-Z]{1}[0-9]{1}$/;
+    return regexCURP.test(valor.toUpperCase());
+}
+
+function carg_arch() {
+			
+    $$("archivos_adjuntos").clearAll()
+    $$("archivos_adjuntos").load("/api/progap/progap_recu_arch?lnTram=<%=//usuario[0].id%>");
+}
+
+</script>
