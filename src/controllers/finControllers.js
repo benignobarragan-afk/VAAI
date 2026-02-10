@@ -36,8 +36,26 @@ const fin_orde_comp = (async (req, res) => {
     return res.render("fin/fin_orde_comp", {rows})
 });
 
+const fin_norde_comp = (async (req, res) => {
+    
+    if (req.groups.indexOf(",ORDE_COMP,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    const lcSQL = `
+    SELECT id AS id, anio AS anio  
+        FROM PROGAP_CONVOCATORIA
+        ORDER BY 2 DESC
+    `
+
+    const rows = await util.gene_cons(lcSQL)
+    
+    return res.render("fin/fin_norde_comp", {rows})
+});
 
 module.exports = {
     fin,
-    fin_orde_comp
+    fin_orde_comp,
+    fin_norde_comp
 }

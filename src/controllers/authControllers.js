@@ -17,7 +17,7 @@ const signin = async (req, res) => {
         conn = await pool.getConnection();
         
         // 3. Ejecutar la consulta
-        const rows = await conn.query("SELECT user_id, password, acceso FROM passfile WHERE user_id = " + req.body.username, [1]);
+        const rows = await conn.query("SELECT user_id, password, acceso FROM passfile WHERE user_id = ?", [req.body.username]);
         //console.log(rows)
         
         if(!rows)
@@ -43,7 +43,7 @@ const signin = async (req, res) => {
         cacheUsuarios.delete(req.body.username);
 
         //Marca la fecha de ingreso en passfile
-        conn.query("UPDATE passfile SET last_hit = NOW() WHERE user_id = " + req.body.username, [1]);
+        conn.query("UPDATE passfile SET last_hit = NOW() WHERE user_id = ?", [req.body.username]);
 
         res.cookie("refresh_token", rtoken, {
             httpOnly: true,             //la cookie solo se puede acceder en el servidor

@@ -1,0 +1,165 @@
+<%- include('../partials/header'); %>
+
+<body>
+    <script>
+        var tip = 0
+        var w1;
+        var mygrid;
+
+        //alert(tip);
+
+        //function doOnLoad() {
+        webix.ui(
+
+        {
+            view: "form",
+            id: "form_orden",
+            labelPosition:"top",
+            elements: [
+                {
+                    view: "tabview", label: "Hola mundo",
+                    cells: [
+                        {
+                            header: "Datos Generales",
+                            body: {margin: 20,
+                                rows: [
+                                    {
+                                        cols: [
+                                            { view: "text", name: "foli_orde", label: "Folio", labelWidth: 100, placeholder: "000001" },
+                                            { view: "combo", name: "tipo_orde", label: "Tipo", labelWidth: 100, options: ["Compra", "Servicio"] }
+                                        ]
+                                    },
+                                    {
+                                        cols: [
+                                            { view: "datepicker", name: "fech_emis", label: "Emisión", labelWidth: 100, stringResult: true },
+                                            { view: "combo", name: "id_centro", label: "Centro Univ.", labelWidth: 100, options: [] /* Cargar desde DB */ }
+                                        ]
+                                    },
+                                    {
+                                        cols: [
+                                            { view: "text", name: "tele_prov", label: "Tel. Prov.", labelWidth: 100 },
+                                            { view: "text", name: "tiem_entr", label: "Entrega", labelWidth: 100, placeholder: "Ej. 5 días" }
+                                        ]
+                                    },
+                                    { view: "text", name: "luga_entr", label: "Lugar Entrega" },
+                                    { view: "text", name: "lugna_paro", label: "Lugar Pago" }
+                                ]
+                            }
+                        },
+                        {
+                            header: "Pago y Fechas",
+                            body: {
+                                rows: [
+                                    {
+                                        cols: [
+                                            { view: "radio", name: "forma_pago", label: "Forma Pago", options: ["Contado", "Parcialidades"], vertical: true },
+                                            { view: "counter", name: "porce_parc", label: "% Anticipo", min: 0, max: 100 }
+                                        ]
+                                    },
+                                    {
+                                        cols: [
+                                            { view: "datepicker", name: "fech_inic", label: "Inicia", labelWidth: 100 },
+                                            { view: "datepicker", name: "fech_fin", label: "Finaliza", labelWidth: 100 }
+                                        ]
+                                    },
+                                    { view: "textarea", name: "observaciones", label: "Observaciones", height: 100 }
+                                ]
+                            }
+                        },
+                        {
+                            header: "Montos y Estatus",
+                            body: {
+                                rows: [
+                                    {
+                                        cols: [
+                                            { view: "text", name: "subtotal", label: "Subtotal", format: "1.111,00", attributes: { style: "text-align:right;" } },
+                                            { view: "text", name: "iva_total", label: "IVA Total", format: "1.111,00" }
+                                        ]
+                                    },
+                                    { view: "text", name: "total", label: "TOTAL", css: "total_resaltado", format: "1.111,00" },
+                                    {
+                                        cols: [
+                                            { view: "select", name: "estatus", label: "Estatus", options: [
+                                                { id: 1, value: "Borrador" },
+                                                { id: 2, value: "Generada" },
+                                                { id: 3, value: "Cancelada" }
+                                            ]},
+                                            { view: "text", name: "revisor", label: "Revisor", readonly: true }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    margin: 10,
+                    cols: [
+                        {},
+                        { view: "button", value: "Guardar Borrador", css: "webix_secondary", width: 150, click: "" },
+                        { view: "button", value: "Generar Orden", css: "webix_primary", width: 150, click: "" },
+                        { view: "button", value: "Cancelar", width: 100 }
+                    ]
+                }
+            ]
+        }
+
+        );
+
+        function genera() {
+            $$("dtable").clearAll();
+            $$("dtable").load("/api/progap/progap_focamx?lnConv=" + $$("cmbSoli").getValue())
+
+        }
+
+        function deta_grup(id) {
+            window.parent.$$("tbView").addView({
+                header: "<span class='webix_icon mdi mdi-file-document-outline'></span>" + (id == undefined ? "Nuevo" : "Modifica") + " FOCAM",
+                body: {
+                    view: "iframe", src: "/progap/progap_nfocam?lnID=" + id,
+                    type: {
+                        height: 60
+                    }
+                },
+                close: true
+            });
+            window.parent.$$("tbView").getTabbar().setValue(window.parent.$$("tbView").getTabbar().data.options[window.parent.$$("tbView").getTabbar().data.options.length - 1].id);
+        }
+
+        function eliminaGrupo(id) {
+
+          Swal.fire({
+					  title: "", text: 'Seguro de eliminar el grupo?', icon: 'warning', showCancelButton: true,
+					  confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Si', cancelButtonText:"No",
+					}).then((result) => {
+						if(result.isConfirmed){
+							webix.ajax().post("/<% // Response.write(config.ruta)%>/op_ngrupx.fwx?t=1", {id:id}).then((res)=>{
+								res = res.json();
+								Swal.fire('', res.message, res.status?"success":"error").then(()=>{
+									if(res.status){
+										genera()
+									}
+								})
+							})
+						}
+					})
+        }
+
+
+
+        function agregar() {
+
+            var checked = [];
+            $$("dtable").data.each(function (obj) {
+                if (obj.marcar == 1) checked.push(obj.id);
+            });
+            
+            $$("dtable").remove(checked);
+            window.parent.parent.carg_grupo(checked.toString());
+        }
+
+    </script>
+</body>
+
+
+</html>
