@@ -134,6 +134,7 @@ const OpApiRoutes = require("./routes/op_api")
 const ToolsApiRoutes = require("./routes/tools_api")
 const ProgapApiRoutes = require("./routes/progap_api")
 const SipApiRoutes = require("./routes/sip_api")
+const FinApiRoutes = require("./routes/fin_api")
 //const UserRoutes = require("./routes/user")
 
 //settings
@@ -170,6 +171,7 @@ app.use("/api/gen", GenApiRoutes)
 app.use("/api/tools", ToolsApiRoutes)
 app.use("/api/progap", ProgapApiRoutes)
 app.use("/api/sip", SipApiRoutes)
+app.use("/api/fin", FinApiRoutes)
 
 
 app.listen(port)

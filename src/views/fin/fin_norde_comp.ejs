@@ -17,27 +17,47 @@
             labelPosition:"top",
             elements: [
                 {
-                    view: "tabview", label: "Hola mundo",
+                    view: "tabview",
                     cells: [
                         {
                             header: "Datos Generales",
                             body: {margin: 20,
                                 rows: [
+                                    {height:5},
                                     {
                                         cols: [
-                                            { view: "text", name: "foli_orde", label: "Folio", labelWidth: 100, placeholder: "000001" },
-                                            { view: "combo", name: "tipo_orde", label: "Tipo", labelWidth: 100, options: ["Compra", "Servicio"] }
+                                            { view: "combo", name: "tipo_orde", label: "Tipo", labelWidth: 80, options: [{id:1, value:"Compra"}, {id:2, value:"Servicio"}], width: 400 },
+                                            {},
+                                            { view: "datepicker", name: "fech_emis", label: "Fecha", labelWidth: 80, stringResult: true, width: 400 },
                                         ]
                                     },
                                     {
                                         cols: [
-                                            { view: "datepicker", name: "fech_emis", label: "Emisión", labelWidth: 100, stringResult: true },
-                                            { view: "combo", name: "id_centro", label: "Centro Univ.", labelWidth: 100, options: [] /* Cargar desde DB */ }
+                                            {
+                                                view: "combo", name: "proyecto", value:"<%=rows[0].proyecto%>", label:"Proyecto", labelWidth: 80,
+                                                options: {
+                                                    fitMaster: false,
+                                                    width: 1000,
+                                                    body: {
+                                                        data: [
+                                                    { id: "0", value: "TODAS" },
+                                                    <%for (var i = 0; i < rows.length; i++) {%>
+                                                    { id: "<%=rows[i].proyecto%>", value: "(<%=rows[i].campus%>-<%=rows[i].fondo%>) <%=rows[i].nombre%>" },
+                                                    <%}%>
+
+                                                ]
+                                                    }
+                                                },
+                                                on: {
+                                                    onChange: genera
+
+                                                }
+                                            },
                                         ]
                                     },
                                     {
                                         cols: [
-                                            { view: "text", name: "tele_prov", label: "Tel. Prov.", labelWidth: 100 },
+                                            { view: "text", name: "rfc", label: "RFC", labelWidth: 100 },
                                             { view: "text", name: "tiem_entr", label: "Entrega", labelWidth: 100, placeholder: "Ej. 5 días" }
                                         ]
                                     },
@@ -48,8 +68,9 @@
                         },
                         {
                             header: "Pago y Fechas",
-                            body: {
+                            body: {margin: 20,
                                 rows: [
+                                    {height:5},
                                     {
                                         cols: [
                                             { view: "radio", name: "forma_pago", label: "Forma Pago", options: ["Contado", "Parcialidades"], vertical: true },
@@ -68,8 +89,9 @@
                         },
                         {
                             header: "Montos y Estatus",
-                            body: {
+                            body: {margin: 20,
                                 rows: [
+                                    {height:5},
                                     {
                                         cols: [
                                             { view: "text", name: "subtotal", label: "Subtotal", format: "1.111,00", attributes: { style: "text-align:right;" } },
@@ -86,7 +108,31 @@
                                             ]},
                                             { view: "text", name: "revisor", label: "Revisor", readonly: true }
                                         ]
-                                    }
+                                    },
+                                    { template: "Detalles de la Orden", type: "section" },
+        
+                                    // Metemos la datatable dentro del array de elementos
+                                    {
+                                        view: "datatable",
+                                        id: "detalles_tabla",
+                                        autoheight: true, // Útil para que se ajuste al formulario
+                                        minHeight: 200,
+                                        select: true,
+                                        columns: [
+                                            { id: "id", header: "ID", width: 50 },
+                                            { id: "producto", header: "Producto", fillspace: true },
+                                            { id: "cantidad", header: "Cant.", width: 70 },
+                                            { id: "subtotal", header: "Subtotal", width: 100, format: webix.i18n.priceFormat }
+                                        ],
+                                        data: [] // Aquí cargarás las partidas dinámicamente
+                                    },
+                                    
+                                    {
+                                        cols: [
+                                            { view: "button", value: "Guardar Formulario", css: "webix_primary", click: "" },
+                                            { view: "button", value: "Cancelar" }
+                                        ]
+                                    },
                                 ]
                             }
                         }

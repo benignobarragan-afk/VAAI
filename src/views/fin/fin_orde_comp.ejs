@@ -38,8 +38,8 @@
                                 view: "button",
                                 type: "icon",
                                 icon: "mdi mdi-plus",
-                                label: "Crear FOCAM",
-                                width: 130,
+                                label: "Crear Orden de compra",
+                                width: 230,
                                 on: {
                                     onItemClick: function () { deta_grup() }
                                 }
@@ -59,26 +59,6 @@
                                      }
                                 }
                             },
-                            {
-                                view: "button",
-                                type: "icon",
-                                icon: "mdi mdi-file-document",
-                                label: "Formato a firmar",
-                                width: 150,
-                                on: {
-                                    onItemClick: function () { 
-                                        const lnID = $$("dtable").getSelectedId()
-                                        if(lnID === undefined){
-                                            webix.message({type: "debug", text: "Selecciona un registro para generar el documentos", expire: 2500})
-                                        }
-                                        else {
-                                            window.open(`/api/progap/progap_form01?id=${lnID}`, '_blank');
-                                        }
-                                        
-                                        }
-                                     }
-
-                            },
 
                             /* {
                                 view: "button",
@@ -95,11 +75,32 @@
                             
                             {}, {},
                             {
-                                view: "combo", id: "cmbSoli", name: "cmbSoli", value: "<%=rows[0].id%>",
-                                width: 300,
+                                view: "combo", id: "cmbDependen", name: "cmbDependen", value: "0", label:"Dependencia", labelWidth: 120,
+                                width: 500,
                                 options: {
                                     fitMaster: false,
-                                    width: 300,
+                                    width: 400,
+                                    body: {
+                                        data: [
+                                    { id: "0", value: "TODAS" },
+                                    <%for (var i = 0; i < rows.length; i++) {%>
+                                    { id: "<%=rows[i].id_cent%>", value: "(<%=rows[i].campus%>) <%=rows[i].descrip%>" },
+                                    <%}%>
+
+                                ]
+                                    }
+                                },
+                                on: {
+                                    onChange: genera
+
+                                }
+                            },
+                            {
+                                view: "combo", id: "cmbSoli", name: "cmbSoli", value:"<%=new Date().getFullYear()%>", label:"Año", 
+                                width: 200,
+                                options: {
+                                    fitMaster: false,
+                                    width: 100,
                                     body: {
                                         data: [
                                     <% // 
@@ -111,8 +112,8 @@
                                             %>
                                     //        { id: <% //  Response.Write(cSoli.id_cent) %>, value: "<% // Response.Write(ALLTRIM(cSoli.depen))%>" },
                                     <% //  ENDSCAN %>
-                                    <%for (var i = 0; i < rows.length; i++) {%>
-                                    { id: "<%= rows[i].id%>", value: "<%=rows[i].anio%>" },
+                                    <%for (var i = new Date().getFullYear(); i >= 2026; i--) {%>
+                                    { id: "<%=i%>", value: "<%=i%>" },
                                     <%}%>
 
                                 ]
@@ -127,75 +128,88 @@
                         ]
                     },
                     {
-                        view:"datatable", id:"dtable", select:true, footer:true, editable:true, hidden:false, minHeight:500, scroll:true,
-                        resizeColumn: true,  navigation: true, resizeRow:true, css:"celda_compacta", 
-                        rightSplit:1, leftSplit:3,
+                        view: "datatable",
+                        id: "dtable",
+                        select: true,
+                        footer: true,
+                        editable: true,
+                        hidden: false,
+                        minHeight: 500,
+                        scroll: true,
+                        resizeColumn: true,
+                        navigation: true,
+                        resizeRow: true,
+                        css: "celda_compacta",
+                        rightSplit: 1, // Mantiene fija la columna de fecha_crea
+                        leftSplit: 3,  // Mantiene fijos el detalle, ID y Folio
                         scheme: {
                             $init: function (obj) {
-                                obj.fecha = (obj.fecha ? (obj.fecha == '01/01/1900'?'': convertDate(obj.fecha) ) : '');
+                                // Limpieza de fechas para todas las columnas DATE de tu tabla
+                                const cleanDate = (d) => (d && d !== '01/01/1900' ? convertDate(d) : '');
+                                obj.fech_emis = cleanDate(obj.fech_emis);
+                                obj.fech_inic = cleanDate(obj.fech_inic);
+                                obj.fech_fin = cleanDate(obj.fech_fin);
+                                obj.fech_crea = cleanDate(obj.fech_crea);
                             }
                         },
 
-                        columns:[
-                        {
-                            id: "detalle", width: 40,sort: "int", css: { 'text-align': 'center' }, 
-                            header: [{text:"",css:"my_style"}, {text:""}],
-                            template:(obj)=>{
-                                return `
-                                    <a href="#" onClick="deta_grup(${obj.id});">
-                                        <i style='font-size:26px;color:#2b96cc;' class='fa-solid fa-magnifying-glass'></i>
-                                    </a>`
+                        columns: [
+                            {
+                                id: "detalle", width: 45, sort: "int", css: { 'text-align': 'center' },
+                                header: [{ text: "", css: "my_style" }, { text: "" }],
+                                template: (obj) => {
+                                    return `
+                                        <a href="#" onClick="deta_grup(${obj.id});">
+                                            <i style='font-size:22px;color:#2b96cc;' class='fa-solid fa-magnifying-glass'></i>
+                                        </a>`;
+                                }
+                            },
+                            {
+                                id: "id", width: 60, sort: "int", css: { 'text-align': 'center' },
+                                header: [{ text: "ID", css: "my_style" }, { content: "textFilter" }]
+                            },
+                            {
+                                id: "foli_orde", width: 150, sort: "string",
+                                header: [{ text: "Folio Orden", css: "my_style" }, { content: "textFilter" }]
+                            },
+                            {
+                                id: "proveedor", width: 250, sort: "string", fillspace: true,
+                                header: [{ text: "Proveedor", css: "my_style" }, { content: "textFilter" }]
+                            },
+                            {
+                                id: "fech_emis", width: 120, sort: "string", css: { 'text-align': 'center' },
+                                header: [{ text: "Fecha Emis.", css: "my_style" }, { content: "textFilter" }]
+                            },
+                            {
+                                id: "rfc", width: 130, sort: "string",
+                                header: [{ text: "RFC", css: "my_style" }, { content: "textFilter" }]
+                            },
+                            {
+                                id: "total", width: 120, sort: "int", format: webix.i18n.priceFormat, css: { 'text-align': 'right' },
+                                header: [{ text: "Total", css: "my_style" }, { content: "textFilter" }]
+                            },
+                            {
+                                id: "estatus", width: 130, sort: "string",
+                                header: [{ text: "Estatus", css: "my_style" }, { content: "selectFilter" }]
+                            },
+                            // Columnas adicionales ocultas para no saturar la vista, pero disponibles
+                            {
+                                id: "fech_inic", width: 110, sort: "string", hidden: true,
+                                header: [{ text: "F. Inicio", css: "my_style" }, { text: "" }]
+                            },
+                            {
+                                id: "fech_fin", width: 110, sort: "string", hidden: true,
+                                header: [{ text: "F. Fin", css: "my_style" }, { text: "" }]
+                            },
+                            {
+                                id: "observaciones", width: 200, sort: "string", hidden: true,
+                                header: [{ text: "Obs.", css: "my_style" }, { text: "" }]
+                            },
+                            {
+                                id: "fech_crea", width: 150, sort: "string",
+                                header: [{ text: "Creado", css: "my_style" }, { content: "textFilter" }]
                             }
-                        },
-                        {
-                            id: "rank", width: 70,sort: "int", css: { 'text-align': 'center' }, 
-                            header: [{text:"#",css:"my_style"}, {
-                                content: "textFilter", placeholder:"Filtrar",
-                            }],
-                        },	
-                        {
-                            id: "folio", width: 200,sort: "string", css: { 'text-align': 'left' }, 
-                            header: [{text:"Oficio",css:"my_style"}, {
-                                content: "textFilter", placeholder:"Filtrar",
-                            }],
-                        },
-                        {
-                            id: "fecha_solicitud", width: 150,sort: "string", css: { 'text-align': 'center' }, 
-                            header: [{text:"Fecha solicitud",css:"my_style"}, {
-                                content: "textFilter", placeholder:"Filtrar",
-                            }],
-                        },                        	
-                        {
-                            id: "dependencia", width: 250,sort: "string", css: { 'text-align': 'left' }, 
-                            minWidth:150, header: [{text:"Centro Universitario",css:"my_style"}, {
-                                content: "textFilter", placeholder:"Filtrar",
-                            }],
-                        },			
-                        {
-                            id: "codigo", width: 100,sort: "string", css: { 'text-align': 'left' }, 
-                            header: [{text:"Código",css:"my_style"}, {
-                                content: "textFilter", placeholder:"Filtrar",
-                            }],
-                        },			
-                        {
-                            id: "nombre", width: 250,sort: "string", css: { 'text-align': 'left' }, 
-                            fillspace:true, minWidth:150, header: [{text:"Nombre",css:"my_style"}, {
-                                content: "textFilter", placeholder:"Filtrar",
-                            }],
-                        },			
-                        {
-                            id: "programa", width: 300,sort: "string", css: { 'text-align': 'left' }, 
-                            fillspace:true, minWidth:150, header: [{text:"Programa posgrado",css:"my_style"}, {
-                                content: "textFilter", placeholder:"Filtrar",
-                            }],
-                        },
-                        {
-                            id: "status", width: 180,sort: "string", css: { 'text-align': 'left' }, 
-                            header: [{text:"Estatus",css:"my_style"}, {
-                                content: "selectFilter", placeholder:"Filtrar",
-                            }],
-                        },
-                        ],
+                        ]
                     },
                 ]
             });
@@ -223,13 +237,13 @@
 
         function genera() {
             $$("dtable").clearAll();
-            $$("dtable").load("/api/progap/progap_focamx?lnConv=" + $$("cmbSoli").getValue())
+            $$("dtable").load("/api/fin/fin_orde_compx?lnConv=" + $$("cmbSoli").getValue())
 
         }
 
         function deta_grup(id) {
             window.parent.$$("tbView").addView({
-                header: "<span class='webix_icon mdi mdi-file-document-outline'></span>" + (id == undefined ? "Nuevo" : "Modifica") + " FOCAM",
+                header: "<span class='webix_icon mdi mdi-file-document-outline'></span>" + (id == undefined ? "Nueva" : "Modifica") + " orden de compra",
                 body: {
                     view: "iframe", src: "/fin/fin_norde_comp?lnID=" + id,
                     type: {
