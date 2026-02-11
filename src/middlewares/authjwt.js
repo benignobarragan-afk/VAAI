@@ -18,7 +18,7 @@ const verifyToken = async (req, res, next) => {
         if (!token){
             
             //return res.status(403).json({"message":"No se encontró el token"});
-            return res.render("login");
+            return res.render("login", {skin:req.skin});
         }
 
         const decoded = jwt.verify(token, config.SECRET)
