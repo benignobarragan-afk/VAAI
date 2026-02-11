@@ -31,6 +31,27 @@ const fin_orde_compx = (async (req, res) => {
     return res.json(rows)
 });
 
+
+const fin_norde_compx2 = (async (req, res) => {
+
+    if (req.groups.indexOf(",ORDE_COMP,") <= 0 || !req.body.proyecto)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    let lcSQL = `
+    SELECT p.proyecto, c.cve_conv, c.descrip, c.dependen, c.telefono, c.direccion
+	    FROM fin_proyecto p LEFT JOIN gen_centros c ON p.id_cent = c.id_cent
+	    WHERE p.proyecto = ?
+    `
+
+    const rows = await util.gene_cons(lcSQL, [req.body.proyecto])
+
+    return res.json(rows[0])
+
+});
+
 module.exports = {
     fin_orde_compx,
+    fin_norde_compx2
 }

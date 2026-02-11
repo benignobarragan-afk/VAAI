@@ -12,6 +12,7 @@ const upload = multer({ dest: path.join(__dirname, '../uploads') });
 const finCtrl = require("../controllers/finApiControllers.js")
 
 router.get("/fin_orde_compx", midd.verifyToken, finCtrl.fin_orde_compx);
+router.post("/fin_norde_compx2", midd.verifyToken, finCtrl.fin_norde_compx2);
 
 
 module.exports = router

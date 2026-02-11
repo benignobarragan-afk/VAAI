@@ -11,5 +11,6 @@ router.get("/cmb_depew", midd.verifyToken, opCtrl.cmb_depew);
 router.get("/cmb_persw", midd.verifyToken, opCtrl.cmb_persw);
 router.get("/cmb_progap_depe", midd.verifyToken, opCtrl.cmb_progap_depe);
 router.get("/cmb_progap_prog", midd.verifyToken, opCtrl.cmb_progap_prog);
+router.get("/cmb_prov", midd.verifyToken, opCtrl.cmb_prov);
 
 module.exports = router

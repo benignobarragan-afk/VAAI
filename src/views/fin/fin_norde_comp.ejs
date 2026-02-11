@@ -9,6 +9,8 @@
         //alert(tip);
 
         //function doOnLoad() {
+    webix.ready(function()
+    {
         webix.ui(
 
         {
@@ -50,7 +52,6 @@
                                                     width: 1000,
                                                     body: {
                                                         data: [
-                                                    { id: "0", value: "TODAS" },
                                                     <%for (var i = 0; i < rows.length; i++) {%>
                                                     { id: "<%=rows[i].proyecto%>", value: "(<%=rows[i].campus%>-<%=rows[i].fondo%>) <%=rows[i].nombre%>" },
                                                     <%}%>
@@ -59,23 +60,96 @@
                                                     }
                                                 },
                                                 on: {
-                                                    onChange: genera
+                                                    onChange: function(newv, oldv) {
+                                                        // newv contiene el ID del elemento seleccionado (1 o 2)
+                                                        if (newv) {
+                                                            //console.log("ID seleccionado:", newv);
+                                                            busc_depe(newv);
+                                                        }
+                                                    }
+                                                    
 
                                                 }
                                             },
                                         ]
                                     },
                                     {view:"fieldset", label:"Datos proveedor",  
-									body:{
-                                    
-                                        cols: [
-                                            { view: "text", name: "rfc", label: "RFC", labelWidth: 80, width: 250 },
-                                            {width: 20},
-                                            { view: "text", name: "tele_prov", label: "Teléfono proveedor", labelWidth: 100, placeholder: "  -    -    "},
-                                            {width: 20},
-                                            { view: "text", name: "correo", label: "Correo proveedor", labelWidth: 120, placeholder: "correo@correo.com" }
-                                        ]
-                                    }
+                                        body:{
+                                            rows: [
+                                            {
+                                            
+                                                cols: [
+                                                    { 
+                                                        view: "text", 
+                                                        id: "rfc", 
+                                                        name: "rfc", 
+                                                        label: "RFC", 
+                                                        width: 280,
+                                                        suggest: {
+                                                            id: "rfc:suggestList",
+                                                            view: "suggest",
+                                                            keyPressTimeout: 1000,
+                                                            body: {
+                                                                template: "#value#",
+                                                                dataFeed: "/api/gen/cmb_prov?lnTipo=1",
+                                                                select: true
+                                                            },
+                                                            on: {
+                                                                "onValueSuggest": function (obj) {
+                                                                    if (obj) {
+                                                                        if($$("tele_prov")) $$("tele_prov").setValue(obj.tele_prov || "");
+                                                                        if($$("corr_prov")) $$("corr_prov").setValue(obj.corr_prov || "");
+                                                                        if($$("rfc"))       $$("rfc").setValue(obj.rfc || "");
+                                                                        if($$("proveedor")) $$("proveedor").setValue(obj.proveedor || "");
+                                                                        if($$("domi_prov")) $$("domi_prov").setValue(obj.domi_prov || "");
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    {width: 20},
+                                                    { 
+                                                        view: "text", 
+                                                        id: "proveedor", 
+                                                        name: "proveedor", 
+                                                        label: "Nombre proveedor", 
+                                                        labelWidth: 150,
+                                                        suggest: {
+                                                            id: "proveedor:suggestList",
+                                                            view: "suggest",
+                                                            keyPressTimeout: 1000,
+                                                            body: {
+                                                                template: "#value#",
+                                                                dataFeed: "/api/gen/cmb_prov?lnTipo=2", // Tipo 2 para búsqueda por nombre
+                                                                select: true
+                                                            },
+                                                            on: {
+                                                                "onValueSuggest": function (obj) {
+
+                                                                    if (obj) {
+                                                                        // Llenado masivo de los campos del proveedor
+                                                                        if($$("tele_prov")) $$("tele_prov").setValue(obj.tele_prov || "");
+                                                                        if($$("corr_prov")) $$("corr_prov").setValue(obj.corr_prov || "");
+                                                                        if($$("rfc"))       $$("rfc").setValue(obj.rfc || "");
+                                                                        if($$("proveedor")) $$("proveedor").setValue(obj.proveedor || "");
+                                                                        if($$("domi_prov")) $$("domi_prov").setValue(obj.domi_prov || "");
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                ]
+                                            },
+                                            {height: 10},
+                                            {
+                                            
+                                                cols: [
+                                                    { view: "text", id: "tele_prov", name: "tele_prov", label: "Teléfono proveedor", labelWidth: 100, placeholder: "  -    -    "},
+                                                    {width: 20},
+                                                    { view: "text", id: "corr_prov", name: "corr_prov", label: "Correo proveedor", labelWidth: 120, placeholder: "correo@correo.com" }
+                                                ]
+                                            }]
+                                        },
                                     },
                                     {view:"fieldset", label:"Datos entrega y forma de pago",  
 									body:{ 
@@ -110,7 +184,7 @@
                                             },                                  
                                             {
                                                 cols: [
-                                                    { view: "textarea", name: "domi_prov", label: "Dirección del proveedor", labelPosition: "top", height: 120},
+                                                    { view: "textarea", id: "domi_prov", name: "domi_prov", label: "Dirección del proveedor", labelPosition: "top", height: 120},
                                                     {width: 20},
                                                     { view: "textarea", id: "luga_entr", name: "pres_serv", label: "Lugar de entrega", labelPosition: "top", height: 120},
                                                     {width: 20},
@@ -191,21 +265,16 @@
                                     {height:5},
                                     {
                                         cols: [
-                                            { view: "text", name: "tele_depe", label: "Teléfono de la dependencia" },
+                                            { view: "text", id: "ures_proy", name: "ures_proy", label: "Código de URE", labelPosition: "top", readonly: true},
+                                            { view: "text", id: "depe_proy", name: "depe_proy", label: "Dependencia del proyecto", labelPosition: "top", readonly: true},
                                         ]
                                     },
-                                    {view: "textarea", id: "asunto", name: "asunto", label: "<span class='obligatorio'>*</span>Asunto", labelPosition: "top", height: 120},
                                     {
                                         cols: [
-                                            { view: "select", name: "estatus", label: "Estatus", options: [
-                                                { id: 1, value: "Borrador" },
-                                                { id: 2, value: "Generada" },
-                                                { id: 3, value: "Cancelada" }
-                                            ]},
-                                            { view: "text", name: "revisor", label: "Revisor", readonly: true }
+                                            { view: "text", id: "tele_depe", name: "tele_depe", label: "Teléfono de la dependencia", labelPosition: "top"},
+                                            { view: "textarea", id: "dire_depe", name: "dire_depe", label: "Dirección dependencia", labelPosition: "top", height: 80  },
                                         ]
                                     },
-                                    { template: "Detalles de la Orden", type: "section" },
         
                                     // Metemos la datatable dentro del array de elementos
                                 ]
@@ -223,13 +292,24 @@
                     ]
                 }
             ]
-        }
-
+        },        
         );
+        busc_depe(<%=rows[0].proyecto%>);
+        });
 
-        function genera() {
-            $$("dtable").clearAll();
-            $$("dtable").load("/api/progap/progap_focamx?lnConv=" + $$("cmbSoli").getValue())
+        function busc_depe(nuevo) {
+            
+            //console.log(nuevo);
+            webix.ajax().post("/api/fin/fin_norde_compx2", {proyecto:nuevo}).then((res)=>{
+				res = res.json();
+                //console.log(res)
+                $$("ures_proy").setValue(res.cve_conv);
+                $$("depe_proy").setValue(res.dependen);
+                $$("tele_depe").setValue(res.telefono);
+                $$("dire_depe").setValue(res.direccion);
+                if($$("luga_entr")) $$("luga_entr").setValue(res.direccion || "");
+                
+			})
 
         }
 
@@ -246,26 +326,6 @@
             });
             window.parent.$$("tbView").getTabbar().setValue(window.parent.$$("tbView").getTabbar().data.options[window.parent.$$("tbView").getTabbar().data.options.length - 1].id);
         }
-
-        function eliminaGrupo(id) {
-
-          Swal.fire({
-					  title: "", text: 'Seguro de eliminar el grupo?', icon: 'warning', showCancelButton: true,
-					  confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Si', cancelButtonText:"No",
-					}).then((result) => {
-						if(result.isConfirmed){
-							webix.ajax().post("/<% // Response.write(config.ruta)%>/op_ngrupx.fwx?t=1", {id:id}).then((res)=>{
-								res = res.json();
-								Swal.fire('', res.message, res.status?"success":"error").then(()=>{
-									if(res.status){
-										genera()
-									}
-								})
-							})
-						}
-					})
-        }
-
 
 
         function agregar() {

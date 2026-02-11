@@ -92,9 +92,32 @@ const cmb_progap_prog = (async (req, res) => {
     res.json(rows)
 });
 
+const cmb_prov = (async (req,res) => {
+    
+    const lcBusca = req.query['filter[value]']
+
+    const lcWhere = util.cade_busc((req.query.lnTipo == 1?'rfc':'proveedor'), lcBusca)
+
+    console.log(lcWhere)
+
+    const lcSQL = `
+        SELECT  rfc, proveedor, domi_prov, tele_prov, corr_prov, CONCAT('(',rfc,') ', proveedor) as value 
+            FROM fin_orde_comp
+            WHERE ${lcWhere.sql}
+            GROUP BY rfc, proveedor, domi_prov, tele_prov, corr_prov 
+            LIMIT 20
+    ` 
+    //console.log(lcSQL)   
+    const rows = await util.gene_cons(lcSQL, lcWhere.params)
+    //console.log(rows)
+    res.json(rows)
+});
+
+
 module.exports = {
     cmb_depew,
     cmb_persw,
     cmb_progap_depe,
-    cmb_progap_prog
+    cmb_progap_prog,
+    cmb_prov
 }
