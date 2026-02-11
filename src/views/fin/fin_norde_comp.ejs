@@ -20,13 +20,23 @@
                     view: "tabview",
                     cells: [
                         {
-                            header: "Datos Generales",
+                            header: "Datos orden de compra",
                             body: {margin: 20,
                                 rows: [
                                     {height:5},
                                     {
                                         cols: [
-                                            { view: "combo", name: "tipo_orde", label: "Tipo", labelWidth: 80, options: [{id:1, value:"Compra"}, {id:2, value:"Servicio"}], width: 400 },
+                                            { view: "combo", name: "tipo_orde", label: "Tipo", labelWidth: 80, options: [{id:1, value:"Compra"}, {id:2, value:"Servicio"}], width: 400,
+                                            on: {
+                                                    onChange: function(newv, oldv) {
+                                                        // newv contiene el ID del elemento seleccionado (1 o 2)
+                                                        if (newv) {
+                                                            //console.log("ID seleccionado:", newv);
+                                                            tipo(newv);
+                                                        }
+                                                    }
+                                                }
+                                            },
                                             {},
                                             { view: "datepicker", name: "fech_emis", label: "Fecha", labelWidth: 80, stringResult: true, width: 400 },
                                         ]
@@ -55,50 +65,136 @@
                                             },
                                         ]
                                     },
-                                    {
+                                    {view:"fieldset", label:"Datos proveedor",  
+									body:{
+                                    
                                         cols: [
-                                            { view: "text", name: "rfc", label: "RFC", labelWidth: 100 },
-                                            { view: "text", name: "tiem_entr", label: "Entrega", labelWidth: 100, placeholder: "Ej. 5 días" }
+                                            { view: "text", name: "rfc", label: "RFC", labelWidth: 80, width: 250 },
+                                            {width: 20},
+                                            { view: "text", name: "tele_prov", label: "Teléfono proveedor", labelWidth: 100, placeholder: "  -    -    "},
+                                            {width: 20},
+                                            { view: "text", name: "correo", label: "Correo proveedor", labelWidth: 120, placeholder: "correo@correo.com" }
                                         ]
+                                    }
                                     },
-                                    { view: "text", name: "luga_entr", label: "Lugar Entrega" },
-                                    { view: "text", name: "lugna_paro", label: "Lugar Pago" }
+                                    {view:"fieldset", label:"Datos entrega y forma de pago",  
+									body:{ 
+                                        rows: [
+                                            {
+                                                cols: [
+                                                    { view: "datepicker", name: "fech_entr", label: "Fecha de entrega", labelWidth: 120, width: 250 },
+                                                    {width: 20},
+                                                    { view: "radio", name: "forma_pago", label: "Forma Pago", labelWidth: 100, options: [{id:1, value:"Contado"},{id:2, value:"Parcialidades"}], vertical: false,
+                                                        on: {
+                                                    onChange: function(newv, oldv) {
+                                                                // newv contiene el ID del elemento seleccionado (1 o 2)
+                                                                if (newv) {
+                                                                    //console.log("ID seleccionado:", newv);
+                                                                    parcialidad(newv);
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    {width: 20},
+                                                    { view: "counter", id: "parcialidad", name: "parcialidad", label: "Parcialidades", labelWidth: 100, min: 0, max: 100, hidden: true },
+                                                    {width: 20},
+                                                    { view: "counter", name: "porce_parc", label: "% Anticipo", min: 0, max: 100 }
+                                                ]
+                                            }, 
+                                            { id:"fech_serv", hidden: true, 
+                                                cols: [
+                                                    { view: "datepicker", id: "inci_serv", name: "inci_serv", label: "Fecha de incio del servicio", labelWidth: 200},
+                                                    {width: 20},
+                                                    { view: "datepicker", id: "fin_serv", name: "fin_serv", label: "Fecha de fin del servicio", labelWidth: 200},
+                                                ]
+                                            },                                  
+                                            {
+                                                cols: [
+                                                    { view: "textarea", name: "domi_prov", label: "Dirección del proveedor", labelPosition: "top", height: 120},
+                                                    {width: 20},
+                                                    { view: "textarea", id: "luga_entr", name: "pres_serv", label: "Lugar de entrega", labelPosition: "top", height: 120},
+                                                    {width: 20},
+                                                    { view: "textarea", name: "observaciones", label: "Observaciones", labelPosition: "top", height: 120},
+                                                ]
+                                            },
+                                        ]}
+                                    }
                                 ]
                             }
                         },
                         {
-                            header: "Pago y Fechas",
+                            header: "Artículos y costos",
+                            body: {
+                                rows: [
+                                    {height:5},
+                                    {
+                                        cols: [
+                                            { view: "textarea", name: "articulo", label: "Artículo o servicio", labelPosition: "top", height: 80},
+                                            {width: 20},
+                                            { view: "combo", name: "unidad", label: "Unidad", labelWidth: 80, options: ["N/A","CAJA","KG","LITRO","METRO","OTRA","PIEZA"], width: 100, labelPosition: "top"},
+                                            { view: "text", name: "cantidad", label: "Cantidad", labelPosition: "top", width: 130},
+                                            {width: 20},
+                                            { view: "text", name: "cost_unit", label: "Costo unitario", labelPosition: "top", width: 130},
+                                            {width: 20},
+                                            { view: "text", name: "tasa_iva", label: "Tasa IVA", labelPosition: "top", width: 130},
+                                            
+                                        ]
+                                    },
+                                    {
+                                        cols: [
+                                            {},
+                                            { view: "button", value: "Agregar artículo", css: "webix_primary", click: agregarArticulo, width: 150 },
+                                            { view: "button", value: "Elimina artículo", click: eliminarArticulo, width: 150}
+                                        ]
+                                    },
+                                    {
+                                        view: "datatable",
+                                        id: "detalles_tabla",
+                                        autoheight: true,
+                                        minHeight: 200,
+                                        select: true,
+                                        footer: true, // 1. Habilitamos el pie de página
+                                        columns: [
+                                            { 
+                                                id: "articulo", 
+                                                header: "Producto", 
+                                                fillspace: true,
+                                                footer: { text: "Totales:", css: "footer_total_text" } // Etiqueta en el pie
+                                            },
+                                            { id: "cantidad", header: "Cantidad", width: 130, css: { "text-align": "right" } },
+                                            { id: "cost_unit", header: "Costo", width: 150, css: { "text-align": "right" }, format: webix.i18n.priceFormat },
+                                            { id: "tasa_iva", header: "IVA", width: 100, css: { "text-align": "right" } },
+                                            { 
+                                                id: "subtotal", 
+                                                header: "Subtotal", 
+                                                width: 200, css: { "text-align": "right" },
+                                                format: webix.i18n.priceFormat,
+                                                footer: { content: "summColumn", css: { "text-align": "right" } } // 2. Sumatoria automática
+                                            },
+                                            { 
+                                                id: "total", 
+                                                header: "Total", 
+                                                width: 200, css: { "text-align": "right" },
+                                                format: webix.i18n.priceFormat,
+                                                footer: { content: "summColumn", css: { "text-align": "right" } } // 3. Sumatoria automática
+                                            }
+                                        ],
+                                        data: [] 
+                                    },                                    
+                                ]
+                            }
+                        },
+                        {
+                            header: "Datos generales",
                             body: {margin: 20,
                                 rows: [
                                     {height:5},
                                     {
                                         cols: [
-                                            { view: "radio", name: "forma_pago", label: "Forma Pago", options: ["Contado", "Parcialidades"], vertical: true },
-                                            { view: "counter", name: "porce_parc", label: "% Anticipo", min: 0, max: 100 }
+                                            { view: "text", name: "tele_depe", label: "Teléfono de la dependencia" },
                                         ]
                                     },
-                                    {
-                                        cols: [
-                                            { view: "datepicker", name: "fech_inic", label: "Inicia", labelWidth: 100 },
-                                            { view: "datepicker", name: "fech_fin", label: "Finaliza", labelWidth: 100 }
-                                        ]
-                                    },
-                                    { view: "textarea", name: "observaciones", label: "Observaciones", height: 100 }
-                                ]
-                            }
-                        },
-                        {
-                            header: "Montos y Estatus",
-                            body: {margin: 20,
-                                rows: [
-                                    {height:5},
-                                    {
-                                        cols: [
-                                            { view: "text", name: "subtotal", label: "Subtotal", format: "1.111,00", attributes: { style: "text-align:right;" } },
-                                            { view: "text", name: "iva_total", label: "IVA Total", format: "1.111,00" }
-                                        ]
-                                    },
-                                    { view: "text", name: "total", label: "TOTAL", css: "total_resaltado", format: "1.111,00" },
+                                    {view: "textarea", id: "asunto", name: "asunto", label: "<span class='obligatorio'>*</span>Asunto", labelPosition: "top", height: 120},
                                     {
                                         cols: [
                                             { view: "select", name: "estatus", label: "Estatus", options: [
@@ -112,27 +208,6 @@
                                     { template: "Detalles de la Orden", type: "section" },
         
                                     // Metemos la datatable dentro del array de elementos
-                                    {
-                                        view: "datatable",
-                                        id: "detalles_tabla",
-                                        autoheight: true, // Útil para que se ajuste al formulario
-                                        minHeight: 200,
-                                        select: true,
-                                        columns: [
-                                            { id: "id", header: "ID", width: 50 },
-                                            { id: "producto", header: "Producto", fillspace: true },
-                                            { id: "cantidad", header: "Cant.", width: 70 },
-                                            { id: "subtotal", header: "Subtotal", width: 100, format: webix.i18n.priceFormat }
-                                        ],
-                                        data: [] // Aquí cargarás las partidas dinámicamente
-                                    },
-                                    
-                                    {
-                                        cols: [
-                                            { view: "button", value: "Guardar Formulario", css: "webix_primary", click: "" },
-                                            { view: "button", value: "Cancelar" }
-                                        ]
-                                    },
                                 ]
                             }
                         }
@@ -203,6 +278,90 @@
             $$("dtable").remove(checked);
             window.parent.parent.carg_grupo(checked.toString());
         }
+
+        function tipo(lnTipo){
+            //console.log(lnTipo)
+            let campoTexto = $$("luga_entr");
+            if(lnTipo == 1){
+                $$("fech_serv").hide();
+                campoTexto.define("label", "Lugar de entrega");
+            }
+            else{
+                $$("fech_serv").show();
+                campoTexto.define("label", "Lugar prestación del servicio");
+            }
+            campoTexto.refresh();
+        }
+
+        function parcialidad(lnTipo){
+            //console.log(lnTipo)
+            if(lnTipo == 1){
+                $$("parcialidad").hide();
+            }
+            else {
+                $$("parcialidad").show();
+            }
+            
+        }
+
+        function agregarArticulo() {
+            // 1. Obtenemos los valores del formulario
+            // Asegúrate de que tu formulario tenga id: "form_orden"
+            var valores = $$("form_orden").getValues();
+
+            // 2. Validaciones básicas para evitar filas vacías
+            if (!valores.articulo || !valores.cantidad || !valores.cost_unit) {
+                webix.message({ type: "error", text: "Complete: Artículo, Cantidad y Costo" });
+                return;
+            }
+
+            // 3. Cálculos matemáticos
+            var cant = parseFloat(valores.cantidad) || 0;
+            var costo = parseFloat(valores.cost_unit) || 0;
+            var tasaIva = parseFloat(valores.tasa_iva) || 0;
+
+            // Cálculo del Subtotal (Cantidad * Costo)
+            var subtotal = cant * costo;
+            
+            // Cálculo del Total (Subtotal + el porcentaje de IVA)
+            // Ejemplo: Si el IVA es 16, calcula: subtotal * 1.16
+            var totalConIva = subtotal * (1 + (tasaIva / 100));
+
+            // 4. Creamos el objeto con los nuevos IDs de las columnas
+            var item = {
+                articulo: valores.articulo,
+                cantidad: cant,
+                cost_unit: costo,
+                tasa_iva: tasaIva,
+                subtotal: subtotal,   // Monto sin IVA
+                total: totalConIva,    // Monto con IVA
+                unidad: valores.unidad // Guardado internamente aunque no esté en la columna
+            };
+
+            // 5. Agregamos a la cuadrícula
+            $$("detalles_tabla").add(item);
+
+            // 6. Limpiamos los campos de captura para el siguiente artículo
+            // Usamos true para no borrar los datos generales de la orden (como folio o proveedor)
+            $$("form_orden").setValues({
+                articulo: "",
+                unidad: "N/A",
+                cantidad: "",
+                cost_unit: "",
+                tasa_iva: ""
+            }, true);
+
+            webix.message("Artículo añadido a la lista");
+        }
+
+    function eliminarArticulo() {
+        var id = $$("detalles_tabla").getSelectedId();
+        if (id) {
+            $$("detalles_tabla").remove(id);
+        } else {
+            webix.message({ type: "error", text: "Seleccione un artículo para eliminar" });
+        }
+    }
 
     </script>
 </body>

@@ -18,24 +18,43 @@
 </head>
 
 <script>
-  webix.i18n.setLocale("es-ES")
-		
-  webix.i18n.filter = {
-    less: "menor",
-    lessOrEqual: "menor o igual",
-    greater: "mayor",
-    greaterOrEqual: "mayor o igual",
-    contains: "contiene",
-    notContains: "no contiene",
-    equal: "igual a",
-    notEqual: "no igual",
-    beginsWith: "empieza con",
-    notBeginsWith: "no empieza con",
-    endsWith: "termina con",
-    notEndsWith: "no termina con",
-    between: "entre",
-    notBetween: "no esta entre",
-    
-  };
+    // 1. Cargamos la base del idioma español
+    webix.i18n.setLocale("es-ES");
 
+    // 2. Configuramos el formato de moneda para Pesos Mexicanos (MXN)
+    webix.i18n.price = "$ {obj}";
+    webix.i18n.priceFormat = "$ {obj}";
+    webix.i18n.groupDelimiter = ",";
+    webix.i18n.decimalDelimiter = ".";
+    webix.i18n.priceSettings = {
+        decimalSize: 2,
+        groupSize: 3,
+        decimalDelimiter: ".",
+        groupDelimiter: ","
+    };
+
+    // 3. Traducimos los filtros de las Datatables
+    webix.i18n.filter = {
+        less: "menor",
+        lessOrEqual: "menor o igual",
+        greater: "mayor",
+        greaterOrEqual: "mayor o igual",
+        contains: "contiene",
+        notContains: "no contiene",
+        equal: "igual a",
+        notEqual: "no igual",
+        beginsWith: "empieza con",
+        notBeginsWith: "no empieza con",
+        endsWith: "termina con",
+        notEndsWith: "no termina con",
+        between: "entre",
+        notBetween: "no esta entre"
+    };
+
+    // 4. Establecemos el formato de fecha estándar para la U. de G.
+    webix.i18n.dateFormat = "%d/%m/%Y";
+    webix.i18n.parseFormat = "%Y-%m-%d %H:%i:%s"; // Para que entienda lo que viene de MariaDB
+
+    // 5. Aplicamos todos los cambios globalmente
+    webix.i18n.setLocale();
 </script>

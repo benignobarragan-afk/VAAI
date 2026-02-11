@@ -50,7 +50,7 @@ const verifyToken = async (req, res, next) => {
                     nom_cen : (!rows[0].nom_cen ? '' : rows[0].nom_cen),
                     nom_usu : (!rows[0].Nombre ? '' : rows[0].Nombre),
                     codigo  : (!rows[0].codigo ? 0 : rows[0].codigo),
-                    skin    : (!rows[0].skin > 0 ? '' : rows[0].skin),
+                    skin    : (rows[0].skin > 0 ? rows[0].skin : ''),
                     token   : token,
                     groups  : (typeof rows[0].GROUPS != 'string'?',,': ',' + rows[0].GROUPS.replace(/\s/g, "") + ',')
                 };
@@ -166,7 +166,7 @@ const verifyToken = async (req, res, next) => {
                     nom_cen : (!rows[0].nom_cen ? '' : rows[0].nom_cen),
                     nom_usu : (!rows[0].Nombre ? '' : rows[0].Nombre),
                     codigo  : (!rows[0].codigo ? 0 : rows[0].codigo),
-                    skin    : (!rows[0].skin ? '' : rows[0].skin),
+                    skin    : (rows[0].skin > 0 ? rows[0].skin : ''),
                     token   : ntoken,
                     groups  : (typeof rows[0].GROUPS != 'string'?',,': ',' + rows[0].GROUPS.replace(/\s/g, "") + ',')
                 };

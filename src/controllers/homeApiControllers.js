@@ -274,7 +274,7 @@ const camb_skin = (async (req, res) => {
 
     let datosUsuario = midd.cacheUsuarios.get(req.userId);
 
-    datosUsuario.skin = (req.body.tema == '0'?'':req.body.tema)
+    datosUsuario.skin = (req.body.tema > 0?req.body.tema:'')
     midd.cacheUsuarios.set(req.userId, datosUsuario);
 
     return res.json({});
