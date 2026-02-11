@@ -13,7 +13,7 @@ const progap = ((req, res) => {
         return res.render("sin_derecho")
     }
 
-    res.render("progap/progap", {lcDerecho})
+    res.render("progap/progap", {lcDerecho, skin:req.skin})
 });
 
 const progap_dashboard = (async (req, res) => {
@@ -39,7 +39,7 @@ const progap_dashboard = (async (req, res) => {
     `
     const rows2 = await util.gene_cons(lcSQL);
 
-    return res.render("progap/progap_dashboard", {rows, rows2})
+    return res.render("progap/progap_dashboard", {rows, rows2, skin:req.skin})
 });
 
 const progap_cata = ((req, res) => {
@@ -51,7 +51,7 @@ const progap_cata = ((req, res) => {
         return res.render("sin_derecho")
     }
 
-    res.render("progap/progap_cata", {lcDerecho})
+    res.render("progap/progap_cata", {lcDerecho, skin:req.skin})
 });
 
 const progap_usuario = (async (req, res) => {
@@ -69,7 +69,7 @@ const progap_usuario = (async (req, res) => {
 
     const rows = await util.gene_cons(lcSQL)
     
-    return res.render("progap/progap_usuario", {rows})
+    return res.render("progap/progap_usuario", {rows, skin:req.skin})
 });
 
 const progap_directivo = (async (req, res) => {
@@ -87,7 +87,7 @@ const progap_directivo = (async (req, res) => {
 
     const rows = await util.gene_cons(lcSQL)
     
-    return res.render("progap/progap_directivo", {rows})
+    return res.render("progap/progap_directivo", {rows, skin:req.skin})
 });
 
 const progap_estudia = (async (req, res) => {
@@ -107,7 +107,7 @@ const progap_estudia = (async (req, res) => {
 
     rows.push({id:0, anio:'TODOS'})
     
-    return res.render("progap/progap_estudia", {rows})
+    return res.render("progap/progap_estudia", {rows, skin:req.skin})
 });
 
 const progap_convoca = (async (req, res) => {
@@ -117,7 +117,7 @@ const progap_convoca = (async (req, res) => {
         return res.render("sin_derecho")
     }
 
-    return res.render("progap/progap_convoca")
+    return res.render("progap/progap_convoca", {skin:req.skin})
 });
 
 const progap_exacam = (async (req, res) => {
@@ -135,7 +135,7 @@ const progap_exacam = (async (req, res) => {
 
     const rows = await util.gene_cons(lcSQL)
     
-    return res.render("progap/progap_exacam", {rows})
+    return res.render("progap/progap_exacam", {rows, skin:req.skin})
 });
 
 const progap_focam = (async (req, res) => {
@@ -153,7 +153,7 @@ const progap_focam = (async (req, res) => {
 
     const rows = await util.gene_cons(lcSQL)
     
-    return res.render("progap/progap_focam", {rows})
+    return res.render("progap/progap_focam", {rows, skin:req.skin})
 });
 
 const progap_progra = (async (req, res) => {
@@ -163,7 +163,7 @@ const progap_progra = (async (req, res) => {
         return res.render("sin_derecho")
     }
     
-    return res.render("progap/progap_progra")
+    return res.render("progap/progap_progra", {skin:req.skin})
 });
 
 const progap_impo_prog = (async (req, res) => {
@@ -173,7 +173,7 @@ const progap_impo_prog = (async (req, res) => {
         return res.render("sin_derecho")
     }
     
-    return res.render("progap/progap_impo_prog")
+    return res.render("progap/progap_impo_prog", {skin:req.skin})
 });
 
 const progap_convo = ((req, res) => {
@@ -183,7 +183,7 @@ const progap_convo = ((req, res) => {
         return res.render("sin_derecho")
     }
     
-    return res.render("progap/progap_convo")
+    return res.render("progap/progap_convo", {skin:req.skin})
 
 });
 
@@ -194,7 +194,7 @@ const progap_actu_prog = ((req, res) => {
         return res.render("sin_derecho")
     }
     
-    return res.render("progap/progap_actu_prog")
+    return res.render("progap/progap_actu_prog", {skin:req.skin})
 
 });
 
@@ -255,7 +255,7 @@ const progap_nestudia = (async (req, res) => {
     }
     
 
-    return res.render("progap/progap_nestudia", {rows, usuario, depe_id, depe_value, prog_id, prog_value})
+    return res.render("progap/progap_nestudia", {rows, usuario, depe_id, depe_value, prog_id, prog_value, skin:req.skin})
 });
 
 const progap_ndirectivo = (async (req, res) => {
@@ -296,7 +296,7 @@ const progap_ndirectivo = (async (req, res) => {
     }
     
 
-    return res.render("progap/progap_ndirectivo", {directivo, depe_id, depe_value})
+    return res.render("progap/progap_ndirectivo", {directivo, depe_id, depe_value, skin:req.skin})
 });
 
 const progap_nusuario = (async (req, res) => {
@@ -343,7 +343,7 @@ const progap_nusuario = (async (req, res) => {
     }
     
 
-    return res.render("progap/progap_nusuario", {rows, usuario, depe_id, depe_value})
+    return res.render("progap/progap_nusuario", {rows, usuario, depe_id, depe_value, skin:req.skin})
 });
 
 
@@ -386,7 +386,7 @@ const progap_nprogra = (async (req, res) => {
     }
     
 
-    return res.render("progap/progap_nprogra", {programa, depe_id, depe_value})
+    return res.render("progap/progap_nprogra", {programa, depe_id, depe_value, skin:req.skin})
 });
 
 const progap_dexacam = (async (req, res) => {
@@ -411,7 +411,7 @@ const progap_dexacam = (async (req, res) => {
 
     }
     
-    return res.render("progap/progap_dexacam", {exacam})
+    return res.render("progap/progap_dexacam", {exacam, skin:req.skin})
 });
 
 const progap_nfocam = (async (req, res) => {
@@ -480,7 +480,7 @@ const progap_nfocam = (async (req, res) => {
     }
     
 
-    return res.render("progap/progap_nfocam", {rows, usuario, depe_id, depe_value, prog_id, prog_value})
+    return res.render("progap/progap_nfocam", {rows, usuario, depe_id, depe_value, prog_id, prog_value, skin:req.skin})
 });
 
 const progap_actu_estu = ((req, res) => {
@@ -490,7 +490,7 @@ const progap_actu_estu = ((req, res) => {
         return res.render("sin_derecho")
     }
     
-    return res.render("progap/progap_actu_estu")
+    return res.render("progap/progap_actu_estu", {skin:req.skin})
 });
 
 module.exports = {

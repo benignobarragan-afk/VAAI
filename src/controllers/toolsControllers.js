@@ -5,19 +5,19 @@ const config = require(path.join(__dirname, "..", "config"));
 
 
 const tools = ((req, res) => {
-    res.render("tools/tools");
+    res.render("tools/tools", {skin:req.skin});
 });
 
 const tools_pdf = ((req, res) => {
-    res.render("tools/tools_pdf");
+    res.render("tools/tools_pdf", {skin:req.skin});
 });
 
 const tools_qr = ((req, res) => {
-    res.render("tools/tools_qr");
+    res.render("tools/tools_qr", {skin:req.skin});
 });
 
 const tools_sqr = ((req, res) => {
-    res.render("tools/tools_sqr");
+    res.render("tools/tools_sqr", {skin:req.skin});
 });
 
 

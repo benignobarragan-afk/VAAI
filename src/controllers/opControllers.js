@@ -20,7 +20,7 @@ const op_cucs = (async (req, res) => {
     const lcDerecho = req.groups;
     const lnOficio = req.query.lnOficio;
 
-    res.render("op/op_cucs", {lcDerecho, rows, lnOficio})
+    res.render("op/op_cucs", {lcDerecho, rows, lnOficio, skin:req.skin})
 });
 
 const op_ofic = ((req, res) => {
@@ -30,7 +30,7 @@ const op_ofic = ((req, res) => {
     }
 
     const lcDerecho = req.groups;
-    res.render("op/op_ofic", {lcDerecho})
+    res.render("op/op_ofic", {lcDerecho, skin:req.skin})
 });
 
 
@@ -50,7 +50,7 @@ const op_aingr = (async (req, res) => {
 
     const rows = await util.gene_cons(lcSQL, [req.userId])
     //console.log(rows)
-    return res.render("op/op_aingr", {rows})
+    return res.render("op/op_aingr", {rows, skin:req.skin})
 });
 
 const op_nofic = (async (req, res) => {
@@ -67,7 +67,7 @@ const op_nofic = (async (req, res) => {
         `
     
     const rows = await util.gene_cons(lcSQL)
-    return res.render("op/op_nofic", {rows})
+    return res.render("op/op_nofic", {rows, skin:req.skin})
 });
 
 const op_ningr = (async (req, res) => {
@@ -89,7 +89,7 @@ const op_ningr = (async (req, res) => {
     loTipo = await util.gene_cons("SELECT id_tiof, descrip FROM OPC_TIPO_OFIC")
     loClas = await util.gene_cons("SELECT id_clof, descrip FROM OPC_CLAS_OFIC WHERE activo = 1")
 
-    return res.render("op/op_ningr", {rows, laQuery, llDirectorio, loTipo, loClas})
+    return res.render("op/op_ningr", {rows, laQuery, llDirectorio, loTipo, loClas, skin:req.skin})
 });
 
 const op_admi = ((req, res) => {
@@ -97,7 +97,7 @@ const op_admi = ((req, res) => {
     {
         return res.render("sin_derecho")
     }
-    return res.render("op/op_admi")
+    return res.render("op/op_admi", {skin:req.skin})
 });
 
 const op_reof0 = (async (req, res) => {
@@ -124,7 +124,7 @@ const op_reof0 = (async (req, res) => {
     
     const rows2 = await util.gene_cons(lcSQL)
     
-    return res.render("op/op_reof0", {rows, rows2})
+    return res.render("op/op_reof0", {rows, rows2, skin:req.skin})
 });
 
 const op_sofic = (async (req, res) => {
@@ -164,7 +164,7 @@ const op_sofic = (async (req, res) => {
     
     //console.log(req.query)
 
-    return res.render("op/op_sofic", {laQuery})
+    return res.render("op/op_sofic", {laQuery, skin:req.skin})
 });
 
 const op_seofic = (async (req, res) => {
@@ -240,7 +240,7 @@ const op_seofic = (async (req, res) => {
     `
     const rows6 = await util.gene_cons(lcSQL)
 
-    return res.render("op/op_seofic", {rows2, rows3, rows4, rows5, rows6})
+    return res.render("op/op_seofic", {rows2, rows3, rows4, rows5, rows6, skin:req.skin})
 });
 
 const op_plan = ((req, res) => {
@@ -248,7 +248,7 @@ const op_plan = ((req, res) => {
     {
         return res.render("sin_derecho")
     }
-    return res.render("op/op_plan")
+    return res.render("op/op_plan", {skin:req.skin})
 });
 
 const op_bplan = (async (req, res) => {
@@ -265,7 +265,7 @@ const op_bplan = (async (req, res) => {
     `
 
     const rows = await util.gene_cons(lcSQL)
-    return res.render("op/op_bplan", {rows})
+    return res.render("op/op_bplan", {rows, skin:req.skin})
 });
 
 const op_nplanti = (async (req, res) => {
@@ -294,7 +294,7 @@ const op_nplanti = (async (req, res) => {
     }
 
     //console.log(rows2)
-    return res.render("op/op_nplanti", {rows, id: req.query.lnID, rows2})
+    return res.render("op/op_nplanti", {rows, id: req.query.lnID, rows2, skin:req.skin})
 });
 
 const op_grup = (async (req, res) => {
@@ -304,7 +304,7 @@ const op_grup = (async (req, res) => {
         return res.render("sin_derecho")
     }
     
-    return res.render("op/op_grup")
+    return res.render("op/op_grup", {skin:req.skin})
 });
 
 const op_bgrup = (async (req, res) => {
@@ -321,7 +321,7 @@ const op_bgrup = (async (req, res) => {
     `
 
     const rows = await util.gene_cons(lcSQL)
-    return res.render("op/op_bgrup", {rows})
+    return res.render("op/op_bgrup", {rows, skin:req.skin})
 });
 
 const op_ngrup = (async (req, res) => {
@@ -338,7 +338,7 @@ const op_ngrup = (async (req, res) => {
     `
 
     const rows = await util.gene_cons(lcSQL)
-    return res.render("op/op_ngrup", {rows})
+    return res.render("op/op_ngrup", {rows, skin:req.skin})
 });
 
 const op_sdofic = (async (req, res) => {
@@ -369,7 +369,7 @@ const op_sdofic = (async (req, res) => {
     const ldDere = await util.gene_cons("SELECT * FROM gen_dere_ofic WHERE user_id = '" + req.userId + "' AND cve = '" + req.query.lcCVE + "'")
 
     //console.log(ldDere)
-    return res.render("op/op_sdofic", {rows, ldDere, loDatos, rowso, llEditar, llEdit_ofic})
+    return res.render("op/op_sdofic", {rows, ldDere, loDatos, rowso, llEditar, llEdit_ofic, skin:req.skin})
 });
 
 const op_rgraf = (async (req, res) => {
@@ -387,7 +387,7 @@ const op_rgraf = (async (req, res) => {
 
     const rows = await util.gene_cons(lcSQL);
     
-    return res.render("op/op_rgraf", {rows})
+    return res.render("op/op_rgraf", {rows, skin:req.skin})
 });
 
 const op_hofic = (async (req, res) => {
@@ -406,7 +406,7 @@ const op_hofic = (async (req, res) => {
     const rows = await util.gene_cons(lcSQL)
 
     
-    return res.render("op/op_hofic", {rows})
+    return res.render("op/op_hofic", {rows, skin:req.skin})
 });
 
 const op_pend = (async (req, res) => {
@@ -427,7 +427,7 @@ const op_pend = (async (req, res) => {
     //console.log(req.query)
 
     
-    return res.render("op/op_pend", {lcCVE:req.query.lcCVE})
+    return res.render("op/op_pend", {lcCVE:req.query.lcCVE, skin:req.skin})
 });
 
 const op_ingr = (async (req, res) => {
@@ -447,7 +447,7 @@ const op_ingr = (async (req, res) => {
     //console.log(req.query)
     //console.log(rows)
     
-    return res.render("op/op_ingr", {rows})
+    return res.render("op/op_ingr", {rows, skin:req.skin})
 });
 
 
@@ -481,7 +481,7 @@ const op_detalle = (async (req, res) => {
     loTexto = loSeek[0].descrip
 
 
-    return res.render("op/op_detalle", {rows,lnXX:req.query.xx,lnOfic:req.query.lnOficio, loCVE, loDepe, loTexto})
+    return res.render("op/op_detalle", {rows,lnXX:req.query.xx,lnOfic:req.query.lnOficio, loCVE, loDepe, loTexto, skin:req.skin})
 });
 
 const detalle_ofic_No = (async (req, res) => {
@@ -505,7 +505,7 @@ const detalle_ofic_No = (async (req, res) => {
     loTipo = await util.gene_cons("SELECT id_tiof, descrip FROM OPC_TIPO_OFIC")
     loClas = await util.gene_cons("SELECT id_clof, descrip FROM OPC_CLAS_OFIC WHERE activo = 1")
 
-    return res.render("op/detalle_ofic_No", {rows, laQuery, llDirectorio, loTipo, loClas, loOficio})
+    return res.render("op/detalle_ofic_No", {rows, laQuery, llDirectorio, loTipo, loClas, loOficio, skin:req.skin})
 
 });
 
@@ -526,7 +526,7 @@ const busc_ofic = (async (req, res) => {
     //console.log(req.query)
     //console.log(rows)
     
-    return res.render("op/busc_ofic", {rows})
+    return res.render("op/busc_ofic", {rows, skin:req.skin})
 });
 
 const new_ord__serv = (async (req, res) => {
@@ -547,7 +547,7 @@ const new_ord__serv = (async (req, res) => {
     `
     const rows = await util.gene_cons(lcSQL, [lnOficio])
     
-    return res.render("op/new_ord__serv", {lnOficio, loTexto:(rows.length==0?'':rows[0].descrip)})
+    return res.render("op/new_ord__serv", {lnOficio, loTexto:(rows.length==0?'':rows[0].descrip), skin:req.skin})
 })
 
 const seg_ofic = (async (req, res) => {
@@ -560,7 +560,7 @@ const seg_ofic = (async (req, res) => {
     loClave = req.query.loClave
     loDepe = req.query.loDepe
 
-    return res.render("op/seg_ofic", {lnOficio})    
+    return res.render("op/seg_ofic", {lnOficio, skin:req.skin})    
 });
 
 const op_nsoli = ((req, res) => {
@@ -570,7 +570,7 @@ const op_nsoli = ((req, res) => {
     }
 
     const lcDerecho = req.groups;
-    res.render("op/op_nsoli", {lcDerecho})
+    res.render("op/op_nsoli", {lcDerecho, skin:req.skin})
 });
 
 const op_narea = (async (req, res) => {
@@ -587,7 +587,7 @@ const op_narea = (async (req, res) => {
     
     const rows = await util.gene_cons(lcSQL)
 
-    res.render("op/op_narea", {rows})
+    res.render("op/op_narea", {rows, skin:req.skin})
 });
 
 module.exports = {

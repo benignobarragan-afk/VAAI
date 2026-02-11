@@ -8,9 +8,10 @@ const intro = (async (req, res) => {
     const lcNombre = req.nom_usu;
     let lcGROUPS = req.groups;
     
-    //console.log(rows)
+    //console.log(req.userId)
+    //console.log(req.skin)
         
-    res.render("intro", {lcNombre})
+    res.render("intro", {lcNombre, skin:req.skin})
 });
 
 
@@ -40,7 +41,7 @@ const logout = ((req, res) => {
     //    ok: true,
     //    mensaje: "Sesión cerrada. Cookie eliminada." 
     //});
-    return res.render("login");
+    return res.render("login", {skin:req.skin});
 });
 
 const sin_derecho = ((req, res) => {
@@ -48,7 +49,7 @@ const sin_derecho = ((req, res) => {
 });
 
 const principal = ((req, res) => {
-    res.render("principal")
+    res.render("principal", {skin:req.skin})
 });
 
 const usuarios = ((req, res) => {
@@ -57,7 +58,7 @@ const usuarios = ((req, res) => {
         return res.render("sin_derecho")
     }
 
-    res.render("usuarios")
+    res.render("usuarios", {skin:req.skin})
 });
 
 const usua_nuev = (async(req, res) => {
@@ -71,12 +72,12 @@ const usua_nuev = (async(req, res) => {
     const rows = await util.gene_cons(lcSQL)
 
     console.log(rows)
-    return res.render("usua_nuev", {rows})
+    return res.render("usua_nuev", {rows, skin:req.skin})
 });
 
 
 const otro_equi = (async(req, res) => {
-    return res.render("otro_equi")
+    return res.render("otro_equi", {skin:req.skin})
 });
 
 const prin_ca_pa = (async (req, res) => {
@@ -95,7 +96,7 @@ const prin_ca_pa = (async (req, res) => {
     const winId = req.query.winId;
     
     console.log(winId)
-    res.render("prin_ca_pa", {rows, winId})
+    res.render("prin_ca_pa", {rows, winId, skin:req.skin})
     
 });
 
@@ -120,7 +121,7 @@ const dere_unic = (async (req, res) => {
     `
     const rowsd = await util.gene_cons(lcSQL, req.userId)
 
-    res.render("dere_unic", {rows, rowsd})
+    res.render("dere_unic", {rows, rowsd, skin:req.skin})
 });
 
 module.exports = {

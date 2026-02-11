@@ -14,7 +14,7 @@ const fin = ((req, res) => {
         return res.render("sin_derecho")
     }
 
-    res.render("fin/fin", {lcDerecho})
+    res.render("fin/fin", {lcDerecho, skin:req.skin})
 });
 
 
@@ -33,7 +33,7 @@ const fin_orde_comp = (async (req, res) => {
     `
     const rows = await util.gene_cons(lcSQL, [req.userId])
     
-    return res.render("fin/fin_orde_comp", {rows})
+    return res.render("fin/fin_orde_comp", {rows, skin:req.skin})
 });
 
 const fin_norde_comp = (async (req, res) => {
@@ -54,7 +54,7 @@ const fin_norde_comp = (async (req, res) => {
     `
     const rows = await util.gene_cons(lcSQL, [req.userId])
     
-    return res.render("fin/fin_norde_comp", {rows})
+    return res.render("fin/fin_norde_comp", {rows, skin:req.skin})
 });
 
 module.exports = {

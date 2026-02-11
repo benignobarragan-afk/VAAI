@@ -17,7 +17,7 @@ const signin = async (req, res) => {
         conn = await pool.getConnection();
         
         // 3. Ejecutar la consulta
-        const rows = await conn.query("SELECT user_id, password, acceso FROM passfile WHERE user_id = ?", [req.body.username]);
+        const rows = await conn.query("SELECT user_id, password, Nombre, acceso, skin FROM passfile WHERE user_id = ?", [req.body.username]);
         //console.log(rows)
         
         if(!rows)
@@ -68,7 +68,6 @@ const signin = async (req, res) => {
     }
 
 }
-
 
 module.exports = {
     signin: signin

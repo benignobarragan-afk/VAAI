@@ -32,7 +32,7 @@ const verifyToken = async (req, res, next) => {
             let datosUsuario = cacheUsuarios.get(req.userId);
 
             if (!datosUsuario) {
-                const rows = await util.gene_cons("SELECT id_cent, Centro, nom_cen, Nombre, codigo, bloqueada, GROUPS FROM passfile WHERE user_id =  " + decoded.id)
+                const rows = await util.gene_cons("SELECT id_cent, Centro, nom_cen, Nombre, codigo, bloqueada, GROUPS, skin FROM passfile WHERE user_id =  " + decoded.id)
                 //console.log("consulto la base de datos")
                 if (rows.length <= 0){
                     return res.status(401).json({"message":"No se localizó al usuario del token"});
@@ -50,6 +50,7 @@ const verifyToken = async (req, res, next) => {
                     nom_cen : (!rows[0].nom_cen ? '' : rows[0].nom_cen),
                     nom_usu : (!rows[0].Nombre ? '' : rows[0].Nombre),
                     codigo  : (!rows[0].codigo ? 0 : rows[0].codigo),
+                    skin    : (!rows[0].skin > 0 ? '' : rows[0].skin),
                     token   : token,
                     groups  : (typeof rows[0].GROUPS != 'string'?',,': ',' + rows[0].GROUPS.replace(/\s/g, "") + ',')
                 };
@@ -63,7 +64,7 @@ const verifyToken = async (req, res, next) => {
  */            //conn = await pool.getConnection();
             
             // 3. Ejecutar la consulta
-            //const rows = await conn.query("SELECT id_cent, Centro, nom_cen, Nombre, codigo, bloqueada, GROUPS FROM passfile WHERE user_id =  " + decoded.id, [1]);
+            //const rows = await conn.query("SELECT id_cent, Centro, nom_cen, Nombre, codigo, bloqueada, GROUPS, skin FROM passfile WHERE user_id =  " + decoded.id, [1]);
             
             
 //codigo antes del cache
@@ -85,9 +86,10 @@ const verifyToken = async (req, res, next) => {
             req.id_cent = datosUsuario.id_cent;
             req.centro  = datosUsuario.centro;
             req.nom_cen = datosUsuario.nom_cen;
-            req.nom_usu = datosUsuario.Nombre;
+            req.nom_usu = datosUsuario.nom_usu;
             req.codigo  = datosUsuario.codigo;
             req.groups  = datosUsuario.groups;
+            req.skin    = datosUsuario.skin;
 
             //console.log(rows)
             //console.log(token != datosUsuario.token)
@@ -136,7 +138,7 @@ const verifyToken = async (req, res, next) => {
                 const rdecoded = jwt.verify(rtoken, config.RSECRET);
                 
                 // 2. IMPORTANTE: Usamos rdecoded.id porque req.userId no existe aún
-                const rows = await util.gene_cons("SELECT id_cent, Centro, nom_cen, Nombre, codigo, bloqueada, GROUPS, acceso FROM passfile WHERE user_id = " + rdecoded.id);
+                const rows = await util.gene_cons("SELECT id_cent, Centro, nom_cen, Nombre, codigo, bloqueada, GROUPS, acceso, skin FROM passfile WHERE user_id = " + rdecoded.id);
                 
                 if (rows.length <= 0) return res.render("login");
 
@@ -164,6 +166,7 @@ const verifyToken = async (req, res, next) => {
                     nom_cen : (!rows[0].nom_cen ? '' : rows[0].nom_cen),
                     nom_usu : (!rows[0].Nombre ? '' : rows[0].Nombre),
                     codigo  : (!rows[0].codigo ? 0 : rows[0].codigo),
+                    skin    : (!rows[0].skin ? '' : rows[0].skin),
                     token   : ntoken,
                     groups  : (typeof rows[0].GROUPS != 'string'?',,': ',' + rows[0].GROUPS.replace(/\s/g, "") + ',')
                 };
@@ -178,6 +181,7 @@ const verifyToken = async (req, res, next) => {
                 req.nom_usu = usuarioEnCache.Nombre;
                 req.codigo  = usuarioEnCache.codigo;
                 req.groups  = usuarioEnCache.groups;
+                req.skin    = usuarioEnCache.skin;
 
                 console.log("Token renovado para usuario:", rdecoded.id);
                 

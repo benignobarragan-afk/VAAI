@@ -14,7 +14,7 @@ const sip = ((req, res) => {
         return res.render("sin_derecho")
     }
 
-    res.render("sip/sip", {lcDerecho})
+    res.render("sip/sip", {lcDerecho, skin:req.skin})
 });
 
 
@@ -33,7 +33,7 @@ const sip_soli_prog = (async (req, res) => {
 
     const rows = await util.gene_cons(lcSQL)
     
-    return res.render("sip/sip_soli_prog", {rows})
+    return res.render("sip/sip_soli_prog", {rows, skin:req.skin})
 });
 
 const sip_nsoli_prog = (async (req, res) => {
@@ -102,7 +102,7 @@ const sip_nsoli_prog = (async (req, res) => {
     }
     
 
-    return res.render("sip/sip_nsoli_prog", {rows, usuario, depe_id, depe_value, prog_id, prog_value})
+    return res.render("sip/sip_nsoli_prog", {rows, usuario, depe_id, depe_value, prog_id, prog_value, skin:req.skin})
 });
 
 module.exports = {

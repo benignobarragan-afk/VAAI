@@ -3,6 +3,7 @@ const pool = require(path.join(__dirname, "..", "db"))
 const config = require(path.join(__dirname, "..", "config"));
 const util = require(path.join(__dirname, "..", "utils/busquedaUtils"));
 const outil = require(path.join(__dirname, "..", "utils/other_utils"));
+const midd = require(path.join(__dirname,"..", "middlewares/authjwt.js"))
 
 const usua_nuevx = (async (req, res) => {
 
@@ -261,6 +262,25 @@ const prin_ca_pax = (async (req, res) => {
 
 });
 
+const camb_skin = (async (req, res) => {
+
+//    console.log(req.body.tema)
+    lcSQL = `
+    UPDATE passfile 
+        SET skin = ?
+        WHERE user_id = ?
+    `
+    const update = await util.gene_cons(lcSQL, [req.body.tema, req.userId])
+
+    let datosUsuario = midd.cacheUsuarios.get(req.userId);
+
+    datosUsuario.skin = (req.body.tema == '0'?'':req.body.tema)
+    midd.cacheUsuarios.set(req.userId, datosUsuario);
+
+    return res.json({});
+});
+
+
 module.exports = {
     usua_nuevx,
     usua_nuevx2,
@@ -268,4 +288,5 @@ module.exports = {
     gene_menu,
     usuariosx,
     prin_ca_pax,
+    camb_skin,
 }
