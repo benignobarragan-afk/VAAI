@@ -2,6 +2,15 @@
 
 <body>
     <script>
+
+        <%if(rows2.length>0){%>
+        var datosIniciales = <%- JSON.stringify(rows2) %>;
+        <%}%>
+
+        <%if(rows3.length>0){%>
+        var detaIniciales = <%- JSON.stringify(rows3) %>;
+        <%}%>
+
         var tip = 0
         var w1;
         var mygrid;
@@ -31,7 +40,7 @@
                                     {height:5},
                                     {
                                         cols: [
-                                            {view: "text", name: "id_orde_comp", hidden: true},
+                                            {view: "text", id: "id_orde_comp", name: "id_orde_comp", value:'0', hidden: false},
                                             { view: "combo", name: "tipo_orde", label: "Tipo", labelWidth: 80, options: [{id:1, value:"Compra"}, {id:2, value:"Servicio"}], width: 400, required: true, 
                                             on: {
                                                     onChange: function(newv, oldv) {
@@ -174,23 +183,23 @@
                                                         }
                                                     },
                                                     {width: 20},
-                                                    { view: "counter", id: "parcialidad", name: "parcialidad", label: "Parcialidades", labelWidth: 100, min: 0, max: 100, hidden: true, required: true },
+                                                    { view: "counter", id: "nume_parc", name: "nume_parc", label: "Parcialidades", labelWidth: 100, min: 0, max: 100, hidden: true, required: true },
                                                     {width: 20},
-                                                    { view: "counter", name: "porce_parc", label: "% Anticipo", min: 0, max: 100, required: true }
+                                                    { view: "counter", name: "porce_anti", label: "% Anticipo", min: 0, max: 100, required: true }
                                                 ]
                                             }, 
                                             { id:"fech_serv", hidden: true, 
                                                 cols: [
-                                                    { view: "datepicker", id: "inci_serv", name: "inci_serv", label: "Fecha de incio del servicio", labelWidth: 200},
+                                                    { view: "datepicker", id: "fech_inic", name: "fech_inic", label: "Fecha de incio del servicio", labelWidth: 200},
                                                     {width: 20},
-                                                    { view: "datepicker", id: "fin_serv", name: "fin_serv", label: "Fecha de fin del servicio", labelWidth: 200},
+                                                    { view: "datepicker", id: "fech_fin", name: "fech_fin", label: "Fecha de fin del servicio", labelWidth: 200},
                                                 ]
                                             },                                  
                                             {
                                                 cols: [
                                                     { view: "textarea", id: "domi_prov", name: "domi_prov", label: "Dirección del proveedor", labelPosition: "top", height: 120, required: true},
                                                     {width: 20},
-                                                    { view: "textarea", id: "luga_entr", name: "pres_serv", label: "Lugar de entrega", labelPosition: "top", height: 120, required: true},
+                                                    { view: "textarea", id: "luga_entr", name: "luga_entr", label: "Lugar de entrega", labelPosition: "top", height: 120, required: true},
                                                     {width: 20},
                                                     { view: "textarea", name: "observaciones", label: "Observaciones", labelPosition: "top", height: 120},
                                                 ]
@@ -210,6 +219,7 @@
                                             { view: "textarea", name: "articulo", label: "Artículo o servicio", labelPosition: "top", height: 80},
                                             {width: 20},
                                             { view: "combo", name: "unidad", label: "Unidad", labelWidth: 80, options: ["N/A","CAJA","KG","LITRO","METRO","OTRA","PIEZA"], width: 100, labelPosition: "top"},
+                                            {width: 20},
                                             { view: "text", name: "cantidad", label: "Cantidad", labelPosition: "top", width: 130},
                                             {width: 20},
                                             { view: "text", name: "cost_unit", label: "Costo unitario", labelPosition: "top", width: 130},
@@ -250,6 +260,13 @@
                                                 footer: { content: "summColumn", css: { "text-align": "right" } } // 2. Sumatoria automática
                                             },
                                             { 
+                                                id: "montoiva", 
+                                                header: "Monto IVA", 
+                                                width: 200, css: { "text-align": "right" },
+                                                format: webix.i18n.priceFormat,
+                                                footer: { content: "summColumn", css: { "text-align": "right" } } // 2. Sumatoria automática
+                                            },
+                                            { 
                                                 id: "total", 
                                                 header: "Total", 
                                                 width: 200, css: { "text-align": "right" },
@@ -257,7 +274,10 @@
                                                 footer: { content: "summColumn", css: { "text-align": "right" } } // 3. Sumatoria automática
                                             }
                                         ],
-                                        data: [] 
+                                        
+                                        <%if(rows3.length>0){%>
+                                        data: detaIniciales, 
+                                        <%}%>
                                     },                                    
                                 ]
                             }
@@ -295,7 +315,10 @@
                         { view: "button", value: "Cancelar", width: 100 }
                     ]
                 }
-            ]
+            ],
+            <%if(rows2.length>0){%>
+            data: datosIniciales,
+            <%}%>
         },        
         );
         busc_depe(<%=rows[0].proyecto%>);
@@ -360,10 +383,10 @@
         function parcialidad(lnTipo){
             //console.log(lnTipo)
             if(lnTipo == 1){
-                $$("parcialidad").hide();
+                $$("nume_parc").hide();
             }
             else {
-                $$("parcialidad").show();
+                $$("nume_parc").show();
             }
             
         }
@@ -386,6 +409,7 @@
 
             // Cálculo del Subtotal (Cantidad * Costo)
             var subtotal = cant * costo;
+            var montoiva = subtotal * ((tasaIva / 100))
             
             // Cálculo del Total (Subtotal + el porcentaje de IVA)
             // Ejemplo: Si el IVA es 16, calcula: subtotal * 1.16
@@ -398,6 +422,7 @@
                 cost_unit: costo,
                 tasa_iva: tasaIva,
                 subtotal: subtotal,   // Monto sin IVA
+                montoiva: montoiva,   // Monto del IVA
                 total: totalConIva,    // Monto con IVA
                 unidad: valores.unidad // Guardado internamente aunque no esté en la columna
             };
@@ -429,25 +454,82 @@
 
     function guardar(){
         
-        var datos = formulario.getValues();
+        var datosOrden = $$("form_orden").getValues();
+    
+        var partidas = $$("detalles_tabla").serialize();
 
-        console.log(lnOrden)
+        // 4. Consolidar el paquete de datos
+        var payload = {
+            encabezado: datosOrden,
+            detalles: partidas
+        };
 
+        //console.log(datosOrden);
+    
+        webix.ajax().post("/api/fin/fin_norde_compx", payload, function(text, data) {
+            var response = data.json();
+            
+            if (response.status === "success") {
+                webix.alert({
+                    title: "Éxito",
+                    text: response.message,
+                });
+
+                if (response.id > 0 && datosOrden.id_orde_comp <= 0){
+                    $$("id_orde_comp").setValue(response.id);
+                }
+            } else {
+                webix.message({ type: "error", text: "Error al guardar: " + response.message });
+            }
+        });
 
     }
 
     function generar(){
-        // Buscamos el formulario por su ID
-        var formulario = $$("form_orden");
 
-        if (formulario.validate()) {
-            // Si pasa la validación, procedemos a guardar en Node.js
-            var datos = formulario.getValues();
-            webix.message("Datos validados, guardando...");
-        } else {
-            // Si falla, Webix marcará los campos en rojo automáticamente
-            webix.message({ type: "error", text: "Revise los campos obligatorios" });
+        // 1. Validar el formulario antes de enviar
+        var formulario = $$("form_orden");
+        if (!formulario.validate()) {
+            webix.message({ type: "error", text: "Por favor, complete los campos obligatorios" });
+            return;
         }
+
+        // 2. Obtener datos generales del formulario (RFC, Proveedor, etc.)
+        var datosOrden = formulario.getValues();
+
+        // 3. Obtener los artículos de la datatable
+        var partidas = $$("detalles_tabla").serialize();
+        
+        if (partidas.length === 0) {
+            webix.message({ type: "error", text: "Debe agregar al menos un artículo a la orden" });
+            return;
+        }
+
+        // 4. Consolidar el paquete de datos
+        var payload = {
+            encabezado: datosOrden,
+            detalles: partidas
+        };
+
+        // 5. Envío mediante AJAX a tu ruta de Node.js
+        webix.ajax().post("/api/ordenes/guardar", payload, function(text, data) {
+            var response = data.json();
+            
+            if (response.status === "success") {
+                webix.alert({
+                    title: "Éxito",
+                    text: "Orden guardada correctamente con el folio: " + response.folio,
+                    callback: function() {
+                        // Opcional: Limpiar formulario o redireccionar
+                        formulario.clear();
+                        $$("detalles_tabla").clearAll();
+                    }
+                });
+            } else {
+                webix.message({ type: "error", text: "Error al guardar: " + response.message });
+            }
+        });
+
     }
 
     </script>

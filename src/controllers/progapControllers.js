@@ -220,19 +220,19 @@ const progap_nestudia = (async (req, res) => {
                 a.id_programa AS programa, a.correo_institucional, a.id_ciclo_ingreso, a.id_ciclo_curso, a.id_ciclo_condonar, 
                 if(a.id_estado > 2, 1, 0) as id_estado 
             FROM progap_alumnos a LEFT JOIN progap_usuarios u ON a.id_usuario = u.id
-            WHERE a.id = ${req.query.lnID}
+            WHERE a.id = ?
 
         `
-        usuario = await util.gene_cons(lcSQL)
+        usuario = await util.gene_cons(lcSQL, [req.query.lnID])
 
         //console.log(usuario)
         if(!!usuario[0].centro){                //verifica que exista la dependencia
             lcSQL = `
             SELECT  id, siglas, dependencia, concat('(',siglas ,') ',  dependencia) as value 
                 FROM progap_dependencias
-                WHERE id = ${usuario[0].centro}
+                WHERE id = ?
             `
-            depen = await util.gene_cons(lcSQL)
+            depen = await util.gene_cons(lcSQL, [usuario[0].centro])
 
             //console.log(depen)
 
@@ -244,9 +244,9 @@ const progap_nestudia = (async (req, res) => {
             lcSQL = `
             SELECT  id, clave_cgipv, programa, concat('(',clave_cgipv ,') ', programa) as value 
                 FROM progap_programa
-                WHERE id = ${usuario[0].programa}
+                WHERE id = ?
             `
-            program = await util.gene_cons(lcSQL)
+            program = await util.gene_cons(lcSQL, [usuario[0].programa])
 
             prog_id = program[0].id
             prog_value = program[0].value
@@ -271,10 +271,10 @@ const progap_ndirectivo = (async (req, res) => {
         lcSQL = `
         SELECT id, id_cu, nombres, id_grado, genero, correo, telefono, celular, cargo 
             FROM progap_altos_mandos
-            WHERE id = ${req.query.lnID}
+            WHERE id = ?
 
             `
-        directivo = await util.gene_cons(lcSQL)
+        directivo = await util.gene_cons(lcSQL, [req.query.lnID])
 
         console.log(directivo)
 
@@ -282,9 +282,9 @@ const progap_ndirectivo = (async (req, res) => {
             lcSQL = `
             SELECT  id, siglas, dependencia, concat('(',siglas ,') ',  dependencia) as value 
                 FROM progap_dependencias
-                WHERE id = ${directivo[0].id_cu}
+                WHERE id = ?
             `
-            depen = await util.gene_cons(lcSQL)
+            depen = await util.gene_cons(lcSQL, [directivo[0].id_cu])
 
             //console.log(depen)
             if (depen.length > 0){
@@ -321,19 +321,19 @@ const progap_nusuario = (async (req, res) => {
         SELECT id, usuario, contrasena, nombre, apellido_paterno, apellido_materno, genero, id_nivel_estudios,
                 id_centro_universitario, telefonos, extension, celular, correo, id_tipo_usuario, estado, id_convocatoria
             FROM progap_usuarios
-            WHERE id = ${req.query.lnID}
+            WHERE id = ?
 
         `
-        usuario = await util.gene_cons(lcSQL)
+        usuario = await util.gene_cons(lcSQL, [req.query.lnID])
 
         console.log(usuario)
         if(!!usuario[0].id_centro_universitario){                //verifica que exista la dependencia
             lcSQL = `
             SELECT  id, siglas, dependencia, concat('(',siglas ,') ',  dependencia) as value 
                 FROM progap_dependencias
-                WHERE id = ${usuario[0].id_centro_universitario}
+                WHERE id = ?
             `
-            depen = await util.gene_cons(lcSQL)
+            depen = await util.gene_cons(lcSQL, [usuario[0].id_centro_universitario])
 
             //console.log(depen)
 
@@ -360,10 +360,10 @@ const progap_nprogra = (async (req, res) => {
         lcSQL = `
         SELECT id, clave_cgipv, id_cu, nivel, programa, clave_911, duracion, participa 
         	FROM progap_programa
-            WHERE id = ${req.query.lnID}
+            WHERE id = ?
 
             `
-        programa = await util.gene_cons(lcSQL)
+        programa = await util.gene_cons(lcSQL, [req.query.lnID])
 
         console.log(req.query.lnID)
         console.log(programa)
@@ -372,9 +372,9 @@ const progap_nprogra = (async (req, res) => {
             lcSQL = `
             SELECT  id, siglas, dependencia, concat('(',siglas ,') ',  dependencia) as value 
                 FROM progap_dependencias
-                WHERE id = ${programa[0].id_cu}
+                WHERE id = ?
             `
-            depen = await util.gene_cons(lcSQL)
+            depen = await util.gene_cons(lcSQL, [programa[0].id_cu])
 
             //console.log(depen)
             if (depen.length > 0){
@@ -402,9 +402,9 @@ const progap_dexacam = (async (req, res) => {
         lcSQL = `
     SELECT e.numero_oficio, e.id_cu, d.dependencia, e.id_convocatoria, d.id_responsable 
 	    FROM progap_exacam e LEFT JOIN progap_dependencias d ON e.id_cu = d.id
-	    WHERE e.id = ${req.query.lnID}
+	    WHERE e.id = ?
     `
-        exacam = await util.gene_cons(lcSQL)
+        exacam = await util.gene_cons(lcSQL, [req.query.lnID])
 
         console.log(req.query.lnID)
         console.log(exacam)
@@ -455,9 +455,9 @@ const progap_nfocam = (async (req, res) => {
             lcSQL = `
             SELECT  id, siglas, dependencia, concat('(',siglas ,') ',  dependencia) as value 
                 FROM progap_dependencias
-                WHERE id = ${usuario[0].centro}
+                WHERE id = ?
             `
-            depen = await util.gene_cons(lcSQL)
+            depen = await util.gene_cons(lcSQL, [usuario[0].centro])
 
             //console.log(depen)
 
@@ -469,9 +469,9 @@ const progap_nfocam = (async (req, res) => {
             lcSQL = `
             SELECT  id, clave_cgipv, programa, concat('(',clave_cgipv ,') ', programa) as value 
                 FROM progap_programa
-                WHERE id = ${usuario[0].programa}
+                WHERE id = ?
             `
-            program = await util.gene_cons(lcSQL)
+            program = await util.gene_cons(lcSQL, [usuario[0].programa])
 
             prog_id = program[0].id
             prog_value = program[0].value
