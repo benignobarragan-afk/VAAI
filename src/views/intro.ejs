@@ -3,7 +3,7 @@
 	<style>
 	/* Forzamos el color de fondo de cada botón */
 		.tema_azul_btn button { background-color: #497aac !important; border-radius: 4px; }
-		.tema_verde_btn button { background-color: #2d6a4f !important; border-radius: 4px; }
+		.tema_claro_btn button { background-color: #EBEDF0 !important; border-radius: 4px; }
 		.tema_gris_btn button { background-color: #3c3c3e !important; border-radius: 4px; }
 		.tema_naranja_btn button { background-color: #e67e22 !important; border-radius: 4px; }
 
@@ -247,19 +247,19 @@
 								cols: [
 									{ 
 										view: "button", type: "icon", icon: "mdi mdi-format-color-fill", 
+										css: "tema_gris_btn", tooltip: "VAAI", 
+										click: function(){ cambiar_tema_servidor("0"); } 
+									},	
+									{ 
+										view: "button", type: "icon", icon: "mdi mdi-format-color-fill", 
 										css: "tema_azul_btn", tooltip: "Azul", 
 										click: function(){ cambiar_tema_servidor("2"); } 
 									},
-/* 									{ 
-										view: "button", type: "icon", icon: "mdi mdi-circle", 
-										css: "tema_verde_btn", tooltip: "Verde", 
-										click: function(){ cambiar_tema_servidor("willow.css"); } 
-									}, */	
-								{ 
+ 									{ 
 										view: "button", type: "icon", icon: "mdi mdi-format-color-fill", 
-										css: "tema_gris_btn", tooltip: "VAAI", 
-										click: function(){ cambiar_tema_servidor("0"); } 
-									},
+										css: "tema_claro_btn", tooltip: "Claro", 
+										click: function(){ cambiar_tema_servidor("3"); } 
+									}, 
 /* 									{ 
 										view: "button", type: "icon", icon: "mdi mdi-circle", 
 										css: "tema_naranja_btn", tooltip: "Material", 

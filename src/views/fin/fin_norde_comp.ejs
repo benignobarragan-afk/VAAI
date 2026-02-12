@@ -17,6 +17,9 @@
             view: "form",
             id: "form_orden",
             labelPosition:"top",
+            rules: {
+                "corr_prov": webix.rules.isEmail // Valida formato de correo
+            },
             elements: [
                 {
                     view: "tabview",
@@ -28,7 +31,8 @@
                                     {height:5},
                                     {
                                         cols: [
-                                            { view: "combo", name: "tipo_orde", label: "Tipo", labelWidth: 80, options: [{id:1, value:"Compra"}, {id:2, value:"Servicio"}], width: 400,
+                                            {view: "text", name: "id_orde_comp", hidden: true},
+                                            { view: "combo", name: "tipo_orde", label: "Tipo", labelWidth: 80, options: [{id:1, value:"Compra"}, {id:2, value:"Servicio"}], width: 400, required: true, 
                                             on: {
                                                     onChange: function(newv, oldv) {
                                                         // newv contiene el ID del elemento seleccionado (1 o 2)
@@ -40,13 +44,13 @@
                                                 }
                                             },
                                             {},
-                                            { view: "datepicker", name: "fech_emis", label: "Fecha", labelWidth: 80, stringResult: true, width: 400 },
+                                            { view: "datepicker", name: "fech_emis", label: "Fecha", labelWidth: 80, stringResult: true, width: 400, required: true, },
                                         ]
                                     },
                                     {
                                         cols: [
                                             {
-                                                view: "combo", name: "proyecto", value:"<%=rows[0].proyecto%>", label:"Proyecto", labelWidth: 80,
+                                                view: "combo", name: "proyecto", value:"<%=rows[0].proyecto%>", label:"Proyecto", labelWidth: 80, required: true,
                                                 options: {
                                                     fitMaster: false,
                                                     width: 1000,
@@ -84,7 +88,7 @@
                                                         id: "rfc", 
                                                         name: "rfc", 
                                                         label: "RFC", 
-                                                        width: 280,
+                                                        width: 280, required: true,
                                                         suggest: {
                                                             id: "rfc:suggestList",
                                                             view: "suggest",
@@ -113,7 +117,7 @@
                                                         id: "proveedor", 
                                                         name: "proveedor", 
                                                         label: "Nombre proveedor", 
-                                                        labelWidth: 150,
+                                                        labelWidth: 150, required: true,
                                                         suggest: {
                                                             id: "proveedor:suggestList",
                                                             view: "suggest",
@@ -144,9 +148,9 @@
                                             {
                                             
                                                 cols: [
-                                                    { view: "text", id: "tele_prov", name: "tele_prov", label: "Teléfono proveedor", labelWidth: 100, placeholder: "  -    -    "},
+                                                    { view: "text", id: "tele_prov", name: "tele_prov", label: "Teléfono proveedor", labelWidth: 150, placeholder: "  -    -    ", required: true,},
                                                     {width: 20},
-                                                    { view: "text", id: "corr_prov", name: "corr_prov", label: "Correo proveedor", labelWidth: 120, placeholder: "correo@correo.com" }
+                                                    { view: "text", id: "corr_prov", name: "corr_prov", label: "Correo proveedor", labelWidth: 150, placeholder: "correo@correo.com", required: true, invalidMessage: "El Correo es invalido"}
                                                 ]
                                             }]
                                         },
@@ -156,9 +160,9 @@
                                         rows: [
                                             {
                                                 cols: [
-                                                    { view: "datepicker", name: "fech_entr", label: "Fecha de entrega", labelWidth: 120, width: 250 },
+                                                    { view: "datepicker", name: "fech_entr", label: "Fecha de entrega", labelWidth: 120, width: 250, required: true },
                                                     {width: 20},
-                                                    { view: "radio", name: "forma_pago", label: "Forma Pago", labelWidth: 100, options: [{id:1, value:"Contado"},{id:2, value:"Parcialidades"}], vertical: false,
+                                                    { view: "radio", name: "forma_pago", label: "Forma Pago", labelWidth: 100, options: [{id:1, value:"Contado"},{id:2, value:"Parcialidades"}], vertical: false, required: true,
                                                         on: {
                                                     onChange: function(newv, oldv) {
                                                                 // newv contiene el ID del elemento seleccionado (1 o 2)
@@ -170,9 +174,9 @@
                                                         }
                                                     },
                                                     {width: 20},
-                                                    { view: "counter", id: "parcialidad", name: "parcialidad", label: "Parcialidades", labelWidth: 100, min: 0, max: 100, hidden: true },
+                                                    { view: "counter", id: "parcialidad", name: "parcialidad", label: "Parcialidades", labelWidth: 100, min: 0, max: 100, hidden: true, required: true },
                                                     {width: 20},
-                                                    { view: "counter", name: "porce_parc", label: "% Anticipo", min: 0, max: 100 }
+                                                    { view: "counter", name: "porce_parc", label: "% Anticipo", min: 0, max: 100, required: true }
                                                 ]
                                             }, 
                                             { id:"fech_serv", hidden: true, 
@@ -184,9 +188,9 @@
                                             },                                  
                                             {
                                                 cols: [
-                                                    { view: "textarea", id: "domi_prov", name: "domi_prov", label: "Dirección del proveedor", labelPosition: "top", height: 120},
+                                                    { view: "textarea", id: "domi_prov", name: "domi_prov", label: "Dirección del proveedor", labelPosition: "top", height: 120, required: true},
                                                     {width: 20},
-                                                    { view: "textarea", id: "luga_entr", name: "pres_serv", label: "Lugar de entrega", labelPosition: "top", height: 120},
+                                                    { view: "textarea", id: "luga_entr", name: "pres_serv", label: "Lugar de entrega", labelPosition: "top", height: 120, required: true},
                                                     {width: 20},
                                                     { view: "textarea", name: "observaciones", label: "Observaciones", labelPosition: "top", height: 120},
                                                 ]
@@ -265,14 +269,14 @@
                                     {height:5},
                                     {
                                         cols: [
-                                            { view: "text", id: "ures_proy", name: "ures_proy", label: "Código de URE", labelPosition: "top", readonly: true},
-                                            { view: "text", id: "depe_proy", name: "depe_proy", label: "Dependencia del proyecto", labelPosition: "top", readonly: true},
+                                            { view: "text", id: "ures_proy", name: "ures_proy", label: "Código de URE", labelPosition: "top", readonly: true, required: true},
+                                            { view: "text", id: "depe_proy", name: "depe_proy", label: "Dependencia del proyecto", labelPosition: "top", readonly: true, required: true},
                                         ]
                                     },
                                     {
                                         cols: [
-                                            { view: "text", id: "tele_depe", name: "tele_depe", label: "Teléfono de la dependencia", labelPosition: "top"},
-                                            { view: "textarea", id: "dire_depe", name: "dire_depe", label: "Dirección dependencia", labelPosition: "top", height: 80  },
+                                            { view: "text", id: "tele_depe", name: "tele_depe", label: "Teléfono de la dependencia", labelPosition: "top", required: true},
+                                            { view: "textarea", id: "dire_depe", name: "dire_depe", label: "Dirección dependencia", labelPosition: "top", height: 80, required: true  },
                                         ]
                                     },
         
@@ -286,8 +290,8 @@
                     margin: 10,
                     cols: [
                         {},
-                        { view: "button", value: "Guardar Borrador", css: "webix_secondary", width: 150, click: "" },
-                        { view: "button", value: "Generar Orden", css: "webix_primary", width: 150, click: "" },
+                        { view: "button", value: "Guardar Borrador", css: "webix_secondary", width: 150, click: guardar },
+                        { view: "button", value: "Generar Orden", css: "webix_primary", width: 150, click: generar },
                         { view: "button", value: "Cancelar", width: 100 }
                     ]
                 }
@@ -420,6 +424,29 @@
             $$("detalles_tabla").remove(id);
         } else {
             webix.message({ type: "error", text: "Seleccione un artículo para eliminar" });
+        }
+    }
+
+    function guardar(){
+        
+        var datos = formulario.getValues();
+
+        console.log(lnOrden)
+
+
+    }
+
+    function generar(){
+        // Buscamos el formulario por su ID
+        var formulario = $$("form_orden");
+
+        if (formulario.validate()) {
+            // Si pasa la validación, procedemos a guardar en Node.js
+            var datos = formulario.getValues();
+            webix.message("Datos validados, guardando...");
+        } else {
+            // Si falla, Webix marcará los campos en rojo automáticamente
+            webix.message({ type: "error", text: "Revise los campos obligatorios" });
         }
     }
 
