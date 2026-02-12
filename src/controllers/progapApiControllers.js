@@ -416,7 +416,7 @@ const progap_form02 = ( async (req, res) => {
     );
 
     doc.on('pageAdded', async () => {
-        oplantilla.plantilla01(doc, ltDire[0].siglas + ".png");
+        oplantilla.plantillaOC(doc, ltDire[0].siglas + ".png");
         doc.fillColor('black').fontSize(12); // Resetear estilo para el contenido
         doc.page.margins.top = 120; // Reforzamos el margen de la página actual
         doc.page.margins.bottom = 10; // Reforzamos el margen de la página actual

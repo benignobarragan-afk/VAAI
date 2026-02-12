@@ -185,7 +185,7 @@
                                                     {width: 20},
                                                     { view: "counter", id: "nume_parc", name: "nume_parc", label: "Parcialidades", labelWidth: 100, min: 0, max: 100, hidden: true, required: true },
                                                     {width: 20},
-                                                    { view: "counter", name: "porce_anti", label: "% Anticipo", min: 0, max: 100, required: true }
+                                                    { view: "counter", name: "porc_anti", label: "% Anticipo", min: 0, max: 100, required: true }
                                                 ]
                                             }, 
                                             { id:"fech_serv", hidden: true, 
@@ -309,10 +309,11 @@
                 {
                     margin: 10,
                     cols: [
+                        { view: "button", value: "Imprimir Orden", css: "webix_primary", width: 150, click: imprimir },
                         {},
                         { view: "button", value: "Guardar Borrador", css: "webix_secondary", width: 150, click: guardar },
                         { view: "button", value: "Generar Orden", css: "webix_primary", width: 150, click: generar },
-                        { view: "button", value: "Cancelar", width: 100 }
+                        { view: "button", value: "Cancelar", css: "webix_danger", width: 100 }
                     ]
                 }
             ],
@@ -482,6 +483,21 @@
                 webix.message({ type: "error", text: "Error al guardar: " + response.message });
             }
         });
+
+    }
+
+    function imprimir(){
+
+ 
+    const lnID = $$("id_orde_comp").getValue()
+    if(lnID <= 0){
+        webix.message({type: "debug", text: "No puedes genear el documento hasta guardarlo por lo menos temporalmente", expire: 2500})
+    }
+    else {
+        window.open(`/api/fin/fin_impr_oc?id=${lnID}`, '_blank');
+    }
+    
+
 
     }
 

@@ -23,7 +23,7 @@ const fin_orde_compx = (async (req, res) => {
 					o.subtotal, o.iva_total, o.total, o.observaciones, o.estatus, o.fech_crea
         FROM fin_orde_comp o INNER JOIN fin_proyecto p on o.proyecto = p.proyecto
             LEFT join gen_centros c ON p.id_cent = c.id_cent
-        ORDER BY o.foli_orde
+        ORDER BY o.foli_orde;
     `
     if (!!req.query.anio){
         lcSQL = lcSQL + " WHERE YEAR(o.fech_emis) = ? "
@@ -123,15 +123,50 @@ const fin_norde_compx = (async (req,res) => {
     }
 
     
+});
 
 
+const fin_impr_oc = (async (req,res) => {
+
+    if (req.groups.indexOf(",ORDE_COMP,") <= 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
+    }
+
+    const doc = new PDFDocument({ size: 'letter' });
+    
+    //doc.pipe(fs.createWriteStream('prueba.pdf')); // write to PDF
+    doc.pipe(res);                                       // HTTP response
+
+    let lcArchivo = path.join(__dirname, "..", "pdf/oc.png")
+    const llArchivo = await other_utils.exit_arch(lcArchivo)
+    if (llArchivo){
+        doc.image(lcArchivo, 25, 25, {width: 630});
+    }
+
+    doc.fontSize(11);
+    doc.moveDown(1);
+    doc.font('Helvetica-Bold');
+    doc.text(`${config.VICERRECTOR}`, { continued: true });
+    doc.font('Helvetica');
+    doc.text(`
+Vicerrector Adjunto Académico y de Investigación
+Vicerrectoría Ejecutiva
+Universidad de Guadalajara
+Presente
+`
+    );
 
 
+    
+
+    doc.end();
 
 });
 
 module.exports = {
     fin_orde_compx,
     fin_norde_compx2,
-    fin_norde_compx
+    fin_norde_compx,
+    fin_impr_oc
 }

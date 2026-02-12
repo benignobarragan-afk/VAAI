@@ -14,6 +14,7 @@ const finCtrl = require("../controllers/finApiControllers.js")
 router.get("/fin_orde_compx", midd.verifyToken, finCtrl.fin_orde_compx);
 router.post("/fin_norde_compx2", midd.verifyToken, finCtrl.fin_norde_compx2);
 router.post("/fin_norde_compx", midd.verifyToken, finCtrl.fin_norde_compx);
+router.get("/fin_impr_oc", midd.verifyToken, finCtrl.fin_impr_oc);
 
 
 
