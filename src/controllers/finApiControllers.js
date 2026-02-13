@@ -148,15 +148,27 @@ const fin_impr_oc = (async (req,res) => {
     //doc.pipe(fs.createWriteStream('prueba.pdf')); // write to PDF
     doc.pipe(res);                                       // HTTP response
 
-    let lcArchivo = path.join(__dirname, "..", "pdf/oc.png")
+    let lcArchivo = path.join(__dirname, "..", "pdf/fondo-oc.jpg")
     const llArchivo = await other_utils.exit_arch(lcArchivo)
     if (llArchivo){
-        doc.image(lcArchivo, 30, 25, {width: 100});
+        doc.image(lcArchivo, 0, 0, {width: 610});
     }
-    doc.fontSize(17);
-    doc.font("Helvetica-Bold").text("ORDEN DE COMPRA", 220, 52);
 
-//NUMERO
+    doc.font("Helvetica").fontSize(8)
+
+    doc.text("CGAI-22-2025", 470, 23, {width: 110, align: 'center'});
+    doc.text("03           11           2025", 470, 47, {width: 110, align: 'center'});
+    doc.text("283610", 520, 83, {width: 60, align: 'center'});
+    doc.text("1.1.9.30", 520, 94, {width: 60, align: 'center'});
+    doc.text("Innovación Educ", 520, 105, {width: 60, align: 'center'});
+    doc.fontSize(10).text("Coordinación General Académica y de Innovación", 165, 82, {width: 280, align: 'center'});
+
+
+
+/*     doc.fontSize(17);
+    doc.font("Helvetica-Bold").text("ORDEN DE COMPRA", 220, 52);
+ */
+/* //NUMERO
 doc.lineWidth(.5);
 doc.font("Helvetica")
 doc.lineJoin('round')
@@ -246,7 +258,7 @@ doc.lineJoin('round')
 doc.fillColor("#000000")
     .fontSize(7)
     .text("ENTIDAD o DEPENDENCIA EMISORA", 165, 95, {width: 280, align: 'center'});
-
+ */
     doc.end();
 });
 
