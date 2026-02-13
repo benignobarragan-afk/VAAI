@@ -140,8 +140,9 @@ const fin_impr_oc = (async (req,res) => {
 
     let lcSQL = `
     SELECT o.id, o.foli_orde, o.tipo_orde, o.fech_emis, o.proyecto, o.rfc, o.proveedor, o.domi_prov, o.nomb_depe, o.tele_depe, o.ures_depe, o.domi_depe, 
-					o.tele_prov, o.corr_prov, DATE_FORMAT(o.fech_entr, '%d/%m/%Y') as fech_entr, o.luga_entr, o.forma_pago, o.porc_anti, o.fech_inic, o.fech_fin, o.nume_parc, 
-					o.subtotal, o.iva_total, o.total, o.observaciones, o.estatus, o.fech_crea, p.fondo, p.nombre AS nomb_proy, p.tipo_proy
+					o.tele_prov, o.corr_prov, DATE_FORMAT(o.fech_entr, '%d/%m/%Y') as fech_entr, o.luga_entr, o.forma_pago, o.porc_anti, o.nume_parc, 
+                    DATE_FORMAT(o.fech_inic, '%d/%m/%Y') as fech_inic, DATE_FORMAT(o.fech_fin, '%d/%m/%Y') as fech_fin, DATE_FORMAT(o.fech_crea, '%d/%m/%Y') as fech_crea,
+					o.subtotal, o.iva_total, o.total, o.observaciones, o.estatus, p.fondo, p.nombre AS nomb_proy, p.tipo_proy
         FROM fin_orde_comp o INNER JOIN fin_proyecto p on o.proyecto = p.proyecto
             LEFT join gen_centros c ON p.id_cent = c.id_cent
         WHERE o.id = ?
@@ -152,6 +153,21 @@ const fin_impr_oc = (async (req,res) => {
     
     //doc.pipe(fs.createWriteStream('prueba.pdf')); // write to PDF
     doc.pipe(res);                                       // HTTP response
+
+    let d = "", m = "", a = ""
+
+    if(!!datos[0].fech_emis){
+        d = String(datos[0].fech_emis.getDate()).padStart(2, '0');
+        m = String(datos[0].fech_emis.getMonth() + 1).padStart(2, '0'); // +1 porque enero es 0
+        a = datos[0].fech_emis.getFullYear();
+    }
+
+    const formatoMoneda = new Intl.NumberFormat('es-MX', {
+        style: 'currency',
+        currency: 'MXN', // Peso Mexicano
+        minimumFractionDigits: 2
+    });
+
 
     // EVENTO CLAVE: Se ejecuta cada vez que se crea una página
     doc.on('pageAdded', () => {
@@ -167,8 +183,8 @@ const fin_impr_oc = (async (req,res) => {
             }
 
         doc.font("Helvetica").fontSize(8)
-        doc.text(`${!datos[0].foli_orde}`, 470, 23, {width: 110, align: 'center'});
-        doc.text("03           11           2025", 470, 47, {width: 110, align: 'center'});
+        doc.text(`${(!datos[0].foli_orde?'':datos[0].foli_orde)}`, 470, 23, {width: 110, align: 'center'});
+        doc.text(`${d}             ${m}             ${a}`, 470, 47, {width: 110, align: 'center'});
         doc.text(`${datos[0].proyecto}`, 520, 83, {width: 60, align: 'center'});
         doc.text(`${datos[0].fondo}`, 520, 94, {width: 60, align: 'center'});
         doc.text(`${datos[0].tipo_proy}`, 520, 105, {width: 60, align: 'center'});
@@ -183,6 +199,40 @@ const fin_impr_oc = (async (req,res) => {
         doc.text(`${datos[0].corr_prov}`, 335, 199, {width: 130, align: 'center'});
         doc.text(`${datos[0].tele_prov}`, 465, 199, {width: 115, align: 'center'});
 
+        doc.options.autoFirstPage = false; // Opcional, dependiendo de tu versión
+        // La propiedad clave es esta:
+        doc.page.margins.bottom = 0; 
+
+        // Ahora imprimes tus textos de la parte inferior
+        doc.text(`${other_utils.montoALetras(datos[0].total)}`, 100, 530, {width: 325, align: 'center'});
+        doc.text(`${formatoMoneda.format(datos[0].subtotal)}`, 506, 531, {width: 73, align: 'right'});
+        doc.text(`${formatoMoneda.format(datos[0].iva_total)}`, 506, 546, {width: 73, align: 'right'});
+        doc.text(`${formatoMoneda.format(datos[0].total)}`, 506, 560, {width: 73, align: 'right'});
+
+        doc.text(`${datos[0].fech_entr}`, 100, 587, {width: 135, align: 'center'});
+        doc.text(`${datos[0].luga_entr}`, 310, 587, {width: 195, align: 'left'});
+        doc.text(`X`, 118, 598, {width: 195, align: 'left'});
+        doc.text(`X`, 118, 607, {width: 195, align: 'left'});
+        doc.text(`PAGO`, 152, 598, {width: 155, align: 'center'});
+        doc.text(`PAGO`, 210, 607, {width: 30, align: 'center'});
+        doc.text(`PAGO`, 330, 607, {width: 175, align: 'center'});
+        doc.text(`X`, 569, 598, {width: 195, align: 'left'});
+        doc.text(`X`, 569, 607, {width: 195, align: 'left'});
+        doc.text(`${datos[0].observaciones}`, 35, 624, {width: 540, align: 'left'});
+        doc.text(`${datos[0].observaciones}`, 30, 727, {width: 127, align: 'left'});
+        doc.text(`${datos[0].observaciones}`, 170, 747, {width: 127, align: 'left'});
+        doc.text(`${datos[0].observaciones}`, 312, 747, {width: 130, align: 'left'});
+
+        // Si vas a seguir agregando contenido después, recuerda restaurar el margen
+
+    /*      doc.lineJoin('round')
+        .rect(506, 540, 73, 15)
+        .fillAndStroke("#f1f4ff", "#000000"); */
+
+        doc.page.margins.bottom = 260;
+        doc.options.autoFirstPage = true;
+
+
         } else {
             if (llArchivoR){
                 doc.image(lcArchivoR, 0, 0, {width: 610});
@@ -195,15 +245,6 @@ const fin_impr_oc = (async (req,res) => {
     if (llArchivo){
         doc.image(lcArchivo, 0, 0, {width: 610});
     }
-
-    const d = String(datos[0].fech_emis.getDate()).padStart(2, '0');
-    const m = String(datos[0].fech_emis.getMonth() + 1).padStart(2, '0'); // +1 porque enero es 0
-    const a = datos[0].fech_emis.getFullYear();
-    const formatoMoneda = new Intl.NumberFormat('es-MX', {
-        style: 'currency',
-        currency: 'MXN', // Peso Mexicano
-        minimumFractionDigits: 2
-    });
 
     doc.font("Helvetica").fontSize(8)
     doc.text(`${(!datos[0].foli_orde?'':datos[0].foli_orde)}`, 470, 23, {width: 110, align: 'center'});
