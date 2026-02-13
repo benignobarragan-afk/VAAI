@@ -85,9 +85,9 @@ const fin_norde_compx = (async (req,res) => {
         for(i=0;i<detalle.length;i++){
 
             lcSQL = `
-            INSERT INTO fin_dorde_comp (id_orde_comp, articulo, cantidad, unidad, precio, iva) VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO fin_dorde_comp (id_orde_comp, articulo, cantidad, unidad, cost_unit, tasa_iva) VALUES (?, ?, ?, ?, ?, ?)
             `
-            insertD = await util.gene_cons(lcSQL, [insert.insertId, detalle[i].articulo, detalle[i].cantidad, detalle[i].unidad, detalle[i].precio, detalle[i].iva])
+            insertD = await util.gene_cons(lcSQL, [insert.insertId, detalle[i].articulo, detalle[i].cantidad, detalle[i].unidad, detalle[i].cost_unit, detalle[i].tasa_iva])
         }
 
         return res.json({"status" : "success", "message": "La orden se guardo exitosamente, recuerda que aun no se genera", id:insert.insertId})
@@ -133,6 +133,16 @@ const fin_impr_oc = (async (req,res) => {
         return res.render("sin_derecho")
     }
 
+    let lcSQL = `
+    SELECT ROW_NUMBER() OVER (ORDER BY o.foli_orde) AS RANK, o.id, o.tipo_orde, o.fech_emis, o.proyecto, o.rfc, o.proveedor, o.domi_prov, 
+					o.tele_prov, o.corr_prov, o.fech_entr, o.luga_entr, o.forma_pago, o.porc_anti, o.fech_inic, o.fech_fin, o.nume_parc, 
+					o.subtotal, o.iva_total, o.total, o.observaciones, o.estatus, o.fech_crea
+        FROM fin_orde_comp o INNER JOIN fin_proyecto p on o.proyecto = p.proyecto
+            LEFT join gen_centros c ON p.id_cent = c.id_cent
+        WHERE o.id = ?
+    `
+    const datos = util.gene_cons(lcSQL, [1])
+
     const doc = new PDFDocument({ size: 'letter' });
     
     //doc.pipe(fs.createWriteStream('prueba.pdf')); // write to PDF
@@ -141,27 +151,103 @@ const fin_impr_oc = (async (req,res) => {
     let lcArchivo = path.join(__dirname, "..", "pdf/oc.png")
     const llArchivo = await other_utils.exit_arch(lcArchivo)
     if (llArchivo){
-        doc.image(lcArchivo, 25, 25, {width: 630});
+        doc.image(lcArchivo, 30, 25, {width: 100});
     }
+    doc.fontSize(17);
+    doc.font("Helvetica-Bold").text("ORDEN DE COMPRA", 220, 52);
 
-    doc.fontSize(11);
-    doc.moveDown(1);
-    doc.font('Helvetica-Bold');
-    doc.text(`${config.VICERRECTOR}`, { continued: true });
-    doc.font('Helvetica');
-    doc.text(`
-Vicerrector Adjunto Académico y de Investigación
-Vicerrectoría Ejecutiva
-Universidad de Guadalajara
-Presente
-`
-    );
+//NUMERO
+doc.lineWidth(.5);
+doc.font("Helvetica")
+doc.lineJoin('round')
+    .rect(470, 22, 110, 13)
+    .fillAndStroke("#f1f4ff", "#000000");
+doc.fillColor("#000000")
+    .fontSize(8)
+    .text("CGAI-22-2025", 470, 25, {width: 110, align: 'center'});
+doc.lineJoin('round')
+    .rect(470, 35, 110, 9)
+    .fillAndStroke("#e9e9e9", "#000000");
+doc.fillColor("#000000")
+    .fontSize(7)
+    .text("NUMERO", 470, 37, {width: 110, align: 'center'});
 
+//FECHA
+doc.lineJoin('round')
+    .rect(470, 50, 110, 13)
+    .fillAndStroke("#f1f4ff", "#000000");
+doc.fillColor("#000000")
+    .fontSize(8)
+    .text("03           11           2025", 470, 53, {width: 110, align: 'center'});
+doc.lineJoin('round')
+    .rect(470, 63, 110, 9)
+    .fillAndStroke("#e9e9e9", "#000000");
+doc.fillColor("#000000")
+    .fontSize(7)
+    .text("DIA     |     MES     |     AÑO", 470, 65, {width: 110, align: 'center'});
+doc.lineJoin('round')
+    .rect(470, 71, 110, 9)
+    .fillAndStroke("#e9e9e9", "#000000");
+doc.fillColor("#000000")
+    .fontSize(7)
+    .text("FECHA DE ELABORACIÓN", 470, 73, {width: 110, align: 'center'});
 
-    
+//PROJECTO
+doc.lineJoin('round')
+    .rect(470, 86, 50, 13)
+    .fillAndStroke("#e9e9e9", "#000000");
+doc.fillColor("#000000")
+    .fontSize(6)
+    .text("NO. PROYECTO:", 470, 90, {width: 50, align: 'center'});
+doc.lineJoin('round')
+    .rect(520, 86, 60, 13)
+    .fillAndStroke("#f1f4ff", "#000000");
+doc.fillColor("#000000")
+    .fontSize(8)
+    .text("283610", 520, 89, {width: 60, align: 'center'});
+//FONDO
+doc.lineJoin('round')
+    .rect(470, 99, 50, 13)
+    .fillAndStroke("#e9e9e9", "#000000");
+doc.fillColor("#000000")
+    .fontSize(6)
+    .text("No. FONDO:", 470, 103, {width: 50, align: 'center'});
+doc.lineJoin('round')
+    .rect(520, 99, 60, 13)
+    .fillAndStroke("#f1f4ff", "#000000");
+doc.fillColor("#000000")
+    .fontSize(8)
+    .text("1.1.9.30", 520, 102, {width: 60, align: 'center'});
+//PROGRAMA
+doc.lineJoin('round')
+    .rect(470, 112, 50, 13)
+    .fillAndStroke("#e9e9e9", "#000000");
+doc.fillColor("#000000")
+    .fontSize(6)
+    .text("PROGRAMA:", 470, 116, {width: 50, align: 'center'});
+doc.lineJoin('round')
+    .rect(520, 112, 60, 13)
+    .fillAndStroke("#f1f4ff", "#000000");
+doc.fillColor("#000000")
+    .fontSize(8)
+    .text("Innovación Educ", 520, 115, {width: 60, align: 'center'});
+
+//DEPENDENCIA
+
+doc.lineJoin('round')
+    .rect(165, 80, 280, 13)
+    .fillAndStroke("#f1f4ff", "#000000");
+doc.fillColor("#000000")
+    .fontSize(8)
+    .text("Coordinación General Académica y de Innovación", 165, 83, {width: 280, align: 'center'});
+doc.lineJoin('round')
+    .rect(165, 93, 280, 9)
+    .fillAndStroke("#e9e9e9", "#000000");
+doc.fillColor("#000000")
+    .fontSize(7)
+    .text("ENTIDAD o DEPENDENCIA EMISORA", 165, 95, {width: 280, align: 'center'});
 
     doc.end();
-
 });
 
 module.exports = {
