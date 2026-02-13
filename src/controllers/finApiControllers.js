@@ -149,6 +149,10 @@ const fin_impr_oc = (async (req,res) => {
     `
     const datos = await util.gene_cons(lcSQL, [req.query.id])
 
+    lcSQL = `
+    SELECT 
+    `
+
     const doc = new PDFDocument({ size: 'letter', bufferPages: true, margins: {top: 245, bottom: 260, left: 0,right: 0}});
     
     //doc.pipe(fs.createWriteStream('prueba.pdf')); // write to PDF
@@ -361,16 +365,40 @@ const fin_impr_oc = (async (req,res) => {
         
         let numPagina = i + 1;
         doc.fillColor("black").fontSize(8);
+        doc.page.margins.bottom = 0; 
         
         // Escribimos en la esquina inferior derecha (ajusta según tu fondo)
+        if (numPagina % 2 !== 0) {
         doc.text(
             `Página ${Math.ceil(numPagina/2)} de ${Math.ceil(range.count/2)}`, 
-            250, 
-            15, 
+            445, 
+            765, 
             { align: 'right', width: 100 }
         );
+        }
     }
+
+    const leyendas = ["ORIGINAL", "COPIA DEPENDENCIA", "COPIA PROVEEDOR"];
+
+    // 3. Iteramos para crear las copias
+    leyendas.forEach(leyenda => {
+        for (let i = range.start; i < range.count; i++) {
+            // Añadimos una nueva página para la copia
+            doc.addPage();
+            
+            // "Copiamos" el contenido de la página i a la nueva página actual
+            // PDFKit no tiene un 'clonePage', así que usamos switchToPage
+            // Nota: Este método funciona mejor si encapsulas tu diseño en una función
+            reproducirContenido(doc, leyenda); 
+        }
+    });
+
     doc.end()
+
+    function reproducirContenido(pdf, textoLeyenda) {
+        // Aquí vuelves a ejecutar la lógica de dibujo o usas plantillas
+        pdf.fontSize(10).fillColor('gray').text(textoLeyenda, 50, pdf.page.height - 50);
+    }
 
 /*     doc.fontSize(17);
     doc.font("Helvetica-Bold").text("ORDEN DE COMPRA", 220, 52);
