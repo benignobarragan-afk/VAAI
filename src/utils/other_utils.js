@@ -403,6 +403,66 @@ const regi_even_segu = (async (userId, evento, ip) => {
             return { valida: true, mensaje: "Contraseña segura." };
         });
 
+
+    const montoALetras = ((monto) => {
+        const unidades = ["", "UN", "DOS", "TRES", "CUATRO", "CINCO", "SEIS", "SIETE", "OCHO", "NUEVE"];
+        const decenas = ["DIEZ", "ONCE", "DOCE", "TRECE", "CATORCE", "QUINCE", "DIECISEIS", "DIECISIETE", "DIECIOCHO", "DIECINUEVE"];
+        const decenasViente = ["VEINTE", "VEINTIUN", "VEINTIDOS", "VEINTITRES", "VEINTICUATRO", "VEINTICINCO", "VEINTISEIS", "VEINTISIETE", "VEINTIOCHO", "VEINTINUEVE"];
+        const decenasResto = ["", "", "", "TREINTA", "CUARENTA", "CINCUENTA", "SESENTA", "SETENTA", "OCHENTA", "NOVENTA"];
+        const centenas = ["", "CIENTO", "DOSCIENTOS", "TRESCIENTOS", "CUATROCIENTOS", "QUINIENTOS", "SEISCIENTOS", "SETECIENTOS", "OCHOCIENTOS", "NOVECIENTOS"];
+
+        const convertirSeccion = (num) => {
+            let output = "";
+            if (num === 100) return "CIEN";
+            
+            if (num >= 100) {
+                output += centenas[Math.floor(num / 100)] + " ";
+                num %= 100;
+            }
+
+            if (num >= 30) {
+                output += decenasResto[Math.floor(num / 10)] + (num % 10 !== 0 ? " Y " + unidades[num % 10] : "");
+            } else if (num >= 20) {
+                output += decenasViente[num - 20];
+            } else if (num >= 10) {
+                output += decenas[num - 10];
+            } else {
+                output += unidades[num];
+            }
+            return output.trim();
+        };
+
+        // Separar parte entera y decimales
+        const partes = parseFloat(monto).toFixed(2).split(".");
+        let entero = parseInt(partes[0]);
+        const centavos = partes[1];
+
+        if (entero === 0) return `CERO PESOS ${centavos}/100 M.N.`;
+
+        let resultado = "";
+
+        // Millones
+        if (entero >= 1000000) {
+            let mills = Math.floor(entero / 1000000);
+            resultado += (mills === 1 ? "UN MILLON " : convertirSeccion(mills) + " MILLONES ");
+            entero %= 1000000;
+        }
+
+        // Miles
+        if (entero >= 1000) {
+            let miles = Math.floor(entero / 1000);
+            resultado += (miles === 1 ? "MIL " : convertirSeccion(miles) + " MIL ");
+            entero %= 1000;
+        }
+
+        // Unidades, Decenas y Centenas
+        if (entero > 0) {
+            resultado += convertirSeccion(entero);
+        }
+
+        return `(${resultado.trim()} PESOS ${centavos}/100 M.N.)`;
+    });
+
 module.exports = {
     ejecutarPython,
     form_fechSQL,
@@ -412,6 +472,7 @@ module.exports = {
     exit_arch,
     leer_excel,
     regi_even_segu,
-    vali_Pass
+    vali_Pass,
+    montoALetras
 
 }

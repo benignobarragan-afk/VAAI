@@ -5,7 +5,7 @@ const config = require(path.join(__dirname, "..", "config"));
 const util = require(path.join(__dirname, "..", "utils/busquedaUtils"));
 const other_utils = require(path.join(__dirname, "..", "utils/other_utils"));
 const oplantilla = require(path.join(__dirname, "..", "utils/plantilla_pdf"));
-const PDFDocument = require("pdfkit-table");
+const PDFDocument = require("pdfkit");
 const fs = require('fs');
 const { cacheUsuarios } = require("../middlewares/authjwt");
 
@@ -133,37 +133,203 @@ const fin_impr_oc = (async (req,res) => {
         return res.render("sin_derecho")
     }
 
+    let lcArchivo = path.join(__dirname, "..", "pdf/fondo-oc.jpg")
+    const llArchivo = await other_utils.exit_arch(lcArchivo)
+    let lcArchivoR = path.join(__dirname, "..", "pdf/fondo-ocr.jpg")
+    const llArchivoR = await other_utils.exit_arch(lcArchivoR)
+
     let lcSQL = `
-    SELECT ROW_NUMBER() OVER (ORDER BY o.foli_orde) AS RANK, o.id, o.tipo_orde, o.fech_emis, o.proyecto, o.rfc, o.proveedor, o.domi_prov, 
-					o.tele_prov, o.corr_prov, o.fech_entr, o.luga_entr, o.forma_pago, o.porc_anti, o.fech_inic, o.fech_fin, o.nume_parc, 
-					o.subtotal, o.iva_total, o.total, o.observaciones, o.estatus, o.fech_crea
+    SELECT o.id, o.foli_orde, o.tipo_orde, o.fech_emis, o.proyecto, o.rfc, o.proveedor, o.domi_prov, o.nomb_depe, o.tele_depe, o.ures_depe, o.domi_depe, 
+					o.tele_prov, o.corr_prov, DATE_FORMAT(o.fech_entr, '%d/%m/%Y') as fech_entr, o.luga_entr, o.forma_pago, o.porc_anti, o.fech_inic, o.fech_fin, o.nume_parc, 
+					o.subtotal, o.iva_total, o.total, o.observaciones, o.estatus, o.fech_crea, p.fondo, p.nombre AS nomb_proy, p.tipo_proy
         FROM fin_orde_comp o INNER JOIN fin_proyecto p on o.proyecto = p.proyecto
             LEFT join gen_centros c ON p.id_cent = c.id_cent
         WHERE o.id = ?
     `
-    const datos = util.gene_cons(lcSQL, [1])
+    const datos = await util.gene_cons(lcSQL, [req.query.id])
 
-    const doc = new PDFDocument({ size: 'letter' });
+    const doc = new PDFDocument({ size: 'letter', bufferPages: true, margins: {top: 245, bottom: 260, left: 0,right: 0}});
     
     //doc.pipe(fs.createWriteStream('prueba.pdf')); // write to PDF
     doc.pipe(res);                                       // HTTP response
 
-    let lcArchivo = path.join(__dirname, "..", "pdf/fondo-oc.jpg")
-    const llArchivo = await other_utils.exit_arch(lcArchivo)
+    // EVENTO CLAVE: Se ejecuta cada vez que se crea una página
+    doc.on('pageAdded', () => {
+        // Obtenemos el número de página actual
+        let numeroPagina = doc.bufferedPageRange().count;
+
+        // Verificamos si es impar (1, 3, 5...)
+        if (numeroPagina % 2 !== 0) {
+            // Colocamos la imagen de fondo (asegúrate de que cubra toda la hoja)
+            if (llArchivo){
+                doc.image(lcArchivo, 0, 0, {width: 610});
+            
+            }
+
+        doc.font("Helvetica").fontSize(8)
+        doc.text(`${!datos[0].foli_orde}`, 470, 23, {width: 110, align: 'center'});
+        doc.text("03           11           2025", 470, 47, {width: 110, align: 'center'});
+        doc.text(`${datos[0].proyecto}`, 520, 83, {width: 60, align: 'center'});
+        doc.text(`${datos[0].fondo}`, 520, 94, {width: 60, align: 'center'});
+        doc.text(`${datos[0].tipo_proy}`, 520, 105, {width: 60, align: 'center'});
+        doc.fontSize(10).text(`${datos[0].nomb_depe}`, 165, 82, {width: 280, align: 'center'});
+        doc.fontSize(8).text(`${datos[0].ures_depe}`, 143, 131, {width: 95, align: 'center'});
+        doc.text(`${datos[0].nomb_depe}`, 240, 131, {width: 340, align: 'center'});
+        doc.text(`${datos[0].tele_depe}`, 143, 152, {width: 95, align: 'center'});
+        doc.text(`${datos[0].domi_depe}`, 240, 152, {width: 340, align: 'center'});
+        doc.text(`${datos[0].domi_prov}`, 32, 178, {width: 207, align: 'left'});
+        doc.text(`${datos[0].proveedor}`, 237, 178, {width: 342, align: 'center'});
+        doc.text(`${datos[0].rfc}`, 237, 199, {width: 95, align: 'center'});
+        doc.text(`${datos[0].corr_prov}`, 335, 199, {width: 130, align: 'center'});
+        doc.text(`${datos[0].tele_prov}`, 465, 199, {width: 115, align: 'center'});
+
+        } else {
+            if (llArchivoR){
+                doc.image(lcArchivoR, 0, 0, {width: 610});
+            }
+            doc.addPage();
+        }
+    });
+
+    
     if (llArchivo){
         doc.image(lcArchivo, 0, 0, {width: 610});
     }
 
+    const d = String(datos[0].fech_emis.getDate()).padStart(2, '0');
+    const m = String(datos[0].fech_emis.getMonth() + 1).padStart(2, '0'); // +1 porque enero es 0
+    const a = datos[0].fech_emis.getFullYear();
+    const formatoMoneda = new Intl.NumberFormat('es-MX', {
+        style: 'currency',
+        currency: 'MXN', // Peso Mexicano
+        minimumFractionDigits: 2
+    });
+
     doc.font("Helvetica").fontSize(8)
+    doc.text(`${(!datos[0].foli_orde?'':datos[0].foli_orde)}`, 470, 23, {width: 110, align: 'center'});
+    doc.text(`${d}             ${m}             ${a}`, 470, 47, {width: 110, align: 'center'});
+    doc.text(`${datos[0].proyecto}`, 520, 83, {width: 60, align: 'center'});
+    doc.text(`${datos[0].fondo}`, 520, 94, {width: 60, align: 'center'});
+    doc.text(`${datos[0].tipo_proy}`, 520, 105, {width: 60, align: 'center'});
+    doc.fontSize(10).text(`${datos[0].nomb_depe}`, 165, 82, {width: 280, align: 'center'});
+    doc.fontSize(8).text(`${datos[0].ures_depe}`, 143, 131, {width: 95, align: 'center'});
+    doc.text(`${datos[0].nomb_depe}`, 240, 131, {width: 340, align: 'center'});
+    doc.text(`${datos[0].tele_depe}`, 143, 152, {width: 95, align: 'center'});
+    doc.text(`${datos[0].domi_depe}`, 240, 152, {width: 340, align: 'center'});
+    doc.text(`${datos[0].domi_prov}`, 32, 178, {width: 207, align: 'left'});
+    doc.text(`${datos[0].proveedor}`, 237, 178, {width: 342, align: 'center'});
+    doc.text(`${datos[0].rfc}`, 237, 199, {width: 95, align: 'center'});
+    doc.text(`${datos[0].corr_prov}`, 335, 199, {width: 130, align: 'center'});
+    doc.text(`${datos[0].tele_prov}`, 465, 199, {width: 115, align: 'center'});
 
-    doc.text("CGAI-22-2025", 470, 23, {width: 110, align: 'center'});
-    doc.text("03           11           2025", 470, 47, {width: 110, align: 'center'});
-    doc.text("283610", 520, 83, {width: 60, align: 'center'});
-    doc.text("1.1.9.30", 520, 94, {width: 60, align: 'center'});
-    doc.text("Innovación Educ", 520, 105, {width: 60, align: 'center'});
-    doc.fontSize(10).text("Coordinación General Académica y de Innovación", 165, 82, {width: 280, align: 'center'});
+    doc.options.autoFirstPage = false; // Opcional, dependiendo de tu versión
+    // La propiedad clave es esta:
+    doc.page.margins.bottom = 0; 
 
+    // Ahora imprimes tus textos de la parte inferior
+    doc.text(`${other_utils.montoALetras(datos[0].total)}`, 100, 530, {width: 325, align: 'center'});
+    doc.text(`${formatoMoneda.format(datos[0].subtotal)}`, 506, 531, {width: 73, align: 'right'});
+    doc.text(`${formatoMoneda.format(datos[0].iva_total)}`, 506, 546, {width: 73, align: 'right'});
+    doc.text(`${formatoMoneda.format(datos[0].total)}`, 506, 560, {width: 73, align: 'right'});
 
+    doc.text(`${datos[0].fech_entr}`, 100, 587, {width: 135, align: 'center'});
+    doc.text(`${datos[0].luga_entr}`, 310, 587, {width: 195, align: 'left'});
+    doc.text(`X`, 118, 598, {width: 195, align: 'left'});
+    doc.text(`X`, 118, 607, {width: 195, align: 'left'});
+    doc.text(`PAGO`, 152, 598, {width: 155, align: 'center'});
+    doc.text(`PAGO`, 210, 607, {width: 30, align: 'center'});
+    doc.text(`PAGO`, 330, 607, {width: 175, align: 'center'});
+    doc.text(`X`, 569, 598, {width: 195, align: 'left'});
+    doc.text(`X`, 569, 607, {width: 195, align: 'left'});
+    doc.text(`${datos[0].observaciones}`, 35, 624, {width: 540, align: 'left'});
+    doc.text(`${datos[0].observaciones}`, 30, 727, {width: 127, align: 'left'});
+    doc.text(`${datos[0].observaciones}`, 170, 747, {width: 127, align: 'left'});
+    doc.text(`${datos[0].observaciones}`, 312, 747, {width: 130, align: 'left'});
+
+    // Si vas a seguir agregando contenido después, recuerda restaurar el margen
+
+/*      doc.lineJoin('round')
+    .rect(506, 540, 73, 15)
+    .fillAndStroke("#f1f4ff", "#000000"); */
+
+    doc.page.margins.bottom = 260;
+    doc.options.autoFirstPage = true;
+
+    doc.fontSize(9)
+    doc.y = 245;
+    doc.x = 30;
+    doc.table({
+    columnStyles: [{ width: 46, align: 'center' }, { width: 307, align: 'left' }, { width: 51, align: 'center' }, { width: 72, align: 'right' }, { width: 75, align: 'right' }],
+    rowStyles: { border: false},
+    data: [
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
+
+      ],
+    })
+
+    const range = doc.bufferedPageRange(); // { start: 0, count: 3 }
+
+    for (let i = range.start; i < (range.start + range.count); i++) {
+        // Nos movemos a la página i
+        doc.switchToPage(i);
+        
+        let numPagina = i + 1;
+        doc.fillColor("black").fontSize(8);
+        
+        // Escribimos en la esquina inferior derecha (ajusta según tu fondo)
+        doc.text(
+            `Página ${Math.ceil(numPagina/2)} de ${Math.ceil(range.count/2)}`, 
+            250, 
+            15, 
+            { align: 'right', width: 100 }
+        );
+    }
+    doc.end()
 
 /*     doc.fontSize(17);
     doc.font("Helvetica-Bold").text("ORDEN DE COMPRA", 220, 52);
@@ -259,7 +425,6 @@ doc.fillColor("#000000")
     .fontSize(7)
     .text("ENTIDAD o DEPENDENCIA EMISORA", 165, 95, {width: 280, align: 'center'});
  */
-    doc.end();
 });
 
 module.exports = {
