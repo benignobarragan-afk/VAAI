@@ -322,15 +322,22 @@
                                         cols: [
                                             { view: "text", id: "ures_depe", name: "ures_depe", label: "Código de URE", labelPosition: "top", readonly: true, required: true},
                                             { view: "text", id: "nomb_depe", name: "nomb_depe", label: "Dependencia del proyecto", labelPosition: "top", readonly: true, required: true},
+                                            { view: "button", value: "Guardar datos dependencia", css: "webix_secondary", width: 150, click: actu_depe },
                                         ]
                                     },
                                     {
                                         cols: [
                                             { view: "text", id: "tele_depe", name: "tele_depe", label: "Teléfono de la dependencia", labelPosition: "top", required: true, attributes: { maxlength: 50 }},
                                             { view: "textarea", id: "domi_depe", name: "domi_depe", label: "Dirección dependencia", labelPosition: "top", height: 80, required: true, attributes: { maxlength: 150 } },
-                                            { view: "button", value: "Guardar datos dependencia", css: "webix_secondary", width: 150, click: actu_depe },
                                         ]
                                     },
+                                    {
+                                        cols: [
+                                            { view: "textarea", id: "nomb_auto", name: "nomb_auto", label: "Persona autoriza", labelPosition: "top", required: true, attributes: { maxlength: 1000 }},
+                                            { view: "textarea", id: "nomb_vobo", name: "nomb_vobo", label: "Personas Vo. Bo.", labelPosition: "top", height: 80, required: true, attributes: { maxlength: 1000 } },
+                                        ]
+                                    },
+
         
                                     // Metemos la datatable dentro del array de elementos
                                 ]
@@ -367,6 +374,8 @@
                 $$("nomb_depe").setValue(res.dependen);
                 $$("tele_depe").setValue(res.telefono);
                 $$("domi_depe").setValue(res.direccion);
+                $$("nomb_auto").setValue(res.nomb_dire);
+                $$("nomb_vobo").setValue(res.nomb_secr);
                 if($$("luga_entr").getValue() == '' || !$$("luga_entr").getValue()){
                     $$("luga_entr").setValue(res.direccion || "")
                 }

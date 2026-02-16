@@ -463,6 +463,17 @@ const regi_even_segu = (async (userId, evento, ip) => {
         return `(${resultado.trim()} PESOS ${centavos}/100 M.N.)`;
     });
 
+
+    const proper = ((text) => {
+        if (!text) return "";
+        
+        return text
+            .toLowerCase()
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+    })
+
 module.exports = {
     ejecutarPython,
     form_fechSQL,
@@ -473,6 +484,7 @@ module.exports = {
     leer_excel,
     regi_even_segu,
     vali_Pass,
-    montoALetras
+    montoALetras,
+    proper
 
 }
