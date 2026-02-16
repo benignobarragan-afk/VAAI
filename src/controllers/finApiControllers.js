@@ -256,9 +256,11 @@ const fin_impr_oc = (async (req,res) => {
     SELECT o.id, o.foli_orde, o.tipo_orde, o.fech_emis, o.proyecto, o.rfc, o.proveedor, o.domi_prov, o.nomb_depe, o.tele_depe, o.ures_depe, o.domi_depe, 
 					o.tele_prov, o.corr_prov, DATE_FORMAT(o.fech_entr, '%d/%m/%Y') as fech_entr, o.luga_entr, o.forma_pago, o.porc_anti, o.nume_parc, 
                     DATE_FORMAT(o.fech_inic, '%d/%m/%Y') as fech_inic, DATE_FORMAT(o.fech_fin, '%d/%m/%Y') as fech_fin, DATE_FORMAT(o.fech_crea, '%d/%m/%Y') as fech_crea,
-					o.subtotal, o.iva_total, o.total, o.observaciones, o.estatus, p.fondo, p.nombre AS nomb_proy, p.tipo_proy, p.programa
+					o.subtotal, o.iva_total, o.total, o.observaciones, o.estatus, p.fondo, p.nombre AS nomb_proy, p.tipo_proy, p.programa, o.padr_pres, ps.nombre as nomb_elab,
+                    o.nomb_auto, o.nomb_vobo
         FROM fin_orde_comp o INNER JOIN fin_proyecto p on o.proyecto = p.proyecto
             LEFT join gen_centros c ON p.id_cent = c.id_cent
+            left join passfile ps on o.usua_crea = ps.user_id
         WHERE o.id = ?
     `
     const datos = await util.gene_cons(lcSQL, [req.query.id])
@@ -343,7 +345,7 @@ const fin_impr_oc = (async (req,res) => {
         doc.text(`${(!datos[0].proyecto?'':datos[0].proyecto)}`, 520, 83, {width: 60, align: 'center'});
         doc.text(`${(!datos[0].fondo?'':datos[0].fondo)}`, 520, 94, {width: 60, align: 'center'});
         doc.fontSize((datos[0].programa.length>10?6:8)).text(`${(!datos[0].programa?'':datos[0].programa)}`, 520, 105, {width: 60, align: 'center'});
-        doc.fontSize((datos[0].nomb_depe.length > 40?8:10)).text(`${(!datos[0].nomb_depe?'':datos[0].nomb_depe)}`, 165, 82, {width: 280, align: 'center'});
+        doc.fontSize((datos[0].padr_pres.length > 40?8:10)).text(`${(!datos[0].padr_pres?'':datos[0].padr_pres)}`, 165, 82, {width: 280, align: 'center'});
         doc.fontSize(8).text(`${(!datos[0].ures_depe?'':datos[0].ures_depe)}`, 143, 131, {width: 95, align: 'center'});
         doc.text(`${(!datos[0].nomb_depe?'':datos[0].nomb_depe)}`, 240, 131, {width: 340, align: 'center'});
         doc.text(`${(!datos[0].tele_depe?'':datos[0].tele_depe)}`, 143, 152, {width: 95, align: 'center'});
@@ -383,9 +385,9 @@ const fin_impr_oc = (async (req,res) => {
         doc.text(`${(datos[0].porc_anti ? 'X':'')}`, 569, 598, {width: 195, align: 'left'});
         doc.text(`${(!datos[0].porc_anti ? 'X':'')}`, 569, 607, {width: 195, align: 'left'});
         doc.text(`${datos[0].observaciones}`, 35, 624, {width: 540, align: 'left'});
-        doc.text(`${datos[0].observaciones}`, 30, 727, {width: 127, align: 'left'});
-        doc.text(`${datos[0].observaciones}`, 170, 747, {width: 127, align: 'left'});
-        doc.text(`${datos[0].observaciones}`, 312, 747, {width: 130, align: 'left'});
+        doc.text(`${datos[0].nomb_elab}`, 30, 727, {width: 127, align: 'center'});
+        doc.text(`${datos[0].nomb_auto}`, 170, 747, {width: 127, align: 'center'});
+        doc.text(`${datos[0].nomb_vobo}`, 312, 747, {width: 130, align: 'center'});
         doc.fontSize(9);
 
         // Si vas a seguir agregando contenido después, recuerda restaurar el margen
@@ -416,7 +418,7 @@ const fin_impr_oc = (async (req,res) => {
     doc.text(`${(!datos[0].proyecto?'':datos[0].proyecto)}`, 520, 83, {width: 60, align: 'center'});
     doc.text(`${(!datos[0].fondo?'':datos[0].fondo)}`, 520, 94, {width: 60, align: 'center'});
     doc.fontSize((datos[0].programa.length>10?6:8)).text(`${(!datos[0].programa?'':datos[0].programa)}`, 520, 105, {width: 60, align: 'center'});
-    doc.fontSize((datos[0].nomb_depe.length > 40?8:10)).text(`${(!datos[0].nomb_depe?'':datos[0].nomb_depe)}`, 165, 82, {width: 280, align: 'center'});
+    doc.fontSize((datos[0].padr_pres.length > 40?8:10)).text(`${(!datos[0].padr_pres?'':datos[0].padr_pres)}`, 165, 82, {width: 280, align: 'center'});
     doc.fontSize(8).text(`${(!datos[0].ures_depe?'':datos[0].ures_depe)}`, 143, 131, {width: 95, align: 'center'});
     doc.text(`${(!datos[0].nomb_depe?'':datos[0].nomb_depe)}`, 240, 131, {width: 340, align: 'center'});
     doc.text(`${(!datos[0].tele_depe?'':datos[0].tele_depe)}`, 143, 152, {width: 95, align: 'center'});
@@ -456,9 +458,9 @@ const fin_impr_oc = (async (req,res) => {
     doc.text(`${(datos[0].porc_anti ? 'X':'')}`, 569, 598, {width: 195, align: 'left'});
     doc.text(`${(!datos[0].porc_anti ? 'X':'')}`, 569, 607, {width: 195, align: 'left'});
     doc.text(`${datos[0].observaciones}`, 35, 624, {width: 540, align: 'left'});
-    doc.text(`${datos[0].observaciones}`, 30, 727, {width: 127, align: 'left'});
-    doc.text(`${datos[0].observaciones}`, 170, 747, {width: 127, align: 'left'});
-    doc.text(`${datos[0].observaciones}`, 312, 747, {width: 130, align: 'left'});
+    doc.text(`${datos[0].nomb_elab}`, 30, 727, {width: 127, align: 'center'});
+    doc.text(`${datos[0].nomb_auto}`, 170, 747, {width: 127, align: 'center'});
+    doc.text(`${datos[0].nomb_vobo}`, 312, 747, {width: 130, align: 'center'});
 
     // Si vas a seguir agregando contenido después, recuerda restaurar el margen
 
