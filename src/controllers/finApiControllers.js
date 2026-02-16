@@ -64,7 +64,17 @@ const fin_norde_compx = (async (req,res) => {
 
     const encabezado = JSON.parse(req.body.encabezado)
     const detalle = JSON.parse(req.body.detalles)
-    console.log(req.body.generar)
+
+    if (encabezado.id_orde_comp > 0){
+        const busc_orde = await util.gene_cons("select estatus from fin_orde_comp where id = ?", [encabezado.id_orde_comp])
+
+        if (busc_orde[0].estatus > 0){
+            return res.json({"status" : "error", "message": "La orden de compra ya no se puede editar"})
+        }
+    }
+    
+
+    //console.log(req.body.generar)
     if (req.body.generar){
 
         if (encabezado.tipo_orde || !encabezado.fech_emis || !encabezado.proyecto || !encabezado.rfc || !encabezado.proveedor ||
@@ -92,7 +102,7 @@ const fin_norde_compx = (async (req,res) => {
         lcSQL = `
         INSERT INTO fin_orde_comp (tipo_orde, fech_emis, proyecto, rfc, proveedor, domi_prov, tele_prov, corr_prov, fech_entr, luga_entr, forma_pago,
 	            porc_anti, fech_inic, fech_fin, nume_parc, subtotal, iva_total, total, observaciones, estatus, fech_crea, cambios, ures_depe, nomb_depe, 
-                tele_depe, domi_depe, usua_crea, subtotal, iva_total, total) 
+                tele_depe, domi_depe, usua_crea) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, ?, 0, NOW(), CONCAT(?,'|INSERT|',NOW(),CHR(13)), ?, ?, ?, ?, ?)
         `
         const laSend = [(!encabezado.tipo_orde?null:encabezado.tipo_orde), (!encabezado.fech_emis?null:encabezado.fech_emis), (!encabezado.proyecto?null:encabezado.proyecto), 
@@ -135,13 +145,22 @@ const fin_norde_compx = (async (req,res) => {
                 return res.json({"status" : "error", "message": "Se econtraron artículos con costo o cantidad menor o igual a cero"})
             }
 
+            const campus_proy = await util.gene_cons("SELECT campus FROM gen_centros WHERE id_cent IN (SELECT id_cent FROM fin_proyecto WHERE proyecto = ?", [encabezado.proyecto])
+            
+            const laID = await util.gene_cons("CALL SP_NEWID (?, '')", ['OC_' + campus_proy[0].campus])
+
+            if (!laID[0][0].nextid){
+                return res.json({"status" : false, "message": "Hay problema al obtener el folio"});
+            } 
+
             lcSQL = `
             UPDATE fin_orde_comp 
-                SET foli_orde = ?, usua_gene = ?, fech_gene = NOW() 
+                SET foli_orde = ?, usua_gene = ?, fech_gene = NOW(), estatus = 2 
                 WHERE id = ?
             `
-            const upda_orde = await util.gene_cons(lcSQL, ['PRUEBA', req.userId, insert.insertId])
-            return res.json({"status" : "success", "message": "La orden se genero con el folio: ", id:insert.insertId})
+            const lcFoli_orde = campus_proy[0].campus+'-'+String(laID[0][0].nextid).padStart(4, '0')+'-' + new Date().getFullYear()
+            const upda_orde = await util.gene_cons(lcSQL, [lcFoli_orde, req.userId, insert.insertId])
+            return res.json({"status" : "success", "message": "La orden se genero con el folio: " + lcFoli_orde, id:insert.insertId})
         }
 
         return res.json({"status" : "success", "message": "La orden se guardo exitosamente, recuerda que aun no se genera", id:insert.insertId})
@@ -187,14 +206,22 @@ const fin_norde_compx = (async (req,res) => {
                 return res.json({"status" : "error", "message": "Se econtraron artículos con costo o cantidad menor o igual a cero"})
             }
 
+            const campus_proy = await util.gene_cons("SELECT campus FROM gen_centros WHERE id_cent IN (SELECT id_cent FROM fin_proyecto WHERE proyecto = ?)", [encabezado.proyecto])
+            
+            const laID = await util.gene_cons("CALL SP_NEWID (?, '')", ['OC_' + campus_proy[0].campus])
+
+            if (!laID[0][0].nextid){
+                return res.json({"status" : false, "message": "Hay problema al obtener el folio"});
+            } 
+
             lcSQL = `
             UPDATE fin_orde_comp 
-                SET foli_orde = ?, usua_gene = ?, fech_gene = NOW() 
+                SET foli_orde = ?, usua_gene = ?, fech_gene = NOW(), estatus = 2 
                 WHERE id = ?
             `
-            const upda_orde = await util.gene_cons(lcSQL, ['PRUEBA', req.userId, encabezado.id_orde_comp])
-            return res.json({"status" : "success", "message": "La orden se genero con el folio: "})
-
+            const lcFoli_orde = campus_proy[0].campus+'-'+String(laID[0][0].nextid).padStart(4, '0')+'-' + new Date().getFullYear()
+            const upda_orde = await util.gene_cons(lcSQL, [lcFoli_orde, req.userId, encabezado.id_orde_comp])
+            return res.json({"status" : "success", "message": "La orden se genero con el folio: " + lcFoli_orde})
         }
         
         return res.json({"status" : "success", "message": "El registro se actualizo exitosamente, recuerda que aun no se generas la orden"})
@@ -210,11 +237,6 @@ const fin_impr_oc = (async (req,res) => {
     {
         return res.render("sin_derecho")
     }
-
-    let lcArchivo = path.join(__dirname, "..", "pdf/fondo-oc.jpg")
-    const llArchivo = await other_utils.exit_arch(lcArchivo)
-    let lcArchivoR = path.join(__dirname, "..", "pdf/fondo-ocr.jpg")
-    const llArchivoR = await other_utils.exit_arch(lcArchivoR)
 
     const formatoMoneda = new Intl.NumberFormat('es-MX', {
         style: 'currency',
@@ -234,12 +256,18 @@ const fin_impr_oc = (async (req,res) => {
     SELECT o.id, o.foli_orde, o.tipo_orde, o.fech_emis, o.proyecto, o.rfc, o.proveedor, o.domi_prov, o.nomb_depe, o.tele_depe, o.ures_depe, o.domi_depe, 
 					o.tele_prov, o.corr_prov, DATE_FORMAT(o.fech_entr, '%d/%m/%Y') as fech_entr, o.luga_entr, o.forma_pago, o.porc_anti, o.nume_parc, 
                     DATE_FORMAT(o.fech_inic, '%d/%m/%Y') as fech_inic, DATE_FORMAT(o.fech_fin, '%d/%m/%Y') as fech_fin, DATE_FORMAT(o.fech_crea, '%d/%m/%Y') as fech_crea,
-					o.subtotal, o.iva_total, o.total, o.observaciones, o.estatus, p.fondo, p.nombre AS nomb_proy, p.tipo_proy
+					o.subtotal, o.iva_total, o.total, o.observaciones, o.estatus, p.fondo, p.nombre AS nomb_proy, p.tipo_proy, p.programa
         FROM fin_orde_comp o INNER JOIN fin_proyecto p on o.proyecto = p.proyecto
             LEFT join gen_centros c ON p.id_cent = c.id_cent
         WHERE o.id = ?
     `
     const datos = await util.gene_cons(lcSQL, [req.query.id])
+
+    let lcArchivo = path.join(__dirname, "..",  `pdf/fondo-o${(datos[0].tipo_orde==1?'c':'s')}.png`)
+    const llArchivo = await other_utils.exit_arch(lcArchivo)
+    let lcArchivoR = path.join(__dirname, "..", "pdf/fondo-ocr.png")
+    const llArchivoR = await other_utils.exit_arch(lcArchivoR)
+
 
     lcSQL = `
     SELECT unidad, articulo, cantidad, cost_unit, cantidad*cost_unit AS total
@@ -255,13 +283,24 @@ const fin_impr_oc = (async (req,res) => {
 
     // 2. Mapeamos los datos y formateamos los números
     detalle.forEach(item => {
-        tablaPDF.push([
-            item.unidad,
-            item.articulo,
-            `${formatoMillares.format(item.cantidad)}`,
-            `${formatoMoneda.format(item.cost_unit)}`,
-            `${formatoMoneda.format(item.total)}`
-        ]);
+        if(datos[0].tipo_orde == 1){                    //si es orden de compra agrega la unidad
+            tablaPDF.push([
+                item.unidad,
+                item.articulo,
+                `${formatoMillares.format(item.cantidad)}`,
+                `${formatoMoneda.format(item.cost_unit)}`,
+                `${formatoMoneda.format(item.total)}`
+            ]);
+        }
+        else {
+            tablaPDF.push([
+                item.articulo,
+                `${formatoMillares.format(item.cantidad)}`,
+                `${formatoMoneda.format(item.cost_unit)}`,
+                `${formatoMoneda.format(item.total)}`
+            ]);
+
+        }
     });
 
 //console.log(tablaPDF)
@@ -301,19 +340,19 @@ const fin_impr_oc = (async (req,res) => {
         doc.font("Helvetica").fontSize(8)
         doc.text(`${(!datos[0].foli_orde?'':datos[0].foli_orde)}`, 470, 23, {width: 110, align: 'center'});
         doc.text(`${d}             ${m}             ${a}`, 470, 47, {width: 110, align: 'center'});
-        doc.text(`${datos[0].proyecto}`, 520, 83, {width: 60, align: 'center'});
-        doc.text(`${datos[0].fondo}`, 520, 94, {width: 60, align: 'center'});
-        doc.text(`${datos[0].tipo_proy}`, 520, 105, {width: 60, align: 'center'});
-        doc.fontSize(10).text(`${datos[0].nomb_depe}`, 165, 82, {width: 280, align: 'center'});
-        doc.fontSize(8).text(`${datos[0].ures_depe}`, 143, 131, {width: 95, align: 'center'});
-        doc.text(`${datos[0].nomb_depe}`, 240, 131, {width: 340, align: 'center'});
-        doc.text(`${datos[0].tele_depe}`, 143, 152, {width: 95, align: 'center'});
-        doc.text(`${datos[0].domi_depe}`, 240, 152, {width: 340, align: 'center'});
-        doc.text(`${datos[0].domi_prov}`, 32, 178, {width: 207, align: 'left'});
-        doc.text(`${datos[0].proveedor}`, 237, 178, {width: 342, align: 'center'});
-        doc.text(`${datos[0].rfc}`, 237, 199, {width: 95, align: 'center'});
-        doc.text(`${datos[0].corr_prov}`, 335, 199, {width: 130, align: 'center'});
-        doc.text(`${datos[0].tele_prov}`, 465, 199, {width: 115, align: 'center'});
+        doc.text(`${(!datos[0].proyecto?'':datos[0].proyecto)}`, 520, 83, {width: 60, align: 'center'});
+        doc.text(`${(!datos[0].fondo?'':datos[0].fondo)}`, 520, 94, {width: 60, align: 'center'});
+        doc.fontSize((datos[0].programa.length>10?6:8)).text(`${(!datos[0].programa?'':datos[0].programa)}`, 520, 105, {width: 60, align: 'center'});
+        doc.fontSize((datos[0].nomb_depe.length > 40?8:10)).text(`${(!datos[0].nomb_depe?'':datos[0].nomb_depe)}`, 165, 82, {width: 280, align: 'center'});
+        doc.fontSize(8).text(`${(!datos[0].ures_depe?'':datos[0].ures_depe)}`, 143, 131, {width: 95, align: 'center'});
+        doc.text(`${(!datos[0].nomb_depe?'':datos[0].nomb_depe)}`, 240, 131, {width: 340, align: 'center'});
+        doc.text(`${(!datos[0].tele_depe?'':datos[0].tele_depe)}`, 143, 152, {width: 95, align: 'center'});
+        doc.text(`${(!datos[0].domi_depe?'':datos[0].domi_depe)}`, 240, 152, {width: 340, align: 'center'});
+        doc.text(`${(!datos[0].domi_prov?'':datos[0].domi_prov)}`, 32, 178, {width: 207, align: 'left'});
+        doc.text(`${(!datos[0].proveedor?'':datos[0].proveedor)}`, 237, 178, {width: 342, align: 'center'});
+        doc.text(`${(!datos[0].rfc?'':datos[0].rfc)}`, 237, 199, {width: 95, align: 'center'});
+        doc.text(`${(!datos[0].corr_prov?'':datos[0].corr_prov)}`, 335, 199, {width: 130, align: 'center'});
+        doc.text(`${(!datos[0].tele_prov?'':datos[0].tele_prov)}`, 465, 199, {width: 115, align: 'center'});
 
         doc.options.autoFirstPage = false; // Opcional, dependiendo de tu versión
         // La propiedad clave es esta:
@@ -325,19 +364,29 @@ const fin_impr_oc = (async (req,res) => {
         doc.text(`${formatoMoneda.format(datos[0].iva_total)}`, 506, 546, {width: 73, align: 'right'});
         doc.text(`${formatoMoneda.format(datos[0].total)}`, 506, 560, {width: 73, align: 'right'});
 
-        doc.text(`${datos[0].fech_entr}`, 100, 587, {width: 135, align: 'center'});
-        doc.text(`${datos[0].luga_entr}`, 310, 587, {width: 195, align: 'left'});
-        doc.text(`X`, 118, 598, {width: 195, align: 'left'});
-        doc.text(`X`, 118, 607, {width: 195, align: 'left'});
-        doc.text(`PAGO`, 152, 598, {width: 155, align: 'center'});
-        doc.text(`PAGO`, 210, 607, {width: 30, align: 'center'});
-        doc.text(`PAGO`, 330, 607, {width: 175, align: 'center'});
-        doc.text(`X`, 569, 598, {width: 195, align: 'left'});
-        doc.text(`X`, 569, 607, {width: 195, align: 'left'});
+        if(datos[0].tipo_orde == 1){
+            doc.text(`${datos[0].fech_entr}`, 100, 587, {width: 135, align: 'center'});
+            doc.text(`${datos[0].luga_entr}`, 310, 587, {width: 195, align: 'left'});
+            doc.text(`${(!datos[0].porc_anti?'':datos[0].porc_anti+'%')}`, 330, 607, {width: 175, align: 'center'});
+        }
+        else {
+            doc.fontSize(6).text(`${datos[0].luga_entr}`, 157, 587, {width: 198, align: 'left'});
+            doc.fontSize(8).text(`${(!datos[0].porc_anti?'':datos[0].porc_anti+'%')}`, 331, 607, {width: 25, align: 'center'});
+            doc.text(`${datos[0].fech_inic}`, 440, 597, {width: 63, align: 'center'});
+            doc.text(`${datos[0].fech_fin}`, 440, 607, {width: 63, align: 'center'});
+        }
+        doc.text(`${(datos[0].forma_pago == 1 ? 'X':'')}`, 118, 598, {width: 195, align: 'left'});
+        doc.text(`${(datos[0].forma_pago == 1 ? '':'X')}`, 118, 607, {width: 195, align: 'left'});
+        doc.text(`${datos[0].fech_entr}`, 152, 597, {width: 155, align: 'center'});
+        doc.text(`${(datos[0].forma_pago ==1?'':datos[0].nume_parc)}`, 210, 607, {width: 30, align: 'center'});
+        
+        doc.text(`${(datos[0].porc_anti ? 'X':'')}`, 569, 598, {width: 195, align: 'left'});
+        doc.text(`${(!datos[0].porc_anti ? 'X':'')}`, 569, 607, {width: 195, align: 'left'});
         doc.text(`${datos[0].observaciones}`, 35, 624, {width: 540, align: 'left'});
         doc.text(`${datos[0].observaciones}`, 30, 727, {width: 127, align: 'left'});
         doc.text(`${datos[0].observaciones}`, 170, 747, {width: 127, align: 'left'});
         doc.text(`${datos[0].observaciones}`, 312, 747, {width: 130, align: 'left'});
+        doc.fontSize(9);
 
         // Si vas a seguir agregando contenido después, recuerda restaurar el margen
 
@@ -366,8 +415,8 @@ const fin_impr_oc = (async (req,res) => {
     doc.text(`${d}             ${m}             ${a}`, 470, 47, {width: 110, align: 'center'});
     doc.text(`${(!datos[0].proyecto?'':datos[0].proyecto)}`, 520, 83, {width: 60, align: 'center'});
     doc.text(`${(!datos[0].fondo?'':datos[0].fondo)}`, 520, 94, {width: 60, align: 'center'});
-    doc.text(`${(!datos[0].tipo_proy?'':datos[0].tipo_proy)}`, 520, 105, {width: 60, align: 'center'});
-    doc.fontSize(10).text(`${(!datos[0].nomb_depe?'':datos[0].nomb_depe)}`, 165, 82, {width: 280, align: 'center'});
+    doc.fontSize((datos[0].programa.length>10?6:8)).text(`${(!datos[0].programa?'':datos[0].programa)}`, 520, 105, {width: 60, align: 'center'});
+    doc.fontSize((datos[0].nomb_depe.length > 40?8:10)).text(`${(!datos[0].nomb_depe?'':datos[0].nomb_depe)}`, 165, 82, {width: 280, align: 'center'});
     doc.fontSize(8).text(`${(!datos[0].ures_depe?'':datos[0].ures_depe)}`, 143, 131, {width: 95, align: 'center'});
     doc.text(`${(!datos[0].nomb_depe?'':datos[0].nomb_depe)}`, 240, 131, {width: 340, align: 'center'});
     doc.text(`${(!datos[0].tele_depe?'':datos[0].tele_depe)}`, 143, 152, {width: 95, align: 'center'});
@@ -388,13 +437,22 @@ const fin_impr_oc = (async (req,res) => {
     doc.text(`${formatoMoneda.format(datos[0].iva_total)}`, 506, 546, {width: 73, align: 'right'});
     doc.text(`${formatoMoneda.format(datos[0].total)}`, 506, 560, {width: 73, align: 'right'});
 
-    doc.text(`${datos[0].fech_entr}`, 100, 587, {width: 135, align: 'center'});
-    doc.text(`${datos[0].luga_entr}`, 310, 587, {width: 195, align: 'left'});
+    if(datos[0].tipo_orde == 1){
+        doc.text(`${datos[0].fech_entr}`, 100, 587, {width: 135, align: 'center'});
+        doc.text(`${datos[0].luga_entr}`, 310, 587, {width: 195, align: 'left'});
+        doc.text(`${(!datos[0].porc_anti?'':datos[0].porc_anti+'%')}`, 330, 607, {width: 175, align: 'center'});
+    }
+    else {
+        doc.fontSize(6).text(`${datos[0].luga_entr}`, 157, 587, {width: 198, align: 'left'});
+        doc.fontSize(8).text(`${(!datos[0].porc_anti?'':datos[0].porc_anti+'%')}`, 331, 607, {width: 25, align: 'center'});
+        doc.text(`${datos[0].fech_inic}`, 440, 597, {width: 63, align: 'center'});
+        doc.text(`${datos[0].fech_fin}`, 440, 607, {width: 63, align: 'center'});
+    }
     doc.text(`${(datos[0].forma_pago == 1 ? 'X':'')}`, 118, 598, {width: 195, align: 'left'});
     doc.text(`${(datos[0].forma_pago == 1 ? '':'X')}`, 118, 607, {width: 195, align: 'left'});
-    doc.text(`PAGO`, 152, 598, {width: 155, align: 'center'});
+    doc.text(`${datos[0].fech_entr}`, 152, 597, {width: 155, align: 'center'});
     doc.text(`${(datos[0].forma_pago ==1?'':datos[0].nume_parc)}`, 210, 607, {width: 30, align: 'center'});
-    doc.text(`${(!datos[0].porc_anti?'':datos[0].porc_anti)}`, 330, 607, {width: 175, align: 'center'});
+    
     doc.text(`${(datos[0].porc_anti ? 'X':'')}`, 569, 598, {width: 195, align: 'left'});
     doc.text(`${(!datos[0].porc_anti ? 'X':'')}`, 569, 607, {width: 195, align: 'left'});
     doc.text(`${datos[0].observaciones}`, 35, 624, {width: 540, align: 'left'});
@@ -404,8 +462,8 @@ const fin_impr_oc = (async (req,res) => {
 
     // Si vas a seguir agregando contenido después, recuerda restaurar el margen
 
-/*      doc.lineJoin('round')
-    .rect(506, 540, 73, 15)
+    /*doc.lineJoin('round')
+    .rect(157, 587, 198, 15)
     .fillAndStroke("#f1f4ff", "#000000"); */
 
     doc.page.margins.bottom = 260;
@@ -414,11 +472,20 @@ const fin_impr_oc = (async (req,res) => {
     doc.fontSize(9)
     doc.y = 245;
     doc.x = 30;
-    doc.table({
-    columnStyles: [{ width: 46, align: 'center' }, { width: 307, align: 'left' }, { width: 51, align: 'center' }, { width: 72, align: 'right' }, { width: 75, align: 'right' }],
-    rowStyles: { border: false},
-    data: tablaPDF,
-    })
+    if(datos[0].tipo_orde == 1){
+        doc.table({
+        columnStyles: [{ width: 46, align: 'center' }, { width: 307, align: 'left' }, { width: 51, align: 'center' }, { width: 72, align: 'right' }, { width: 75, align: 'right' }],
+        rowStyles: { border: false},
+        data: tablaPDF,
+        });
+    }
+    else {
+        doc.table({
+        columnStyles: [{ width: 353, align: 'left' }, { width: 51, align: 'center' }, { width: 72, align: 'right' }, { width: 75, align: 'right' }],
+        rowStyles: { border: false},
+        data: tablaPDF,
+        });
+    }
 
     doc.addPage();
 
