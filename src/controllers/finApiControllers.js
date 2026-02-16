@@ -6,6 +6,7 @@ const util = require(path.join(__dirname, "..", "utils/busquedaUtils"));
 const other_utils = require(path.join(__dirname, "..", "utils/other_utils"));
 const oplantilla = require(path.join(__dirname, "..", "utils/plantilla_pdf"));
 const PDFDocument = require("pdfkit");
+const { PDFDocument: PDFDocument2, rgb } = require('pdf-lib');
 const fs = require('fs');
 const { cacheUsuarios } = require("../middlewares/authjwt");
 
@@ -63,24 +64,47 @@ const fin_norde_compx = (async (req,res) => {
 
     const encabezado = JSON.parse(req.body.encabezado)
     const detalle = JSON.parse(req.body.detalles)
-    let insertD = []
+    console.log(req.body.generar)
+    if (req.body.generar){
 
-    console.log(detalle)
+        if (encabezado.tipo_orde || !encabezado.fech_emis || !encabezado.proyecto || !encabezado.rfc || !encabezado.proveedor ||
+            !encabezado.domi_prov || !encabezado.tele_prov || !encabezado.corr_prov, !encabezado.fech_entr || !encabezado.luga_entr ||
+            !encabezado.forma_pago || !encabezado.ures_depe || !encabezado.nomb_depe || !encabezado.tele_depe || !encabezado.domi_depe)
+        {
+
+            return res.json({"status" : "error", "message": "Falta campos requeridos para la orden de compra"})
+        }
+
+        if (encabezado.tipo_orde == 2 && (!encabezado.fech_inic || !encabezado.fech_fin)){
+            return res.json({"status" : "error", "message": "Al ser orden de servicio debe tener fecha inicio y fin del servicio"})
+        }
+        
+        if (encabezado.forma_pago == 2 && !encabezado.nume_parc){
+            return res.json({"status" : "error", "message": "Faltan el total de parcialidades"})
+        }
+    }
+    
+    let insertD = [], lnSubtodal = 0, lnIVA = 0, lnTotal = 0, llError_arti = false;
+
+    //console.log(detalle)
 
     if (!encabezado.id_orde_comp || encabezado.id_orde_comp <= 0){
         lcSQL = `
         INSERT INTO fin_orde_comp (tipo_orde, fech_emis, proyecto, rfc, proveedor, domi_prov, tele_prov, corr_prov, fech_entr, luga_entr, forma_pago,
-	            porc_anti, fech_inic, fech_fin, nume_parc, subtotal, iva_total, total, observaciones, estatus, fech_crea, cambios) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, ?, 0, NOW(), CONCAT(?,'|INSERT|',NOW(),CHR(13)))
+	            porc_anti, fech_inic, fech_fin, nume_parc, subtotal, iva_total, total, observaciones, estatus, fech_crea, cambios, ures_depe, nomb_depe, 
+                tele_depe, domi_depe, usua_crea, subtotal, iva_total, total) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, ?, 0, NOW(), CONCAT(?,'|INSERT|',NOW(),CHR(13)), ?, ?, ?, ?, ?)
         `
         const laSend = [(!encabezado.tipo_orde?null:encabezado.tipo_orde), (!encabezado.fech_emis?null:encabezado.fech_emis), (!encabezado.proyecto?null:encabezado.proyecto), 
                             encabezado.rfc, encabezado.proveedor, encabezado.domi_prov, encabezado.tele_prov, encabezado.corr_prov, (!encabezado.fech_entr?null:encabezado.fech_entr), 
                             encabezado.luga_entr, (!encabezado.forma_pago?null:encabezado.forma_pago), (!encabezado.porc_anti?null:encabezado.porc_anti), (!encabezado.fech_inic?null:encabezado.fech_inic), 
-                            (!encabezado.fech_fin?null:encabezado.fech_fin), (!encabezado.nume_parc?null:encabezado.nume_parc), encabezado.observaciones, req.userId]
+                            (!encabezado.fech_fin?null:encabezado.fech_fin), (!encabezado.nume_parc?null:encabezado.nume_parc), encabezado.observaciones, req.userId,
+                            encabezado.ures_depe, encabezado.nomb_depe, encabezado.tele_depe, encabezado.domi_depe, req.userId, lnSubtodal, lnIVA, lnTotal
+                        ]
 
         const insert = await util.gene_cons(lcSQL, laSend)
         
-        console.log(insert.insertId)
+        //console.log(insert.insertId)
 
         for(i=0;i<detalle.length;i++){
 
@@ -88,42 +112,96 @@ const fin_norde_compx = (async (req,res) => {
             INSERT INTO fin_dorde_comp (id_orde_comp, articulo, cantidad, unidad, cost_unit, tasa_iva) VALUES (?, ?, ?, ?, ?, ?)
             `
             insertD = await util.gene_cons(lcSQL, [insert.insertId, detalle[i].articulo, detalle[i].cantidad, detalle[i].unidad, detalle[i].cost_unit, detalle[i].tasa_iva])
+
+            lnSubtodal  += detalle[i].cantidad*detalle[i].cost_unit
+            lnIVA       += (detalle[i].cantidad*detalle[i].cost_unit)*(detalle[i].tasa_iva/100)
+            lnTotal     += (detalle[i].cantidad*detalle[i].cost_unit)*(1+(detalle[i].tasa_iva/100))
+            if(detalle[i].cantidad <= 0 || detalle[i].cost_unit <= 0){
+                llError_arti = true
+            }
+        }
+
+        if (lnSubtodal > 0 || lnIVA > 0 || lnTotal > 0){
+            lcSQL = `
+            UPDATE fin_orde_comp 
+                SET subtotal = ?, iva_total = ?, total = ? 
+                WHERE id = ?
+            `
+            const upda_mont = await util.gene_cons(lcSQL, [(!lnSubtodal?0:lnSubtodal), (!lnIVA?0:lnIVA), (!lnTotal?0:lnTotal), insert.insertId])
+        }
+
+        if (req.body.generar){
+            if (llError_arti){
+                return res.json({"status" : "error", "message": "Se econtraron artículos con costo o cantidad menor o igual a cero"})
+            }
+
+            lcSQL = `
+            UPDATE fin_orde_comp 
+                SET foli_orde = ?, usua_gene = ?, fech_gene = NOW() 
+                WHERE id = ?
+            `
+            const upda_orde = await util.gene_cons(lcSQL, ['PRUEBA', req.userId, insert.insertId])
+            return res.json({"status" : "success", "message": "La orden se genero con el folio: ", id:insert.insertId})
         }
 
         return res.json({"status" : "success", "message": "La orden se guardo exitosamente, recuerda que aun no se genera", id:insert.insertId})
 
     }
-
-    if(encabezado.id_orde_comp > 0){
-        lcSQL = `
-        UPDATE fin_orde_comp  SET tipo_orde = ?, fech_emis = ?, proyecto = ?, rfc = ?, proveedor = ?, domi_prov = ?, tele_prov = ?, corr_prov = ?, 
-                fech_entr = ?, luga_entr = ?, forma_pago = ?, porc_anti = ?, fech_inic = ?, fech_fin = ?, nume_parc = ?, subtotal = 0, iva_total = 0, total = 0, 
-                observaciones = ?, cambios = CONCAT(IFNULL(cambios,''), ?,'|UPDATE|',NOW(),CHR(13)) 
-            WHERE id = ?
-        `
-        const laSend = [(!encabezado.tipo_orde?null:encabezado.tipo_orde), (!encabezado.fech_emis?null:encabezado.fech_emis), (!encabezado.proyecto?null:encabezado.proyecto), 
-                            encabezado.rfc, encabezado.proveedor, encabezado.domi_prov, encabezado.tele_prov, encabezado.corr_prov, (!encabezado.fech_entr?null:encabezado.fech_entr), 
-                            encabezado.luga_entr, (!encabezado.forma_pago?null:encabezado.forma_pago), (!encabezado.porc_anti?null:encabezado.porc_anti), (!encabezado.fech_inic?null:encabezado.fech_inic), 
-                            (!encabezado.fech_fin?null:encabezado.fech_fin), (!encabezado.nume_parc?null:encabezado.nume_parc), encabezado.observaciones, req.userId, encabezado.id_orde_comp]
-
-        const update = await util.gene_cons(lcSQL, laSend)
+    else{
 
         const deleted = await util.gene_cons("DELETE FROM fin_dorde_comp WHERE id_orde_comp = ?", [encabezado.id_orde_comp])
-        
+
         for(i=0;i<detalle.length;i++){
 
             lcSQL = `
             INSERT INTO fin_dorde_comp (id_orde_comp, articulo, cantidad, unidad, cost_unit, tasa_iva) VALUES (?, ?, ?, ?, ?, ?)
             `
             insertD = await util.gene_cons(lcSQL, [encabezado.id_orde_comp, detalle[i].articulo, detalle[i].cantidad, detalle[i].unidad, detalle[i].cost_unit, detalle[i].tasa_iva])
+
+            lnSubtodal  += detalle[i].cantidad*detalle[i].cost_unit
+            lnIVA       += (detalle[i].cantidad*detalle[i].cost_unit)*(detalle[i].tasa_iva/100)
+            lnTotal     += (detalle[i].cantidad*detalle[i].cost_unit)*(1+(detalle[i].tasa_iva/100))
+            
+            if(detalle[i].cantidad <= 0 || detalle[i].cost_unit <= 0){
+                llError_arti = true
+            }
         }
 
+        //console.log(encabezado)
+        lcSQL = `
+        UPDATE fin_orde_comp  SET tipo_orde = ?, fech_emis = ?, proyecto = ?, rfc = ?, proveedor = ?, domi_prov = ?, tele_prov = ?, corr_prov = ?, 
+                fech_entr = ?, luga_entr = ?, forma_pago = ?, porc_anti = ?, fech_inic = ?, fech_fin = ?, nume_parc = ?, subtotal = 0, iva_total = 0, total = 0, 
+                observaciones = ?, ures_depe = ?, nomb_depe = ?, tele_depe = ?, domi_depe = ?, subtotal = ?, iva_total = ?, total = ?, cambios = CONCAT(IFNULL(cambios,''), ?,'|UPDATE|',NOW(),CHR(13)) 
+            WHERE id = ?
+        `
+        const laSend = [(!encabezado.tipo_orde?null:encabezado.tipo_orde), (!encabezado.fech_emis?null:encabezado.fech_emis), (!encabezado.proyecto?null:encabezado.proyecto), 
+                            encabezado.rfc, encabezado.proveedor, encabezado.domi_prov, encabezado.tele_prov, encabezado.corr_prov, (!encabezado.fech_entr?null:encabezado.fech_entr), 
+                            encabezado.luga_entr, (!encabezado.forma_pago?null:encabezado.forma_pago), (!encabezado.porc_anti?null:encabezado.porc_anti), (!encabezado.fech_inic?null:encabezado.fech_inic), 
+                            (!encabezado.fech_fin?null:encabezado.fech_fin), (!encabezado.nume_parc?null:encabezado.nume_parc), encabezado.observaciones,  encabezado.ures_depe, encabezado.nomb_depe,
+                            encabezado.tele_depe, encabezado.domi_depe, (!lnSubtodal?0:lnSubtodal), (!lnIVA?0:lnIVA), (!lnTotal?0:lnTotal), req.userId, encabezado.id_orde_comp]
 
+        const update = await util.gene_cons(lcSQL, laSend)
+
+        if (req.body.generar){
+            if (llError_arti){
+                return res.json({"status" : "error", "message": "Se econtraron artículos con costo o cantidad menor o igual a cero"})
+            }
+
+            lcSQL = `
+            UPDATE fin_orde_comp 
+                SET foli_orde = ?, usua_gene = ?, fech_gene = NOW() 
+                WHERE id = ?
+            `
+            const upda_orde = await util.gene_cons(lcSQL, ['PRUEBA', req.userId, encabezado.id_orde_comp])
+            return res.json({"status" : "success", "message": "La orden se genero con el folio: "})
+
+        }
+        
         return res.json({"status" : "success", "message": "El registro se actualizo exitosamente, recuerda que aun no se generas la orden"})
     }
-
-    
 });
+
+
 
 
 const fin_impr_oc = (async (req,res) => {
@@ -138,6 +216,20 @@ const fin_impr_oc = (async (req,res) => {
     let lcArchivoR = path.join(__dirname, "..", "pdf/fondo-ocr.jpg")
     const llArchivoR = await other_utils.exit_arch(lcArchivoR)
 
+    const formatoMoneda = new Intl.NumberFormat('es-MX', {
+        style: 'currency',
+        currency: 'MXN', // Peso Mexicano
+        minimumFractionDigits: 2
+    });
+
+    const formatoMillares = new Intl.NumberFormat('es-MX', {
+        style: 'decimal',
+        useGrouping: true,      // Asegura que separe los miles
+        minimumFractionDigits: 0, // No pone decimales si no los hay
+        maximumFractionDigits: 0  // Fuerza a que no existan decimales
+    });
+
+
     let lcSQL = `
     SELECT o.id, o.foli_orde, o.tipo_orde, o.fech_emis, o.proyecto, o.rfc, o.proveedor, o.domi_prov, o.nomb_depe, o.tele_depe, o.ures_depe, o.domi_depe, 
 					o.tele_prov, o.corr_prov, DATE_FORMAT(o.fech_entr, '%d/%m/%Y') as fech_entr, o.luga_entr, o.forma_pago, o.porc_anti, o.nume_parc, 
@@ -150,13 +242,39 @@ const fin_impr_oc = (async (req,res) => {
     const datos = await util.gene_cons(lcSQL, [req.query.id])
 
     lcSQL = `
-    SELECT 
+    SELECT unidad, articulo, cantidad, cost_unit, cantidad*cost_unit AS total
+        FROM fin_dorde_comp
+        WHERE id_orde_comp = ?
     `
+    const detalle = await util.gene_cons(lcSQL, [req.query.id])
+
+    //console.log(detalle)
+
+    // 1. Definimos los encabezados
+    let tablaPDF = [];
+
+    // 2. Mapeamos los datos y formateamos los números
+    detalle.forEach(item => {
+        tablaPDF.push([
+            item.unidad,
+            item.articulo,
+            `${formatoMillares.format(item.cantidad)}`,
+            `${formatoMoneda.format(item.cost_unit)}`,
+            `${formatoMoneda.format(item.total)}`
+        ]);
+    });
+
+//console.log(tablaPDF)
 
     const doc = new PDFDocument({ size: 'letter', bufferPages: true, margins: {top: 245, bottom: 260, left: 0,right: 0}});
     
-    //doc.pipe(fs.createWriteStream('prueba.pdf')); // write to PDF
-    doc.pipe(res);                                       // HTTP response
+/*     //doc.pipe(fs.createWriteStream('prueba.pdf')); // write to PDF
+    doc.pipe(res);                                       // HTTP response */
+
+    let chunks = [];
+    doc.on('data', (chunk) => {
+        chunks.push(chunk);
+    });
 
     let d = "", m = "", a = ""
 
@@ -165,12 +283,6 @@ const fin_impr_oc = (async (req,res) => {
         m = String(datos[0].fech_emis.getMonth() + 1).padStart(2, '0'); // +1 porque enero es 0
         a = datos[0].fech_emis.getFullYear();
     }
-
-    const formatoMoneda = new Intl.NumberFormat('es-MX', {
-        style: 'currency',
-        currency: 'MXN', // Peso Mexicano
-        minimumFractionDigits: 2
-    });
 
 
     // EVENTO CLAVE: Se ejecuta cada vez que se crea una página
@@ -244,7 +356,6 @@ const fin_impr_oc = (async (req,res) => {
             doc.addPage();
         }
     });
-
     
     if (llArchivo){
         doc.image(lcArchivo, 0, 0, {width: 610});
@@ -253,19 +364,19 @@ const fin_impr_oc = (async (req,res) => {
     doc.font("Helvetica").fontSize(8)
     doc.text(`${(!datos[0].foli_orde?'':datos[0].foli_orde)}`, 470, 23, {width: 110, align: 'center'});
     doc.text(`${d}             ${m}             ${a}`, 470, 47, {width: 110, align: 'center'});
-    doc.text(`${datos[0].proyecto}`, 520, 83, {width: 60, align: 'center'});
-    doc.text(`${datos[0].fondo}`, 520, 94, {width: 60, align: 'center'});
-    doc.text(`${datos[0].tipo_proy}`, 520, 105, {width: 60, align: 'center'});
-    doc.fontSize(10).text(`${datos[0].nomb_depe}`, 165, 82, {width: 280, align: 'center'});
-    doc.fontSize(8).text(`${datos[0].ures_depe}`, 143, 131, {width: 95, align: 'center'});
-    doc.text(`${datos[0].nomb_depe}`, 240, 131, {width: 340, align: 'center'});
-    doc.text(`${datos[0].tele_depe}`, 143, 152, {width: 95, align: 'center'});
-    doc.text(`${datos[0].domi_depe}`, 240, 152, {width: 340, align: 'center'});
-    doc.text(`${datos[0].domi_prov}`, 32, 178, {width: 207, align: 'left'});
-    doc.text(`${datos[0].proveedor}`, 237, 178, {width: 342, align: 'center'});
-    doc.text(`${datos[0].rfc}`, 237, 199, {width: 95, align: 'center'});
-    doc.text(`${datos[0].corr_prov}`, 335, 199, {width: 130, align: 'center'});
-    doc.text(`${datos[0].tele_prov}`, 465, 199, {width: 115, align: 'center'});
+    doc.text(`${(!datos[0].proyecto?'':datos[0].proyecto)}`, 520, 83, {width: 60, align: 'center'});
+    doc.text(`${(!datos[0].fondo?'':datos[0].fondo)}`, 520, 94, {width: 60, align: 'center'});
+    doc.text(`${(!datos[0].tipo_proy?'':datos[0].tipo_proy)}`, 520, 105, {width: 60, align: 'center'});
+    doc.fontSize(10).text(`${(!datos[0].nomb_depe?'':datos[0].nomb_depe)}`, 165, 82, {width: 280, align: 'center'});
+    doc.fontSize(8).text(`${(!datos[0].ures_depe?'':datos[0].ures_depe)}`, 143, 131, {width: 95, align: 'center'});
+    doc.text(`${(!datos[0].nomb_depe?'':datos[0].nomb_depe)}`, 240, 131, {width: 340, align: 'center'});
+    doc.text(`${(!datos[0].tele_depe?'':datos[0].tele_depe)}`, 143, 152, {width: 95, align: 'center'});
+    doc.text(`${(!datos[0].domi_depe?'':datos[0].domi_depe)}`, 240, 152, {width: 340, align: 'center'});
+    doc.text(`${(!datos[0].domi_prov?'':datos[0].domi_prov)}`, 32, 178, {width: 207, align: 'left'});
+    doc.text(`${(!datos[0].proveedor?'':datos[0].proveedor)}`, 237, 178, {width: 342, align: 'center'});
+    doc.text(`${(!datos[0].rfc?'':datos[0].rfc)}`, 237, 199, {width: 95, align: 'center'});
+    doc.text(`${(!datos[0].corr_prov?'':datos[0].corr_prov)}`, 335, 199, {width: 130, align: 'center'});
+    doc.text(`${(!datos[0].tele_prov?'':datos[0].tele_prov)}`, 465, 199, {width: 115, align: 'center'});
 
     doc.options.autoFirstPage = false; // Opcional, dependiendo de tu versión
     // La propiedad clave es esta:
@@ -279,13 +390,13 @@ const fin_impr_oc = (async (req,res) => {
 
     doc.text(`${datos[0].fech_entr}`, 100, 587, {width: 135, align: 'center'});
     doc.text(`${datos[0].luga_entr}`, 310, 587, {width: 195, align: 'left'});
-    doc.text(`X`, 118, 598, {width: 195, align: 'left'});
-    doc.text(`X`, 118, 607, {width: 195, align: 'left'});
+    doc.text(`${(datos[0].forma_pago == 1 ? 'X':'')}`, 118, 598, {width: 195, align: 'left'});
+    doc.text(`${(datos[0].forma_pago == 1 ? '':'X')}`, 118, 607, {width: 195, align: 'left'});
     doc.text(`PAGO`, 152, 598, {width: 155, align: 'center'});
-    doc.text(`PAGO`, 210, 607, {width: 30, align: 'center'});
-    doc.text(`PAGO`, 330, 607, {width: 175, align: 'center'});
-    doc.text(`X`, 569, 598, {width: 195, align: 'left'});
-    doc.text(`X`, 569, 607, {width: 195, align: 'left'});
+    doc.text(`${(datos[0].forma_pago ==1?'':datos[0].nume_parc)}`, 210, 607, {width: 30, align: 'center'});
+    doc.text(`${(!datos[0].porc_anti?'':datos[0].porc_anti)}`, 330, 607, {width: 175, align: 'center'});
+    doc.text(`${(datos[0].porc_anti ? 'X':'')}`, 569, 598, {width: 195, align: 'left'});
+    doc.text(`${(!datos[0].porc_anti ? 'X':'')}`, 569, 607, {width: 195, align: 'left'});
     doc.text(`${datos[0].observaciones}`, 35, 624, {width: 540, align: 'left'});
     doc.text(`${datos[0].observaciones}`, 30, 727, {width: 127, align: 'left'});
     doc.text(`${datos[0].observaciones}`, 170, 747, {width: 127, align: 'left'});
@@ -306,58 +417,12 @@ const fin_impr_oc = (async (req,res) => {
     doc.table({
     columnStyles: [{ width: 46, align: 'center' }, { width: 307, align: 'left' }, { width: 51, align: 'center' }, { width: 72, align: 'right' }, { width: 75, align: 'right' }],
     rowStyles: { border: false},
-    data: [
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-        ["KG", "Sample value 2 fasdf asdf asf asd fasd fasdf s", "10", "5,000.00", "50,000.00"],
-
-      ],
+    data: tablaPDF,
     })
 
-    const range = doc.bufferedPageRange(); // { start: 0, count: 3 }
+    doc.addPage();
+
+/*     const range = doc.bufferedPageRange(); // { start: 0, count: 3 }
 
     for (let i = range.start; i < (range.start + range.count); i++) {
         // Nos movemos a la página i
@@ -376,9 +441,9 @@ const fin_impr_oc = (async (req,res) => {
             { align: 'right', width: 100 }
         );
         }
-    }
+    } */
 
-    const leyendas = ["ORIGINAL", "COPIA DEPENDENCIA", "COPIA PROVEEDOR"];
+    /* const leyendas = ["ORIGINAL", "COPIA DEPENDENCIA", "COPIA PROVEEDOR"];
 
     // 3. Iteramos para crear las copias
     leyendas.forEach(leyenda => {
@@ -390,6 +455,70 @@ const fin_impr_oc = (async (req,res) => {
             // PDFKit no tiene un 'clonePage', así que usamos switchToPage
             // Nota: Este método funciona mejor si encapsulas tu diseño en una función
             reproducirContenido(doc, leyenda); 
+        }
+    }); */
+
+    doc.on('end', async () => {
+        try {
+            const pdfBuffer = Buffer.concat(chunks);
+            const originalDoc = await PDFDocument2.load(pdfBuffer);
+            
+            // --- PASO 1: LIMPIEZA DEL ORIGINAL ---
+            let totalPaginasOriginal = originalDoc.getPageCount();
+            
+            // Si agregaste una hoja extra en PDFKit, la eliminamos aquí
+            if (totalPaginasOriginal > 1) {
+                originalDoc.removePage(totalPaginasOriginal - 1);
+                totalPaginasOriginal--; // Ajustamos el contador
+            }
+
+            const pdfFinalDoc = await PDFDocument2.create();
+            const leyendas = ["ORIGINAL", "COPIA DEPENDENCIA", "COPIA PROVEEDOR"];
+            
+            // Re-obtenemos los índices después de haber borrado la última página
+            const indicesPaginas = originalDoc.getPageIndices(); 
+
+            for (const texto of leyendas) {
+                // Copiamos el set de páginas limpio
+                const paginasCopiadas = await pdfFinalDoc.copyPages(originalDoc, indicesPaginas);
+                
+                paginasCopiadas.forEach((pagina, index) => {
+                    pdfFinalDoc.addPage(pagina);
+                    
+                    // Solo rotulamos y numeramos páginas IMPARES (Frente)
+                    if (index % 2 === 0) {
+                        // --- PASO 2: CÁLCULO DE NUMERACIÓN ---
+                        // Math.ceil ayuda por si el total es impar
+                        const numPaginaReal = Math.ceil((index + 1) / 2);
+                        const totalReal = Math.ceil(totalPaginasOriginal / 2);
+
+                        // Dibujamos la leyenda (ORIGINAL, etc.)
+                        pagina.drawText(texto, {
+                            x: 20,
+                            y: 25,
+                            size: 10,
+                            color: rgb(0.5, 0.5, 0.5)
+                        });
+
+                        // Dibujamos la numeración "1 de X"
+                        // Ajusta x e y según donde prefieras que aparezca en la orden de compra
+                        pagina.drawText(`Página ${numPaginaReal} de ${totalReal}`, {
+                            x: 500, // Esquina derecha
+                            y: 20,
+                            size: 8,
+                            color: rgb(0, 0, 0)
+                        });
+                    }
+                });
+            }
+            
+            const pdfFinalBytes = await pdfFinalDoc.save();
+            res.contentType("application/pdf");
+            res.send(Buffer.from(pdfFinalBytes)); 
+
+        } catch (error) {
+            console.error("Error en el procesamiento:", error);
+            if (!res.headersSent) res.status(500).send("Error al generar copias");
         }
     });
 
@@ -496,9 +625,30 @@ doc.fillColor("#000000")
  */
 });
 
+const fin_norde_compx3 = (async (req, res) => {
+
+    //console.log(req.body) 
+
+    if (req.groups.indexOf(",ORDE_COMP,") <= 0 || !req.body.ures_depe)        //si no tiene derechos
+    {
+        return res.json({"status" : "error", "message": "No tienes derechos para actualizar los datos"})
+    }
+
+    let lcSQL = `
+    UPDATE gen_centros SET telefono = ?, direccion = ?, 
+	    cambios = CONCAT(IFNULL(cambios, '') ,?,'|UPDATE|',NOW(),CHR(13)) WHERE cve_conv = ?
+    `
+
+    const rows = await util.gene_cons(lcSQL, [req.body.tele_depe, req.body.domi_depe, req.userId, req.body.ures_depe])
+
+    return res.json({"status" : "success", "message": "La dependencia se actualizó correctamente"})
+
+});
+
 module.exports = {
     fin_orde_compx,
     fin_norde_compx2,
     fin_norde_compx,
-    fin_impr_oc
+    fin_impr_oc,
+    fin_norde_compx3
 }

@@ -66,7 +66,7 @@
                                                     body: {
                                                         data: [
                                                     <%for (var i = 0; i < rows.length; i++) {%>
-                                                    { id: "<%=rows[i].proyecto%>", value: "(<%=rows[i].campus%>-<%=rows[i].fondo%>) <%=rows[i].nombre%>" },
+                                                    { id: "<%=rows[i].proyecto%>", value: "(<%=rows[i].campus%>-<%=rows[i].fondo%>) <%=rows[i].proyecto%>-<%=rows[i].nombre%>" },
                                                     <%}%>
 
                                                 ]
@@ -98,6 +98,7 @@
                                                         name: "rfc", 
                                                         label: "RFC", 
                                                         width: 280, required: true,
+                                                        attributes: { maxlength: 20 },
                                                         suggest: {
                                                             id: "rfc:suggestList",
                                                             view: "suggest",
@@ -127,6 +128,7 @@
                                                         name: "proveedor", 
                                                         label: "Nombre proveedor", 
                                                         labelWidth: 150, required: true,
+                                                        attributes: { maxlength: 255 },
                                                         suggest: {
                                                             id: "proveedor:suggestList",
                                                             view: "suggest",
@@ -157,9 +159,9 @@
                                             {
                                             
                                                 cols: [
-                                                    { view: "text", id: "tele_prov", name: "tele_prov", label: "Teléfono proveedor", labelWidth: 150, placeholder: "  -    -    ", required: true,},
+                                                    { view: "text", id: "tele_prov", name: "tele_prov", label: "Teléfono proveedor", labelWidth: 150, placeholder: "  -    -    ", required: true, attributes: { maxlength: 30 },},
                                                     {width: 20},
-                                                    { view: "text", id: "corr_prov", name: "corr_prov", label: "Correo proveedor", labelWidth: 150, placeholder: "correo@correo.com", required: true, invalidMessage: "El Correo es invalido"}
+                                                    { view: "text", id: "corr_prov", name: "corr_prov", label: "Correo proveedor", labelWidth: 150, placeholder: "correo@correo.com", required: true, invalidMessage: "El Correo es invalido", attributes: { maxlength: 50 },}
                                                 ]
                                             }]
                                         },
@@ -183,9 +185,9 @@
                                                         }
                                                     },
                                                     {width: 20},
-                                                    { view: "counter", id: "nume_parc", name: "nume_parc", label: "Parcialidades", labelWidth: 100, min: 0, max: 100, hidden: true, required: true },
+                                                    { view: "counter", id: "nume_parc", name: "nume_parc", label: "Parcialidades", labelWidth: 100, min: 0, max: 100, hidden: true },
                                                     {width: 20},
-                                                    { view: "counter", name: "porc_anti", label: "% Anticipo", min: 0, max: 100, required: true }
+                                                    { view: "counter", name: "porc_anti", label: "% Anticipo", min: 0, max: 100 }
                                                 ]
                                             }, 
                                             { id:"fech_serv", hidden: true, 
@@ -197,11 +199,11 @@
                                             },                                  
                                             {
                                                 cols: [
-                                                    { view: "textarea", id: "domi_prov", name: "domi_prov", label: "Dirección del proveedor", labelPosition: "top", height: 120, required: true},
+                                                    { view: "textarea", id: "domi_prov", name: "domi_prov", label: "Dirección del proveedor", labelPosition: "top", height: 120, required: true, attributes: { maxlength: 1000 },},
                                                     {width: 20},
-                                                    { view: "textarea", id: "luga_entr", name: "luga_entr", label: "Lugar de entrega", labelPosition: "top", height: 120, required: true},
+                                                    { view: "textarea", id: "luga_entr", name: "luga_entr", label: "Lugar de entrega", labelPosition: "top", height: 120, required: true , attributes: { maxlength: 1000 }},
                                                     {width: 20},
-                                                    { view: "textarea", name: "observaciones", label: "Observaciones", labelPosition: "top", height: 120},
+                                                    { view: "textarea", name: "observaciones", label: "Observaciones", labelPosition: "top", height: 120, attributes: { maxlength: 1000 }},
                                                 ]
                                             },
                                         ]}
@@ -216,15 +218,44 @@
                                     {height:5},
                                     {
                                         cols: [
-                                            { view: "textarea", name: "articulo", label: "Artículo o servicio", labelPosition: "top", height: 80},
+                                            { view: "textarea", name: "articulo", label: "Artículo o servicio", labelPosition: "top", height: 80, attributes: { maxlength: 1000 }},
                                             {width: 20},
                                             { view: "combo", name: "unidad", label: "Unidad", labelWidth: 80, options: ["N/A","CAJA","KG","LITRO","METRO","OTRA","PIEZA"], width: 100, labelPosition: "top"},
                                             {width: 20},
-                                            { view: "text", name: "cantidad", label: "Cantidad", labelPosition: "top", width: 130},
+                                            { view: "text", name: "cantidad", label: "Cantidad", labelPosition: "top", width: 130, attributes: { maxlength: 20}, pattern: { mask: "####################", allow: /[0-9]/g }},
                                             {width: 20},
-                                            { view: "text", name: "cost_unit", label: "Costo unitario", labelPosition: "top", width: 130},
+                                            { 
+                                                view: "text", 
+                                                name: "cost_unit", 
+                                                label: "Costo unitario", 
+                                                labelPosition: "top", 
+                                                width: 130, 
+                                                attributes: { maxlength: 20 },
+                                                // Esta propiedad es mágica: solo permite los caracteres que pongas aquí
+                                                keyPressTimeout: 1, 
+                                                on: {
+                                                    onTimedKeyPress: function() {
+                                                        let value = this.getValue();
+                                                        // Eliminamos cualquier cosa que no sea número o punto
+                                                        let fixed = value.replace(/[^0-9.]/g, "");
+                                                        
+                                                        // Si hay más de un punto, dejamos solo el primero
+                                                        if (fixed.split(".").length > 2) {
+                                                            fixed = fixed.substring(0, fixed.lastIndexOf("."));
+                                                        }
+                                                        
+                                                        if (value !== fixed) this.setValue(fixed);
+                                                    },
+                                                    onBlur: function() {
+                                                        let val = this.getValue();
+                                                        if (val !== "" && !isNaN(val)) {
+                                                            this.setValue(parseFloat(val).toFixed(2));
+                                                        }
+                                                    }
+                                                }
+                                            },
                                             {width: 20},
-                                            { view: "text", name: "tasa_iva", label: "Tasa IVA", labelPosition: "top", width: 130},
+                                            { view: "text", name: "tasa_iva", label: "Tasa IVA", labelPosition: "top", width: 130, attributes: { maxlength: 2}, pattern: { mask: "##", allow: /[0-9]/g }},
                                             
                                         ]
                                     },
@@ -283,20 +314,21 @@
                             }
                         },
                         {
-                            header: "Datos generales",
+                            header: "Datos dependencia",
                             body: {margin: 20,
                                 rows: [
                                     {height:5},
                                     {
                                         cols: [
-                                            { view: "text", id: "ures_proy", name: "ures_proy", label: "Código de URE", labelPosition: "top", readonly: true, required: true},
-                                            { view: "text", id: "depe_proy", name: "depe_proy", label: "Dependencia del proyecto", labelPosition: "top", readonly: true, required: true},
+                                            { view: "text", id: "ures_depe", name: "ures_depe", label: "Código de URE", labelPosition: "top", readonly: true, required: true},
+                                            { view: "text", id: "nomb_depe", name: "nomb_depe", label: "Dependencia del proyecto", labelPosition: "top", readonly: true, required: true},
                                         ]
                                     },
                                     {
                                         cols: [
-                                            { view: "text", id: "tele_depe", name: "tele_depe", label: "Teléfono de la dependencia", labelPosition: "top", required: true},
-                                            { view: "textarea", id: "dire_depe", name: "dire_depe", label: "Dirección dependencia", labelPosition: "top", height: 80, required: true  },
+                                            { view: "text", id: "tele_depe", name: "tele_depe", label: "Teléfono de la dependencia", labelPosition: "top", required: true, attributes: { maxlength: 50 }},
+                                            { view: "textarea", id: "domi_depe", name: "domi_depe", label: "Dirección dependencia", labelPosition: "top", height: 80, required: true, attributes: { maxlength: 150 } },
+                                            { view: "button", value: "Guardar datos dependencia", css: "webix_secondary", width: 150, click: actu_depe },
                                         ]
                                     },
         
@@ -331,12 +363,13 @@
             webix.ajax().post("/api/fin/fin_norde_compx2", {proyecto:nuevo}).then((res)=>{
 				res = res.json();
                 //console.log(res)
-                $$("ures_proy").setValue(res.cve_conv);
-                $$("depe_proy").setValue(res.dependen);
+                $$("ures_depe").setValue(res.cve_conv);
+                $$("nomb_depe").setValue(res.dependen);
                 $$("tele_depe").setValue(res.telefono);
-                $$("dire_depe").setValue(res.direccion);
-                if($$("luga_entr")) $$("luga_entr").setValue(res.direccion || "");
-                
+                $$("domi_depe").setValue(res.direccion);
+                if($$("luga_entr").getValue() == '' || !$$("luga_entr").getValue()){
+                    $$("luga_entr").setValue(res.direccion || "")
+                }
 			})
 
         }
@@ -524,28 +557,44 @@
         // 4. Consolidar el paquete de datos
         var payload = {
             encabezado: datosOrden,
-            detalles: partidas
+            detalles: partidas,
+            generar: true,
         };
 
         // 5. Envío mediante AJAX a tu ruta de Node.js
-        webix.ajax().post("/api/ordenes/guardar", payload, function(text, data) {
+        webix.ajax().post("/api/fin/fin_norde_compx", payload, function(text, data) {
             var response = data.json();
             
             if (response.status === "success") {
                 webix.alert({
                     title: "Éxito",
-                    text: "Orden guardada correctamente con el folio: " + response.folio,
-                    callback: function() {
-                        // Opcional: Limpiar formulario o redireccionar
-                        formulario.clear();
-                        $$("detalles_tabla").clearAll();
-                    }
+                    text: response.message,
                 });
+
+                if (response.id > 0 && datosOrden.id_orde_comp <= 0){
+                    $$("id_orde_comp").setValue(response.id);
+                }
             } else {
                 webix.message({ type: "error", text: "Error al guardar: " + response.message });
             }
         });
 
+    }
+
+    function actu_depe(){
+
+        const camb_depe = {
+            ures_depe : $$("ures_depe").getValue(),
+            nomb_depe : $$("nomb_depe").getValue(),
+            tele_depe : $$("tele_depe").getValue(),
+            domi_depe : $$("domi_depe").getValue(),
+        }
+
+        webix.ajax().post("/api/fin/fin_norde_compx3", camb_depe).then((res)=>{
+            res = res.json();
+            Swal.fire({text:res.message, icon:res.status== "success" ? "success":"error"});
+            //console.log(res)
+        });        
     }
 
     </script>
