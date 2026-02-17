@@ -270,8 +270,8 @@
                                     {
                                         cols: [
                                             {},
-                                            { view: "button", value: "Agregar artículo", css: "webix_primary", click: agregarArticulo, width: 150, <%=(rows2[0].estatus > 1?' disabled: true':'')%>},
-                                            { view: "button", value: "Elimina artículo", click: eliminarArticulo, width: 150, <%=(rows2[0].estatus > 1?' disabled: true':'')%>}
+                                            { view: "button", value: "Agregar artículo", css: "webix_primary", click: agregarArticulo, width: 150, <%=(rows2[0]?.estatus > 1?' disabled: true':'')%>},
+                                            { view: "button", value: "Elimina artículo", click: eliminarArticulo, width: 150, <%=(rows2[0]?.estatus > 1?' disabled: true':'')%>}
                                         ]
                                     },
                                     {
@@ -330,7 +330,7 @@
                                         cols: [
                                             { view: "text", id: "ures_depe", name: "ures_depe", label: "Código de URE", labelPosition: "top", readonly: true, required: true},
                                             { view: "text", id: "nomb_depe", name: "nomb_depe", label: "Dependencia del proyecto", labelPosition: "top", readonly: true, required: true},
-                                            { view: "button", value: "Guardar datos dependencia", css: "webix_secondary", width: 150, click: actu_depe, <%=(rows2[0].estatus > 1?' disabled: true':'')%>},
+                                            { view: "button", value: "Guardar datos dependencia", css: "webix_secondary", width: 150, click: actu_depe, <%=(rows2[0]?.estatus > 1?' disabled: true':'')%>},
                                         ]
                                     },
                                     {
@@ -358,9 +358,9 @@
                     cols: [
                         { view: "button", value: "Imprimir Orden", css: "webix_primary", width: 150, click: imprimir },
                         {},
-                        { view: "button", id:"cmbGuar_temp", value: "Guardar Borrador", value: "Guardar Borrador", css: "webix_secondary", width: 150, click: guardar, <%=(rows2[0].estatus > 1?' disabled: true':'')%>},
-                        { view: "button", id:"cmdGuardar", value: "Generar Orden", css: "webix_primary", width: 150, click: generar, <%=(rows2[0].estatus > 1?' disabled: true':'')%> },
-                        { view: "button", value: "Cancelar", css: "webix_danger", width: 100, <%=(rows2[0].estatus > 1?' disabled: true':'')%> }
+                        { view: "button", id:"cmbGuar_temp", value: "Guardar Borrador", value: "Guardar Borrador", css: "webix_secondary", width: 150, click: guardar, <%=(rows2[0]?.estatus > 1?' disabled: true':'')%>},
+                        { view: "button", id:"cmdGuardar", value: "Generar Orden", css: "webix_primary", width: 150, click: generar, <%=(rows2[0]?.estatus > 1?' disabled: true':'')%> },
+                        { view: "button", value: "Cancelar", css: "webix_danger", width: 100, <%=(rows2[0]?.estatus > 8?' disabled: true':'')%> }
                     ]
                 }
             ],
