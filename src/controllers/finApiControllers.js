@@ -19,9 +19,9 @@ const fin_orde_compx = (async (req, res) => {
     }
     let parameters = []
     let lcSQL = `
-    SELECT ROW_NUMBER() OVER (ORDER BY o.foli_orde) AS RANK, o.id, o.tipo_orde, o.fech_emis, o.proyecto, o.rfc, o.proveedor, o.domi_prov, 
-					o.tele_prov, o.corr_prov, o.fech_entr, o.luga_entr, o.forma_pago, o.porc_anti, o.fech_inic, o.fech_fin, o.nume_parc, 
-					o.subtotal, o.iva_total, o.total, o.observaciones, o.estatus, o.fech_crea
+    SELECT ROW_NUMBER() OVER (ORDER BY o.foli_orde) AS RANK, o.id, o.foli_orde, if(o.tipo_orde = 1, "Compra", "Servicio") as tipo_orde, DATE_FORMAT(o.fech_emis, '%d/%m/%Y') as fech_emis, 
+                    o.proyecto, o.rfc, o.proveedor, o.domi_prov, o.tele_prov, o.corr_prov, DATE_FORMAT(o.fech_entr, '%d/%m/%Y') as fech_entr, o.luga_entr, o.forma_pago, 
+                    o.porc_anti, o.nume_parc, o.subtotal, o.iva_total, o.total, o.observaciones, o.fech_crea, o.resico, if(o.estatus=0,"Abierta", if(o.estatus=2,"Cerrada",if(o.estatus=9,"Cancelada", "Pendiente"))) as estatus
         FROM fin_orde_comp o INNER JOIN fin_proyecto p on o.proyecto = p.proyecto
             LEFT join gen_centros c ON p.id_cent = c.id_cent
         ORDER BY o.foli_orde;
@@ -94,22 +94,23 @@ const fin_norde_compx = (async (req,res) => {
         }
     }
     
-    let insertD = [], lnSubtodal = 0, lnIVA = 0, lnTotal = 0, llError_arti = false;
+    let insertD = [], lnSubtodal = 0, lnIVA = 0, lnTotal = 0, lnMRESICO = 0,llError_arti = false;
 
     //console.log(detalle)
 
     if (!encabezado.id_orde_comp || encabezado.id_orde_comp <= 0){
         lcSQL = `
         INSERT INTO fin_orde_comp (tipo_orde, fech_emis, proyecto, rfc, proveedor, domi_prov, tele_prov, corr_prov, fech_entr, luga_entr, forma_pago,
-	            porc_anti, fech_inic, fech_fin, nume_parc, subtotal, iva_total, total, observaciones, estatus, fech_crea, cambios, ures_depe, nomb_depe, 
-                tele_depe, domi_depe, usua_crea) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, ?, 0, NOW(), CONCAT(?,'|INSERT|',NOW(),CHR(13)), ?, ?, ?, ?, ?)
+	            porc_anti, fech_inic, fech_fin, nume_parc, subtotal, iva_total, total, resico, observaciones, estatus, fech_crea, cambios, ures_depe, nomb_depe, 
+                tele_depe, domi_depe, usua_crea, apli_resico, nomb_elab) 
+            VALUES (?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, 0, ?, 0, NOW(), CONCAT(?,'|INSERT|',NOW(),CHR(13)), ?, ?, ?, ?, ?, ?)
         `
-        const laSend = [(!encabezado.tipo_orde?null:encabezado.tipo_orde), (!encabezado.fech_emis?null:encabezado.fech_emis), (!encabezado.proyecto?null:encabezado.proyecto), 
+        //(!encabezado.fech_emis?null:encabezado.fech_emis),    Se quito por que la fecha de emisión se toma el día
+        const laSend = [(!encabezado.tipo_orde?null:encabezado.tipo_orde), (!encabezado.proyecto?null:encabezado.proyecto), 
                             encabezado.rfc, encabezado.proveedor, encabezado.domi_prov, encabezado.tele_prov, encabezado.corr_prov, (!encabezado.fech_entr?null:encabezado.fech_entr), 
                             encabezado.luga_entr, (!encabezado.forma_pago?null:encabezado.forma_pago), (!encabezado.porc_anti?null:encabezado.porc_anti), (!encabezado.fech_inic?null:encabezado.fech_inic), 
                             (!encabezado.fech_fin?null:encabezado.fech_fin), (!encabezado.nume_parc?null:encabezado.nume_parc), encabezado.observaciones, req.userId,
-                            encabezado.ures_depe, encabezado.nomb_depe, encabezado.tele_depe, encabezado.domi_depe, req.userId, lnSubtodal, lnIVA, lnTotal
+                            encabezado.ures_depe, encabezado.nomb_depe, encabezado.tele_depe, encabezado.domi_depe, req.userId, (!encabezado.apli_resico?0:encabezado.apli_resico), (!encabezado.nomb_elab?0:encabezado.nomb_elab)
                         ]
 
         const insert = await util.gene_cons(lcSQL, laSend)
@@ -119,11 +120,12 @@ const fin_norde_compx = (async (req,res) => {
         for(i=0;i<detalle.length;i++){
 
             lcSQL = `
-            INSERT INTO fin_dorde_comp (id_orde_comp, articulo, cantidad, unidad, cost_unit, tasa_iva) VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO fin_dorde_comp (id_orde_comp, articulo, cantidad, unidad, cost_unit, tasa_iva, resico) VALUES (?, ?, ?, ?, ?, ?, ?)
             `
-            insertD = await util.gene_cons(lcSQL, [insert.insertId, detalle[i].articulo, detalle[i].cantidad, detalle[i].unidad, detalle[i].cost_unit, detalle[i].tasa_iva])
+            insertD = await util.gene_cons(lcSQL, [insert.insertId, detalle[i].articulo, detalle[i].cantidad, detalle[i].unidad, detalle[i].cost_unit, detalle[i].tasa_iva, detalle[i].resico])
 
             lnSubtodal  += detalle[i].cantidad*detalle[i].cost_unit
+            lnMRESICO   += detalle[i].cantidad*detalle[i].cost_unit*(encabezado.apli_resico ==1?0.0125:0)
             lnIVA       += (detalle[i].cantidad*detalle[i].cost_unit)*(detalle[i].tasa_iva/100)
             lnTotal     += (detalle[i].cantidad*detalle[i].cost_unit)*(1+(detalle[i].tasa_iva/100))
             if(detalle[i].cantidad <= 0 || detalle[i].cost_unit <= 0){
@@ -134,10 +136,10 @@ const fin_norde_compx = (async (req,res) => {
         if (lnSubtodal > 0 || lnIVA > 0 || lnTotal > 0){
             lcSQL = `
             UPDATE fin_orde_comp 
-                SET subtotal = ?, iva_total = ?, total = ? 
+                SET subtotal = ?, iva_total = ?, total = ?, resico = ? 
                 WHERE id = ?
             `
-            const upda_mont = await util.gene_cons(lcSQL, [(!lnSubtodal?0:lnSubtodal), (!lnIVA?0:lnIVA), (!lnTotal?0:lnTotal), insert.insertId])
+            const upda_mont = await util.gene_cons(lcSQL, [(!lnSubtodal?0:lnSubtodal), (!lnIVA?0:lnIVA), (!lnTotal?0:lnTotal), (!lnMRESICO?0:lnMRESICO), insert.insertId])
         }
 
         if (req.body.generar){
@@ -173,11 +175,12 @@ const fin_norde_compx = (async (req,res) => {
         for(i=0;i<detalle.length;i++){
 
             lcSQL = `
-            INSERT INTO fin_dorde_comp (id_orde_comp, articulo, cantidad, unidad, cost_unit, tasa_iva) VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO fin_dorde_comp (id_orde_comp, articulo, cantidad, unidad, cost_unit, tasa_iva, resico) VALUES (?, ?, ?, ?, ?, ?, ?)
             `
-            insertD = await util.gene_cons(lcSQL, [encabezado.id_orde_comp, detalle[i].articulo, detalle[i].cantidad, detalle[i].unidad, detalle[i].cost_unit, detalle[i].tasa_iva])
+            insertD = await util.gene_cons(lcSQL, [encabezado.id_orde_comp, detalle[i].articulo, detalle[i].cantidad, detalle[i].unidad, detalle[i].cost_unit, detalle[i].tasa_iva, detalle[i].resico])
 
             lnSubtodal  += detalle[i].cantidad*detalle[i].cost_unit
+            lnMRESICO   += detalle[i].cantidad*detalle[i].cost_unit*(encabezado.apli_resico ==1?0.0125:0)
             lnIVA       += (detalle[i].cantidad*detalle[i].cost_unit)*(detalle[i].tasa_iva/100)
             lnTotal     += (detalle[i].cantidad*detalle[i].cost_unit)*(1+(detalle[i].tasa_iva/100))
             
@@ -188,16 +191,19 @@ const fin_norde_compx = (async (req,res) => {
 
         //console.log(encabezado)
         lcSQL = `
-        UPDATE fin_orde_comp  SET tipo_orde = ?, fech_emis = ?, proyecto = ?, rfc = ?, proveedor = ?, domi_prov = ?, tele_prov = ?, corr_prov = ?, 
+        UPDATE fin_orde_comp  SET tipo_orde = ?, fech_emis = NOW(), proyecto = ?, rfc = ?, proveedor = ?, domi_prov = ?, tele_prov = ?, corr_prov = ?, 
                 fech_entr = ?, luga_entr = ?, forma_pago = ?, porc_anti = ?, fech_inic = ?, fech_fin = ?, nume_parc = ?, subtotal = 0, iva_total = 0, total = 0, 
-                observaciones = ?, ures_depe = ?, nomb_depe = ?, tele_depe = ?, domi_depe = ?, subtotal = ?, iva_total = ?, total = ?, cambios = CONCAT(IFNULL(cambios,''), ?,'|UPDATE|',NOW(),CHR(13)) 
+                observaciones = ?, ures_depe = ?, nomb_depe = ?, tele_depe = ?, domi_depe = ?, subtotal = ?, iva_total = ?, total = ?, apli_resico = ?, resico = ?, 
+                nomb_elab = ?, cambios = CONCAT(IFNULL(cambios,''), ?,'|UPDATE|',NOW(),CHR(13)) 
             WHERE id = ?
         `
-        const laSend = [(!encabezado.tipo_orde?null:encabezado.tipo_orde), (!encabezado.fech_emis?null:encabezado.fech_emis), (!encabezado.proyecto?null:encabezado.proyecto), 
+        //(!encabezado.fech_emis?null:encabezado.fech_emis),    Se quito por que la fecha de emisión se toma el día
+        const laSend = [(!encabezado.tipo_orde?null:encabezado.tipo_orde), (!encabezado.proyecto?null:encabezado.proyecto), 
                             encabezado.rfc, encabezado.proveedor, encabezado.domi_prov, encabezado.tele_prov, encabezado.corr_prov, (!encabezado.fech_entr?null:encabezado.fech_entr), 
                             encabezado.luga_entr, (!encabezado.forma_pago?null:encabezado.forma_pago), (!encabezado.porc_anti?null:encabezado.porc_anti), (!encabezado.fech_inic?null:encabezado.fech_inic), 
                             (!encabezado.fech_fin?null:encabezado.fech_fin), (!encabezado.nume_parc?null:encabezado.nume_parc), encabezado.observaciones,  encabezado.ures_depe, encabezado.nomb_depe,
-                            encabezado.tele_depe, encabezado.domi_depe, (!lnSubtodal?0:lnSubtodal), (!lnIVA?0:lnIVA), (!lnTotal?0:lnTotal), req.userId, encabezado.id_orde_comp]
+                            encabezado.tele_depe, encabezado.domi_depe, (!lnSubtodal?0:lnSubtodal), (!lnIVA?0:lnIVA), (!lnTotal?0:lnTotal), (!encabezado.apli_resico?0:encabezado.apli_resico), (!lnMRESICO?0:lnMRESICO), 
+                            (!encabezado.nomb_elab?0:encabezado.nomb_elab), req.userId, encabezado.id_orde_comp]
 
         const update = await util.gene_cons(lcSQL, laSend)
 

@@ -139,10 +139,9 @@
                         resizeColumn: true,
                         navigation: true,
                         resizeRow: true,
-                        css: "celda_compacta",
                         rightSplit: 1, // Mantiene fija la columna de fecha_crea
                         leftSplit: 3,  // Mantiene fijos el detalle, ID y Folio
-                        scheme: {
+                        /* scheme: {
                             $init: function (obj) {
                                 // Limpieza de fechas para todas las columnas DATE de tu tabla
                                 const cleanDate = (d) => (d && d !== '01/01/1900' ? convertDate(d) : '');
@@ -151,12 +150,12 @@
                                 obj.fech_fin = cleanDate(obj.fech_fin);
                                 obj.fech_crea = cleanDate(obj.fech_crea);
                             }
-                        },
+                        }, */
 
                         columns: [
                             {
                                 id: "detalle", width: 45, sort: "int", css: { 'text-align': 'center' },
-                                header: [{ text: "", css: "my_style" }, { text: "" }],
+                                header: [{ text: "" }, { text: "" }],
                                 template: (obj) => {
                                     return `
                                         <a href="#" onClick="deta_grup(${obj.id});">
@@ -165,49 +164,44 @@
                                 }
                             },
                             {
-                                id: "id", width: 60, sort: "int", css: { 'text-align': 'center' },
-                                header: [{ text: "ID", css: "my_style" }, { content: "textFilter" }]
+                                id: "tipo_orde", width: 80, sort: "string",
+                                header: [{ text: "Tipo" }, { content: "textFilter" }]
                             },
                             {
-                                id: "foli_orde", width: 150, sort: "string",
-                                header: [{ text: "Folio Orden", css: "my_style" }, { content: "textFilter" }]
-                            },
-                            {
-                                id: "proveedor", width: 250, sort: "string", fillspace: true,
-                                header: [{ text: "Proveedor", css: "my_style" }, { content: "textFilter" }]
-                            },
-                            {
-                                id: "fech_emis", width: 120, sort: "string", css: { 'text-align': 'center' },
-                                header: [{ text: "Fecha Emis.", css: "my_style" }, { content: "textFilter" }]
+                                id: "foli_orde", width: 130, sort: "string",
+                                header: [{ text: "Folio Orden" }, { content: "textFilter" }]
                             },
                             {
                                 id: "rfc", width: 130, sort: "string",
-                                header: [{ text: "RFC", css: "my_style" }, { content: "textFilter" }]
+                                header: [{ text: "RFC" }, { content: "textFilter" }]
+                            },
+                            {
+                                id: "proveedor", width: 250, sort: "string", fillspace: true,
+                                header: [{ text: "Proveedor" }, { content: "textFilter" }]
+                            },
+                            {
+                                id: "fech_emis", width: 120, sort: "string", css: { 'text-align': 'center' },
+                                header: [{ text: "Fecha Emis." }, { content: "textFilter" }]
+                            },
+                            {
+                                id: "subtotal", width: 120, sort: "int", format: webix.i18n.priceFormat, css: { 'text-align': 'right' },
+                                header: [{ text: "Subtotal" }, { content: "textFilter" }]
+                            },
+                            {
+                                id: "iva_total", width: 120, sort: "int", format: webix.i18n.priceFormat, css: { 'text-align': 'right' },
+                                header: [{ text: "IVA" }, { content: "textFilter" }]
+                            },
+                            {
+                                id: "resico", width: 120, sort: "int", format: webix.i18n.priceFormat, css: { 'text-align': 'right' },
+                                header: [{ text: "RESICO" }, { content: "textFilter" }]
                             },
                             {
                                 id: "total", width: 120, sort: "int", format: webix.i18n.priceFormat, css: { 'text-align': 'right' },
-                                header: [{ text: "Total", css: "my_style" }, { content: "textFilter" }]
+                                header: [{ text: "Total" }, { content: "textFilter" }]
                             },
                             {
                                 id: "estatus", width: 130, sort: "string",
-                                header: [{ text: "Estatus", css: "my_style" }, { content: "selectFilter" }]
-                            },
-                            // Columnas adicionales ocultas para no saturar la vista, pero disponibles
-                            {
-                                id: "fech_inic", width: 110, sort: "string", hidden: true,
-                                header: [{ text: "F. Inicio", css: "my_style" }, { text: "" }]
-                            },
-                            {
-                                id: "fech_fin", width: 110, sort: "string", hidden: true,
-                                header: [{ text: "F. Fin", css: "my_style" }, { text: "" }]
-                            },
-                            {
-                                id: "observaciones", width: 200, sort: "string", hidden: true,
-                                header: [{ text: "Obs.", css: "my_style" }, { text: "" }]
-                            },
-                            {
-                                id: "fech_crea", width: 150, sort: "string",
-                                header: [{ text: "Creado", css: "my_style" }, { content: "textFilter" }]
+                                header: [{ text: "Estatus" }, { content: "selectFilter" }]
                             }
                         ]
                     },

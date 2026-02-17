@@ -32,7 +32,7 @@ const verifyToken = async (req, res, next) => {
             let datosUsuario = cacheUsuarios.get(req.userId);
 
             if (!datosUsuario) {
-                const rows = await util.gene_cons("SELECT id_cent, Centro, nom_cen, Nombre, codigo, bloqueada, GROUPS, skin FROM passfile WHERE user_id =  " + decoded.id)
+                const rows = await util.gene_cons("SELECT id_cent, Centro, nom_cen, nomb_most as Nombre, codigo, bloqueada, GROUPS, skin FROM passfile WHERE user_id =  " + decoded.id)
                 //console.log("consulto la base de datos")
                 if (rows.length <= 0){
                     return res.status(401).json({"message":"No se localizó al usuario del token"});
@@ -64,7 +64,7 @@ const verifyToken = async (req, res, next) => {
  */            //conn = await pool.getConnection();
             
             // 3. Ejecutar la consulta
-            //const rows = await conn.query("SELECT id_cent, Centro, nom_cen, Nombre, codigo, bloqueada, GROUPS, skin FROM passfile WHERE user_id =  " + decoded.id, [1]);
+            //const rows = await conn.query("SELECT id_cent, Centro, nom_cen, nomb_most as Nombre, codigo, bloqueada, GROUPS, skin FROM passfile WHERE user_id =  " + decoded.id, [1]);
             
             
 //codigo antes del cache
@@ -138,7 +138,7 @@ const verifyToken = async (req, res, next) => {
                 const rdecoded = jwt.verify(rtoken, config.RSECRET);
                 
                 // 2. IMPORTANTE: Usamos rdecoded.id porque req.userId no existe aún
-                const rows = await util.gene_cons("SELECT id_cent, Centro, nom_cen, Nombre, codigo, bloqueada, GROUPS, acceso, skin FROM passfile WHERE user_id = " + rdecoded.id);
+                const rows = await util.gene_cons("SELECT id_cent, Centro, nom_cen, nomb_most as Nombre, codigo, bloqueada, GROUPS, acceso, skin FROM passfile WHERE user_id = " + rdecoded.id);
                 
                 if (rows.length <= 0) return res.render("login");
 

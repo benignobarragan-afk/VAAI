@@ -52,8 +52,18 @@
                                                     }
                                                 }
                                             },
+                                            {width: 20},
+                                            {view: "checkbox", id: "apli_resico", name: "apli_resico", label: "¿Aplica RESICO?", labelWidth: 120, value: 0, checkValue: 1, uncheckValue: 0,
+                                                on: {
+                                                    onChange: function(newVal, oldVal) {
+                                                        actu_resico(newVal); 
+                                                    }
+                                                }    
+                                            },
                                             {},
-                                            { view: "datepicker", name: "fech_emis", label: "Fecha", labelWidth: 80, stringResult: true, width: 400, required: true, },
+                                            <%if(rows2.length>0){%>
+                                            { view: "datepicker", name: "fech_emis", label: "Fecha", labelWidth: 80, stringResult: true, width: 400, required: true, readonly: true},
+                                            <%}%>
                                         ]
                                     },
                                     {
@@ -301,7 +311,14 @@
                                             { 
                                                 id: "montoiva", 
                                                 header: "Monto IVA", 
-                                                width: 200, css: { "text-align": "right" },
+                                                width: 120, css: { "text-align": "right" },
+                                                format: webix.i18n.priceFormat,
+                                                footer: { content: "summColumn", css: { "text-align": "right" } } // 2. Sumatoria automática
+                                            },
+                                            { 
+                                                id: "mont_resico", 
+                                                header: "RESICO", 
+                                                width: 120, css: { "text-align": "right" },
                                                 format: webix.i18n.priceFormat,
                                                 footer: { content: "summColumn", css: { "text-align": "right" } } // 2. Sumatoria automática
                                             },
@@ -341,6 +358,7 @@
                                     },
                                     {
                                         cols: [
+                                            { view: "textarea", id: "nomb_elab", name: "nomb_elab", label: "Persona elaboro", labelPosition: "top", required: true, attributes: { maxlength: 1000 }},
                                             { view: "textarea", id: "nomb_auto", name: "nomb_auto", label: "Persona autoriza", labelPosition: "top", required: true, attributes: { maxlength: 1000 }},
                                             { view: "textarea", id: "nomb_vobo", name: "nomb_vobo", label: "Personas Vo. Bo.", labelPosition: "top", height: 80, required: true, attributes: { maxlength: 1000 } },
                                         ]
@@ -382,6 +400,7 @@
                 $$("nomb_depe").setValue(res.dependen);
                 $$("tele_depe").setValue(res.telefono);
                 $$("domi_depe").setValue(res.direccion);
+                $$("nomb_elab").setValue((!$$("nomb_elab").getValue()?'<%=nomb_usua%>':$$("nomb_elab").getValue()))
                 $$("nomb_auto").setValue(res.nomb_dire);
                 $$("nomb_vobo").setValue(res.nomb_secr);
                 if($$("luga_entr").getValue() == '' || !$$("luga_entr").getValue()){
@@ -450,7 +469,6 @@
             // 1. Obtenemos los valores del formulario
             // Asegúrate de que tu formulario tenga id: "form_orden"
             var valores = $$("form_orden").getValues();
-
             // 2. Validaciones básicas para evitar filas vacías
             if (!valores.articulo || !valores.cantidad || !valores.cost_unit) {
                 webix.message({ type: "error", text: "Complete: Artículo, Cantidad y Costo" });
@@ -464,7 +482,8 @@
 
             // Cálculo del Subtotal (Cantidad * Costo)
             var subtotal = cant * costo;
-            var montoiva = subtotal * ((tasaIva / 100))
+            var resico   = (valores.apli_resico == 1?subtotal * 0.0125:0);
+            var montoiva = subtotal * ((tasaIva / 100));
             
             // Cálculo del Total (Subtotal + el porcentaje de IVA)
             // Ejemplo: Si el IVA es 16, calcula: subtotal * 1.16
@@ -478,6 +497,7 @@
                 tasa_iva: tasaIva,
                 subtotal: subtotal,   // Monto sin IVA
                 montoiva: montoiva,   // Monto del IVA
+                mont_resico: resico,       //Monto RESICO
                 total: totalConIva,    // Monto con IVA
                 unidad: valores.unidad // Guardado internamente aunque no esté en la columna
             };
@@ -618,6 +638,38 @@
             Swal.fire({text:res.message, icon:res.status== "success" ? "success":"error"});
             //console.log(res)
         });        
+    }
+
+    function actu_resico(valor) {
+        var table = $$("detalles_tabla");
+
+        if (table && table.count() > 0) {
+
+            // Bloqueamos el dibujado para que sea más rápido
+            table.blockEvent(); 
+
+            table.eachRow(function(rowId) {
+                var item = table.getItem(rowId);
+                
+                
+                // 1. Actualizamos la tasa de IVA en el objeto
+                if (valor == 1){
+                    item.mont_resico = item.cantidad * item.cost_unit * 0.0125;
+                }
+                else 
+                {
+                    item.mont_resico = 0;
+                }
+                
+                // 3. Guardamos los cambios en la fila
+                table.updateItem(rowId, item);
+            });
+
+            table.unblockEvent();
+            table.refresh(); // Refrescamos visualmente la tabla
+            
+            webix.message("El RESICO se actulizo en los artículos");
+        }
     }
 
     </script>
