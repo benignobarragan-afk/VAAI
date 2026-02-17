@@ -443,16 +443,17 @@ const fin_impr_oc = (async (req,res) => {
         doc.text(`${datos[0].fech_entr}`, 100, 587, {width: 135, align: 'center'});
         doc.text(`${datos[0].luga_entr}`, 310, 587, {width: 195, align: 'left'});
         doc.text(`${(!datos[0].porc_anti?'':datos[0].porc_anti+'%')}`, 330, 607, {width: 175, align: 'center'});
+        doc.text(`A la entrega`, 152, 597, {width: 155, align: 'center'});
     }
     else {
         doc.fontSize(6).text(`${datos[0].luga_entr}`, 157, 587, {width: 198, align: 'left'});
         doc.fontSize(8).text(`${(!datos[0].porc_anti?'':datos[0].porc_anti+'%')}`, 331, 607, {width: 25, align: 'center'});
         doc.text(`${datos[0].fech_inic}`, 440, 597, {width: 63, align: 'center'});
         doc.text(`${datos[0].fech_fin}`, 440, 607, {width: 63, align: 'center'});
+        doc.text(`${datos[0].fech_entr}`, 152, 597, {width: 155, align: 'center'});
     }
     doc.text(`${(datos[0].forma_pago == 1 ? 'X':'')}`, 118, 598, {width: 195, align: 'left'});
     doc.text(`${(datos[0].forma_pago == 1 ? '':'X')}`, 118, 607, {width: 195, align: 'left'});
-    doc.text(`${datos[0].fech_entr}`, 152, 597, {width: 155, align: 'center'});
     doc.text(`${(datos[0].forma_pago ==1?'':datos[0].nume_parc)}`, 210, 607, {width: 30, align: 'center'});
     
     doc.text(`${(datos[0].porc_anti ? 'X':'')}`, 569, 598, {width: 195, align: 'left'});

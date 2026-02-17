@@ -171,7 +171,7 @@
                                         rows: [
                                             {
                                                 cols: [
-                                                    { view: "datepicker", name: "fech_entr", label: "Fecha de entrega", labelWidth: 120, width: 250, required: true },
+                                                    { view: "datepicker", id: "fech_entr", name: "fech_entr", label: "Fecha de entrega", labelWidth: 130, width: 250, required: true },
                                                     {width: 20},
                                                     { view: "radio", name: "forma_pago", label: "Forma Pago", labelWidth: 100, options: [{id:1, value:"Contado"},{id:2, value:"Parcialidades"}], vertical: false, required: true,
                                                         on: {
@@ -222,7 +222,11 @@
                                             {width: 20},
                                             { view: "combo", name: "unidad", label: "Unidad", labelWidth: 80, options: ["N/A","CAJA","KG","LITRO","METRO","OTRA","PIEZA"], width: 100, labelPosition: "top"},
                                             {width: 20},
-                                            { view: "text", name: "cantidad", label: "Cantidad", labelPosition: "top", width: 130, attributes: { maxlength: 20}, pattern: { mask: "####################", allow: /[0-9]/g }},
+                                            { view: "text", name: "cantidad", label: "Cantidad", labelPosition: "top", width: 130, attributes: { maxlength: 20}, 
+                                                pattern: { mask: "####################", allow: /[0-9]/g },
+                                                // Esta línea le dice: "Si está vacío, está BIEN (true)"
+                                                validate: function(value){ return value === "" || value.length > 0; }
+                                            },
                                             {width: 20},
                                             { 
                                                 view: "text", 
@@ -255,15 +259,19 @@
                                                 }
                                             },
                                             {width: 20},
-                                            { view: "text", name: "tasa_iva", label: "Tasa IVA", labelPosition: "top", width: 130, attributes: { maxlength: 2}, pattern: { mask: "##", allow: /[0-9]/g }},
+                                            { view: "text", name: "tasa_iva", label: "Tasa IVA", labelPosition: "top", width: 130, attributes: { maxlength: 2}, 
+                                                pattern: { mask: "##", allow: /[0-9]/g },
+                                                // Esta línea le dice: "Si está vacío, está BIEN (true)"
+                                                validate: function(value){ return value === "" || value.length > 0; }
+                                            },
                                             
                                         ]
                                     },
                                     {
                                         cols: [
                                             {},
-                                            { view: "button", value: "Agregar artículo", css: "webix_primary", click: agregarArticulo, width: 150 },
-                                            { view: "button", value: "Elimina artículo", click: eliminarArticulo, width: 150}
+                                            { view: "button", value: "Agregar artículo", css: "webix_primary", click: agregarArticulo, width: 150, <%=(rows2[0].estatus > 1?' disabled: true':'')%>},
+                                            { view: "button", value: "Elimina artículo", click: eliminarArticulo, width: 150, <%=(rows2[0].estatus > 1?' disabled: true':'')%>}
                                         ]
                                     },
                                     {
@@ -322,7 +330,7 @@
                                         cols: [
                                             { view: "text", id: "ures_depe", name: "ures_depe", label: "Código de URE", labelPosition: "top", readonly: true, required: true},
                                             { view: "text", id: "nomb_depe", name: "nomb_depe", label: "Dependencia del proyecto", labelPosition: "top", readonly: true, required: true},
-                                            { view: "button", value: "Guardar datos dependencia", css: "webix_secondary", width: 150, click: actu_depe },
+                                            { view: "button", value: "Guardar datos dependencia", css: "webix_secondary", width: 150, click: actu_depe, <%=(rows2[0].estatus > 1?' disabled: true':'')%>},
                                         ]
                                     },
                                     {
@@ -350,9 +358,9 @@
                     cols: [
                         { view: "button", value: "Imprimir Orden", css: "webix_primary", width: 150, click: imprimir },
                         {},
-                        { view: "button", value: "Guardar Borrador", css: "webix_secondary", width: 150, click: guardar },
-                        { view: "button", value: "Generar Orden", css: "webix_primary", width: 150, click: generar },
-                        { view: "button", value: "Cancelar", css: "webix_danger", width: 100 }
+                        { view: "button", id:"cmbGuar_temp", value: "Guardar Borrador", value: "Guardar Borrador", css: "webix_secondary", width: 150, click: guardar, <%=(rows2[0].estatus > 1?' disabled: true':'')%>},
+                        { view: "button", id:"cmdGuardar", value: "Generar Orden", css: "webix_primary", width: 150, click: generar, <%=(rows2[0].estatus > 1?' disabled: true':'')%> },
+                        { view: "button", value: "Cancelar", css: "webix_danger", width: 100, <%=(rows2[0].estatus > 1?' disabled: true':'')%> }
                     ]
                 }
             ],
@@ -412,15 +420,19 @@
         function tipo(lnTipo){
             //console.log(lnTipo)
             let campoTexto = $$("luga_entr");
+            let campoFecha = $$("fech_entr");
             if(lnTipo == 1){
                 $$("fech_serv").hide();
                 campoTexto.define("label", "Lugar de entrega");
+                campoFecha.define("label", "Fecha de entrega");
             }
             else{
                 $$("fech_serv").show();
                 campoTexto.define("label", "Lugar prestación del servicio");
+                campoFecha.define("label", "Fecha de pago");
             }
             campoTexto.refresh();
+            campoFecha.refresh();
         }
 
         function parcialidad(lnTipo){
@@ -583,6 +595,8 @@
                 if (response.id > 0 && datosOrden.id_orde_comp <= 0){
                     $$("id_orde_comp").setValue(response.id);
                 }
+                $$("cmbGuar_temp").disable();
+                $$("cmdGuardar").disable();
             } else {
                 webix.message({ type: "error", text: "Error al guardar: " + response.message });
             }
