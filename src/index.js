@@ -81,7 +81,9 @@ const app = express();
   },
 })); */
 
-app.set('trust proxy', 'loopback');
+//codigo anterior de nginx
+//app.set('trust proxy', 'loopback');
+app.set('trust proxy', true);
 
 morgan.token('user-id', function (req, res) {
     // Asumimos que tu middleware de autenticación pone el ID en req.user.id
