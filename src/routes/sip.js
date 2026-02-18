@@ -10,6 +10,7 @@ const sipCtrl = require("../controllers/sipControllers.js")
 router.get("/sip", midd.verifyToken, sipCtrl.sip);
 router.get("/sip_soli_prog", midd.verifyToken, sipCtrl.sip_soli_prog);
 router.get("/sip_nsoli_prog", midd.verifyToken, sipCtrl.sip_nsoli_prog);
+router.get("/sip_materia", midd.verifyToken, sipCtrl.sip_materia);
 
 
 module.exports = router

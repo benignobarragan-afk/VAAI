@@ -1,0 +1,56 @@
+<%- include('../partials/header'); %>
+
+<script type="text/javascript">
+
+<%if(rows.length>0){%>
+    var datos = <%- JSON.stringify(rows) %>;
+<%}%>
+
+    webix.ready(function(){
+        // Definición de la interfaz
+        webix.ui({
+            rows: [
+                {
+                    view: "datatable",
+                    id: "tabla_materias",
+                    select: "row",
+                    editable: true,
+                    editaction: "dblclick", // Evento de doble clic para edición
+                    resizeColumn: true,
+                    headerRowHeight: 45,
+                    // Las columnas basadas en tu consulta SELECT
+                    columns: [
+                        { id: "area", header: "Área", width: 150, sort: "string" },
+                        { id: "clave", header: "Clave", width: 100, sort: "string", css: "bold_header" },
+                        { id: "materia", header: "Materia", fillspace: true, sort: "string" },
+                        { id: "cr", header: "CR", width: 60, sort: "int", tooltip: "Créditos" },
+                        { id: "teo", header: "TEO", width: 60, sort: "int", tooltip: "Teoría" },
+                        { id: "pra", header: "PRA", width: 60, sort: "int", tooltip: "Práctica" },
+                        { id: "tipo", header: "Tipo", width: 100, sort: "string" },
+                        { id: "nivel", header: "Nivel", width: 120, sort: "string" },
+                        { id: "prereq", header: "Pre-requisito", width: 150 },
+                        { id: "correq", header: "Co-requisito", width: 150 },
+                        { id: "departamento", header: "Departamento", width: 200, sort: "string" }
+                    ],
+                    <%if(rows.length>0){%>
+                    data: datos, 
+                    <%}%>
+                    on: {
+                        onItemDblClick: function(id) {
+                            var item = this.getItem(id.row);
+                            webix.message("Editando materia: " + item.materia);
+                        }
+                    }
+                }
+            ]
+        });
+
+        // Ajustar al tamaño de la ventana automáticamente
+        webix.event(window, "resize", function(){
+            $$("tabla_materias").adjust();
+        });
+    });
+</script>
+
+</body>
+</html>

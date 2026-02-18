@@ -22,7 +22,9 @@
 
 		//webix-components
 
-		var form_elements = [{cols:[
+		var form_elements = [
+		{rows:[
+		{cols:[
 		{rows:[
 			{
 				view: "label", class: { "font-weight": "bold", "font-size": 14, "text-align": "center" }, align: "center", label: "CAPTURA DE NUEVO OFICIO INGRESADO"
@@ -167,11 +169,11 @@
 						
 				},
 				{
-					view:"checkbox", id:"oficio_bis", name:"oficio_bis", label:"Oficio BIS", hidden:true, width:120, borderless:false,
+					view:"checkbox", id:"oficio_bis", name:"oficio_bis", label:"Oficio BIS", hidden:true, borderless:false,
 				},
 				{width:10},
 				{
-					view: "select", id: "anio_ingr", name: "anio_ingr", labelPosition: "top", label: "A&ntildeo ingreso", width:110,
+					view: "select", id: "anio_ingr", name: "anio_ingr", labelPosition: "top", label: "A&ntildeo ingreso", 
 					on:{
 						onChange:()=>{
 							buscaNume();
@@ -186,7 +188,7 @@
 				},
 				{width:10},
 				{
-					view: "text", id: "nume_cont", name: "nume_cont", labelPosition: "top", label: "Probable N&uacute;m. ctrl", value: "", width:150,
+					view: "text", id: "nume_cont", name: "nume_cont", labelPosition: "top", label: "Probable N&uacute;m. ctrl", value: "", 
 				},
 				{width:10},
 				{
@@ -197,7 +199,7 @@
 			{
 				cols:[
 				{
-					view: "select", id: "info_sens", name: "info_sens", label: "<span class='obligatorio'>*</span>El documento contiene informaci&oacute;n sensible?", value:"0", labelWidth:320, width:380,
+					view: "select", id: "info_sens", name: "info_sens", label: "<span class='obligatorio'>*</span>El documento contiene informaci&oacute;n sensible?", value:"0", labelWidth:320, 
 					options:[
 						{id:"0", value:"No"},
 						{id:"1", value:"Si"}
@@ -207,7 +209,7 @@
 					width:50
 				},
 				{
-					view:"select", label:"La informaci&oacute;n contenida en el documento es:", labelWidth:320, width:440, id:"tipo_info", name:"tipo_info",
+					view:"select", label:"La informaci&oacute;n contenida en el documento es:", labelWidth:320, id:"tipo_info", name:"tipo_info",
 					options:[
 						{id:"0", value:""},
 						{id:"1", value:"Fundamental"},
@@ -530,7 +532,7 @@
 				]
 			},
 		]},
-		{},
+		{width:10},
 		{rows:[
 			{cols:[
 				{ view: "button", css: "webix_primary", label: "Escaneo automático", click: esca_loca, width: 300, id: "scan_local", align: "right" },
@@ -576,7 +578,6 @@
 		{
 			view: "textarea", id: "ligado_a", name: "ligado_a", label: "Ligado a:", labelPosition: "top", height: 80, hidden:true,
 		},
-		<% // IF !EMPTY(lnID_doficio)%>
 		{
 			cols:[
 			{
@@ -629,7 +630,6 @@
 			}
 			]
 		},
-		<% // ENDIF%>
 		{
 			view: "fieldset", label: "Ligar oficio",
 			body: {
@@ -681,7 +681,7 @@
 			}
 		},{
 			view: "button", label: "Ingresar oficio", click: guardar, id:"btnGuardar", align: "right", width: 150
-		}]
+		}]}]
 
 		webix.ready(function () {
 			webix.ui({

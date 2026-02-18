@@ -17,7 +17,7 @@ const sip_soli_progx = (async (req, res) => {
     }
 
     const lcSQL = `
-    SELECT ROW_NUMBER() OVER (ORDER BY s.numero) AS rank, s.numero, d.siglas, n.nivel, m.modalidad, s.revisor, s.programa, s.sede_hosp, np.nivel_pnpc, s.vali_snp, 
+    SELECT ROW_NUMBER() OVER (ORDER BY s.numero) AS rank, s.id, s.numero, d.siglas, n.nivel, m.modalidad, s.revisor, s.programa, s.sede_hosp, np.nivel_pnpc, s.vali_snp, 
 		s.referencia, s.part_snp_2025, s.estado, s.snp_2025, s.esta_letr, s.grad_otor, s.conv_cola, s.vigencia, 
 		s.area_disc, s.duracion, s.cale_crea, s.dict_crea, DATE_FORMAT(s.fech_crea, "%d/%m/%Y") AS fech_crea
 	FROM sip_soli_prog s

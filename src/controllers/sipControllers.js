@@ -43,70 +43,77 @@ const sip_nsoli_prog = (async (req, res) => {
         return res.render("sin_derecho")
     }
     
-    let lcSQL = `
-    SELECT * 
-        FROM progap_ciclos 
-        ORDER BY nombre desc
-    `
-
-    const rows = await util.gene_cons(lcSQL)
-    let usuario = [], depe_id = '', depe_value = '', prog_id = '', prog_value = ''
+    let rows = [], siiau = [], dictamen = [], lcSQL = ""
 
     if (req.query.lnID > 0){
-/*     lcSQL = `
-        SELECT a.id, a.codigo, u.contrasena, a.nombre, a.apellido_paterno, a.apellido_materno, a.curp, u.id_centro_universitario AS centro, 
-                a.id_programa AS programa, a.correo_institucional, a.id_ciclo_ingreso, a.id_ciclo_curso, a.id_ciclo_condonar, 
-                if(a.id_estado > 2, 1, 0) as id_estado 
-            FROM progap_alumnos a LEFT JOIN progap_usuarios u ON a.id_usuario = u.id
-            WHERE a.id = ${req.query.lnID}
 
-        ` */
-    lcSQL = `
-        SELECT t.id, t.codigo, a.nombre, a.apellido_paterno, a.apellido_materno, a.curp, t.id_centro_universitario AS centro, 
-                t.id_programa AS programa, a.correo_institucional, t.id_ciclo_ingreso, t.id_ciclo_curso, t.id_ciclo_condonar, 
-                if(a.id_estado > 2, 1, 0) as id_estado 
-            FROM progap_tram_focam t LEFT JOIN progap_alumno a ON t.codigo = a.codigo
-            WHERE t.id = ?
-
+        lcSQL = `
+            SELECT s.id, s.numero, d.siglas, n.nivel, m.modalidad, s.revisor, s.programa, s.sede_hosp, np.nivel_pnpc, s.vali_snp, 
+                s.referencia, s.part_snp_2025, s.estado, s.snp_2025, s.esta_letr, s.grad_otor, s.conv_cola, s.vigencia, 
+                s.area_disc, s.duracion, s.cale_crea, s.dict_crea, DATE_FORMAT(s.fech_crea, "%d/%m/%Y") AS fech_crea
+            FROM sip_soli_prog s
+                LEFT JOIN progap_dependencias d ON s.id_centro_universitario = d.id
+                LEFT JOIN sip_nivel n ON s.id_nivel = n.id
+                LEFT JOIN sip_modalidad m ON s.id_modalidad = m.id
+                LEFT JOIN sip_nivel_pnpc np ON s.id_nivel_pnpc = np.id
+                WHERE s.id = ?
         `
+        rows = await util.gene_cons(lcSQL, [req.query.lnID])
 
-        usuario = await util.gene_cons(lcSQL, [req.query.lnID])
+        console.log(rows)
 
-        //console.log(usuario)
-        if(!!usuario[0].centro){                //verifica que exista la dependencia
-            lcSQL = `
-            SELECT  id, siglas, dependencia, concat('(',siglas ,') ',  dependencia) as value 
-                FROM progap_dependencias
-                WHERE id = ${usuario[0].centro}
-            `
-            depen = await util.gene_cons(lcSQL)
+        lcSQL = `
+            SELECT ps.cve_siiau as id, ps.id as id_siiau, pps.orden, ps.cve_siiau, ps.nomb_siiau, n.nivel, ps.siglas_programa, ps.modalidad_grado, 
+                ps.cve_programa, ps.cve_campodet, ps.cve_modalidad 
+            FROM sip_prog_prog_siiau pps 
+                LEFT JOIN sip_prog_siiau ps ON pps.cve_siiau = ps.cve_siiau
+                LEFT JOIN sip_nivel n ON ps.cve_nivel = n.id
+                WHERE pps.id_prog = ?
+                ORDER BY pps.orden
+        `
+        console.log(lcSQL)
 
-            //console.log(depen)
+        siiau = await util.gene_cons(lcSQL, [req.query.lnID])
 
-            depe_id = depen[0].id
-            depe_value = depen[0].value
-        }
+        lcSQL = `
+            SELECT id, id_soli_prog, dictamen, if(ifnull(fe_errata,0)=1, 'SI', 'NO') as fe_errata, DATE_FORMAT(fecha, '%d/%m/%Y') as fecha, cambios
+                FROM sip_soli_prog_dict 
+                WHERE id_soli_prog = ?
+        `
+        dictamen = await util.gene_cons(lcSQL, [req.query.lnID])
 
-        if(!!usuario[0].programa){              //verifica que exista el programa
-            lcSQL = `
-            SELECT  id, clave_cgipv, programa, concat('(',clave_cgipv ,') ', programa) as value 
-                FROM progap_programa
-                WHERE id = ${usuario[0].programa}
-            `
-            program = await util.gene_cons(lcSQL)
+    }
+    loEnvio = {rows, siiau, dictamen, skin:req.skin}
 
-            prog_id = program[0].id
-            prog_value = program[0].value
-            //console.log(program)
-        }
+    return res.render("sip/sip_nsoli_prog", loEnvio)
+});
+
+const sip_materia = (async (req, res) => {
+    
+    if (req.groups.indexOf(",ADMI_PROGAP,") < 0)        //si no tiene derechos
+    {
+        return res.render("sin_derecho")
     }
     
+    let rows = [], lcSQL = ""
 
-    return res.render("sip/sip_nsoli_prog", {rows, usuario, depe_id, depe_value, prog_id, prog_value, skin:req.skin})
+    if (!!req.query.lnID  || req.query.lnID == ''){
+
+        lcSQL = `
+        SELECT area, clave, materia, cr, teo, pra, tipo, nivel, prereq, correq, departamento 
+	        FROM sip_materia
+            WHERE carrera = ?
+        `
+        rows = await util.gene_cons(lcSQL, [req.query.lnID])
+
+        console.log(rows)
+    }
+    return res.render("sip/sip_materia", {rows, skin:req.skin})
 });
 
 module.exports = {
     sip,
     sip_soli_prog,
-    sip_nsoli_prog
+    sip_nsoli_prog,
+    sip_materia
 }

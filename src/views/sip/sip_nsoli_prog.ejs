@@ -10,9 +10,20 @@
 
 <script>
 
-<%if(usuario.length>0){%>
-var datosIniciales = <%- JSON.stringify(usuario) %>;
+var xx = 1;
+
+<%if(rows.length>0){%>
+var datos = <%- JSON.stringify(rows) %>;
 <%}%>
+
+<%if(siiau.length>0){%>
+var datossiiau = <%- JSON.stringify(siiau) %>;
+<%}%>
+
+<%if(dictamen.length>0){%>
+var datodictamen = <%- JSON.stringify(dictamen) %>;
+<%}%>
+
 
 webix.ready(function(){
     webix.ui({
@@ -25,72 +36,159 @@ webix.ready(function(){
             bottomPadding: 15
         },
         elements:[
-            // ID oculto para edición (auto_increment)
-            { view: "text", name: "id", hidden: true },
-            
-            { margin: 10, cols: [
-                { view: "text", label: "Número", name: "numero" },
-                { view: "text", label: "Centro Univ.", name: "id_centro_universitario" }
-            ]},
+        {
+        view: "tabview",
+        cells: [
+            {
+                header: "Datos generales",
+                body: {margin: 20,
+                    rows: 
+                    [
+                        // ID oculto para edición (auto_increment)
+                        { view: "text", name: "id", hidden: true },
+                        
+                        { margin: 10, cols: [
+                            { view: "text", label: "Número", name: "numero" },
+                            { view: "text", label: "Centro Univ.", name: "id_centro_universitario" }
+                        ]},
 
-            { margin: 10, cols: [
-                { view: "text", label: "ID Nivel", name: "id_nivel" },
-                { view: "text", label: "ID Modalidad", name: "id_modalidad" },
-                { view: "text", label: "ID Orientación", name: "id_orientacion" }
-            ]},
+                        { margin: 10, cols: [
+                            { view: "text", label: "ID Nivel", name: "id_nivel" },
+                            { view: "text", label: "ID Modalidad", name: "id_modalidad" },
+                            { view: "text", label: "ID Orientación", name: "id_orientacion" }
+                        ]},
 
-            { view: "text", label: "Revisor", name: "revisor" },
-            { view: "textarea", label: "Programa", name: "programa", height: 60 },
-            { view: "text", label: "Sede Hosp.", name: "sede_hosp" },
-            
-            { margin: 10, cols: [
-                { view: "text", label: "Nivel PNPC", name: "id_nivel_pnpc" },
-                { view: "text", label: "Vali SNP", name: "vali_snp" }
-            ]},
+                        { view: "text", label: "Revisor", name: "revisor" },
+                        { view: "textarea", label: "Programa", name: "programa", height: 60 },
+                        { view: "text", label: "Sede Hosp.", name: "sede_hosp" },
+                        
+                        { margin: 10, cols: [
+                            { view: "text", label: "Nivel PNPC", name: "id_nivel_pnpc" },
+                            { view: "text", label: "Vali SNP", name: "vali_snp" }
+                        ]},
 
-            { margin: 10, cols: [
-                { view: "text", label: "Referencia", name: "referencia" },
-                { view: "text", label: "Part SNP 2025", name: "part_snp_2025" }
-            ]},
+                        { margin: 10, cols: [
+                            { view: "text", label: "Referencia", name: "referencia" },
+                            { view: "text", label: "Part SNP 2025", name: "part_snp_2025" }
+                        ]},
 
-            { view: "text", label: "Estado", name: "estado" },
-            
-            { margin: 10, cols: [
-                { view: "text", label: "SNP 2025", name: "snp_2025" },
-                { view: "text", label: "Esta Letr", name: "esta_letr" }
-            ]},
+                        { view: "text", label: "Estado", name: "estado" },
+                        
+                        { margin: 10, cols: [
+                            { view: "text", label: "SNP 2025", name: "snp_2025" },
+                            { view: "text", label: "Esta Letr", name: "esta_letr" }
+                        ]},
 
-            { view: "text", label: "Grad Otor", name: "grad_otor" },
-            { view: "text", label: "Conv Cola", name: "conv_cola" },
-            { view: "text", label: "Vigencia", name: "vigencia" },
-            { view: "text", label: "Área Disc", name: "area_disc" },
-            
-            { margin: 10, cols: [
-                { view: "text", label: "Área SNI", name: "area_sni" },
-                { view: "text", label: "Duración", name: "duracion" }
-            ]},
+                        { view: "text", label: "Grad Otor", name: "grad_otor" },
+                        { view: "text", label: "Conv Cola", name: "conv_cola" },
+                        { view: "text", label: "Vigencia", name: "vigencia" },
+                        { view: "text", label: "Área Disc", name: "area_disc" },
+                        
+                        { margin: 10, cols: [
+                            { view: "text", label: "Área SNI", name: "area_sni" },
+                            { view: "text", label: "Duración", name: "duracion" }
+                        ]},
 
-            { view: "text", label: "Creación Orig", name: "creacion_orig" },
-            
-            { margin: 10, cols: [
-                { view: "text", label: "Año Crea", name: "anio_crea" },
-                { view: "text", label: "Cale Crea", name: "cale_crea" }
-            ]},
+                        { view: "text", label: "Creación Orig", name: "creacion_orig" },
+                        
+                        { margin: 10, cols: [
+                            { view: "text", label: "Año Crea", name: "anio_crea" },
+                            { view: "text", label: "Cale Crea", name: "cale_crea" }
+                        ]},
 
-            { margin: 10, cols: [
-                { view: "text", label: "Dict Crea", name: "dict_crea" },
-                { view: "datepicker", label: "Fecha Crea", name: "fech_crea", format: "%d/%m/%Y", stringResult: true }
-            ]},
+                        { margin: 10, cols: [
+                            { view: "text", label: "Dict Crea", name: "dict_crea" },
+                            { view: "datepicker", label: "Fecha Crea", name: "fech_crea", format: "%d/%m/%Y", stringResult: true }
+                        ]},
 
-            { margin: 20, cols: [
-                {}, // Espaciador
-                { view: "button", value: "Cancelar", width: 120, click: function() { $$("form_programa_vaai").clear(); }},
-                { view: "button", value: "Guardar Datos", css: "webix_primary", width: 150, click:"" }
-            ]}
+                        { margin: 20, cols: [
+                            {}, // Espaciador
+                            { view: "button", value: "Cancelar", width: 120, click: function() { $$("form_programa_vaai").clear(); }},
+                            { view: "button", value: "Guardar Datos", css: "webix_primary", width: 150, click:"" }
+                        ]}
+                    ]
+                }
+            },
+            {
+                header: "Dictamenes",
+                body: {margin: 20,
+                    rows: 
+                    [
+                        {
+                            view: "datatable",
+                            id: "tabla_dictamenes",
+                            select: "row",
+                            editable: true,
+                            editaction: "dblclick",
+                            headerRowHeight: 45,
+                            rowHeight: 40,
+                            columns: [
+                                { id: "dictamen", header: "Dictamen", width: 150, sort: "string", css: { "text-align": "center" } },
+                                { 
+                                    id: "fecha", 
+                                    header: "Fecha Dictamen", 
+                                    width: 120, 
+                                    sort: "date", css: { "text-align": "center" }
+                                },
+                                { id: "fe_errata", header: "Fe de Errata", width: 150, sort: "string", css: { "text-align": "center" } },
+                                {
+                                    id: "cambios", 
+                                    header: "Descripción de Cambios", 
+                                    fillspace: true, // Esta columna se expande para ocupar el resto del ancho
+                                    sort: "string" 
+                                }
+                            ],
+                            // Evento opcional para cuando seleccionas una fila
+                            on: {
+                                onAfterSelect: function(selection) {
+                                    var item = this.getItem(selection.id);
+                                    webix.message("Seleccionado dictamen: " + item.dictamen);
+                                }
+                            },
+                            <%if(dictamen.length>0){%>
+                            data: datodictamen, 
+                            <%}%>
+                        },
+                    ]
+                }
+            },
+            {
+                header: "Datos SIIAU",
+                body: {margin: 20,
+                    rows: 
+                    [
+                        {
+                            view: "datatable",
+                            id: "tabla_programas_siiau",
+                            select: "row",
+                            columns: [
+                                { id: "orden", header: "Orden", width: 60, sort: "int" },
+                                { id: "nomb_siiau", header: "Programa Académico", fillspace: true, sort: "string" },
+                                { id: "cve_siiau", header: "Clave SIIAU", width: 100, sort: "string" },
+                                { id: "nivel", header: "Nivel", width: 220, sort: "string" },
+                                { id: "siglas_programa", header: "Siglas", width: 90 },
+                                { id: "modalidad_grado", header: "Modalidad", width: 150 },
+                                { id: "cve_programa", header: "Programa", width: 150 },
+                                { id: "cve_campodet", header: "Campo", width: 90 },
+                            ],
+                            on: {
+                                onItemDblClick: function(id) {
+                                    var item = this.getItem(id);
+                                    deta_prog(id, item.nomb_siiau);
+                                }
+                            },
+                            <%if(siiau.length > 0){%>
+                            data: datossiiau, 
+                            <%}%>
+                        },
+                    ]
+                }
+            }
         ],
-        <%if(usuario.length>0){%>
-        data: datosIniciales,
-        <%}%>
+        }],
+        <%if(rows.length>0){%>
+        data: datos,
+        <%}%>    
     });
 });
 
@@ -133,5 +231,31 @@ function carg_arch() {
     $$("archivos_adjuntos").clearAll()
     $$("archivos_adjuntos").load("/api/progap/progap_recu_arch?lnTram=<%=//usuario[0].id%>");
 }
+
+function deta_prog(id_prog, titulo) {
+		xx++;
+		webix.ui({
+			view: "window", id: "w4" + xx,
+			move: false, left: 0, top: 0, width: 1000, height: 600, resize: true, fullscreen:true,
+			head: {
+				view: "toolbar", id: "toolbar4" + xx, css: "mi_toolbar_color",
+				cols: [
+					{ view: "label", label: titulo },
+					{ view: "icon", icon: 'mdi mdi-fullscreen', click:()=>{
+						var ventana = $$('w4' + xx)
+						ventana.config.move = !ventana.config.move
+						ventana.config.fullscreen = !ventana.config.fullscreen;
+						ventana.setPosition(0,0)
+						ventana.resize();
+					} },
+					{ view: "icon", icon: 'mdi mdi-close', click: "$$('w4" + xx + "').close();" }
+				]
+			},
+			body: {
+				view: "iframe",
+				src: "/sip/sip_materia?lnID=" + id_prog
+			}
+		}).show();
+	}
 
 </script>
