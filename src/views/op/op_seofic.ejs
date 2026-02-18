@@ -111,90 +111,48 @@
 									view: "form", id: "form",
 									rows: [
 										{cols: [
-										{
-											label: "Concepto", view: "textarea", id: "txtConcepto", name: "txtConcepto", labelWidth: 95, labelPosition:"top", height: 120, value:`<%=rows2[0].CONCEPTO%>`, 
-										},
-										{width:15},
-										{rows: [
-											{ 
-												view: "uploader", value: "Adjunta un archivo PDF", accept:"application/pdf",
-												name:"filePDF", id:"filePDF", width:300,
-												link:"list1",  upload:"/api/op/op_uoficio",
-												formData: {
-													idOficio: <%=rows2[0].ID_IDEN%>, out: 1
+										{rows: [ 
+											{label: "Concepto", view: "textarea", id: "txtConcepto", name: "txtConcepto", labelWidth: 95, labelPosition:"top", height: 120, value:`<%=rows2[0].CONCEPTO%>`}, 
+											{cols: [
+												{
+												view: "combo", id:"seccion", name:"seccion", label: "Secci&oacute;n/Subsecci&oacute;n", labelPosition:"top",
+												labelWidth:300, width:800, options: {
+														filter: function (item, value) {
+															if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+																return true;
+															return false;
+														},
+														keyPressTimeout: 500,
+																body: {
+																	fitMaster: false, template: "#value#",
+																	dataFeed: "/api/op/cmb_seccw"
+																},
+														// keyPressTimeout: 1000,
+														//data:[]
+													},
 												},
-													on:{
-															onUploadComplete:(response, file)=>{
-
-															console.log(response);
-															console.log(response.message);
-															webix.message({ type:"info", text:response.message, id:"loadingMsg" });
-															$$("form").enable();
-															carg_arch();
-
-															//$$("formPDF").hideProgress();
-														},
-														onBeforeFileAdd: function (item) {
-														//$$("formPDF").showProgress();
-
-														$$("form").disable(); 
-														//$$("textoPDF").setValue("Subiendo y procesando archivo...");
-														webix.message({ type:"info", text:"Subiendo y procesando archivo...", id:"loadingMsg" });
-										
-														return true;
-														},
-														onUploadFail: function (item){
-														$$("form").enable(); 
-														},
+												{},
+												<%if(!!rows2[0].GDOC){%>
+												{
+													view: "button",
+													type: "icon", 
+													label: "Ver GoogleDocs", // El texto del botón
+													css: "webix_primary",      // Clase para darle un estilo primario (opcional)
+													icon: "mdi mdi-file-word-box",      // Ícono de PDF de la librería Webix
+													width: 180,
+													// icon: "fa fa-file-pdf-o", // Alternativa si usas Font Awesome
+													
+													// Manejador de eventos onClick
+													click: function() {
+														// La URL del PDF que quieres abrir
+														const pdfUrl = "<%=rows2[0].GDOC%>"; 
+														
+														// Abrir la liga en una nueva pestaña
+														window.open(pdfUrl, '_blank');
 													}
 												},
-												{
-												view:"list",  id:"list1", type:"uploader",
-												autoheight:true, borderless:true	
-												},
-										]},
-										]},
-										{
-										cols: [
-											{
-											view: "combo", id:"seccion", name:"seccion", label: "Secci&oacute;n/Subsecci&oacute;n", labelPosition:"top",
-											labelWidth:300, width:800, options: {
-													filter: function (item, value) {
-														if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
-															return true;
-														return false;
-													},
-													keyPressTimeout: 500,
-															body: {
-																fitMaster: false, template: "#value#",
-																dataFeed: "/api/op/cmb_seccw"
-															},
-													// keyPressTimeout: 1000,
-													//data:[]
-												},
-											},
-											{},
-											<%if(!!rows2[0].GDOC){%>
-											{
-												view: "button",
-												type: "icon", 
-												label: "Ver GoogleDocs", // El texto del botón
-												css: "webix_primary",      // Clase para darle un estilo primario (opcional)
-												icon: "mdi mdi-file-word-box",      // Ícono de PDF de la librería Webix
-												width: 180,
-												// icon: "fa fa-file-pdf-o", // Alternativa si usas Font Awesome
-												
-												// Manejador de eventos onClick
-												click: function() {
-													// La URL del PDF que quieres abrir
-													const pdfUrl = "<%=rows2[0].GDOC%>"; 
-													
-													// Abrir la liga en una nueva pestaña
-													window.open(pdfUrl, '_blank');
-												}
-											},
-											<%}%>
-										]
+												<%}%>
+											]
 										},
 										{
 											cols: [
@@ -246,8 +204,27 @@
 											},
 											*/
 										},
-										
-	 
+										]},
+										{width:15},
+										{rows:[
+											{cols:[
+												{ view: "button", css: "webix_primary", label: "Escaneo automático", click: esca_loca, width: 230, id: "scan_local", align: "right" },
+												{width:15},
+												{ view: "button", css: "webix_secundary", label: "Enviar", click: esca_loca, width: 150, id: "envi_scan", align: "right" },
+											]},
+											
+												{
+													view: "template", 
+													id: "visor_pdf",
+													template: function(obj){
+														if (!obj.data) return "Da clic al botón Escaneo automático";
+														// Pasamos la cadena base64 directamente al src
+														return `<iframe src="data:application/pdf;base64,${obj.data}" width="100%" height="100%" frameborder="0"></iframe>`;
+													}
+												},
+
+										]},
+										]},
 										{
 											cols: [
 												{
@@ -276,8 +253,48 @@
 													}
 												},
 												{width: 80},
-												{label: "Nota estatus", view: "textarea", id: "txtStatus", name: "txtStatus", labelWidth: 95, labelPosition:"left", },
+												{label: "Nota estatus", view: "textarea", id: "txtStatus", name: "txtStatus", labelWidth: 95, labelPosition:"top", height:80},
+												{width:15},
 												{ view: "button", css: "webix_primary", label: "Cambio de estatus", click: camb_stat, width: 120, id: "btncamb_stat", align: "right", disabled: <%=(rows2[0].STATUS>3 || (rows2[0].STATUS==1 && rows6[0].titular != 1)?'true':'false')%> },
+												{width:180},
+												{rows: [
+													{ 
+														view: "uploader", value: "Adjunta un archivo PDF", accept:"application/pdf",
+														name:"filePDF", id:"filePDF", width:200,
+														link:"list1",  upload:"/api/op/op_uoficio",
+														formData: {
+															idOficio: <%=rows2[0].ID_IDEN%>, out: 1
+														},
+															on:{
+																	onUploadComplete:(response, file)=>{
+
+																	console.log(response);
+																	console.log(response.message);
+																	webix.message({ type:"info", text:response.message, id:"loadingMsg" });
+																	$$("form").enable();
+																	carg_arch();
+
+																	//$$("formPDF").hideProgress();
+																},
+																onBeforeFileAdd: function (item) {
+																//$$("formPDF").showProgress();
+
+																$$("form").disable(); 
+																//$$("textoPDF").setValue("Subiendo y procesando archivo...");
+																webix.message({ type:"info", text:"Subiendo y procesando archivo...", id:"loadingMsg" });
+												
+																return true;
+																},
+																onUploadFail: function (item){
+																$$("form").enable(); 
+																},
+															}
+														},
+														{
+														view:"list",  id:"list1", type:"uploader",
+														autoheight:true, borderless:true	
+														},
+												]},
 											] 
 											
 										},
@@ -876,6 +893,31 @@
 		function countDirigido() {
 			return $$("dtable").find(function (obj) { return obj.tipo == 1; });
 		}
+
+		function esca_loca(){
+			// Mostramos un aviso de carga (opcional pero recomendado)
+			webix.extend($$("visor_pdf"), webix.ProgressBar);
+			$$("visor_pdf").showProgress();
+
+			webix.ajax().post("http://127.0.0.1:2727/scan", {}).then((res)=>{
+				$$("visor_pdf").hideProgress();
+				res = res.json();
+				console.log(res);
+				$$("visor_pdf").setValues({ data: res.base64 });
+			}).fail((xhr)=>{
+				// Aquí manejamos el Error 500 u otros
+				$$("visor_pdf").hideProgress();
+				
+				console.error("Error en el escáner:", xhr.status, xhr.responseText);
+				
+				webix.alert({
+					title: "Error del Escáner",
+					text: "No se pudo completar el escaneo (Error " + xhr.status + "). Revise que el servicio local esté corriendo.",
+					type: "alert-error"
+				});
+			});
+		}
+
 	</script>
 </body>
 
