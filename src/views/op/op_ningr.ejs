@@ -23,670 +23,730 @@
 		//webix-components
 
 		var form_elements = [
-		{rows:[
-		{cols:[
-		{rows:[
-			{
-				view: "label", class: { "font-weight": "bold", "font-size": 14, "text-align": "center" }, align: "center", label: "CAPTURA DE NUEVO OFICIO INGRESADO"
-			},
-			<%
-			if(llDirectorio && !!laQuery.lcClav_ofic){ //  IF llDirectorio AND EMPTY(lcClav_ofic) %>
-			{
-				cols: [
-
-					{
-						view: "select", id: "tipo_docu", name: "tipo_docu", label: "<span class='obligatorio'>*</span>Tipo documento", labelPosition: "top", value:1<% //  Response.write(lnTipo_docu) %>, 
-						options: [
-							<% //  SELECT cTipo_docu
-							//SCAN %>
-								{ id: "<% // Response.write(cTipo_docu.id_pk)%>", value: "<% // Response.write(cTipo_docu.descrip)%>" },
-							<% //  ENDSCAN %>
-						],
-						on: {
-							"onChange": function (newv, oldv) {
-								buscaNume();
-								if(newv == 3){
-									$$("segu_pra").show();
-								}else{
-									$$("segu_pra").hide();
-									$$("segu_pra").setValue();
-								}
-
-								if (newv == 1) {
-									$$("telefono").show();
-									$$("doc_firm").show();
-								} else {
-									$$("telefono").hide();
-									$$("doc_firm").hide();
-
-								}
-							}
-						}
-					},
-					{
-						view:"combo", id:"segu_pra", name:"segu_pra", labelPosition:"top", label:"Si vas a dar seguimiento a un documento PRA seleccionalo",	 hidden:true, 
-						options:{
-							filter: function (item, value) {
-								if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
-									return true;
-								return false;
-							},
-							//url: "/api/op/op_ningrx2?t=2"
-						}
-					},
-					{
-						view:"select", id:"doc_firm", name:"doc_firm",labelPosition:"top", label:"Define el documento", hidden:true, 
-						options:[{
-							id:"1", value:"Documentos firmados"
-						},{
-							id:"2", value:"Doc. para firma del Director"
-						},{
-							id:"3", value:"Doc. para firma del Srio. Particular"
-						}]
-					},{
-						view: "text", id: "telefono", name: "telefono", label: "Tel&eacute;fono", labelPosition: "top", hidden:false
-				},
-				
-			]
-
-			},
-			<%} //  ENDIF %>
-			{
-			cols: [{
-					view: "combo", id: "cve", name: "cve", label: "<span class='obligatorio'>*</span>Oficial&iacute;a", labelPosition: "top",
-						<%
-						
-						/*
-						GO TOP IN cOficialia
-						IF RECCOUNT("cOficialia") > 0
-						*/
-						%>
-						value:"<%=rows[0].cve%>", 
-						<% // ENDIF%>
-
-					on: {
-						"onChange": function (newv, oldv) {
-							obtenerSeccion();
-							
-							
-							if(["CGCE"].includes(newv)){
-								$$("oficio_bis").show();
-								if(["CGCE", "SP"].includes(newv)){
-									$$("ligado_a").show()
-								}else{
-									$$("ligado_a").hide()
-								}
-							}else{
-								$$("oficio_bis").hide();
-								$$("ligado_a").hide()
-							}
-							cambiaCombo(newv, 'id_oficio')
-							cambiaCombo(newv, 'liga');
-							var lista = $$("liga_entr").getList();
-							lista.clearAll();
-							$$("liga_entr").setValue();
-
-							var lista = $$("liga_sali").getList();
-							lista.clearAll();
-
-
-							$$("liga_sali").define({
-								options: [
-								<% 
-								/*
-								IF USED("ofic_sali")
-								GO TOP IN ofic_sali 
-								*/%>
-								{ "id":0 , "value": "0" }
-								//	{ "id":<% //  Response.write(ofic_sali.id_iden) %> , "value": "<% // Response.write(ofic_sali.oficio)%>" }
-									<% //  ENDIF %>
-							]
-							})
-
-
-							//$$("liga_sali").setValue('<% // Response.write(IIF(USED("ofic_sali"),ofic_sali.id_iden,0))%>');
-							//$$("liga_sali").refresh();
-
-							buscaNume();
-							buscaOficio()
-							
-							
-						},
-
-					},
-					options: {
-						filter: function (item, value) {
-							if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
-								return true;
-							return false;
-						},
-						data:[
-							<%for (var i = 0; i < rows.length; i++) {%>
-							{ id: "<%= rows[i].cve%>", value: "(<%=rows[i].cve%>) <%=rows[i].depen%>" },
-							<%}%>
-						]
-					}
-						
-				},
-				{
-					view:"checkbox", id:"oficio_bis", name:"oficio_bis", label:"Oficio BIS", hidden:true, borderless:false,
-				},
-				{width:10},
-				{
-					view: "select", id: "anio_ingr", name: "anio_ingr", labelPosition: "top", label: "A&ntildeo ingreso", width:90, 
-					on:{
-						onChange:()=>{
-							buscaNume();
-						}
-					},
-					options:[
-					<% // FOR xx = YEAR(DATE()) TO 2019 STEP -1%>
-					//{id:"<% // Response.write(xx)%>", value:"<% // Response.write(xx)%>"},
-					{id:"<%=new Date().getFullYear()%>", value:"<%=new Date().getFullYear()%>"}
-					<% // NEXT%>
-					]
-				},
-				{width:10},
-				{
-					view: "text", id: "nume_cont", name: "nume_cont", labelPosition: "top", label: "Probable N&uacute;m. ctrl", value: "", width:90,
-				},
-				{width:10},
-				{
-					view: "datepicker", id: "fech_ofic", name: "fech_ofic", labelPosition: "top", label: "<span class='obligatorio'>*</span>Fecha oficio", value: new Date(), width:140,
-				},
-				]
-			},
-			{
-				cols:[
-				{
-					view: "select", id: "info_sens", name: "info_sens", label: "<span class='obligatorio'>*</span>El documento contiene informaci&oacute;n sensible?", value:"0", labelWidth:320, 
-					options:[
-						{id:"0", value:"No"},
-						{id:"1", value:"Si"}
-					]
-				},
-				{
-					width:50
-				},
-				{
-					view:"select", label:"La informaci&oacute;n contenida en el documento es:", labelWidth:320, id:"tipo_info", name:"tipo_info",
-					options:[
-						{id:"0", value:""},
-						{id:"1", value:"Fundamental"},
-						{id:"2", value:"Ordinaria"}
-					]
-				}
-				]
-					
-			},
-			{
-				cols: [{
-					view: "datepicker", id: "fech_rece", name: "fech_rece", labelPosition: "top", label: "<span class='obligatorio'>*</span>Fecha recepci&oacute;n", value: new Date()
-				}, 
-				{width:10},
-				{
-					view: "text", label: "<span class='obligatorio'>*</span>Hora recepci&oacute;n", labelPosition: "top", attributes: { maxlength: 5 }, id: "hora_rece", name: "hora_rece", placeholder: "Formato 24 hrs.", value:hour.trim(), 
-					validate: function (value) {
-						return /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value);
-					}, invalidMessage: "El formato de la hora es invalido"
-
-				}, 
-				{width:10},
-				{
-					view: "text", id: "nume_ofic", name: "nume_ofic", label: "<span class='obligatorio'>*</span>N&uacute;mero de oficio recibido", labelPosition: "top",
-
-					suggest: {
-
-						filter: function (item, value) {
-							if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
-								return true;
-							return false;
-						},
-						keyPressTimeout: 500,
-						body: {
-							fitMaster: false,
-							template: "#value#",
-							dataFeed: "/api/op/cmb_control2W?t=1" 
-						},
-					},
-					on:{
-						"onBlur":function(){
-							buscaOficio();
-						}
-					}
-				}]
-			},  
-			{
-				view: "fieldset", label: "Procedencia",
-				body: {
-					rows: [{
-						view: "radio", labelWidth:120, label: "<span class='obligatorio'>*</span>Dependencia", id: "rbDepe", name: "rbDepe", on: { "onChange": function (newv, oldv) { cambiaCombo(newv, 'depe') } }, value: 1, options: [{
-							id: 1, value: "U. de G."
-						}, {
-							id: 2, value: "Ajena a U. de G."
-						}]
-					}, {
-						view: "combo", id: "dependen", name: "dependen",editable: true, value: "<% // Response.write(IIF(USED('ofic_sali') AND !EMPTY(ofic_sali.dependen),ofic_sali.dependen, '0'))%>",
-						options: {
-							filter: function (item, value) {
-								if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
-									return true;
-								return false;
-							},
-							keyPressTimeout: 500,
-							body: {
-								fitMaster: false, template: "#value#",
-								dataFeed: "/api/gen/cmb_depew?lnTipo=1"
-							},
-							<% //  IF USED('ofic_sali') AND !EMPTY("ofic_sali.dependen")
-							//GO TOP IN ofic_sali%>
-							//data: [{ id: "<% // Response.write(ofic_sali.dependen)%>", value: "<% // Response.write(STRTRAN(STRCONV(ofic_sali.depe_nomb,9),'"', "'"))%>" }], 
-							<% //  ENDIF %>
-						},
-						on: {
-						onChange: function (id) {
-								console.log(id);
-								webix.ajax()
-						.get("/api/op/op_ningrx3", {id, cve:$$("cve").getValue()})
-						.then(function (data) {
-
-							let res = data.json()[0]
-							console.log(typeof res != undefined)
-							
-							if (typeof res != undefined){
-								$$("remi_nomb").setValue(res.nomb_remi);
-								$$("remi_carg").setValue(res.carg_remi);
-								$$("dest_nomb").setValue(res.nomb_dest);
-								$$("dest_carg").setValue(res.carg_dest);
-
-								console.log(res.nomb_remi)
-							}
-						})
-							//mues_dato(id);
-							//dirigido(id);
-							//obtenerSeccion();
-						}
-						},
-					}, {
-						view: "text", hidden: true, id: "txtDepen", name: "txtDepen", value:"<% // Response.write(	IIF(USED('ofic_sali') AND !EMPTY(ofic_sali.dependen), ofic_sali.dependen,''))%>",
-						on:{
-							"onKeyPress": function(code, e){
-								$$("id_cent").setValue('')
-							}
-						},
-						suggest: {
-							filter: function (item, value) {
-								if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
-									return true;
-								return false;
-							},
-							keyPressTimeout: 500,
-							body: {
-								fitMaster: false, template: "#value#",
-								dataFeed: "/api/gen/cmb_depew?lnTipo=2"
-							},
-							on: {
-								"onValueSuggest": function (obj) {
-									$$("txtDepen").setValue(obj.descrip)
-									$$('id_cent').setValue(obj.id)
-								}
-							}
-						},
-					}, 
-					{
-						view:"text", id:"id_cent", name:"id_cent", readonly:true, hidden:true
-					},
-					{
-						view: "text", hidden: true, id: "clav_proc", name: "clav_proc"
-					}]
-				}
-			}, 
-			{
-				view: "fieldset", label: "Remitente",
-					body: {
-					cols: [{
-						view: "text", id: "remi_nomb", name: "remi_nomb", label: "<span class='obligatorio'>*</span>Nombre", labelWidth: 120, labelPosition: "top",
-						attributes:{ autocomplete :"off" },
-						suggest: {
-							filter: function (item, value) {
-								if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
-									return true;
-								return false;
-							},
-							keyPressTimeout: 500,
-							body: {
-								fitMaster: false,
-								template: "#value#",
-								dataFeed: "/api/gen/cmb_persw?lnTipo=11"
-							},
-							on: {
-								"onValueSuggest": function (obj) {
-									//cargaCargo('remi_carg', obj.id, obj.value)
-									$$("remi_carg").setValue(obj.cargo);
-
-								}
-							}
-						},
-					}, 
-					{width:10},
-					{
-						view: "text", id: "remi_carg", name: "remi_carg", label: "Cargo", labelPosition: "top",
-						attributes:{ autocomplete :"off" },
-						suggest: {
-							filter: function (item, value) {
-								if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
-									return true;
-								return false;
-							},
-							keyPressTimeout: 500,
-							body: {
-								fitMaster: false,
-								template: "#value#",
-								//dataFeed: "/<% // Response.Write(config.ruta)%>/cmb_opcargo.fwx"
-							},
-						}
-					}]
-				}
-			},
-			{
-				view: "fieldset", label: "Destinatario",
-					body: {
-					cols: [{
-						view: "text", id: "dest_nomb", name: "dest_nomb", label: "<span class='obligatorio'>*</span>Nombre", labelPosition: "top",
-						attributes:{ autocomplete :"off" },
-						suggest: {
-							filter: function (item, value) {
-								if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
-									return true;
-								return false;
-							},
-							keyPressTimeout: 500,
-							body: {
-								fitMaster: false,
-								template: "#value#",
-								dataFeed: "/api/gen/cmb_persw?lnTipo=11"
-							},
-							on: {
-								"onValueSuggest": function (obj) {
-									//cargaCargo('dest_carg', obj.id, obj.value)
-									$$("dest_carg").setValue(obj.cargo);
-								}
-							}
-						},
-					}, 
-					{width:10},
-					{
-						view: "text", id: "dest_carg", name: "dest_carg", label: "Cargo", labelPosition: "top",attributes:{ autocomplete :"off" },
-						suggest: {
-							filter: function (item, value) {
-								if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
-									return true;
-								return false;
-							},
-							keyPressTimeout: 500,
-							body: {
-								fitMaster: false,
-								template: "#value#",
-								//dataFeed: "/<% // Response.Write(config.ruta)%>/cmb_opcargo.fwx"
-							},
-						}
-					}]
-				}
-			},
-			{
-				view: "fieldset", label: "Con copia/atención",
-					body: {
-					cols: [{
-						view: "text", id: "copi_nomb", name: "copi_nomb", label: "<span class='obligatorio'>*</span>Nombre", labelWidth: 120, labelPosition: "top",
-						attributes:{ autocomplete :"off" },
-						suggest: {
-							filter: function (item, value) {
-								if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
-									return true;
-								return false;
-							},
-							keyPressTimeout: 500,
-							body: {
-								fitMaster: false,
-								template: "#value#",
-								dataFeed: "/api/gen/cmb_persw?lnTipo=11"
-							},
-							on: {
-								"onValueSuggest": function (obj) {
-									//cargaCargo('remi_carg', obj.id, obj.value)
-									$$("remi_carg").setValue(obj.cargo);
-
-								}
-							}
-						},
-					}, 
-					{width:10},
-					{
-						view: "text", id: "copi_carg", name: "copi_carg", label: "Cargo", labelPosition: "top",
-						attributes:{ autocomplete :"off" },
-						suggest: {
-							filter: function (item, value) {
-								if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
-									return true;
-								return false;
-							},
-							keyPressTimeout: 500,
-							body: {
-								fitMaster: false,
-								template: "#value#",
-								//dataFeed: "/<% // Response.Write(config.ruta)%>/cmb_opcargo.fwx"
-							},
-						}
-					}]
-				}
-			},
-			{
-				cols: [{
-					view: "select", id: "tipo_ofic", name: "tipo_ofic", labelPosition: "top", label: "<span class='obligatorio'>*</span>Tipo oficio", value: 1, options: [
-						<% //  SELECT cTipo_ofic
-						//SCAN %>
-						{ id: "<% // Response.write(cTipo_ofic.id_tiof)%>", value: "<% // Response.write(cTipo_ofic.descrip)%>" },
-						<% //  ENDSCAN %>
-						<%for (var i = 0; i < loTipo.length; i++) {%>
-							{ id: "<%=loTipo[i].id_tiof%>", value: "<%=loTipo[i].descrip%>" },
-						<%}%>
-					],
-					on: {
-						"onChange": function (newv, oldv) {
-							if (newv == 5) {
-								$$("fech_term").show();
-							} else {
-								$$("fech_term").hide();
-							}
-						}
-					}
-				}, 
-				{width:10},
-				{
-					view: "datepicker", id: "fech_term", minuteStep: 1, name: "fech_term", labelPosition: "top", 
-					label: "<span class='obligatorio'>*</span>Fecha termino", value: new Date(), hidden: true,	
-					multiselect:"touch"
-				}, 
-				{ view: "text", id: "txtFech_term", name: "txtFech_term",hidden: true },
-				{
-					view: "select", id: "clase", name: "clase", labelPosition: "top", label: "<span class='obligatorio'>*</span>Clase", value: 1,	options: [
-						<% //  SELECT cClase
-						//SCAN %>
-						//{ id: "<% // Response.write(cClase.id_clof)%>", value: "<% // Response.write(STRCONV(cClase.descrip,11))%>" },
-						<% //  ENDSCAN %>
-						<%for (var i = 0; i < loClas.length; i++) {%>
-							{ id: "<%=loClas[i].id_clof%>", value: "<%=loClas[i].descrip%>" },
-						<%}%>
-					]
-				},
-				{width:10},
-				{
-					view:"select", label:"Enviar por:", labelWidth:320, width:440, id:"tipo_ingr", name:"tipo_ingr", 
-					options:[
-						{id:"0", value:""},
-						{id:"1", value:"Por correo"},
-						{id:"2", value:"Oficio f&iacute;sico"}
-					],
-					labelPosition:"top", value:"<% // Response.write(IIF(!EMPTY(lcClav_ofic), '1', '0'))%>", 
-				},
-				]
-			},
-		]},
-		{width:10},
-		{rows:[
-			{cols:[
-				{ view: "button", css: "webix_primary", label: "Escaneo automático", click: esca_loca, width: 300, id: "scan_local", align: "right" },
-				{width:165},
-				{view: "textarea", id: "pdf_base64", name: "pdf_base64", hidden: true},
-			]},
-			
-				{
-					view: "template", 
-					id: "visor_pdf",
-					template: function(obj){
-						if (!obj.data) return "Da clic al botón Escaneo automático";
-						// Pasamos la cadena base64 directamente al src
-						return `<iframe src="data:application/pdf;base64,${obj.data}" width="100%" height="100%" frameborder="0"></iframe>`;
-					}
-				},
-
-		]},
-		{width:10},
-		]}, 
 		{
-		cols:[{
-			view: "textarea", id: "asunto", name: "asunto", label: "<span class='obligatorio'>*</span>Asunto", labelPosition: "top", height: 120
-		},
-		{width:80},
-		{
-			view: "button", label: "Ingresar oficio", click: guardar, id:"btnGuardar", align: "right", width: 150
-		},
-		]},
-		{
-			view: "combo", id:"seccion", name:"seccion", label: "Secci&oacute;n/Subsecci&oacute;n", labelPosition:"top", labelWidth:300, width:800,
-			options: {
-				filter: function (item, value) {
-					if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
-						return true;
-					return false;
-				},
-				keyPressTimeout: 500,
-						body: {
-							fitMaster: false, template: "#value#",
-							dataFeed: "/api/op/cmb_seccw"
-						},
-				// keyPressTimeout: 1000,
-				//data:[]
-			}
-		},
-		{
-			view: "textarea", id: "nota", name: "nota", label: "Nota (Seguimiento)", labelPosition: "top", height: 80
-		},
-		{
-			view: "textarea", id: "ligado_a", name: "ligado_a", label: "Ligado a:", labelPosition: "top", height: 80, hidden:true,
-		},
-		{
-			cols:[
-			{
-				view:"multicombo", 
-				label:"Adjuntar archivos adjuntos al oficio",  labelWidth:250, labelPosition:"top", 
-				id:"adjuntos", name:"adjuntos",
-				options:{
-					filter: function (item, value) {
-						if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
-							return true;
-						return false;
-					},
-					body:{
-						maxWidth:400,
-					},
-                    /*
-					url:()=>{
-						return webix.ajax().get("/<% // Response.write(config.ruta)%>/op_ofic_arch.fwx?oficio=<% // Response.write(ofic_sali.id_iden)%>&to=1").then((res)=>{
-							res = res.json();
-							let values = []
-							res.data.forEach((item)=>{
-								values.push(item.id);
-							})
-							$$("adjuntos").setValue(values.toString())
-							return res.data;
-						})
-					}
-                    */
-				}
-			},
-			{width:25},
-			{
-				view:"button", label:"Marcar todos", width:100, click:()=>{
-					let list = $$("adjuntos").getList();
-					let values = [];
-					let currentId = list.getFirstId()
-					do{
-						values.push(currentId);
-						currentId = list.getNextId(currentId, 1);
-					}while(currentId);
+            view: "accordion",
+            multi: true,
+            rows: [
+                {
+                    header: "CAPTURA DE NUEVO OFICIO INGRESADO",
+                    body: {
+                        rows: [
+                            {rows:[
+								{cols:[
+								{rows:[
+									<%
+									if(llDirectorio && !!laQuery.lcClav_ofic){ //  IF llDirectorio AND EMPTY(lcClav_ofic) %>
+									{
+										cols: [
 
-					$$("adjuntos").setValue(values.toString())
-				}
-			},
-			{width:10},
-			{
-				view:"button", label:"Desmarcar todos", width:100, click:()=>{
-					$$("adjuntos").setValue()
-				}
-			}
-			]
-		},
-		{
-			view: "fieldset", label: "Ligar oficio",
-			body: {
-				rows: [{
-					cols: [{
-						view: "radio", label: "Ligar oficio", labelWidth:120, id: "rbLiga", name: "rbLiga", value: 1, on: { "onChange": function (newv, oldv) { cambiaCombo(newv, 'liga') } }, options: [{
-							id: 1, value: "Salida"
-						}, {
-							id: 2, value: "Entrada"
-						}]
-					}, {
-						view: "combo", placeholder: "Buscar oficio(De acuerdo a la oficialia seleccionada)", id: "cmbLiga_ofic", name: "cmbLiga_ofic",
-						options: {
-							filter: function (item, value) {
-								if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
-									return true;
-								return false;
-							},
-							keyPressTimeout: 500,
-							body: {
-								fitMaster: false, template: "#value#",
-								dataFeed: "/api/op/cmb_control3W?cve=<%=rows[0].cve%>" 
-							},
-						},
-					}, 
-					{width:20},
-					{
-						view: "button", label: "Ligar", click: ligar, width: 100
-					}]
-				}, {
-					cols: [{
-						view: "multiselect", placeholder: "Ofic. salida ligados", id: "liga_sali", name: "liga_sali", labelPosition: "top", label: "Ofic. salida ligados", options: [
-							<% //  IF USED("ofic_sali") %>
-							//{ "id":<% //  Response.write(ofic_sali.id_iden) %> , "value": "<% // Response.write(ofic_sali.oficio)%>" }
-							<% //  ENDIF %>
-						],
-						value: "<% // Response.write(IIF(USED("ofic_sali"),ofic_sali.id_iden,0))%>"
-					}, 
-					{width:10},
-					{
-						view: "multiselect", placeholder: "Ofic. entrada ligados", id: "liga_entr", name: "liga_entr", options: [], labelPosition: "top", label: "Ofic. entrada ligados"
-					}, 
-					{width:10},
-					{
-						view: "button", width: 100, label: "Limpiar", click: function () { var lista = $$("liga_ofic").getList(); lista.clearAll(); $$("liga_ofic").setValue(); }, hidden: true
-					},]
+											{
+												view: "select", id: "tipo_docu", name: "tipo_docu", label: "<span class='obligatorio'>*</span>Tipo documento", labelPosition: "top", value:1<% //  Response.write(lnTipo_docu) %>, 
+												options: [
+													<% //  SELECT cTipo_docu
+													//SCAN %>
+														{ id: "<% // Response.write(cTipo_docu.id_pk)%>", value: "<% // Response.write(cTipo_docu.descrip)%>" },
+													<% //  ENDSCAN %>
+												],
+												on: {
+													"onChange": function (newv, oldv) {
+														buscaNume();
+														if(newv == 3){
+															$$("segu_pra").show();
+														}else{
+															$$("segu_pra").hide();
+															$$("segu_pra").setValue();
+														}
 
-				}]
-			}
-		},]}]
+														if (newv == 1) {
+															$$("telefono").show();
+															$$("doc_firm").show();
+														} else {
+															$$("telefono").hide();
+															$$("doc_firm").hide();
+
+														}
+													}
+												}
+											},
+											{
+												view:"combo", id:"segu_pra", name:"segu_pra", labelPosition:"top", label:"Si vas a dar seguimiento a un documento PRA seleccionalo",	 hidden:true, 
+												options:{
+													filter: function (item, value) {
+														if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+															return true;
+														return false;
+													},
+													//url: "/api/op/op_ningrx2?t=2"
+												}
+											},
+											{
+												view:"select", id:"doc_firm", name:"doc_firm",labelPosition:"top", label:"Define el documento", hidden:true, 
+												options:[{
+													id:"1", value:"Documentos firmados"
+												},{
+													id:"2", value:"Doc. para firma del Director"
+												},{
+													id:"3", value:"Doc. para firma del Srio. Particular"
+												}]
+											},{
+												view: "text", id: "telefono", name: "telefono", label: "Tel&eacute;fono", labelPosition: "top", hidden:false
+										},
+										
+									]
+
+									},
+									<%} //  ENDIF %>
+									{
+									cols: [{
+											view: "combo", id: "cve", name: "cve", label: "<span class='obligatorio'>*</span>Oficial&iacute;a", labelPosition: "top",
+												<%
+												
+												/*
+												GO TOP IN cOficialia
+												IF RECCOUNT("cOficialia") > 0
+												*/
+												%>
+												value:"<%=rows[0].cve%>", 
+												<% // ENDIF%>
+
+											on: {
+												"onChange": function (newv, oldv) {
+													obtenerSeccion();
+													
+													
+													if(["CGCE"].includes(newv)){
+														$$("oficio_bis").show();
+														if(["CGCE", "SP"].includes(newv)){
+															$$("ligado_a").show()
+														}else{
+															$$("ligado_a").hide()
+														}
+													}else{
+														$$("oficio_bis").hide();
+														$$("ligado_a").hide()
+													}
+													cambiaCombo(newv, 'id_oficio')
+													cambiaCombo(newv, 'liga');
+													var lista = $$("liga_entr").getList();
+													lista.clearAll();
+													$$("liga_entr").setValue();
+
+													var lista = $$("liga_sali").getList();
+													lista.clearAll();
+
+
+													$$("liga_sali").define({
+														options: [
+														<% 
+														/*
+														IF USED("ofic_sali")
+														GO TOP IN ofic_sali 
+														*/%>
+														{ "id":0 , "value": "0" }
+														//	{ "id":<% //  Response.write(ofic_sali.id_iden) %> , "value": "<% // Response.write(ofic_sali.oficio)%>" }
+															<% //  ENDIF %>
+													]
+													})
+
+
+													//$$("liga_sali").setValue('<% // Response.write(IIF(USED("ofic_sali"),ofic_sali.id_iden,0))%>');
+													//$$("liga_sali").refresh();
+
+													buscaNume();
+													buscaOficio()
+													
+													
+												},
+
+											},
+											options: {
+												filter: function (item, value) {
+													if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+														return true;
+													return false;
+												},
+												data:[
+													<%for (var i = 0; i < rows.length; i++) {%>
+													{ id: "<%= rows[i].cve%>", value: "(<%=rows[i].cve%>) <%=rows[i].depen%>" },
+													<%}%>
+												]
+											}
+												
+										},
+										{
+											view:"checkbox", id:"oficio_bis", name:"oficio_bis", label:"Oficio BIS", hidden:true, borderless:false,
+										},
+										{width:10},
+										{
+											view: "select", id: "anio_ingr", name: "anio_ingr", labelPosition: "top", label: "A&ntildeo ingreso", width:90, 
+											on:{
+												onChange:()=>{
+													buscaNume();
+												}
+											},
+											options:[
+											<% // FOR xx = YEAR(DATE()) TO 2019 STEP -1%>
+											//{id:"<% // Response.write(xx)%>", value:"<% // Response.write(xx)%>"},
+											{id:"<%=new Date().getFullYear()%>", value:"<%=new Date().getFullYear()%>"}
+											<% // NEXT%>
+											]
+										},
+										{width:10},
+										{
+											view: "text", id: "nume_cont", name: "nume_cont", labelPosition: "top", label: "Probable N&uacute;m. ctrl", value: "", width:90,
+										},
+										{width:10},
+										{
+											view: "datepicker", id: "fech_ofic", name: "fech_ofic", labelPosition: "top", label: "<span class='obligatorio'>*</span>Fecha oficio", value: new Date(), width:140,
+										},
+										]
+									},
+									{
+										cols:[
+										{
+											view: "select", id: "info_sens", name: "info_sens", label: "<span class='obligatorio'>*</span>El documento contiene informaci&oacute;n sensible?", value:"0", labelWidth:320, 
+											options:[
+												{id:"0", value:"No"},
+												{id:"1", value:"Si"}
+											]
+										},
+										{
+											width:50
+										},
+										{
+											view:"select", label:"La informaci&oacute;n contenida en el documento es:", labelWidth:320, id:"tipo_info", name:"tipo_info",
+											options:[
+												{id:"0", value:""},
+												{id:"1", value:"Fundamental"},
+												{id:"2", value:"Ordinaria"}
+											]
+										}
+										]
+											
+									},
+									{
+										cols: [{
+											view: "datepicker", id: "fech_rece", name: "fech_rece", labelPosition: "top", label: "<span class='obligatorio'>*</span>Fecha recepci&oacute;n", value: new Date()
+										}, 
+										{width:10},
+										{
+											view: "text", label: "<span class='obligatorio'>*</span>Hora recepci&oacute;n", labelPosition: "top", attributes: { maxlength: 5 }, id: "hora_rece", name: "hora_rece", placeholder: "Formato 24 hrs.", value:hour.trim(), 
+											validate: function (value) {
+												return /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value);
+											}, invalidMessage: "El formato de la hora es invalido"
+
+										}, 
+										{width:10},
+										{
+											view: "text", id: "nume_ofic", name: "nume_ofic", label: "<span class='obligatorio'>*</span>N&uacute;mero de oficio recibido", labelPosition: "top",
+
+											suggest: {
+
+												filter: function (item, value) {
+													if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+														return true;
+													return false;
+												},
+												keyPressTimeout: 500,
+												body: {
+													fitMaster: false,
+													template: "#value#",
+													dataFeed: "/api/op/cmb_control2W?t=1" 
+												},
+											},
+											on:{
+												"onBlur":function(){
+													buscaOficio();
+												}
+											}
+										}]
+									},  
+									{
+										view: "fieldset", label: "Procedencia",
+										body: {
+											rows: [{
+												view: "radio", labelWidth:120, label: "<span class='obligatorio'>*</span>Dependencia", id: "rbDepe", name: "rbDepe", on: { "onChange": function (newv, oldv) { cambiaCombo(newv, 'depe') } }, value: 1, options: [{
+													id: 1, value: "U. de G."
+												}, {
+													id: 2, value: "Ajena a U. de G."
+												}]
+											}, {
+												view: "combo", id: "dependen", name: "dependen",editable: true, value: "<% // Response.write(IIF(USED('ofic_sali') AND !EMPTY(ofic_sali.dependen),ofic_sali.dependen, '0'))%>",
+												options: {
+													filter: function (item, value) {
+														if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+															return true;
+														return false;
+													},
+													keyPressTimeout: 500,
+													body: {
+														fitMaster: false, template: "#value#",
+														dataFeed: "/api/gen/cmb_depew?lnTipo=1"
+													},
+													<% //  IF USED('ofic_sali') AND !EMPTY("ofic_sali.dependen")
+													//GO TOP IN ofic_sali%>
+													//data: [{ id: "<% // Response.write(ofic_sali.dependen)%>", value: "<% // Response.write(STRTRAN(STRCONV(ofic_sali.depe_nomb,9),'"', "'"))%>" }], 
+													<% //  ENDIF %>
+												},
+												on: {
+												onChange: function (id) {
+														console.log(id);
+														webix.ajax()
+												.get("/api/op/op_ningrx3", {id, cve:$$("cve").getValue()})
+												.then(function (data) {
+
+													let res = data.json()[0]
+													console.log(typeof res != undefined)
+													
+													if (typeof res != undefined){
+														$$("remi_nomb").setValue(res.nomb_remi);
+														$$("remi_carg").setValue(res.carg_remi);
+														$$("dest_nomb").setValue(res.nomb_dest);
+														$$("dest_carg").setValue(res.carg_dest);
+
+														console.log(res.nomb_remi)
+													}
+												})
+													//mues_dato(id);
+													//dirigido(id);
+													//obtenerSeccion();
+												}
+												},
+											}, {
+												view: "text", hidden: true, id: "txtDepen", name: "txtDepen", value:"<% // Response.write(	IIF(USED('ofic_sali') AND !EMPTY(ofic_sali.dependen), ofic_sali.dependen,''))%>",
+												on:{
+													"onKeyPress": function(code, e){
+														$$("id_cent").setValue('')
+													}
+												},
+												suggest: {
+													filter: function (item, value) {
+														if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+															return true;
+														return false;
+													},
+													keyPressTimeout: 500,
+													body: {
+														fitMaster: false, template: "#value#",
+														dataFeed: "/api/gen/cmb_depew?lnTipo=2"
+													},
+													on: {
+														"onValueSuggest": function (obj) {
+															$$("txtDepen").setValue(obj.descrip)
+															$$('id_cent').setValue(obj.id)
+														}
+													}
+												},
+											}, 
+											{
+												view:"text", id:"id_cent", name:"id_cent", readonly:true, hidden:true
+											},
+											{
+												view: "text", hidden: true, id: "clav_proc", name: "clav_proc"
+											}]
+										}
+									}, 
+									{
+										view: "fieldset", label: "Remitente",
+											body: {
+											cols: [{
+												view: "text", id: "remi_nomb", name: "remi_nomb", label: "<span class='obligatorio'>*</span>Nombre", labelWidth: 120, labelPosition: "top",
+												attributes:{ autocomplete :"off" },
+												suggest: {
+													filter: function (item, value) {
+														if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+															return true;
+														return false;
+													},
+													keyPressTimeout: 500,
+													body: {
+														fitMaster: false,
+														template: "#value#",
+														dataFeed: "/api/gen/cmb_persw?lnTipo=11"
+													},
+													on: {
+														"onValueSuggest": function (obj) {
+															//cargaCargo('remi_carg', obj.id, obj.value)
+															$$("remi_carg").setValue(obj.cargo);
+
+														}
+													}
+												},
+											}, 
+											{width:10},
+											{
+												view: "text", id: "remi_carg", name: "remi_carg", label: "Cargo", labelPosition: "top",
+												attributes:{ autocomplete :"off" },
+												suggest: {
+													filter: function (item, value) {
+														if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+															return true;
+														return false;
+													},
+													keyPressTimeout: 500,
+													body: {
+														fitMaster: false,
+														template: "#value#",
+														//dataFeed: "/<% // Response.Write(config.ruta)%>/cmb_opcargo.fwx"
+													},
+												}
+											}]
+										}
+									},
+									{
+										view: "fieldset", label: "Destinatario",
+											body: {
+											cols: [{
+												view: "text", id: "dest_nomb", name: "dest_nomb", label: "<span class='obligatorio'>*</span>Nombre", labelPosition: "top",
+												attributes:{ autocomplete :"off" },
+												suggest: {
+													filter: function (item, value) {
+														if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+															return true;
+														return false;
+													},
+													keyPressTimeout: 500,
+													body: {
+														fitMaster: false,
+														template: "#value#",
+														dataFeed: "/api/gen/cmb_persw?lnTipo=11"
+													},
+													on: {
+														"onValueSuggest": function (obj) {
+															//cargaCargo('dest_carg', obj.id, obj.value)
+															$$("dest_carg").setValue(obj.cargo);
+														}
+													}
+												},
+											}, 
+											{width:10},
+											{
+												view: "text", id: "dest_carg", name: "dest_carg", label: "Cargo", labelPosition: "top",attributes:{ autocomplete :"off" },
+												suggest: {
+													filter: function (item, value) {
+														if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+															return true;
+														return false;
+													},
+													keyPressTimeout: 500,
+													body: {
+														fitMaster: false,
+														template: "#value#",
+														//dataFeed: "/<% // Response.Write(config.ruta)%>/cmb_opcargo.fwx"
+													},
+												}
+											}]
+										}
+									},
+									{
+										view: "fieldset", label: "Con copia/atención",
+											body: {
+											cols: [{
+												view: "text", id: "copi_nomb", name: "copi_nomb", label: "<span class='obligatorio'>*</span>Nombre", labelWidth: 120, labelPosition: "top",
+												attributes:{ autocomplete :"off" },
+												suggest: {
+													filter: function (item, value) {
+														if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+															return true;
+														return false;
+													},
+													keyPressTimeout: 500,
+													body: {
+														fitMaster: false,
+														template: "#value#",
+														dataFeed: "/api/gen/cmb_persw?lnTipo=11"
+													},
+													on: {
+														"onValueSuggest": function (obj) {
+															//cargaCargo('remi_carg', obj.id, obj.value)
+															$$("remi_carg").setValue(obj.cargo);
+
+														}
+													}
+												},
+											}, 
+											{width:10},
+											{
+												view: "text", id: "copi_carg", name: "copi_carg", label: "Cargo", labelPosition: "top",
+												attributes:{ autocomplete :"off" },
+												suggest: {
+													filter: function (item, value) {
+														if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+															return true;
+														return false;
+													},
+													keyPressTimeout: 500,
+													body: {
+														fitMaster: false,
+														template: "#value#",
+														//dataFeed: "/<% // Response.Write(config.ruta)%>/cmb_opcargo.fwx"
+													},
+												}
+											}]
+										}
+									},
+									{
+										cols: [{
+											view: "select", id: "tipo_ofic", name: "tipo_ofic", labelPosition: "top", label: "<span class='obligatorio'>*</span>Tipo oficio", value: 1, options: [
+												<% //  SELECT cTipo_ofic
+												//SCAN %>
+												{ id: "<% // Response.write(cTipo_ofic.id_tiof)%>", value: "<% // Response.write(cTipo_ofic.descrip)%>" },
+												<% //  ENDSCAN %>
+												<%for (var i = 0; i < loTipo.length; i++) {%>
+													{ id: "<%=loTipo[i].id_tiof%>", value: "<%=loTipo[i].descrip%>" },
+												<%}%>
+											],
+											on: {
+												"onChange": function (newv, oldv) {
+													if (newv == 5) {
+														$$("fech_term").show();
+													} else {
+														$$("fech_term").hide();
+													}
+												}
+											}
+										}, 
+										{width:10},
+										{
+											view: "datepicker", id: "fech_term", minuteStep: 1, name: "fech_term", labelPosition: "top", 
+											label: "<span class='obligatorio'>*</span>Fecha termino", value: new Date(), hidden: true,	
+											multiselect:"touch"
+										}, 
+										{ view: "text", id: "txtFech_term", name: "txtFech_term",hidden: true },
+										{
+											view: "select", id: "clase", name: "clase", labelPosition: "top", label: "<span class='obligatorio'>*</span>Clase", value: 1,	options: [
+												<% //  SELECT cClase
+												//SCAN %>
+												//{ id: "<% // Response.write(cClase.id_clof)%>", value: "<% // Response.write(STRCONV(cClase.descrip,11))%>" },
+												<% //  ENDSCAN %>
+												<%for (var i = 0; i < loClas.length; i++) {%>
+													{ id: "<%=loClas[i].id_clof%>", value: "<%=loClas[i].descrip%>" },
+												<%}%>
+											]
+										},
+										{width:10},
+										{
+											view:"select", label:"Enviar por:", labelWidth:320, width:440, id:"tipo_ingr", name:"tipo_ingr", 
+											options:[
+												{id:"0", value:""},
+												{id:"1", value:"Por correo"},
+												{id:"2", value:"Oficio f&iacute;sico"}
+											],
+											labelPosition:"top", value:"<% // Response.write(IIF(!EMPTY(lcClav_ofic), '1', '0'))%>", 
+										},
+										]
+									},
+								]},
+								{width:10},
+								{rows:[
+									{cols:[
+										{ view: "button", css: "webix_primary", label: "Escaneo", click: esca_loca, width: 140, id: "scan_local", align: "right" },
+										{width:25},
+										{
+											view: "uploader", width:300, 
+											id: "uploader_pdf",
+											value: "Subir PDF manualmente",
+											link: "visor_pdf", // Vinculamos visualmente al visor
+											multiple: false,
+											accept: "application/pdf",
+											autosend: false, // Importante: No queremos que se mande al servidor todavía
+											on: {
+												onBeforeFileAdd: function(file){
+													// 1. Validar que sea PDF
+													if (file.type !== "pdf"){
+														webix.message({ type: "error", text: "Solo se permiten archivos PDF" });
+														return false;
+													}
+
+													// 2. Leer el archivo localmente
+													var reader = new FileReader();
+													reader.onload = function(e) {
+														// El resultado es un DataURL (trae el prefijo base64)
+														var base64String = e.target.result;
+														
+														// Extraemos solo el base64 puro para tu visor y tu campo oculto
+														var rawBase64 = base64String.split(',')[1];
+
+														// 3. Cargarlo en el visor que construimos
+														$$("visor_pdf").setValues({ data: rawBase64 });
+
+														// 4. (Opcional) Guardarlo en el campo oculto para el POST final
+														if($$("pdf_base64"))
+															$$("pdf_base64").setValue(rawBase64);
+														
+														webix.message("PDF cargado correctamente");
+													};
+													
+													reader.readAsDataURL(file.file); // Esto dispara el onload de arriba
+													return false; // Retornamos false para que Webix no intente subirlo al servidor
+												}
+											}
+										},
+										{view: "textarea", id: "pdf_base64", name: "pdf_base64", hidden: true},
+									]},
+									
+										{
+											view: "template", 
+											id: "visor_pdf",
+											template: function(obj){
+												if (!obj.data) return "Da clic al botón Escaneo automático";
+												// Pasamos la cadena base64 directamente al src
+												return `<iframe src="data:application/pdf;base64,${obj.data}" width="100%" height="100%" frameborder="0"></iframe>`;
+											}
+										},
+
+								]},
+								{width:10},
+								]}, 
+								{
+								cols:[{
+									view: "textarea", id: "asunto", name: "asunto", label: "<span class='obligatorio'>*</span>Asunto", labelPosition: "top", height: 120
+								},
+								{width:80},
+								{
+									view: "button", label: "Ingresar oficio", click: guardar, id:"btnGuardar", align: "right", width: 150
+								},
+								]},
+								]}
+                        ]
+                    }
+                },
+                {
+                    header: "ADJUNTAR DOCUMENTOS Y OFICIOS (Clic para expandir)",
+                    collapsed: true,
+                    body: {
+                        rows: [
+								{
+									view: "combo", id:"seccion", name:"seccion", label: "Secci&oacute;n/Subsecci&oacute;n", labelPosition:"top", labelWidth:300, width:800,
+									options: {
+										filter: function (item, value) {
+											if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+												return true;
+											return false;
+										},
+										keyPressTimeout: 500,
+												body: {
+													fitMaster: false, template: "#value#",
+													dataFeed: "/api/op/cmb_seccw"
+												},
+										// keyPressTimeout: 1000,
+										//data:[]
+									}
+								},
+								{
+									view: "textarea", id: "nota", name: "nota", label: "Nota (Seguimiento)", labelPosition: "top", height: 80
+								},
+								{
+									view: "textarea", id: "ligado_a", name: "ligado_a", label: "Ligado a:", labelPosition: "top", height: 80, hidden:true,
+								},
+								{
+									cols:[
+									{
+										view:"multicombo", 
+										label:"Adjuntar archivos adjuntos al oficio",  labelWidth:250, labelPosition:"top", 
+										id:"adjuntos", name:"adjuntos",
+										options:{
+											filter: function (item, value) {
+												if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+													return true;
+												return false;
+											},
+											body:{
+												maxWidth:400,
+											},
+											/*
+											url:()=>{
+												return webix.ajax().get("/<% // Response.write(config.ruta)%>/op_ofic_arch.fwx?oficio=<% // Response.write(ofic_sali.id_iden)%>&to=1").then((res)=>{
+													res = res.json();
+													let values = []
+													res.data.forEach((item)=>{
+														values.push(item.id);
+													})
+													$$("adjuntos").setValue(values.toString())
+													return res.data;
+												})
+											}
+											*/
+										}
+									},
+									{width:25},
+									{
+										view:"button", label:"Marcar todos", width:100, click:()=>{
+											let list = $$("adjuntos").getList();
+											let values = [];
+											let currentId = list.getFirstId()
+											do{
+												values.push(currentId);
+												currentId = list.getNextId(currentId, 1);
+											}while(currentId);
+
+											$$("adjuntos").setValue(values.toString())
+										}
+									},
+									{width:10},
+									{
+										view:"button", label:"Desmarcar todos", width:100, click:()=>{
+											$$("adjuntos").setValue()
+										}
+									}
+									]
+								},
+								{
+									view: "fieldset", label: "Ligar oficio",
+									body: {
+										rows: [{
+											cols: [{
+												view: "radio", label: "Ligar oficio", labelWidth:120, id: "rbLiga", name: "rbLiga", value: 1, on: { "onChange": function (newv, oldv) { cambiaCombo(newv, 'liga') } }, options: [{
+													id: 1, value: "Salida"
+												}, {
+													id: 2, value: "Entrada"
+												}]
+											}, {
+												view: "combo", placeholder: "Buscar oficio(De acuerdo a la oficialia seleccionada)", id: "cmbLiga_ofic", name: "cmbLiga_ofic",
+												options: {
+													filter: function (item, value) {
+														if (item.value.toString().toLowerCase().indexOf(value.toLowerCase()) != -1)
+															return true;
+														return false;
+													},
+													keyPressTimeout: 500,
+													body: {
+														fitMaster: false, template: "#value#",
+														dataFeed: "/api/op/cmb_control3W?cve=<%=rows[0].cve%>" 
+													},
+												},
+											}, 
+											{width:20},
+											{
+												view: "button", label: "Ligar", click: ligar, width: 100
+											}]
+										}, {
+											cols: [{
+												view: "multiselect", placeholder: "Ofic. salida ligados", id: "liga_sali", name: "liga_sali", labelPosition: "top", label: "Ofic. salida ligados", options: [
+													<% //  IF USED("ofic_sali") %>
+													//{ "id":<% //  Response.write(ofic_sali.id_iden) %> , "value": "<% // Response.write(ofic_sali.oficio)%>" }
+													<% //  ENDIF %>
+												],
+												value: "<% // Response.write(IIF(USED("ofic_sali"),ofic_sali.id_iden,0))%>"
+											}, 
+											{width:10},
+											{
+												view: "multiselect", placeholder: "Ofic. entrada ligados", id: "liga_entr", name: "liga_entr", options: [], labelPosition: "top", label: "Ofic. entrada ligados"
+											}, 
+											{width:10},
+											{
+												view: "button", width: 100, label: "Limpiar", click: function () { var lista = $$("liga_ofic").getList(); lista.clearAll(); $$("liga_ofic").setValue(); }, hidden: true
+											},]
+
+										}]
+									}
+								},
+                        ]
+                    }
+                }
+            ]
+        },
+		]
 
 		webix.ready(function () {
 			webix.ui({
