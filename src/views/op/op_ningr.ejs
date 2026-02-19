@@ -173,7 +173,7 @@
 				},
 				{width:10},
 				{
-					view: "select", id: "anio_ingr", name: "anio_ingr", labelPosition: "top", label: "A&ntildeo ingreso", 
+					view: "select", id: "anio_ingr", name: "anio_ingr", labelPosition: "top", label: "A&ntildeo ingreso", width:90, 
 					on:{
 						onChange:()=>{
 							buscaNume();
@@ -188,11 +188,11 @@
 				},
 				{width:10},
 				{
-					view: "text", id: "nume_cont", name: "nume_cont", labelPosition: "top", label: "Probable N&uacute;m. ctrl", value: "", 
+					view: "text", id: "nume_cont", name: "nume_cont", labelPosition: "top", label: "Probable N&uacute;m. ctrl", value: "", width:90,
 				},
 				{width:10},
 				{
-					view: "datepicker", id: "fech_ofic", name: "fech_ofic", labelPosition: "top", label: "<span class='obligatorio'>*</span>Fecha oficio", value: new Date()
+					view: "datepicker", id: "fech_ofic", name: "fech_ofic", labelPosition: "top", label: "<span class='obligatorio'>*</span>Fecha oficio", value: new Date(), width:140,
 				},
 				]
 			},
@@ -537,6 +537,7 @@
 			{cols:[
 				{ view: "button", css: "webix_primary", label: "Escaneo automático", click: esca_loca, width: 300, id: "scan_local", align: "right" },
 				{width:165},
+				{view: "textarea", id: "pdf_base64", name: "pdf_base64", hidden: true},
 			]},
 			
 				{
@@ -1124,8 +1125,9 @@
 			webix.ajax().post("http://127.0.0.1:2727/scan", {}).then((res)=>{
 				$$("visor_pdf").hideProgress();
 				res = res.json();
-				console.log(res);
+				//console.log(res);
 				$$("visor_pdf").setValues({ data: res.base64 });
+				$$("pdf_base64").setValue(res.base64);
 			}).fail((xhr)=>{
 				// Aquí manejamos el Error 500 u otros
 				$$("visor_pdf").hideProgress();

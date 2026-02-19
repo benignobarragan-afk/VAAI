@@ -15,6 +15,12 @@ const outil = require('./utils/other_utils');
 
 const app = express();
 
+// 1. Configuración de límites (AQUÍ ES DONDE DEBE IR)
+// Esto prepara al servidor para recibir los PDFs en Base64 del sistema SIVA
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+
 // Esto activa las protecciones básicas que pide ZAP
 /* app.use(
   helmet({

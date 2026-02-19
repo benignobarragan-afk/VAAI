@@ -865,6 +865,40 @@ const op_ningrx = (async (req, res) => {
         }
     }
 
+    if (req.body.pdf_base64) {
+        //inserta el registro en la base de datos
+
+        const nombreArchivo = rows4.insertId + '.pdf';
+
+        let lcSQL = `
+        INSERT INTO opc_archivo (id_ofic, descrip, fecha, usuario, ofic_out, uid) 
+            VALUES (?, ?, now(), ?, 0, ?)
+        `
+
+        const laInsert = await util.gene_cons(lcSQL, [rows4.insertId, nombreArchivo, req.userId, util.gene_id_11()])
+
+        // 1. Definir la ruta y nombre del archivo
+        const rutaDestino = path.join(config.SERV_ARCH, 'OPARCHIVO',  laInsert.insertId+'.pdf');
+
+        // 2. Convertir base64 a Buffer (binario)
+        // Nota: Si la cadena trae el prefijo "data:application/pdf;base64,", hay que quitarlo
+        const cleanBase64 = req.body.pdf_base64.replace(/^data:application\/pdf;base64,/, "");
+        const buffer = Buffer.from(cleanBase64, 'base64');
+
+        // 3. Guardar el archivo en el disco
+        fs.writeFile(rutaDestino, buffer, (err) => {
+            if (err) {
+                console.error("Error al guardar PDF:", err);
+                lcSQL = `
+                DELETE FROM opc_archivo WHERE id_arch = ?
+                `
+                const laDelete = util.gene_cons(lcSQL, [laInsert.insertId])
+                //return res.status(500).send("Error al guardar el archivo");
+            }
+            console.log("PDF guardado correctamente en:", rutaDestino);
+            
+        });
+    }
 
     res.json([{status: true, message:"Se guardo correctamente con el n\u00FAmero: " + lnNume_cont, oficio: lnNume_cont, id: rows4.insertId }]);
     //console.log(rows5)
