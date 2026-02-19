@@ -554,8 +554,14 @@
 		{width:10},
 		]}, 
 		{
+		cols:[{
 			view: "textarea", id: "asunto", name: "asunto", label: "<span class='obligatorio'>*</span>Asunto", labelPosition: "top", height: 120
 		},
+		{width:80},
+		{
+			view: "button", label: "Ingresar oficio", click: guardar, id:"btnGuardar", align: "right", width: 150
+		},
+		]},
 		{
 			view: "combo", id:"seccion", name:"seccion", label: "Secci&oacute;n/Subsecci&oacute;n", labelPosition:"top", labelWidth:300, width:800,
 			options: {
@@ -680,9 +686,7 @@
 
 				}]
 			}
-		},{
-			view: "button", label: "Ingresar oficio", click: guardar, id:"btnGuardar", align: "right", width: 150
-		}]}]
+		},]}]
 
 		webix.ready(function () {
 			webix.ui({
