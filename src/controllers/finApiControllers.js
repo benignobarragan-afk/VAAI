@@ -103,7 +103,7 @@ const fin_norde_compx = (async (req,res) => {
         INSERT INTO fin_orde_comp (tipo_orde, fech_emis, proyecto, rfc, proveedor, domi_prov, tele_prov, corr_prov, fech_entr, luga_entr, forma_pago,
 	            porc_anti, fech_inic, fech_fin, nume_parc, subtotal, iva_total, total, resico, observaciones, estatus, fech_crea, cambios, ures_depe, nomb_depe, 
                 tele_depe, domi_depe, usua_crea, apli_resico, nomb_elab) 
-            VALUES (?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, 0, ?, 0, NOW(), CONCAT(?,'|INSERT|',NOW(),CHR(13)), ?, ?, ?, ?, ?, ?)
+            VALUES (?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, 0, ?, 0, NOW(), CONCAT(?,'|INSERT|',NOW(),CHR(13)), ?, ?, ?, ?, ?, ?, ?)
         `
         //(!encabezado.fech_emis?null:encabezado.fech_emis),    Se quito por que la fecha de emisión se toma el día
         const laSend = [(!encabezado.tipo_orde?null:encabezado.tipo_orde), (!encabezado.proyecto?null:encabezado.proyecto), 
