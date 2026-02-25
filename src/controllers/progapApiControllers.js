@@ -145,13 +145,16 @@ const progap_exacamx = (async (req, res) => {
 
 const progap_focamx = (async (req, res) => {
 
-    if (req.groups.indexOf(",ADMI_PROGAP,") <= 0)        //si no tiene derechos
+    const llAdmin = (req.groups.indexOf(",ADMI_PROGAP,") >= 0)
+    if (req.groups.indexOf(",PROGAP,") <= 0)        //si no tiene derechos
     {
         return res.json([])
     }
 
-    const lcSQL = `
-    
+    let lcSQL = ''
+
+    if(llAdmin){
+    lcSQL = `
     SELECT ROW_NUMBER() OVER (ORDER BY a.id) AS rank, a.id, a.id as folio, concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, a.codigo, 
     		 d.dependencia, CONCAT(p.clave_cgipv, ' - ', p.programa) AS programa, DATE_FORMAT(a.fecha_solicitud, '%d/%m/%Y') AS fecha_solicitud,
             if(a.id_estado = 4, "Rechazado", if(a.id_estado = 3, "Solicitud completa", if(a.id_estado = 5, "Es necesario corregir", 
@@ -164,6 +167,23 @@ const progap_focamx = (async (req, res) => {
         ORDER BY a.id
 
     `
+    }
+    else {
+lcSQL = `
+    SELECT ROW_NUMBER() OVER (ORDER BY a.id) AS rank, a.id, a.id as folio, concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, a.codigo, 
+    		 d.dependencia, CONCAT(p.clave_cgipv, ' - ', p.programa) AS programa, DATE_FORMAT(a.fecha_solicitud, '%d/%m/%Y') AS fecha_solicitud,
+            if(a.id_estado = 4, "Rechazado", if(a.id_estado = 3, "Solicitud completa", if(a.id_estado = 5, "Es necesario corregir", 
+		    if(a.id_estado = 2, "Enviado a revisión", "Sin enviar")))) AS status
+        FROM progap_alumnos a 
+        LEFT JOIN progap_usuarios u ON a.id_usuario = u.id
+        LEFT JOIN progap_dependencias d ON u.id_centro_universitario = d.id
+        LEFT JOIN progap_programa p ON a.id_programa = p.id
+        WHERE u.id_centro_universitario in (select )
+        ${(!req.query.lnConv?'':'WHERE a.id_convocatoria = '+ req.query.lnConv)} ${(!req.query.id_cu?'':' AND u.id_centro_universitario = '+ req.query.id_cu)}  
+        ORDER BY a.id
+
+    `
+    }
     const rows = await util.gene_cons(lcSQL)
     return res.json(rows)
 });

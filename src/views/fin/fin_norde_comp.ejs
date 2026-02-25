@@ -345,21 +345,22 @@
                                     {height:5},
                                     {
                                         cols: [
-                                            { view: "text", id: "ures_depe", name: "ures_depe", label: "Código de URE", labelPosition: "top", readonly: true, required: true},
-                                            { view: "text", id: "nomb_depe", name: "nomb_depe", label: "Dependencia del proyecto", labelPosition: "top", readonly: true, required: true},
+                                            { view: "text", id: "ures_depe", name: "ures_depe", label: "Código de URE", labelPosition: "top", readonly: true, required: true, width: 150},{width:15},
+                                            { view: "text", id: "nomb_depe", name: "nomb_depe", label: "Dependencia del proyecto", labelPosition: "top", readonly: true, required: true},{width:15},
+                                            { view: "text", id: "padr_depe", name: "padr_depe", label: "Padre presupuestal", labelPosition: "top", readonly: true, required: true},{width:15},
                                             { view: "button", value: "Guardar datos dependencia", css: "webix_secondary", width: 150, click: actu_depe, <%=(rows2[0]?.estatus > 1?' disabled: true':'')%>},
                                         ]
                                     },
                                     {
                                         cols: [
-                                            { view: "text", id: "tele_depe", name: "tele_depe", label: "Teléfono de la dependencia", labelPosition: "top", required: true, attributes: { maxlength: 50 }},
+                                            { view: "text", id: "tele_depe", name: "tele_depe", label: "Teléfono de la dependencia", labelPosition: "top", required: true, attributes: { maxlength: 50 }},{width:15},
                                             { view: "textarea", id: "domi_depe", name: "domi_depe", label: "Dirección dependencia", labelPosition: "top", height: 80, required: true, attributes: { maxlength: 150 } },
                                         ]
                                     },
                                     {
                                         cols: [
-                                            { view: "textarea", id: "nomb_elab", name: "nomb_elab", label: "Persona elaboro", labelPosition: "top", required: true, attributes: { maxlength: 1000 }},
-                                            { view: "textarea", id: "nomb_auto", name: "nomb_auto", label: "Persona autoriza", labelPosition: "top", required: true, attributes: { maxlength: 1000 }},
+                                            { view: "textarea", id: "nomb_elab", name: "nomb_elab", label: "Persona elaboro", labelPosition: "top", required: true, attributes: { maxlength: 1000 }},{width:15},
+                                            { view: "textarea", id: "nomb_auto", name: "nomb_auto", label: "Persona autoriza", labelPosition: "top", required: true, attributes: { maxlength: 1000 }},{width:15},
                                             { view: "textarea", id: "nomb_vobo", name: "nomb_vobo", label: "Personas Vo. Bo.", labelPosition: "top", height: 80, required: true, attributes: { maxlength: 1000 } },
                                         ]
                                     },
@@ -398,6 +399,7 @@
                 //console.log(res)
                 $$("ures_depe").setValue(res.cve_conv);
                 $$("nomb_depe").setValue(res.dependen);
+                $$("padr_depe").setValue(res.padre);
                 $$("tele_depe").setValue(res.telefono);
                 $$("domi_depe").setValue(res.direccion);
                 $$("nomb_elab").setValue((!$$("nomb_elab").getValue()?'<%=nomb_usua%>':$$("nomb_elab").getValue()))
@@ -629,6 +631,7 @@
         const camb_depe = {
             ures_depe : $$("ures_depe").getValue(),
             nomb_depe : $$("nomb_depe").getValue(),
+            padr_depe : $$("padr_depe").getValue(),
             tele_depe : $$("tele_depe").getValue(),
             domi_depe : $$("domi_depe").getValue(),
         }

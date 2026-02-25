@@ -44,8 +44,9 @@ const fin_norde_compx2 = (async (req, res) => {
     }
 
     let lcSQL = `
-    SELECT p.proyecto, c.cve_conv, c.descrip, c.dependen, c.telefono, c.direccion, c.nomb_dire, c.nomb_secr
+    SELECT p.proyecto, c.cve_conv, c.descrip, c.dependen, c.telefono, c.direccion, c.nomb_dire, c.nomb_secr, pp.dependen as padre
 	    FROM fin_proyecto p LEFT JOIN gen_centros c ON p.id_cent = c.id_cent
+            LEFT JOIN gen_centros pp on c.padre = pp.clave
 	    WHERE p.proyecto = ?
     `
 
@@ -102,15 +103,15 @@ const fin_norde_compx = (async (req,res) => {
         lcSQL = `
         INSERT INTO fin_orde_comp (tipo_orde, fech_emis, proyecto, rfc, proveedor, domi_prov, tele_prov, corr_prov, fech_entr, luga_entr, forma_pago,
 	            porc_anti, fech_inic, fech_fin, nume_parc, subtotal, iva_total, total, resico, observaciones, estatus, fech_crea, cambios, ures_depe, nomb_depe, 
-                tele_depe, domi_depe, usua_crea, apli_resico, nomb_elab) 
-            VALUES (?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, 0, ?, 0, NOW(), CONCAT(?,'|INSERT|',NOW(),CHR(13)), ?, ?, ?, ?, ?, ?, ?)
+                padr_depe, tele_depe, domi_depe, usua_crea, apli_resico, nomb_elab) 
+            VALUES (?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, 0, ?, 0, NOW(), CONCAT(?,'|INSERT|',NOW(),CHR(13)), ?, ?, ?, ?, ?, ?, ?, ?)
         `
         //(!encabezado.fech_emis?null:encabezado.fech_emis),    Se quito por que la fecha de emisión se toma el día
         const laSend = [(!encabezado.tipo_orde?null:encabezado.tipo_orde), (!encabezado.proyecto?null:encabezado.proyecto), 
                             encabezado.rfc, encabezado.proveedor, encabezado.domi_prov, encabezado.tele_prov, encabezado.corr_prov, (!encabezado.fech_entr?null:encabezado.fech_entr), 
                             encabezado.luga_entr, (!encabezado.forma_pago?null:encabezado.forma_pago), (!encabezado.porc_anti?null:encabezado.porc_anti), (!encabezado.fech_inic?null:encabezado.fech_inic), 
                             (!encabezado.fech_fin?null:encabezado.fech_fin), (!encabezado.nume_parc?null:encabezado.nume_parc), encabezado.observaciones, req.userId,
-                            encabezado.ures_depe, encabezado.nomb_depe, encabezado.tele_depe, encabezado.domi_depe, req.userId, (!encabezado.apli_resico?0:encabezado.apli_resico), (!encabezado.nomb_elab?0:encabezado.nomb_elab)
+                            encabezado.ures_depe, encabezado.nomb_depe, encabezado.padr_depe, encabezado.tele_depe, encabezado.domi_depe, req.userId, (!encabezado.apli_resico?0:encabezado.apli_resico), (!encabezado.nomb_elab?0:encabezado.nomb_elab)
                         ]
 
         const insert = await util.gene_cons(lcSQL, laSend)
@@ -193,7 +194,7 @@ const fin_norde_compx = (async (req,res) => {
         lcSQL = `
         UPDATE fin_orde_comp  SET tipo_orde = ?, fech_emis = NOW(), proyecto = ?, rfc = ?, proveedor = ?, domi_prov = ?, tele_prov = ?, corr_prov = ?, 
                 fech_entr = ?, luga_entr = ?, forma_pago = ?, porc_anti = ?, fech_inic = ?, fech_fin = ?, nume_parc = ?, subtotal = 0, iva_total = 0, total = 0, 
-                observaciones = ?, ures_depe = ?, nomb_depe = ?, tele_depe = ?, domi_depe = ?, subtotal = ?, iva_total = ?, total = ?, apli_resico = ?, resico = ?, 
+                observaciones = ?, ures_depe = ?, nomb_depe = ?, padr_depe = ?, tele_depe = ?, domi_depe = ?, subtotal = ?, iva_total = ?, total = ?, apli_resico = ?, resico = ?, 
                 nomb_elab = ?, cambios = CONCAT(IFNULL(cambios,''), ?,'|UPDATE|',NOW(),CHR(13)) 
             WHERE id = ?
         `
@@ -201,7 +202,7 @@ const fin_norde_compx = (async (req,res) => {
         const laSend = [(!encabezado.tipo_orde?null:encabezado.tipo_orde), (!encabezado.proyecto?null:encabezado.proyecto), 
                             encabezado.rfc, encabezado.proveedor, encabezado.domi_prov, encabezado.tele_prov, encabezado.corr_prov, (!encabezado.fech_entr?null:encabezado.fech_entr), 
                             encabezado.luga_entr, (!encabezado.forma_pago?null:encabezado.forma_pago), (!encabezado.porc_anti?null:encabezado.porc_anti), (!encabezado.fech_inic?null:encabezado.fech_inic), 
-                            (!encabezado.fech_fin?null:encabezado.fech_fin), (!encabezado.nume_parc?null:encabezado.nume_parc), encabezado.observaciones,  encabezado.ures_depe, encabezado.nomb_depe,
+                            (!encabezado.fech_fin?null:encabezado.fech_fin), (!encabezado.nume_parc?null:encabezado.nume_parc), encabezado.observaciones,  encabezado.ures_depe, encabezado.nomb_depe, encabezado.padr_depe, 
                             encabezado.tele_depe, encabezado.domi_depe, (!lnSubtodal?0:lnSubtodal), (!lnIVA?0:lnIVA), (!lnTotal?0:lnTotal), (!encabezado.apli_resico?0:encabezado.apli_resico), (!lnMRESICO?0:lnMRESICO), 
                             (!encabezado.nomb_elab?0:encabezado.nomb_elab), req.userId, encabezado.id_orde_comp]
 
@@ -262,7 +263,7 @@ const fin_impr_oc = (async (req,res) => {
     SELECT o.id, o.foli_orde, o.tipo_orde, o.fech_emis, o.proyecto, o.rfc, o.proveedor, o.domi_prov, o.nomb_depe, o.tele_depe, o.ures_depe, o.domi_depe, 
 					o.tele_prov, o.corr_prov, DATE_FORMAT(o.fech_entr, '%d/%m/%Y') as fech_entr, o.luga_entr, o.forma_pago, o.porc_anti, o.nume_parc, 
                     DATE_FORMAT(o.fech_inic, '%d/%m/%Y') as fech_inic, DATE_FORMAT(o.fech_fin, '%d/%m/%Y') as fech_fin, DATE_FORMAT(o.fech_crea, '%d/%m/%Y') as fech_crea,
-					o.subtotal, o.iva_total, o.total, o.observaciones, o.estatus, p.fondo, p.nombre AS nomb_proy, p.tipo_proy, p.programa, o.padr_pres,
+					o.subtotal, o.iva_total, o.total, o.observaciones, o.estatus, p.fondo, p.nombre AS nomb_proy, p.tipo_proy, p.programa, o.padr_depe,
                     o.nomb_auto, o.nomb_vobo, CONCAT( SUBSTRING_INDEX(REPLACE(ps.dn, '"', ''), ' ', -1), ' ', SUBSTRING_INDEX(REPLACE(REPLACE(ps.dn, '"', ''), 'DN ', ''), ' ', 2)) as nomb_elab
         FROM fin_orde_comp o INNER JOIN fin_proyecto p on o.proyecto = p.proyecto
             LEFT join gen_centros c ON p.id_cent = c.id_cent
@@ -351,7 +352,7 @@ const fin_impr_oc = (async (req,res) => {
         doc.text(`${(!datos[0].proyecto?'':datos[0].proyecto)}`, 520, 83, {width: 60, align: 'center'});
         doc.text(`${(!datos[0].fondo?'':datos[0].fondo)}`, 520, 94, {width: 60, align: 'center'});
         doc.fontSize((datos[0].programa.length>10?6:8)).text(`${(!datos[0].programa?'':datos[0].programa)}`, 520, 105, {width: 60, align: 'center'});
-        doc.fontSize((!!datos[0].padr_pres && datos[0].padr_pres.length > 40?8:10)).text(`${(!datos[0].padr_pres?'':datos[0].padr_pres)}`, 165, 82, {width: 280, align: 'center'});
+        doc.fontSize((!!datos[0].padr_depe && datos[0].padr_depe.length > 40?8:10)).text(`${(!datos[0].padr_depe?'':datos[0].padr_depe)}`, 165, 82, {width: 280, align: 'center'});
         doc.fontSize(8).text(`${(!datos[0].ures_depe?'':datos[0].ures_depe)}`, 143, 131, {width: 95, align: 'center'});
         doc.text(`${(!datos[0].nomb_depe?'':datos[0].nomb_depe)}`, 240, 131, {width: 340, align: 'center'});
         doc.text(`${(!datos[0].tele_depe?'':datos[0].tele_depe)}`, 143, 152, {width: 95, align: 'center'});
@@ -424,7 +425,7 @@ const fin_impr_oc = (async (req,res) => {
     doc.text(`${(!datos[0].proyecto?'':datos[0].proyecto)}`, 520, 83, {width: 60, align: 'center'});
     doc.text(`${(!datos[0].fondo?'':datos[0].fondo)}`, 520, 94, {width: 60, align: 'center'});
     doc.fontSize((datos[0].programa.length>10?6:8)).text(`${(!datos[0].programa?'':datos[0].programa)}`, 520, 105, {width: 60, align: 'center'});
-    doc.fontSize((!!datos[0].padr_pres && datos[0].padr_pres.length > 40?8:10)).text(`${(!datos[0].padr_pres?'':datos[0].padr_pres)}`, 165, 82, {width: 280, align: 'center'});
+    doc.fontSize((!!datos[0].padr_depe && datos[0].padr_depe.length > 40?8:10)).text(`${(!datos[0].padr_depe?'':datos[0].padr_depe)}`, 165, 82, {width: 280, align: 'center'});
     doc.fontSize(8).text(`${(!datos[0].ures_depe?'':datos[0].ures_depe)}`, 143, 131, {width: 95, align: 'center'});
     doc.text(`${(!datos[0].nomb_depe?'':datos[0].nomb_depe)}`, 240, 131, {width: 340, align: 'center'});
     doc.text(`${(!datos[0].tele_depe?'':datos[0].tele_depe)}`, 143, 152, {width: 95, align: 'center'});
