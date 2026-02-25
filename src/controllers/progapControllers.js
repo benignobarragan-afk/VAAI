@@ -140,7 +140,7 @@ const progap_exacam = (async (req, res) => {
 
 const progap_focam = (async (req, res) => {
     
-    if (req.groups.indexOf(",ADMI_PROGAP,") < 0)        //si no tiene derechos
+    if (req.groups.indexOf(",PROGAP,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -415,8 +415,8 @@ const progap_dexacam = (async (req, res) => {
 });
 
 const progap_nfocam = (async (req, res) => {
-    
-    if (req.groups.indexOf(",ADMI_PROGAP,") < 0)        //si no tiene derechos
+
+    if (req.groups.indexOf(",ADMI_PROGAP,") < 0)       //si no tiene derechos
     {
         return res.render("sin_derecho")
     }

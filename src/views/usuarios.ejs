@@ -54,7 +54,16 @@
 					this.hideOverlay();
 					//this.adjustRowHeight("nomb_serv", true);
 					this.render();
+				
 				},
+				onItemDblClick: function(id, e, node) {
+					// id.row es el ID de la fila donde se hizo clic
+					var item = this.getItem(id.row);
+					window.location.href = "/usua_nuev?codigo=" + item.codigo;
+					
+					// Ejemplo: Llamar a una función para ver detalles
+					// verDetallesUsuario(item.user_id); 
+				}
 			},
 		},
 	]

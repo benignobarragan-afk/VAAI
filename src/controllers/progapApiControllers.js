@@ -147,7 +147,7 @@ const progap_focamx = (async (req, res) => {
 
     if (req.groups.indexOf(",ADMI_PROGAP,") <= 0)        //si no tiene derechos
     {
-        return res.render("sin_derecho")
+        return res.json([])
     }
 
     const lcSQL = `
@@ -156,7 +156,6 @@ const progap_focamx = (async (req, res) => {
     		 d.dependencia, CONCAT(p.clave_cgipv, ' - ', p.programa) AS programa, DATE_FORMAT(a.fecha_solicitud, '%d/%m/%Y') AS fecha_solicitud,
             if(a.id_estado = 4, "Rechazado", if(a.id_estado = 3, "Solicitud completa", if(a.id_estado = 5, "Es necesario corregir", 
 		    if(a.id_estado = 2, "Enviado a revisión", "Sin enviar")))) AS status
-
         FROM progap_alumnos a 
         LEFT JOIN progap_usuarios u ON a.id_usuario = u.id
         LEFT JOIN progap_dependencias d ON u.id_centro_universitario = d.id

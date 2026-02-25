@@ -99,7 +99,7 @@ const principal = (async (req, res) => {
             
             -- Si tiene niveles (ej. /op/op_plan), extraemos lo que está entre la 1ra y 2da diagonal
             ELSE SUBSTRING_INDEX(SUBSTRING_INDEX(url, '/', 2), '/', -1)
-        END as apartado, COUNT(*) AS total, SUM(tiempo_respuesta_ms)/100 AS tiempo
+        END as apartado, COUNT(*) AS total, SUM(tiempo_respuesta_ms)/10 AS tiempo
     FROM log_visitas 
     WHERE es_api = 0 and usuario_id = '2315513' AND fecha_visita >= DATE_SUB(NOW(), INTERVAL 7 DAY)
     group BY 1
@@ -126,12 +126,13 @@ const usua_nuev = (async(req, res) => {
         return res.render("sin_derecho")
     }
     
+    console.log(req.query)
     const lcSQL = "SELECT * FROM `group`" 
     
     const rows = await util.gene_cons(lcSQL)
 
-    console.log(rows)
-    return res.render("usua_nuev", {rows, skin:req.skin})
+    //console.log(rows)
+    return res.render("usua_nuev", {rows, codigo:req.query.codigo, skin:req.skin})
 });
 
 
@@ -166,21 +167,29 @@ const dere_unic = (async (req, res) => {
         return res.render("sin_derecho")
     }
 
-    lcSQL = `
-    SELECT cve, depen 
-	    FROM gen_tipo_ofic
-    `
-    const rows = await util.gene_cons(lcSQL)
+    console.log(req.query)
 
-    lcSQL = `
-    SELECT o.cve, o.depen, if(d.titular = 1, "SI", "NO") AS titular
-        FROM gen_tipo_ofic o INNER JOIN gen_dere_ofic d ON o.cve = d.cve 
-        WHERE d.user_id = ?
+    if(req.query.lcDere ==  'oficio')
+    {
+        lcSQL = `
+        SELECT o.cve as id, o.cve = d.cve as marcado, o.depen, if(d.titular = 1, "SI", "NO") AS titular
+            FROM gen_tipo_ofic o 
+                LEFT JOIN gen_dere_ofic d ON o.cve = d.cve AND d.user_id = ?
+        `
+    }
+    if(req.query.lcDere ==  'progap')
+    {
+        lcSQL = `
+        SELECT d.id, d.id = dr.id as marcado, d.dependencia AS depen 
+	        FROM progap_dependencias d 
+                LEFT JOIN gen_dere_progap dr ON d.id = dr.id
+	        WHERE id_antecesor = 0
+        `        
+    }
+    
+    const rows = await util.gene_cons(lcSQL, req.userId)
 
-    `
-    const rowsd = await util.gene_cons(lcSQL, req.userId)
-
-    res.render("dere_unic", {rows, rowsd, skin:req.skin})
+    res.render("dere_unic", {rows, lcDere:req.query.lcDere, winId:req.query.winId, userSerch:req.query.userSerch, skin:req.skin})
 });
 
 module.exports = {

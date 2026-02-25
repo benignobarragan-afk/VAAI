@@ -15,6 +15,7 @@ router.get("/gene_menu", midd.verifyToken, homeCtrl.gene_menu);
 router.get("/usuariosx", midd.verifyToken, homeCtrl.usuariosx);
 router.post("/prin_ca_pax", midd.verifyToken, homeCtrl.prin_ca_pax);
 router.post("/camb_skin", midd.verifyToken, homeCtrl.camb_skin);
+router.post("/dere_unicx", midd.verifyToken, homeCtrl.dere_unicx);
 
 
 module.exports = router

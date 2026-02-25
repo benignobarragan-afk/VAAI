@@ -185,7 +185,10 @@
 					}
 				}]
 			});
-
+			<%if(!!codigo){%>
+				$$("txtCodigo").setValue(<%=codigo%>);
+				gene_pass();
+			<%}%>
 		});
 
 
@@ -368,7 +371,7 @@
 			body: {
 				view: "iframe",
 				id: "frame-body" + xx,
-				src: "/" + pagina + "?winId=my_win" + xx
+				src: "/" + pagina + "&winId=my_win" + xx
 			}
 		}).show();
 	}

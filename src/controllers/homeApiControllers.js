@@ -280,6 +280,105 @@ const camb_skin = (async (req, res) => {
     return res.json({});
 });
 
+const dere_unicx = (async (req, res) => {
+
+    //console.log(req.body.checked);
+    let lcSQL = '', params = [], rows = [], rowsd = [], rowsi = []
+    const lcUsuario = req.body.userSerch;
+    const laMarcado = JSON.parse(req.body.checked);
+    const placeholders = laMarcado.map(() => '?').join(',');
+
+    switch (req.body.lcDere) {
+    
+        case 'oficio':
+            // Proceso para oficio
+            console.log("Procesando oficio...");
+            // ¡IMPORTANTE! Siempre pon 'break' al final de cada caso
+            lcSQL = `
+            UPDATE gen_dere_ofic
+                SET cambio = concat(IFNULL(cambio, ''),"DELETE|", ?, '|', NOW())
+                WHERE user_id = ? and cve NOT IN (${placeholders})
+            `
+            params = [req.userId, lcUsuario, ...laMarcado];
+
+    
+            rows = await util.gene_cons(lcSQL, params)
+
+            lcSQL = `
+            DELETE FROM gen_dere_ofic
+                WHERE user_id = ? and cve NOT IN (${placeholders})
+            `
+            params = [lcUsuario, ...laMarcado];
+            rowsd = await util.gene_cons(lcSQL, params)
+
+            lcSQL = `
+            INSERT INTO gen_dere_ofic (user_id, cve, cambio)
+                SELECT ?, cve, concat("INSERT|", ?, '|', NOW(), CHR(10)) 
+                    FROM gen_tipo_ofic 
+                        WHERE cve IN (${placeholders})
+                        and cve not in (SELECT cve 
+                                        FROM gen_dere_ofic 
+                                        WHERE user_id = ?)
+            `
+            params = [lcUsuario, req.userId, ...laMarcado, lcUsuario];
+            rowsi = await util.gene_cons(lcSQL, params)
+            
+            //console.log(rows)
+            return res.json({
+                "error": false, 
+                "mensage": "Se guardaron los cambios de oficialia"
+            });
+            break;
+
+        case 'progap':
+            // Proceso para progap
+            console.log("Procesando progap...");
+            
+            lcSQL = `
+            UPDATE gen_dere_progap
+                SET cambio = concat(IFNULL(cambio, ''),"DELETE|", ?, '|', NOW())
+                WHERE user_id = ? and id NOT IN (${placeholders})
+            `
+            params = [req.userId, lcUsuario, ...laMarcado];
+
+    
+            rows = await util.gene_cons(lcSQL, params)
+
+            lcSQL = `
+            DELETE FROM gen_dere_progap
+                WHERE user_id = ? and id NOT IN (${placeholders})
+            `
+            params = [lcUsuario, ...laMarcado];
+            rowsd = await util.gene_cons(lcSQL, params)
+
+            lcSQL = `
+            INSERT INTO gen_dere_progap (user_id, id, cambio)
+                SELECT ?, id, concat("INSERT|", ?, '|', NOW(), CHR(10)) 
+                    FROM progap_dependencias 
+                        WHERE id IN (${placeholders})
+                        and id not in (SELECT id 
+                                        FROM gen_dere_progap 
+                                        WHERE user_id = ?)
+            `
+            params = [lcUsuario, req.userId, ...laMarcado, lcUsuario];
+            rowsi = await util.gene_cons(lcSQL, params)
+            
+            //console.log(rows)
+            return res.json({
+                "error": false, 
+                "mensage": "Se guardaron los cambios de progap"
+            });
+            break;
+
+        default:
+            // Este es el equivalente al 'OTHERWISE' de FoxPro
+            return res.json({
+                "error": true, 
+                "mensage": "Error al insertar en la tabla: Opción no válida"
+            });
+    }
+    
+});
 
 module.exports = {
     usua_nuevx,
@@ -289,4 +388,5 @@ module.exports = {
     usuariosx,
     prin_ca_pax,
     camb_skin,
+    dere_unicx,
 }

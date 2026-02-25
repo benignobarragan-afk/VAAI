@@ -351,7 +351,7 @@ const fin_impr_oc = (async (req,res) => {
         doc.text(`${(!datos[0].proyecto?'':datos[0].proyecto)}`, 520, 83, {width: 60, align: 'center'});
         doc.text(`${(!datos[0].fondo?'':datos[0].fondo)}`, 520, 94, {width: 60, align: 'center'});
         doc.fontSize((datos[0].programa.length>10?6:8)).text(`${(!datos[0].programa?'':datos[0].programa)}`, 520, 105, {width: 60, align: 'center'});
-        doc.fontSize((datos[0].padr_pres.length > 40?8:10)).text(`${(!datos[0].padr_pres?'':datos[0].padr_pres)}`, 165, 82, {width: 280, align: 'center'});
+        doc.fontSize((!!datos[0].padr_pres && datos[0].padr_pres.length > 40?8:10)).text(`${(!datos[0].padr_pres?'':datos[0].padr_pres)}`, 165, 82, {width: 280, align: 'center'});
         doc.fontSize(8).text(`${(!datos[0].ures_depe?'':datos[0].ures_depe)}`, 143, 131, {width: 95, align: 'center'});
         doc.text(`${(!datos[0].nomb_depe?'':datos[0].nomb_depe)}`, 240, 131, {width: 340, align: 'center'});
         doc.text(`${(!datos[0].tele_depe?'':datos[0].tele_depe)}`, 143, 152, {width: 95, align: 'center'});
@@ -424,7 +424,7 @@ const fin_impr_oc = (async (req,res) => {
     doc.text(`${(!datos[0].proyecto?'':datos[0].proyecto)}`, 520, 83, {width: 60, align: 'center'});
     doc.text(`${(!datos[0].fondo?'':datos[0].fondo)}`, 520, 94, {width: 60, align: 'center'});
     doc.fontSize((datos[0].programa.length>10?6:8)).text(`${(!datos[0].programa?'':datos[0].programa)}`, 520, 105, {width: 60, align: 'center'});
-    doc.fontSize((datos[0].padr_pres.length > 40?8:10)).text(`${(!datos[0].padr_pres?'':datos[0].padr_pres)}`, 165, 82, {width: 280, align: 'center'});
+    doc.fontSize((!!datos[0].padr_pres && datos[0].padr_pres.length > 40?8:10)).text(`${(!datos[0].padr_pres?'':datos[0].padr_pres)}`, 165, 82, {width: 280, align: 'center'});
     doc.fontSize(8).text(`${(!datos[0].ures_depe?'':datos[0].ures_depe)}`, 143, 131, {width: 95, align: 'center'});
     doc.text(`${(!datos[0].nomb_depe?'':datos[0].nomb_depe)}`, 240, 131, {width: 340, align: 'center'});
     doc.text(`${(!datos[0].tele_depe?'':datos[0].tele_depe)}`, 143, 152, {width: 95, align: 'center'});

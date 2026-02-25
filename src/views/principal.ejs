@@ -201,7 +201,7 @@
       columns:[
         { id:"dia", header:"Día",  width:200, sort:"string", css:{"text-align":"center"},},
         { id:"apartado",	 header:"Apartado",  width:180, sort:"string"},
-        { id:"total",	 header:"Consultas",  width:180, sort:"int", css:{"text-align":"right"},
+        { id:"total",	 header:"Visitas",  width:180, sort:"int", css:{"text-align":"right"},
           format: function(value){
             return webix.Number.format(value, {
                 decimalSize: 0,
@@ -237,7 +237,7 @@
     step:10,
   },
   legend:{
-    values:[{text:"Visitas",color:"#58dccd"},{text:"Tiempo décimas de segundo",color:"#914ad8"}],
+    values:[{text:"Visitas",color:"#58dccd"},{text:"Tiempo centésimas de segundo",color:"#914ad8"}],
     valign:"middle",
     align:"right",
     width:90,
