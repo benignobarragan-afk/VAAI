@@ -5,7 +5,8 @@
 		.tema_azul_btn button { background-color: #497aac !important; border-radius: 4px; }
 		.tema_claro_btn button { background-color: #EBEDF0 !important; border-radius: 4px; }
 		.tema_gris_btn button { background-color: #3c3c3e !important; border-radius: 4px; }
-		.tema_naranja_btn button { background-color: #e67e22 !important; border-radius: 4px; }
+		.tema_gold_btn button { background-color: #b58a3b !important; border-radius: 4px; }
+		
 
 		/* Ponemos el círculo (icono) en blanco para que contraste */
 		.tema_azul_btn .webix_icon, 
@@ -254,17 +255,26 @@
 										view: "button", type: "icon", icon: "mdi mdi-format-color-fill", 
 										css: "tema_azul_btn", tooltip: "Azul", 
 										click: function(){ cambiar_tema_servidor("2"); } 
-									},
- 									{ 
-										view: "button", type: "icon", icon: "mdi mdi-format-color-fill", 
-										css: "tema_claro_btn", tooltip: "Claro", 
-										click: function(){ cambiar_tema_servidor("3"); } 
 									}, 
 /* 									{ 
 										view: "button", type: "icon", icon: "mdi mdi-circle", 
 										css: "tema_naranja_btn", tooltip: "Material", 
 										click: function(){ cambiar_tema_servidor("material.css"); } 
 									} */
+								]
+							},
+							{
+								cols: [
+									{ 
+										view: "button", type: "icon", icon: "mdi mdi-format-color-fill", 
+										css: "tema_claro_btn", tooltip: "Claro", 
+										click: function(){ cambiar_tema_servidor("3"); } 
+									},
+									{ 
+										view: "button", type: "icon", icon: "mdi mdi-format-color-fill", 
+										css: "tema_gold_btn", tooltip: "Dorado", 
+										click: function(){ cambiar_tema_servidor("4"); } 
+									},	
 								]
 							},
 							{

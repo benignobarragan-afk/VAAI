@@ -3,6 +3,7 @@ const path = require("path")
 const pool = require(path.join(__dirname, "..", "db"))
 const config = require(path.join(__dirname, "..", "config"));
 const { cacheUsuarios } = require("../middlewares/authjwt");
+const other_utils = require(path.join(__dirname, "..", "utils/other_utils"));
 
 
 const signin = async (req, res) => {
@@ -36,6 +37,7 @@ const signin = async (req, res) => {
             })
             return false;
         }
+        other_utils.regi_even_segu(req.body.username, 'LOG_IN', req.ip)
         const token = jwt.sign({id:req.body.username}, config.SECRET, {expiresIn: '15m'})
         const rtoken = jwt.sign({id:req.body.username, acceso:rows[0].acceso}, config.RSECRET, {expiresIn: '7d'})
         

@@ -3,6 +3,7 @@ const pool = require(path.join(__dirname, "..", "db"))
 const config = require(path.join(__dirname, "..", "config"));
 const util = require(path.join(__dirname, "..", "utils/busquedaUtils"));
 const { cacheUsuarios } = require("../middlewares/authjwt");
+const other_utils = require(path.join(__dirname, "..", "utils/other_utils"));
 
 const intro = (async (req, res) => {
     const lcNombre = req.nom_usu;
@@ -22,6 +23,7 @@ const logout = ((req, res) => {
     // 1. Llamar a res.clearCookie()
     // Debes especificar el mismo 'path' (ruta) que usaste al crearla.
     // Si no especificaste 'path' al crearla, no es necesario aquí.
+    other_utils.regi_even_segu(req.userId, 'LOG_OUT', req.ip)
     res.clearCookie('refresh_token', {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production', // Mismo valor que al crear
@@ -48,8 +50,65 @@ const sin_derecho = ((req, res) => {
     res.render("sin_derecho")
 });
 
-const principal = ((req, res) => {
-    res.render("principal", {skin:req.skin})
+const principal = (async (req, res) => {
+
+    let lcSQL = `
+    SELECT user_id, evento, date_format(fecha, "%d/%m/%Y") AS dia, ip_address, COUNT(*) as total
+        FROM logs_seguridad 
+        WHERE user_id = ? AND fecha >= DATE_SUB(NOW(), INTERVAL 14 DAY)
+        group BY 1,2,3,4
+        ORDER BY fecha DESC 
+    `
+
+    const token = await util.gene_cons(lcSQL, req.userId);
+
+    lcSQL = `
+    SELECT DATE_FORMAT(fecha_visita, "%d/%m/%Y") AS dia, SUM(if(es_api = 0, 1, 0)) AS pagina, SUM(if(es_api = 1, 1, 0)) AS consulta, COUNT(*) AS total
+        FROM log_visitas 
+        WHERE usuario_id = ? AND fecha_visita >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        group BY 1
+        ORDER BY fecha_visita  
+    `
+    const visitas = await util.gene_cons(lcSQL, req.userId);
+
+    lcSQL = `
+    SELECT 
+        DATE_FORMAT(fecha_visita, "%d/%m/%Y") AS dia,
+        CASE 
+            -- Si solo hay una diagonal (ej. /usua_nuev), devolvemos 'home'
+            WHEN CHAR_LENGTH(url) - CHAR_LENGTH(REPLACE(url, '/', '')) = 1 
+            THEN 'home'
+            
+            -- Si tiene niveles (ej. /op/op_plan), extraemos lo que está entre la 1ra y 2da diagonal
+            ELSE SUBSTRING_INDEX(SUBSTRING_INDEX(url, '/', 2), '/', -1)
+        END as apartado, COUNT(*) AS total, SUM(tiempo_respuesta_ms) AS tiempo
+    FROM log_visitas 
+    WHERE es_api = 0 and usuario_id = '2315513' AND fecha_visita >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+    group BY 1,2
+    ORDER BY 1 DESC 
+    `
+
+    const pagina = await util.gene_cons(lcSQL, req.userId);
+
+        lcSQL = `
+    SELECT 
+        CASE 
+            -- Si solo hay una diagonal (ej. /usua_nuev), devolvemos 'home'
+            WHEN CHAR_LENGTH(url) - CHAR_LENGTH(REPLACE(url, '/', '')) = 1 
+            THEN 'home'
+            
+            -- Si tiene niveles (ej. /op/op_plan), extraemos lo que está entre la 1ra y 2da diagonal
+            ELSE SUBSTRING_INDEX(SUBSTRING_INDEX(url, '/', 2), '/', -1)
+        END as apartado, COUNT(*) AS total, SUM(tiempo_respuesta_ms)/100 AS tiempo
+    FROM log_visitas 
+    WHERE es_api = 0 and usuario_id = '2315513' AND fecha_visita >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+    group BY 1
+    ORDER BY 1 DESC 
+    `
+
+    const pagina_t = await util.gene_cons(lcSQL, req.userId);
+
+    res.render("principal", {token, visitas, pagina, pagina_t, skin:req.skin})
 });
 
 const usuarios = ((req, res) => {
