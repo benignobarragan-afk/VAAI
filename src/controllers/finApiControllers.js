@@ -277,7 +277,7 @@ const fin_impr_oc = (async (req,res) => {
 					o.tele_prov, o.corr_prov, DATE_FORMAT(o.fech_entr, '%d/%m/%Y') as fech_entr, o.luga_entr, o.forma_pago, o.porc_anti, o.nume_parc, 
                     DATE_FORMAT(o.fech_inic, '%d/%m/%Y') as fech_inic, DATE_FORMAT(o.fech_fin, '%d/%m/%Y') as fech_fin, DATE_FORMAT(o.fech_crea, '%d/%m/%Y') as fech_crea,
 					o.subtotal, o.iva_total, o.total, o.observaciones, o.estatus, p.fondo, p.nombre AS nomb_proy, p.tipo_proy, p.programa, o.padr_depe,
-                    o.nomb_auto, o.nomb_vobo, CONCAT( SUBSTRING_INDEX(REPLACE(ps.dn, '"', ''), ' ', -1), ' ', SUBSTRING_INDEX(REPLACE(REPLACE(ps.dn, '"', ''), 'DN ', ''), ' ', 2)) as nomb_elab
+                    o.nomb_auto, o.nomb_vobo, IFNULL(o.nomb_elab, '') as nomb_elab
         FROM fin_orde_comp o INNER JOIN fin_proyecto p on o.proyecto = p.proyecto
             LEFT join gen_centros c ON p.id_cent = c.id_cent
             left join passfile ps on o.usua_crea = ps.user_id
