@@ -22,7 +22,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 
 // Esto activa las protecciones básicas que pide ZAP
-/* app.use(
+app.use(
   helmet({
     contentSecurityPolicy: {
       directives: {
@@ -49,7 +49,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
       },
     },
   })
-); */
+);
 
 //cuando van a utilizar mi ip otro compañero
 /* app.use(
