@@ -69,7 +69,7 @@
                                     {
                                         cols: [
                                             {
-                                                view: "combo", name: "proyecto", value:"<%=rows[0].proyecto%>", label:"Proyecto", labelWidth: 80, required: true,
+                                                view: "combo", id: "proyecto", name: "proyecto", value:"<%=rows[0].proyecto%>", label:"Proyecto", labelWidth: 80, required: true,
                                                 options: {
                                                     fitMaster: false,
                                                     width: 1000,
@@ -348,7 +348,6 @@
                                             { view: "text", id: "ures_depe", name: "ures_depe", label: "Código de URE", labelPosition: "top", readonly: true, required: true, width: 150},{width:15},
                                             { view: "text", id: "nomb_depe", name: "nomb_depe", label: "Dependencia del proyecto", labelPosition: "top", readonly: true, required: true},{width:15},
                                             { view: "text", id: "padr_depe", name: "padr_depe", label: "Padre presupuestal", labelPosition: "top", readonly: true, required: true},{width:15},
-                                            { view: "button", value: "Guardar datos dependencia", css: "webix_secondary", width: 150, click: actu_depe, <%=(rows2[0]?.estatus > 1?' disabled: true':'')%>},
                                         ]
                                     },
                                     {
@@ -400,11 +399,11 @@
                 $$("ures_depe").setValue(res.cve_conv);
                 $$("nomb_depe").setValue(res.dependen);
                 $$("padr_depe").setValue(res.padre);
-                $$("tele_depe").setValue(res.telefono);
-                $$("domi_depe").setValue(res.direccion);
+                $$("tele_depe").setValue(res.tele_depe);
+                $$("domi_depe").setValue(res.domi_depe);
                 $$("nomb_elab").setValue((!$$("nomb_elab").getValue()?'<%=nomb_usua%>':$$("nomb_elab").getValue()))
-                $$("nomb_auto").setValue(res.nomb_dire);
-                $$("nomb_vobo").setValue(res.nomb_secr);
+                $$("nomb_auto").setValue(res.nomb_auto);
+                $$("nomb_vobo").setValue(res.nomb_vobo);
                 if($$("luga_entr").getValue() == '' || !$$("luga_entr").getValue()){
                     $$("luga_entr").setValue(res.direccion || "")
                 }
@@ -634,6 +633,9 @@
             padr_depe : $$("padr_depe").getValue(),
             tele_depe : $$("tele_depe").getValue(),
             domi_depe : $$("domi_depe").getValue(),
+            proyecto  : $$("proyecto").getValue(),
+            nomb_auto : $$("nomb_auto").getValue(),
+            nomb_vobo : $$("nomb_vobo").getValue(),
         }
 
         webix.ajax().post("/api/fin/fin_norde_compx3", camb_depe).then((res)=>{

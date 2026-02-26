@@ -44,7 +44,7 @@ const fin_norde_compx2 = (async (req, res) => {
     }
 
     let lcSQL = `
-    SELECT p.proyecto, c.cve_conv, c.descrip, c.dependen, c.telefono, c.direccion, c.nomb_dire, c.nomb_secr, pp.dependen as padre
+    SELECT p.proyecto, c.cve_conv, c.descrip, c.dependen, p.tele_depe, p.domi_depe, p.nomb_auto, p.nomb_vobo, pp.dependen as padre
 	    FROM fin_proyecto p LEFT JOIN gen_centros c ON p.id_cent = c.id_cent
             LEFT JOIN gen_centros pp on c.padre = pp.clave
 	    WHERE p.proyecto = ?
@@ -103,15 +103,16 @@ const fin_norde_compx = (async (req,res) => {
         lcSQL = `
         INSERT INTO fin_orde_comp (tipo_orde, fech_emis, proyecto, rfc, proveedor, domi_prov, tele_prov, corr_prov, fech_entr, luga_entr, forma_pago,
 	            porc_anti, fech_inic, fech_fin, nume_parc, subtotal, iva_total, total, resico, observaciones, estatus, fech_crea, cambios, ures_depe, nomb_depe, 
-                padr_depe, tele_depe, domi_depe, usua_crea, apli_resico, nomb_elab) 
-            VALUES (?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, 0, ?, 0, NOW(), CONCAT(?,'|INSERT|',NOW(),CHR(13)), ?, ?, ?, ?, ?, ?, ?, ?)
+                padr_depe, tele_depe, domi_depe, usua_crea, apli_resico, nomb_elab, nomb_auto, nomb_vobo, domi_depe, tele_depe) 
+            VALUES (?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, 0, ?, 0, NOW(), CONCAT(?,'|INSERT|',NOW(),CHR(13)), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `
         //(!encabezado.fech_emis?null:encabezado.fech_emis),    Se quito por que la fecha de emisión se toma el día
         const laSend = [(!encabezado.tipo_orde?null:encabezado.tipo_orde), (!encabezado.proyecto?null:encabezado.proyecto), 
                             encabezado.rfc, encabezado.proveedor, encabezado.domi_prov, encabezado.tele_prov, encabezado.corr_prov, (!encabezado.fech_entr?null:encabezado.fech_entr), 
                             encabezado.luga_entr, (!encabezado.forma_pago?null:encabezado.forma_pago), (!encabezado.porc_anti?null:encabezado.porc_anti), (!encabezado.fech_inic?null:encabezado.fech_inic), 
                             (!encabezado.fech_fin?null:encabezado.fech_fin), (!encabezado.nume_parc?null:encabezado.nume_parc), encabezado.observaciones, req.userId,
-                            encabezado.ures_depe, encabezado.nomb_depe, encabezado.padr_depe, encabezado.tele_depe, encabezado.domi_depe, req.userId, (!encabezado.apli_resico?0:encabezado.apli_resico), (!encabezado.nomb_elab?0:encabezado.nomb_elab)
+                            encabezado.ures_depe, encabezado.nomb_depe, encabezado.padr_depe, encabezado.tele_depe, encabezado.domi_depe, req.userId, (!encabezado.apli_resico?0:encabezado.apli_resico), (!encabezado.nomb_elab?0:encabezado.nomb_elab),
+                            encabezado.nomb_auto, encabezado.nomb_vobo, encabezado.domi_depe, encabezado.tele_depe
                         ]
 
         const insert = await util.gene_cons(lcSQL, laSend)
@@ -195,7 +196,7 @@ const fin_norde_compx = (async (req,res) => {
         UPDATE fin_orde_comp  SET tipo_orde = ?, fech_emis = NOW(), proyecto = ?, rfc = ?, proveedor = ?, domi_prov = ?, tele_prov = ?, corr_prov = ?, 
                 fech_entr = ?, luga_entr = ?, forma_pago = ?, porc_anti = ?, fech_inic = ?, fech_fin = ?, nume_parc = ?, subtotal = 0, iva_total = 0, total = 0, 
                 observaciones = ?, ures_depe = ?, nomb_depe = ?, padr_depe = ?, tele_depe = ?, domi_depe = ?, subtotal = ?, iva_total = ?, total = ?, apli_resico = ?, resico = ?, 
-                nomb_elab = ?, cambios = CONCAT(IFNULL(cambios,''), ?,'|UPDATE|',NOW(),CHR(13)) 
+                nomb_elab = ?, nomb_auto = ?, nomb_vobo = ?, domi_depe = ?, tele_depe = ?, cambios = CONCAT(IFNULL(cambios,''), ?,'|UPDATE|',NOW(),CHR(13)) 
             WHERE id = ?
         `
         //(!encabezado.fech_emis?null:encabezado.fech_emis),    Se quito por que la fecha de emisión se toma el día
@@ -204,7 +205,7 @@ const fin_norde_compx = (async (req,res) => {
                             encabezado.luga_entr, (!encabezado.forma_pago?null:encabezado.forma_pago), (!encabezado.porc_anti?null:encabezado.porc_anti), (!encabezado.fech_inic?null:encabezado.fech_inic), 
                             (!encabezado.fech_fin?null:encabezado.fech_fin), (!encabezado.nume_parc?null:encabezado.nume_parc), encabezado.observaciones,  encabezado.ures_depe, encabezado.nomb_depe, encabezado.padr_depe, 
                             encabezado.tele_depe, encabezado.domi_depe, (!lnSubtodal?0:lnSubtodal), (!lnIVA?0:lnIVA), (!lnTotal?0:lnTotal), (!encabezado.apli_resico?0:encabezado.apli_resico), (!lnMRESICO?0:lnMRESICO), 
-                            (!encabezado.nomb_elab?0:encabezado.nomb_elab), req.userId, encabezado.id_orde_comp]
+                            (!encabezado.nomb_elab?0:encabezado.nomb_elab), encabezado.nomb_auto, encabezado.nomb_vobo, encabezado.domi_depe, encabezado.tele_depe, req.userId, encabezado.id_orde_comp]
 
         const update = await util.gene_cons(lcSQL, laSend)
 
@@ -230,7 +231,19 @@ const fin_norde_compx = (async (req,res) => {
             const upda_orde = await util.gene_cons(lcSQL, [lcFoli_orde, req.userId, encabezado.id_orde_comp])
             return res.json({"status" : "success", "message": "La orden se genero con el folio: " + lcFoli_orde})
         }
-        
+
+        if (!!encabezado.proyecto){
+            lcSQL = `
+            UPDATE fin_proyecto 
+                SET nomb_auto = if(IFNULL(?, '') = '', nomb_auto, ?),
+                    nomb_vobo = if(IFNULL(?, '') = '', nomb_vobo, ?),
+                    domi_depe = if(IFNULL(?, '') = '', domi_depe, ?),
+                    tele_depe = if(IFNULL(?, '') = '', tele_depe, ?)
+                where proyecto = ?
+            `
+            const upda_proy = await util.gene_cons(lcSQL, [encabezado.nomb_auto, encabezado.nomb_auto, encabezado.nomb_vobo, encabezado.nomb_vobo, encabezado.domi_depe, encabezado.domi_depe, encabezado.tele_depe, encabezado.tele_depe, encabezado.proyecto])
+        }
+
         return res.json({"status" : "success", "message": "El registro se actualizo exitosamente, recuerda que aun no se generas la orden"})
     }
 });
@@ -392,9 +405,9 @@ const fin_impr_oc = (async (req,res) => {
         doc.text(`${(datos[0].porc_anti ? 'X':'')}`, 569, 598, {width: 195, align: 'left'});
         doc.text(`${(!datos[0].porc_anti ? 'X':'')}`, 569, 607, {width: 195, align: 'left'});
         doc.text(`${datos[0].observaciones}`, 35, 624, {width: 540, align: 'left'});
-        doc.text(`${datos[0].nomb_elab}`, 30, 727, {width: 127, align: 'center'});
-        doc.text(`${datos[0].nomb_auto}`, 170, 747, {width: 127, align: 'center'});
-        doc.text(`${datos[0].nomb_vobo}`, 312, 747, {width: 130, align: 'center'});
+        doc.text(`${other_utils.proper(datos[0].nomb_elab)}`, 30, 727, {width: 127, align: 'center'});
+        doc.text(`${datos[0].nomb_auto}`, 170, 727, {width: 127, align: 'center'});
+        doc.text(`${datos[0].nomb_vobo}`, 312, 727, {width: 130, align: 'center'});
         doc.fontSize(9);
 
         // Si vas a seguir agregando contenido después, recuerda restaurar el margen
@@ -467,8 +480,8 @@ const fin_impr_oc = (async (req,res) => {
     doc.text(`${(!datos[0].porc_anti ? 'X':'')}`, 569, 607, {width: 195, align: 'left'});
     doc.text(`${datos[0].observaciones}`, 35, 624, {width: 540, align: 'left'});
     doc.text(`${other_utils.proper(datos[0].nomb_elab)}`, 30, 727, {width: 127, align: 'center'});
-    doc.text(`${datos[0].nomb_auto}`, 170, 747, {width: 127, align: 'center'});
-    doc.text(`${datos[0].nomb_vobo}`, 312, 747, {width: 130, align: 'center'});
+    doc.text(`${datos[0].nomb_auto}`, 170, 727, {width: 127, align: 'center'});
+    doc.text(`${datos[0].nomb_vobo}`, 312, 727, {width: 130, align: 'center'});
 
     // Si vas a seguir agregando contenido después, recuerda restaurar el margen
 
