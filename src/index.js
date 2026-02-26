@@ -46,6 +46,15 @@ app.use(
         
         // Imagenes locales y datos base64
         "img-src": ["'self'", "data:"],
+
+        // Permite cargar el PDF dentro del iframe (visor nativo)
+        "frame-src": ["'self'", "data:"],
+
+        // Necesario para que algunos navegadores rendericen el PDF como objeto
+        "object-src": ["'self'"],
+
+        // Evita que otros sitios pongan a SIVA en un frame (protección contra Clickjacking)
+        "frame-ancestors": ["'self'"]
       },
     },
   })
