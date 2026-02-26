@@ -3,26 +3,30 @@
 <script type="text/javascript">
 
 
-// Asegúrate de que el DOM esté listo
+
 webix.ready(function(){
-    // Verifica que el componente esté cargado
-    if (webix.ui.pdfviewer) {
-        webix.ui({
-            rows:[
-                { view:"pdfbar", id:"toolbar" },
-                { 
-                    view:"pdfviewer", 
-                    id:"pdf",
-                    toolbar:"toolbar", 
-                    // El prefijo binary-> es correcto para URLs externas
-                    url:"binary->/pdf/7-GRATUIDAD-GRADUAL-R.pdf",
-                    scale:"page-width",
+    webix.ui({
+        // Usamos un layout de filas para que el visor se estire
+        rows:[
+            {
+                view: "template", 
+                id: "visor_pdf",
+                // Removemos paddings y bordes para que se pegue a las orillas
+                css: "visor_ajustado", 
+                template: function(obj){
+                    // Si no hay URL o datos, mostramos mensaje inicial
+                    if (!obj.src) return "<div style='display:flex; align-items:center; justify-content:center; height:100%;'>Esperando documento para visualizar...</div>";
+                    
+                    // Retornamos el iframe apuntando al archivo en tu servidor Rocky Linux
+                    // El estilo 100% asegura que llene todo el componente template
+                    return `<iframe src="${obj.src}" style="width:100%; height:100%; border:none;" allow="fullscreen"></iframe>`;
                 }
-            ]
-        });
-    } else {
-        webix.message({ type:"error", text:"El componente PDFViewer no está cargado." });
-    }
+            }
+        ]
+    });
+
+    // Para cargar el PDF de PROGAP que mencionaste:
+    $$("visor_pdf").setValues({ src: "/pdf/7-GRATUIDAD-GRADUAL-R.pdf" });
 });
 
 </script>
