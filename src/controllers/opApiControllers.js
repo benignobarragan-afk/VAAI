@@ -868,7 +868,7 @@ const op_ningrx = (async (req, res) => {
     if (req.body.pdf_base64) {
         //inserta el registro en la base de datos
 
-        const nombreArchivo = rows4.insertId + '.pdf';
+        const nombreArchivo = rows4.insertId + '.PDF';
 
         let lcSQL = `
         INSERT INTO opc_archivo (id_ofic, descrip, fecha, usuario, ofic_out, uid) 
@@ -878,7 +878,7 @@ const op_ningrx = (async (req, res) => {
         const laInsert = await util.gene_cons(lcSQL, [rows4.insertId, nombreArchivo, req.userId, util.gene_id_11()])
 
         // 1. Definir la ruta y nombre del archivo
-        const rutaDestino = path.join(config.SERV_ARCH, 'OPARCHIVO',  laInsert.insertId+'.pdf');
+        const rutaDestino = path.join(config.SERV_ARCH, 'OPARCHIVO',  laInsert.insertId+'.PDF');
 
         // 2. Convertir base64 a Buffer (binario)
         // Nota: Si la cadena trae el prefijo "data:application/pdf;base64,", hay que quitarlo
@@ -2067,8 +2067,8 @@ const adownload = (async (req, res) => {
 	    FROM opc_archivo 
         WHERE UID = ?
     `
-    //console.log(lcSQL)
     const rows = await util.gene_cons(lcSQL, [req.query.id])
+    console.log(rows)
 
     if (!rows || rows.length <= 0){
         return res.send("No se econtro el archivo en la base de datos")
