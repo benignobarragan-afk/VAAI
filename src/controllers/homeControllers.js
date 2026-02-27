@@ -26,12 +26,14 @@ const logout = ((req, res) => {
     other_utils.regi_even_segu(req.userId, 'LOG_OUT', req.ip)
     res.clearCookie('refresh_token', {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production', // Mismo valor que al crear
+            //secure: process.env.NODE_ENV === 'production', // Mismo valor que al crear
+            secure: true, 
             sameSite: 'strict', // Mismo valor que al crear
             // path: '/' // (Si usaste path, inclúyelo aquí)            
         }).clearCookie('access_token', {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production', // Mismo valor que al crear
+            //secure: process.env.NODE_ENV === 'production', // Mismo valor que al crear
+            secure: true, 
             sameSite: 'strict', // Mismo valor que al crear
             // path: '/' // (Si usaste path, inclúyelo aquí)            
         });

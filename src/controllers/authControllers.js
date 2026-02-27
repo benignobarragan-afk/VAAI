@@ -49,11 +49,11 @@ const signin = async (req, res) => {
 
         res.cookie("refresh_token", rtoken, {
             httpOnly: true,             //la cookie solo se puede acceder en el servidor
-            secure: false,
+            secure: true,               // Solo se envía por HTTPS
             sameSite: "strict"
         }).cookie("access_token", token, {
             httpOnly: true,             //la cookie solo se puede acceder en el servidor
-            secure: false,
+            secure: true,               // Solo se envía por HTTPS
             sameSite: "strict"
         })
         .json({

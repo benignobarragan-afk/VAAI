@@ -152,7 +152,7 @@ const verifyToken = async (req, res, next) => {
 
                 res.cookie("access_token", ntoken, {
                     httpOnly: true,
-                    secure: false, 
+                    secure: true, 
                     sameSite: "strict"
                 });
                 

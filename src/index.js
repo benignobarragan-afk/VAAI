@@ -57,8 +57,16 @@ app.use(
         "frame-ancestors": ["'self'"]
       },
     },
-    hidePoweredBy: true, // Esto quita la versión del servidor que ZAP marca
-    hsts: { maxAge: 31536000, includeSubDomains: true, preload: true } // Activa el HSTS
+    // ESTO QUITA LA ALERTA DE X-Content-Type-Options
+    noSniff: true, 
+    // ESTO QUITA LA ALERTA DE HSTS
+    hsts: {
+      maxAge: 31536000, // 1 año
+      includeSubDomains: true,
+      preload: true
+    },
+    // ESTO QUITA LA ALERTA DE DIVULGACIÓN DE VERSIÓN (Campo "Server")
+    hidePoweredBy: true
   })
 );
 
