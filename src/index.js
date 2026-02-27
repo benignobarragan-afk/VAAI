@@ -42,7 +42,7 @@ app.use(
         "font-src": ["'self'"],
 
         // Bloqueamos cualquier conexión externa accidental
-        "connect-src": ["'self'"],
+        "connect-src": ["'self'", "http://127.0.0.1:2727", "ws://127.0.0.1:2727"],
         
         // Imagenes locales y datos base64
         "img-src": ["'self'", "data:"],
