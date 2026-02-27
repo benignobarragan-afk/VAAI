@@ -18,6 +18,8 @@ const progap = ((req, res) => {
 
 const progap_dashboard = (async (req, res) => {
     
+    const llAdmin = (req.groups.indexOf(",ADMI_PROGAP,") >= 0)
+
     if (req.groups.indexOf(",PROGAP,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
@@ -31,13 +33,25 @@ const progap_dashboard = (async (req, res) => {
 
     const rows = await util.gene_cons(lcSQL);
 
-    lcSQL = `
-        SELECT id, siglas, dependencia 
-            FROM progap_dependencias 
-            WHERE id IN (SELECT DISTINCT id_cu FROM progap_programa)
-            ORDER BY siglas
-    `
-    const rows2 = await util.gene_cons(lcSQL);
+    if (llAdmin){
+        lcSQL = `
+            SELECT id, siglas, dependencia 
+                FROM progap_dependencias 
+                WHERE id_antecesor = 0
+                ORDER BY siglas
+        `
+    }else{
+        lcSQL = `
+            SELECT id, siglas, dependencia 
+                FROM progap_dependencias 
+                WHERE id_antecesor = 0 and ID IN (SELECT id 
+                                                    FROM gen_dere_progap
+                                                    WHERE user_id = ?)
+                ORDER BY siglas
+        `
+    }
+    
+    const rows2 = await util.gene_cons(lcSQL, [req.userId]);
 
     return res.render("progap/progap_dashboard", {rows, rows2, skin:req.skin})
 });

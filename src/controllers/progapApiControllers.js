@@ -151,7 +151,7 @@ const progap_focamx = (async (req, res) => {
         return res.json([])
     }
 
-    let lcSQL = ''
+    let lcSQL = '' 
 
     ///CODIGO ANTERIOR
 /*     SELECT ROW_NUMBER() OVER (ORDER BY a.id) AS rank, a.id, a.id as folio, concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, a.codigo, 
@@ -839,17 +839,34 @@ const progap_dashboardx = (async (req, res) => {
         return res.render("sin_derecho")
     }
 
+    const llAdmin = (req.groups.indexOf(",ADMI_PROGAP,") >= 0)
+    let rows = []
     //console.log(req.query.lnDepe)
     
-    lcSQL = `
-    SELECT d.siglas as mes, SUM(if(a.id_estado = 3, 1, 0)) AS completa, SUM(if(a.id_estado = 4, 1, 0)) AS rechazada, 
-            SUM(if(IFNULL(a.id_estado,0) <> 4 AND IFNULL(a.id_estado,0) <> 3, 1, 0)) AS pendiente 
-        FROM progap_alumnos a LEFT JOIN progap_dependencias d ON a.id_centro_universitario = d.id
-        WHERE a.id_convocatoria = ${req.query.lnConvo} ${(req.query.lnDepe > 0?' and a.id_centro_universitario = ' + req.query.lnDepe:'')}
-        group BY d.siglas
-        ORDER BY d.siglas
-    `
-    const rows = await util.gene_cons(lcSQL)
+    if(llAdmin){
+        lcSQL = `
+        SELECT d.siglas as mes, SUM(if(a.id_estado = 3, 1, 0)) AS completa, SUM(if(a.id_estado = 4, 1, 0)) AS rechazada, 
+                SUM(if(IFNULL(a.id_estado,0) <> 4 AND IFNULL(a.id_estado,0) <> 3, 1, 0)) AS pendiente 
+            FROM progap_tram_focam a LEFT JOIN progap_dependencias d ON a.id_centro_universitario = d.id
+            WHERE a.id_convocatoria = ? ${(req.query.lnDepe > 0?' and a.id_centro_universitario = ?':'')}
+            group BY d.siglas
+            ORDER BY d.siglas
+        `
+        rows = await util.gene_cons(lcSQL, [(!req.query.lnConvo?0:req.query.lnConvo),req.query.lnDepe])
+    }else{
+        lcSQL = `
+        SELECT d.siglas as mes, SUM(if(a.id_estado = 3, 1, 0)) AS completa, SUM(if(a.id_estado = 4, 1, 0)) AS rechazada, 
+                SUM(if(IFNULL(a.id_estado,0) <> 4 AND IFNULL(a.id_estado,0) <> 3, 1, 0)) AS pendiente 
+            FROM progap_tram_focam a LEFT JOIN progap_dependencias d ON a.id_centro_universitario = d.id
+            WHERE a.id_convocatoria = ? AND a.id_centro_universitario IN (SELECT id 
+                                                                            FROM gen_dere_progap
+                                                                            WHERE user_id = ?) ${(req.query.lnDepe > 0?' AND a.id_centro_universitario = ?':'')}
+            group BY d.siglas
+            ORDER BY d.siglas
+        `
+        rows = await util.gene_cons(lcSQL, [(!req.query.lnConvo?0:req.query.lnConvo), req.userId ,req.query.lnDepe])
+    }
+    
     return res.json(rows)
 
 });
@@ -860,21 +877,42 @@ const progap_dashboardx2 = (async (req, res) => {
     {
         return res.render("sin_derecho")
     }
+    
+    const llAdmin = (req.groups.indexOf(",ADMI_PROGAP,") >= 0)
+    let rows = []
 
     //console.log(req.query)
     
-    lcSQL = `
-    SELECT SUM(if(a.id_estado = 3 AND LEFT(p.nivel,1) = 'D', 1, 0)) AS dcompleta, 
-            SUM(if(a.id_estado = 4 AND LEFT(p.nivel,1) = 'D', 1, 0)) AS drechazada, 
-            SUM(if(IFNULL(a.id_estado,0) <> 4 AND IFNULL(a.id_estado,0) <> 3 AND IFNULL(LEFT(p.nivel,1),"M") = 'D', 1, 0)) AS dpendiente,
-            SUM(if(a.id_estado = 3 AND LEFT(p.nivel,1) <> 'D', 1, 0)) AS mcompleta, 
-            SUM(if(a.id_estado = 4 AND LEFT(p.nivel,1) <> 'D', 1, 0)) AS mrechazada, 
-            SUM(if(IFNULL(a.id_estado,0) <> 4 AND IFNULL(a.id_estado,0) <> 3 AND IFNULL(LEFT(p.nivel,1),"M") <> 'D', 1, 0)) AS mpendiente  
-	FROM progap_alumnos a LEFT JOIN progap_dependencias d ON a.id_centro_universitario = d.id
-		LEFT JOIN progap_programa p ON a.id_programa = p.id
-        WHERE a.id_convocatoria = ${req.query.lnConvo} ${(req.query.lnDepe > 0?' and a.id_centro_universitario = ' + req.query.lnDepe:'')}
-    `
-    const rows = await util.gene_cons(lcSQL)
+    if(llAdmin){
+        lcSQL = `
+        SELECT SUM(if(a.id_estado = 3 AND LEFT(p.nivel,1) = 'D', 1, 0)) AS dcompleta, 
+                SUM(if(a.id_estado = 4 AND LEFT(p.nivel,1) = 'D', 1, 0)) AS drechazada, 
+                SUM(if(IFNULL(a.id_estado,0) <> 4 AND IFNULL(a.id_estado,0) <> 3 AND IFNULL(LEFT(p.nivel,1),"M") = 'D', 1, 0)) AS dpendiente,
+                SUM(if(a.id_estado = 3 AND LEFT(p.nivel,1) <> 'D', 1, 0)) AS mcompleta, 
+                SUM(if(a.id_estado = 4 AND LEFT(p.nivel,1) <> 'D', 1, 0)) AS mrechazada, 
+                SUM(if(IFNULL(a.id_estado,0) <> 4 AND IFNULL(a.id_estado,0) <> 3 AND IFNULL(LEFT(p.nivel,1),"M") <> 'D', 1, 0)) AS mpendiente  
+        FROM progap_tram_focam a LEFT JOIN progap_dependencias d ON a.id_centro_universitario = d.id
+            LEFT JOIN progap_programa p ON a.id_programa = p.id
+            WHERE a.id_convocatoria = ? ${(req.query.lnDepe > 0?' and a.id_centro_universitario = ?':'')}
+        `
+        rows = await util.gene_cons(lcSQL, [(!req.query.lnConvo?0:req.query.lnConvo),req.query.lnDepe])
+    }else{
+        lcSQL = `
+        SELECT SUM(if(a.id_estado = 3 AND LEFT(p.nivel,1) = 'D', 1, 0)) AS dcompleta, 
+                SUM(if(a.id_estado = 4 AND LEFT(p.nivel,1) = 'D', 1, 0)) AS drechazada, 
+                SUM(if(IFNULL(a.id_estado,0) <> 4 AND IFNULL(a.id_estado,0) <> 3 AND IFNULL(LEFT(p.nivel,1),"M") = 'D', 1, 0)) AS dpendiente,
+                SUM(if(a.id_estado = 3 AND LEFT(p.nivel,1) <> 'D', 1, 0)) AS mcompleta, 
+                SUM(if(a.id_estado = 4 AND LEFT(p.nivel,1) <> 'D', 1, 0)) AS mrechazada, 
+                SUM(if(IFNULL(a.id_estado,0) <> 4 AND IFNULL(a.id_estado,0) <> 3 AND IFNULL(LEFT(p.nivel,1),"M") <> 'D', 1, 0)) AS mpendiente  
+        FROM progap_tram_focam a LEFT JOIN progap_dependencias d ON a.id_centro_universitario = d.id
+            LEFT JOIN progap_programa p ON a.id_programa = p.id
+            WHERE a.id_convocatoria = ? AND a.id_centro_universitario IN (SELECT id 
+                                                                            FROM gen_dere_progap
+                                                                            WHERE user_id = ?) ${(req.query.lnDepe > 0?' AND a.id_centro_universitario = ?':'')}
+        `
+        rows = await util.gene_cons(lcSQL, [(!req.query.lnConvo?0:req.query.lnConvo), req.userId ,req.query.lnDepe])
+    }
+    
     const lnTotal = parseInt(rows[0].dcompleta) + parseInt(rows[0].drechazada) + parseInt(rows[0].dpendiente) + parseInt(rows[0].mcompleta) + parseInt(rows[0].mrechazada) + parseInt(rows[0].mpendiente)
     //console.log(lnTotal)
     const vertical = [
@@ -897,19 +935,41 @@ const progap_dashboardx3 = (async (req, res) => {
         return res.render("sin_derecho")
     }
 
+    const llAdmin = (req.groups.indexOf(",ADMI_PROGAP,") >= 0)
+    let rows = []
+
     //console.log(req.query)
     
+    if(llAdmin){
     lcSQL = `
     SELECT d.siglas, SUM(if(ifnull(a.id_estado,1) = 1, 1, 0)) AS s1, SUM(if(ifnull(a.id_estado,1) = 2, 1, 0)) AS s2,
             SUM(if(ifnull(a.id_estado,1) = 3, 1, 0)) AS s3, SUM(if(ifnull(a.id_estado,1) = 4, 1, 0)) AS s4,
             SUM(if(ifnull(a.id_estado,5) = 2, 1, 0)) AS s5, COUNT(*) AS total
-        FROM progap_alumnos a LEFT JOIN progap_dependencias d ON a.id_centro_universitario = d.id 
-        WHERE a.id_convocatoria = ${req.query.lnConvo} ${(req.query.lnDepe > 0?' and a.id_centro_universitario = ' + req.query.lnDepe:'')}
+        FROM progap_tram_focam a LEFT JOIN progap_dependencias d ON a.id_centro_universitario = d.id 
+        WHERE a.id_convocatoria = ? ${(req.query.lnDepe > 0?' AND a.id_centro_universitario = ?':'')}
         group BY 1
         ORDER BY 1 DESC 
         LIMIT 10
     `
-    const rows = await util.gene_cons(lcSQL)
+    rows = await util.gene_cons(lcSQL, [(!req.query.lnConvo?0:req.query.lnConvo),req.query.lnDepe])
+
+    }else{
+    lcSQL = `
+    SELECT d.siglas, SUM(if(ifnull(a.id_estado,1) = 1, 1, 0)) AS s1, SUM(if(ifnull(a.id_estado,1) = 2, 1, 0)) AS s2,
+            SUM(if(ifnull(a.id_estado,1) = 3, 1, 0)) AS s3, SUM(if(ifnull(a.id_estado,1) = 4, 1, 0)) AS s4,
+            SUM(if(ifnull(a.id_estado,5) = 2, 1, 0)) AS s5, COUNT(*) AS total
+        FROM progap_tram_focam a LEFT JOIN progap_dependencias d ON a.id_centro_universitario = d.id 
+        WHERE a.id_convocatoria = ? AND a.id_centro_universitario IN (SELECT id 
+                                                                        FROM gen_dere_progap
+                                                                        WHERE user_id = ?) ${(req.query.lnDepe > 0?' AND a.id_centro_universitario = ?':'')}
+        group BY 1
+        ORDER BY 1 DESC 
+        LIMIT 10
+    `
+    rows = await util.gene_cons(lcSQL, [(!req.query.lnConvo?0:req.query.lnConvo), req.userId ,req.query.lnDepe])
+
+    }
+
 
     let loDatos = []
     for (i = 0; i < rows.length; i++){
@@ -941,20 +1001,41 @@ const progap_dashboardx4 = (async (req, res) => {
         return res.render("sin_derecho")
     }
 
+    const llAdmin = (req.groups.indexOf(",ADMI_PROGAP,") >= 0)
+    let rows = []
+
     //console.log(req.query)
-    
-    lcSQL = `
-    SELECT SUM(if(ifnull(LEFT(p.nivel,1),'M') = 'D', 1, 0)) AS dtotal, SUM(if(a.id_estado = 3 AND LEFT(p.nivel,1) = 'D', 1, 0)) AS dcompleta, 		
-            SUM(if(IFNULL(a.id_estado,0) <> 3 AND IFNULL(LEFT(p.nivel,1),"M") = 'D', 1, 0)) AS dpendienter,
-            SUM(if(IFNULL(a.id_estado,0) <> 3 and IFNULL(a.id_estado,0) <> 4 AND IFNULL(LEFT(p.nivel,1),"M") = 'D', 1, 0)) AS dpendiente,
-            SUM(if(ifnull(LEFT(p.nivel,1),'M') <> 'D', 1, 0)) AS mtotal, SUM(if(a.id_estado = 3 AND LEFT(p.nivel,1) <> 'D', 1, 0)) AS mcompleta, 
-            SUM(if(IFNULL(a.id_estado,0) <> 3 AND IFNULL(LEFT(p.nivel,1),"M") <> 'D', 1, 0)) AS mpendienter, 
-            SUM(if(IFNULL(a.id_estado,0) <> 3 AND IFNULL(a.id_estado,0) <> 4 AND IFNULL(LEFT(p.nivel,1),"M") <> 'D', 1, 0)) AS mpendiente  
-        FROM progap_alumnos a LEFT JOIN progap_dependencias d ON a.id_centro_universitario = d.id
-            LEFT JOIN progap_programa p ON a.id_programa = p.id
-        WHERE a.id_convocatoria = ${req.query.lnConvo} ${(req.query.lnDepe > 0?' and a.id_centro_universitario = ' + req.query.lnDepe:'')}
-    `
-    const rows = await util.gene_cons(lcSQL)
+    if(llAdmin){
+        lcSQL = `
+        SELECT SUM(if(ifnull(LEFT(p.nivel,1),'M') = 'D', 1, 0)) AS dtotal, SUM(if(a.id_estado = 3 AND LEFT(p.nivel,1) = 'D', 1, 0)) AS dcompleta, 		
+                SUM(if(IFNULL(a.id_estado,0) <> 3 AND IFNULL(LEFT(p.nivel,1),"M") = 'D', 1, 0)) AS dpendienter,
+                SUM(if(IFNULL(a.id_estado,0) <> 3 and IFNULL(a.id_estado,0) <> 4 AND IFNULL(LEFT(p.nivel,1),"M") = 'D', 1, 0)) AS dpendiente,
+                SUM(if(ifnull(LEFT(p.nivel,1),'M') <> 'D', 1, 0)) AS mtotal, SUM(if(a.id_estado = 3 AND LEFT(p.nivel,1) <> 'D', 1, 0)) AS mcompleta, 
+                SUM(if(IFNULL(a.id_estado,0) <> 3 AND IFNULL(LEFT(p.nivel,1),"M") <> 'D', 1, 0)) AS mpendienter, 
+                SUM(if(IFNULL(a.id_estado,0) <> 3 AND IFNULL(a.id_estado,0) <> 4 AND IFNULL(LEFT(p.nivel,1),"M") <> 'D', 1, 0)) AS mpendiente  
+            FROM progap_tram_focam a LEFT JOIN progap_dependencias d ON a.id_centro_universitario = d.id
+                LEFT JOIN progap_programa p ON a.id_programa = p.id
+            WHERE a.id_convocatoria = ? ${(req.query.lnDepe > 0?' AND a.id_centro_universitario = ?':'')}
+        `
+        rows = await util.gene_cons(lcSQL, [(!req.query.lnConvo?0:req.query.lnConvo),req.query.lnDepe])
+
+    }else{
+        lcSQL = `
+        SELECT SUM(if(ifnull(LEFT(p.nivel,1),'M') = 'D', 1, 0)) AS dtotal, SUM(if(a.id_estado = 3 AND LEFT(p.nivel,1) = 'D', 1, 0)) AS dcompleta, 		
+                SUM(if(IFNULL(a.id_estado,0) <> 3 AND IFNULL(LEFT(p.nivel,1),"M") = 'D', 1, 0)) AS dpendienter,
+                SUM(if(IFNULL(a.id_estado,0) <> 3 and IFNULL(a.id_estado,0) <> 4 AND IFNULL(LEFT(p.nivel,1),"M") = 'D', 1, 0)) AS dpendiente,
+                SUM(if(ifnull(LEFT(p.nivel,1),'M') <> 'D', 1, 0)) AS mtotal, SUM(if(a.id_estado = 3 AND LEFT(p.nivel,1) <> 'D', 1, 0)) AS mcompleta, 
+                SUM(if(IFNULL(a.id_estado,0) <> 3 AND IFNULL(LEFT(p.nivel,1),"M") <> 'D', 1, 0)) AS mpendienter, 
+                SUM(if(IFNULL(a.id_estado,0) <> 3 AND IFNULL(a.id_estado,0) <> 4 AND IFNULL(LEFT(p.nivel,1),"M") <> 'D', 1, 0)) AS mpendiente  
+            FROM progap_tram_focam a LEFT JOIN progap_dependencias d ON a.id_centro_universitario = d.id
+                LEFT JOIN progap_programa p ON a.id_programa = p.id
+            WHERE a.id_convocatoria = ? AND a.id_centro_universitario IN (SELECT id 
+                                                                        FROM gen_dere_progap
+                                                                        WHERE user_id = ?) ${(req.query.lnDepe > 0?' AND a.id_centro_universitario = ?':'')}
+        `
+        rows = await util.gene_cons(lcSQL, [(!req.query.lnConvo?0:req.query.lnConvo), req.userId ,req.query.lnDepe])
+
+    }
 
     return res.json(rows)
 
