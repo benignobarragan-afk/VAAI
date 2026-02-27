@@ -153,9 +153,8 @@ const progap_focamx = (async (req, res) => {
 
     let lcSQL = ''
 
-    if(llAdmin){
-    lcSQL = `
-    SELECT ROW_NUMBER() OVER (ORDER BY a.id) AS rank, a.id, a.id as folio, concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, a.codigo, 
+    ///CODIGO ANTERIOR
+/*     SELECT ROW_NUMBER() OVER (ORDER BY a.id) AS rank, a.id, a.id as folio, concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, a.codigo, 
     		 d.dependencia, CONCAT(p.clave_cgipv, ' - ', p.programa) AS programa, DATE_FORMAT(a.fecha_solicitud, '%d/%m/%Y') AS fecha_solicitud,
             if(a.id_estado = 4, "Rechazado", if(a.id_estado = 3, "Solicitud completa", if(a.id_estado = 5, "Es necesario corregir", 
 		    if(a.id_estado = 2, "Enviado a revisión", "Sin enviar")))) AS status
@@ -164,27 +163,41 @@ const progap_focamx = (async (req, res) => {
         LEFT JOIN progap_dependencias d ON u.id_centro_universitario = d.id
         LEFT JOIN progap_programa p ON a.id_programa = p.id
         ${(!req.query.lnConv?'':'WHERE a.id_convocatoria = '+ req.query.lnConv)} ${(!req.query.id_cu?'':' AND u.id_centro_universitario = '+ req.query.id_cu)}  
-        ORDER BY a.id
-
-    `
+        ORDER BY a.id */
+    let rows
+    if(llAdmin){
+        lcSQL = `
+        SELECT ROW_NUMBER() OVER (ORDER BY a.id) AS rank, tf.folio,  concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, a.codigo, 
+                d.dependencia, CONCAT(p.clave_cgipv, ' - ', p.programa) AS programa, DATE_FORMAT(tf.fecha_solicitud, '%d/%m/%Y') AS fecha_solicitud,
+                if(tf.id_estado = 4, "Rechazado", if(tf.id_estado = 3, "Solicitud completa", if(tf.id_estado = 5, "Es necesario corregir", 
+                if(tf.id_estado = 2, "Enviado a revisión", "Sin enviar")))) AS status
+            FROM progap_tram_focam tf
+                LEFT JOIN progap_alumno a on tf.codigo = a.codigo 
+                LEFT JOIN progap_dependencias d ON tf.id_centro_universitario = d.id
+                LEFT JOIN progap_programa p ON tf.id_programa = p.id
+            WHERE tf.id_convocatoria = ?
+            ORDER BY a.id
+        `
+        rows = await util.gene_cons(lcSQL, [(!req.query.lnConv?0:req.query.lnConv)])
     }
     else {
-lcSQL = `
-    SELECT ROW_NUMBER() OVER (ORDER BY a.id) AS rank, a.id, a.id as folio, concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, a.codigo, 
-    		 d.dependencia, CONCAT(p.clave_cgipv, ' - ', p.programa) AS programa, DATE_FORMAT(a.fecha_solicitud, '%d/%m/%Y') AS fecha_solicitud,
-            if(a.id_estado = 4, "Rechazado", if(a.id_estado = 3, "Solicitud completa", if(a.id_estado = 5, "Es necesario corregir", 
-		    if(a.id_estado = 2, "Enviado a revisión", "Sin enviar")))) AS status
-        FROM progap_alumnos a 
-        LEFT JOIN progap_usuarios u ON a.id_usuario = u.id
-        LEFT JOIN progap_dependencias d ON u.id_centro_universitario = d.id
-        LEFT JOIN progap_programa p ON a.id_programa = p.id
-        WHERE u.id_centro_universitario in (select )
-        ${(!req.query.lnConv?'':'WHERE a.id_convocatoria = '+ req.query.lnConv)} ${(!req.query.id_cu?'':' AND u.id_centro_universitario = '+ req.query.id_cu)}  
-        ORDER BY a.id
-
+    lcSQL = `
+        SELECT ROW_NUMBER() OVER (ORDER BY a.id) AS rank, tf.folio,  concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, a.codigo, 
+                d.dependencia, CONCAT(p.clave_cgipv, ' - ', p.programa) AS programa, DATE_FORMAT(tf.fecha_solicitud, '%d/%m/%Y') AS fecha_solicitud,
+                if(tf.id_estado = 4, "Rechazado", if(tf.id_estado = 3, "Solicitud completa", if(tf.id_estado = 5, "Es necesario corregir", 
+                if(tf.id_estado = 2, "Enviado a revisión", "Sin enviar")))) AS status
+            FROM progap_tram_focam tf
+                LEFT JOIN progap_alumno a on tf.codigo = a.codigo 
+                LEFT JOIN progap_dependencias d ON tf.id_centro_universitario = d.id
+                LEFT JOIN progap_programa p ON tf.id_programa = p.id
+            WHERE tf.id_convocatoria = ? AND tf.id_centro_universitario IN (SELECT id 
+                                                                                FROM gen_dere_progap
+                                                                                WHERE user_id = ?)
+            ORDER BY a.id
     `
+        rows = await util.gene_cons(lcSQL, [(!req.query.lnConv?0:req.query.lnConv), req.userId])
     }
-    const rows = await util.gene_cons(lcSQL)
+
     return res.json(rows)
 });
 
