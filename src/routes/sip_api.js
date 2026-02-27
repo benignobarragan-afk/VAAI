@@ -13,6 +13,8 @@ const sipCtrl = require("../controllers/sipApiControllers.js")
 
 
 router.get("/sip_soli_progx", midd.verifyToken, sipCtrl.sip_soli_progx);
+router.get("/ddownload", midd.verifyToken, sipCtrl.ddownload);
+
 
 
 module.exports = router

@@ -33,6 +33,33 @@ const sip_soli_progx = (async (req, res) => {
     return res.json(rows)
 });
 
+
+const ddownload = (async (req, res) => {
+
+    
+    if (req.groups.indexOf(",SIP_SOLI_PROG,") < 0){        //si no tiene derechos
+        return res.render("sin_derecho")
+    }
+        
+    const nombreArchivo = req.query.id + '.PDF'
+    const ruta_fisica = path.join(config.SERV_ARCH, 'PROGAP', 'DICTAMEN', nombreArchivo);
+    
+    //absolutePath = path.resolve(__dirname, 'uploads', ruta_fisica);
+    const absolutePath = path.resolve(ruta_fisica);
+    console.log(absolutePath)
+
+    if (!fs.existsSync(absolutePath)) {
+        return res.status(404).send("El archivo no existe en el servidor.");
+    }
+
+    res.download(absolutePath, nombreArchivo, (err) => {
+        if (err) {
+            console.error("Error en la descarga:", err);
+        }
+    });
+});
+
 module.exports = {
-    sip_soli_progx
+    sip_soli_progx,
+    ddownload,
 }

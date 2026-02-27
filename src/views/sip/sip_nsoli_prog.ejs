@@ -114,14 +114,12 @@ webix.ready(function(){
                 body: {margin: 20,
                     rows: 
                     [
-                        {
+                        /* {
                             view: "datatable",
                             id: "tabla_dictamenes",
                             select: "row",
                             editable: true,
                             editaction: "dblclick",
-                            headerRowHeight: 45,
-                            rowHeight: 40,
                             columns: [
                                 { id: "dictamen", header: "Dictamen", width: 150, sort: "string", css: { "text-align": "center" } },
                                 { 
@@ -132,23 +130,71 @@ webix.ready(function(){
                                 },
                                 { id: "fe_errata", header: "Fe de Errata", width: 150, sort: "string", css: { "text-align": "center" } },
                                 {
+                                    id: "text_sesi", 
+                                    header: "Datos sesión", 
+                                    sort: "string" 
+                                },
+                                {
                                     id: "cambios", 
                                     header: "Descripción de Cambios", 
-                                    fillspace: true, // Esta columna se expande para ocupar el resto del ancho
                                     sort: "string" 
                                 }
                             ],
                             // Evento opcional para cuando seleccionas una fila
                             on: {
                                 onAfterSelect: function(selection) {
-                                    var item = this.getItem(selection.id);
-                                    webix.message("Seleccionado dictamen: " + item.dictamen);
-                                }
+                                     var item = this.getItem(selection.id);
+                                    webix.message("Seleccionado dictamen: " + item.dictamen); 
+                                },
+                                onAfterLoad: function () {
+                                    this.hideOverlay();
+                                    //this.adjustRowHeight();
+                                    this.render();
+                                },
                             },
                             <%if(dictamen.length>0){%>
                             data: datodictamen, 
                             <%}%>
-                        },
+                        }, */
+                        {
+                            view: "datatable", id: "tabla_dictamenes", select: "row", rowCss: "#css#", tooltip : true,
+                            columns: [
+                                { id: "dictamen", header: ["Dictamen", { content: "numberFilter" }], width: 150, footer: { colspan: "3", content: "rowCount", css: "footer" } },
+                                { id: "fecha", header: ["Fecha Dictamen", { content: "textFilter" }], width: 120, sort: "string", css: { 'text-align': 'center' } },
+                                { id: "fe_errata", header: ["Fe de Errata", { content: "textFilter" }], width: 100, sort: "string", css: { 'text-align': 'left' } },
+                                { id: "text_sesi", header: ["Sesión", { content: "textFilter" }], width: 300, sort: "string", css: { 'text-align': 'left' },  fillspace: true,  },
+                                { id: "cambios", header: ["Cambios", { content: "textFilter" }], width: 300, sort: "string", css: { 'text-align': 'left' },  fillspace: true,  },
+                                {
+                                    id: "archivo", header: ["archivo", { content: "textFilter" }], width: 120, sort: "string", css: { 'text-align': 'center' }, template: function (obj, common) {
+                                        if (obj.archivo <= 0) return "";
+                                        else return "<div class='webix_el_button' style='cursor: pointer;' align='center'><a href='/api/sip/ddownload?id=" + obj.archivo +  "' target='_blank'><i style='font-size:32px;color:#2b96cc;' class='mdi mdi-file-pdf-box'></i></a></div>"
+                                    }
+                                },
+                                {
+                                    id: "ruta_arch", header: ["WWW", { content: "textFilter" }], width: 80, sort: "string", template: function (obj, common) {
+                                        if (!obj.ruta_arch || obj.ruta_arch == "") return "";
+                                        else return "<div class='webix_el_button' style='cursor: pointer;' align='center'><a href='" + obj.ruta_arch +  "' target='_blank'><i style='font-size:32px;color:#2b96cc;' class='mdi mdi-web'></i></a></div>"
+                                    }
+                                },
+                            ],
+                            on: {
+                                onBeforeLoad: function () { this.showOverlay("Cargando..."); },
+                                onAfterLoad: function () {
+                                    this.hideOverlay();
+                                    //this.adjustRowHeight();
+                                    this.render();
+                                },
+                                onItemDblClick:  function(id) {
+                                    openWindow("Detalle de oficialia", "/<% // Response.Write(config.ruta)%>/op_nadmi.fwx?lcID=" + id.row)
+                                }
+                            },
+                            scrollY: true, scrollX: true, resizeColumn: true, resizeRow: true, navigation: true,
+                            footer: true, borderless: false, fixedRowHeight: false, height: 600,
+                            <%if(dictamen.length>0){%>
+                            data: datodictamen, 
+                            <%}%>
+
+                        }
                     ]
                 }
             },
@@ -192,47 +238,8 @@ webix.ready(function(){
     });
 });
 
-function guardarEstudiante(){
-    var form = $$("form_registro");
-    if(form.validate()){
-        var datos = form.getValues();
-        console.log("Datos listos para enviar:", datos);
-        
-        // Aquí usarías tu webix.ajax().post("/api/...", datos)
-        webix.message("Procesando registro...");
-        webix.ajax()
-				.post("/api/progap/progap_nestudiax", datos)
-				.then(function (data) {
-					//$$("btnGuardar").enable();
-					let res = data.json()
-					console.log(res)
-					Swal.fire({
-						title:res.message, icon:res.status=='error'?"error":"success"
-					}).then(()=>{
-						if(res.status=='server'){
-//							window.location = "/op/op_ofic";
-                        }
-					})
-					// webix.alert({ type: (data.json()[0].status ? "" : "alert-error"), text:  })
-					// if (data.json()[0].status)
-				})
-    } else {
-        webix.message({ type:"error", text:"Por favor llene los campos marcados en rojo" });
-    }
-}
 
-function validarCURP(valor) {
-    const regexCURP = /^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[0-9A-Z]{1}[0-9]{1}$/;
-    return regexCURP.test(valor.toUpperCase());
-}
-
-function carg_arch() {
-			
-    $$("archivos_adjuntos").clearAll()
-    $$("archivos_adjuntos").load("/api/progap/progap_recu_arch?lnTram=<%=//usuario[0].id%>");
-}
-
-function deta_prog(id_prog, titulo) {
+    function deta_prog(id_prog, titulo) {
 		xx++;
 		webix.ui({
 			view: "window", id: "w4" + xx,

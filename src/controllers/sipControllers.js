@@ -38,7 +38,7 @@ const sip_soli_prog = (async (req, res) => {
 
 const sip_nsoli_prog = (async (req, res) => {
     
-    if (req.groups.indexOf(",ADMI_PROGAP,") < 0)        //si no tiene derechos
+    if (req.groups.indexOf(",SIP_SOLI_PROG,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -76,11 +76,14 @@ const sip_nsoli_prog = (async (req, res) => {
         siiau = await util.gene_cons(lcSQL, [req.query.lnID])
 
         lcSQL = `
-            SELECT id, id_soli_prog, dictamen, if(ifnull(fe_errata,0)=1, 'SI', 'NO') as fe_errata, DATE_FORMAT(fecha, '%d/%m/%Y') as fecha, cambios
+            SELECT id, id_soli_prog, dictamen, if(ifnull(fe_errata,0)=1, 'SI', 'NO') as fe_errata, DATE_FORMAT(fecha, '%d/%m/%Y') as fecha, IFNULL(text_sesi, '') as text_sesi,
+                    ruta_arch, cambios, if(ifnull(ruta_arch,'') = '', 0, id) as archivo
                 FROM sip_soli_prog_dict 
                 WHERE id_soli_prog = ?
         `
         dictamen = await util.gene_cons(lcSQL, [req.query.lnID])
+
+        console.log(dictamen)
 
     }
     loEnvio = {rows, siiau, dictamen, skin:req.skin}
@@ -90,7 +93,7 @@ const sip_nsoli_prog = (async (req, res) => {
 
 const sip_materia = (async (req, res) => {
     
-    if (req.groups.indexOf(",ADMI_PROGAP,") < 0)        //si no tiene derechos
+    if (req.groups.indexOf(",SIP_SOLI_PROG,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
