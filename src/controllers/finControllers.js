@@ -26,8 +26,8 @@ const fin_orde_comp = (async (req, res) => {
     }
 
     const lcSQL = `
-    SELECT p.user_id, p.id_cent, c.campus, c.descrip
-	    FROM gen_dere_proy p LEFT JOIN gen_centros c ON p.id_cent = c.id_cent
+    SELECT p.user_id, p.id as id_cent, c.campus, c.descrip
+	    FROM gen_dere_proy p LEFT JOIN gen_centros c ON p.id = c.id_cent
     	WHERE p.user_id = ?
 
     `
@@ -47,7 +47,7 @@ const fin_norde_comp = (async (req, res) => {
     SELECT c.id_cent, c.dependen, c.campus, p.proyecto, p.fondo, p.nombre
 	FROM fin_proyecto p LEFT JOIN gen_centros c ON p.id_cent = c.id_cent
 	WHERE p.id_cent IN 
-		(SELECT id_cent 
+		(SELECT id 
 			FROM gen_dere_proy
 			WHERE user_id = ?)
 			ORDER BY c.campus, p.fondo, p.proyecto
