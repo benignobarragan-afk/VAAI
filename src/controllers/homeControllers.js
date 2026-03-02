@@ -184,12 +184,24 @@ const dere_unic = (async (req, res) => {
         lcSQL = `
         SELECT d.id, d.id = dr.id as marcado, d.dependencia AS depen 
 	        FROM progap_dependencias d 
-                LEFT JOIN gen_dere_progap dr ON d.id = dr.id
+                LEFT JOIN gen_dere_progap dr ON d.id = dr.id AND dr.user_id = ?
 	        WHERE id_antecesor = 0
         `        
     }
+    if(req.query.lcDere ==  'fin')
+    {
+        lcSQL = `
+        SELECT c.id_cent as id, c.id_cent = dr.id as marcado, CONCAT('(', cve_conv, ') ', dependen) AS depen
+            FROM gen_centros c 
+                LEFT JOIN gen_dere_proy dr ON c.id_cent = dr.id AND dr.user_id = ?
+            WHERE c.id_cent IN (SELECT id_cent 
+                                    FROM fin_proyecto)
+                                        
+        `        
+    }
     
-    const rows = await util.gene_cons(lcSQL, req.userId)
+    const rows = await util.gene_cons(lcSQL, req.query.userSerch)
+    console.log(lcSQL)
 
     res.render("dere_unic", {rows, lcDere:req.query.lcDere, winId:req.query.winId, userSerch:req.query.userSerch, skin:req.skin})
 });

@@ -292,7 +292,7 @@ const dere_unicx = (async (req, res) => {
     
         case 'oficio':
             // Proceso para oficio
-            console.log("Procesando oficio...");
+            //console.log("Procesando oficio...");
             // ¡IMPORTANTE! Siempre pon 'break' al final de cada caso
             lcSQL = `
             UPDATE gen_dere_ofic
@@ -332,7 +332,7 @@ const dere_unicx = (async (req, res) => {
 
         case 'progap':
             // Proceso para progap
-            console.log("Procesando progap...");
+            //console.log("Procesando progap...");
             
             lcSQL = `
             UPDATE gen_dere_progap
@@ -367,6 +367,46 @@ const dere_unicx = (async (req, res) => {
             return res.json({
                 "error": false, 
                 "mensage": "Se guardaron los cambios de progap"
+            });
+            break;
+
+        case 'fin':
+            // Proceso para fin
+            //console.log("Procesando fin...");
+            
+            lcSQL = `
+            UPDATE gen_dere_proy
+                SET cambio = concat(IFNULL(cambio, ''),"DELETE|", ?, '|', NOW())
+                WHERE user_id = ? and id NOT IN (${placeholders})
+            `
+            params = [req.userId, lcUsuario, ...laMarcado];
+
+    
+            rows = await util.gene_cons(lcSQL, params)
+
+            lcSQL = `
+            DELETE FROM gen_dere_proy
+                WHERE user_id = ? and id NOT IN (${placeholders})
+            `
+            params = [lcUsuario, ...laMarcado];
+            rowsd = await util.gene_cons(lcSQL, params)
+
+            lcSQL = `
+            INSERT INTO gen_dere_proy (user_id, id, cambio)
+                SELECT ?, id_cent, concat("INSERT|", ?, '|', NOW(), CHR(10)) 
+                    FROM gen_centros 
+                        WHERE id_cent IN (${placeholders})
+                        and id_cent not in (SELECT id 
+                                        FROM gen_dere_proy 
+                                        WHERE user_id = ?)
+            `
+            params = [lcUsuario, req.userId, ...laMarcado, lcUsuario];
+            rowsi = await util.gene_cons(lcSQL, params)
+            
+            //console.log(rows)
+            return res.json({
+                "error": false, 
+                "mensage": "Se guardaron los cambios en la dependencia del proyecto"
             });
             break;
 
