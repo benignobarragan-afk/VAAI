@@ -24,9 +24,9 @@ const fin_orde_compx = (async (req, res) => {
                     o.porc_anti, o.nume_parc, o.subtotal, o.iva_total, o.total, o.observaciones, o.fech_crea, o.resico, if(o.estatus=0,"Abierta", if(o.estatus=2,"Cerrada",if(o.estatus=9,"Cancelada", "Pendiente"))) as estatus
         FROM fin_orde_comp o INNER JOIN fin_proyecto p on o.proyecto = p.proyecto
             LEFT join gen_centros c ON p.id_cent = c.id_cent
-            WHERE p.id_cent IN (SELECT id FROM gen_dere_proy WHERE user_id = ?) 
+            WHERE p.id_cent IN (SELECT id FROM gen_dere_proy WHERE user_id = ?) OR p.proyecto IN (SELECT id FROM gen_dere_proy WHERE user_id = ?)
     `
-    parameters.push(req.userId);
+    parameters.push(req.userId, req.userId);
 
     if (!!req.query.anio){
         lcSQL = lcSQL + " AND YEAR(o.fech_emis) = ? "
