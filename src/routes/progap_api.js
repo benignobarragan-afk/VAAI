@@ -36,6 +36,7 @@ router.post("/progap_nfocamx", midd.verifyToken, upload.single('upload'), progap
 router.get("/progap_recu_arch", midd.verifyToken, progapCtrl.progap_recu_arch);
 router.get("/pdownload", midd.verifyToken, progapCtrl.pdownload);
 router.post("/progap_actu_estux", midd.verifyToken, upload.single('upload'), progapCtrl.progap_actu_estux);
+router.get("/progap_focamx2", midd.verifyToken, progapCtrl.progap_focamx2);
 
 
 

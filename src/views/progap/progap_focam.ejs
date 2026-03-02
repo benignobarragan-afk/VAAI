@@ -6,6 +6,25 @@
         var w1;
         var mygrid;
 
+
+        // Agregamos un listener de teclas global
+        webix.event(window, "keydown", function(e){
+            // 112 es el código de la tecla F1
+            if (e.keyCode == 112) {
+                
+                // VITAL: Detener la ayuda del navegador
+                if (e.preventDefault) e.preventDefault();
+                
+                // Ejecutar la lógica de tu botón
+                $$("btn_guardar").callEvent("onItemClick"); 
+                
+                // O llamar directamente a tu función
+                // miFuncionDeGuardado();
+
+                return false;
+            }
+        });
+        
         //alert(tip);
 
         //function doOnLoad() {
@@ -79,6 +98,101 @@
                                      }
 
                             },
+                            {},
+                            {
+                                view: "button",
+                                type: "icon",
+                                id: "btn_Aceptar",
+                                label: "Aceptar (Ctrl+A)",
+                                icon: "mdi mdi-check-circle",
+                                hotkey: "ctrl-a", 
+                                width: 180,
+                                click: function() {
+                                    // 1. Obtenemos la tabla por su ID
+                                    var tabla = $$("dtable");
+                                    
+                                    // 2. Obtenemos el ID de la fila seleccionada
+                                    var idSeleccionado = tabla.getSelectedId();
+
+                                    if (idSeleccionado) {
+                                        // Aquí iría tu llamada al API para guardar en MariaDB si fuera necesario
+                                        // ...
+                                        
+                                        // 3. Mostramos el mensaje de éxito
+                                        webix.message({ type: "success", text: "Documento validado" });
+
+                                        // 4. Eliminamos la fila de la tabla físicamente
+                                        tabla.remove(idSeleccionado);
+                                        
+                                        var primerId = tabla.getFirstId();
+                                        if (primerId) tabla.select(primerId);
+                                        
+                                    } else {
+                                        webix.message({ type: "error", text: "Por favor, selecciona una fila primero" });
+                                    }
+                                }
+                            },
+                            {
+                                view: "button",
+                                type: "icon",
+                                id: "btn_rechazar",
+                                label: "Rechazar (Ctrl+R)",
+                                icon: "mdi mdi-close-circle",
+                                hotkey: "ctrl-r", 
+                                width: 180,
+                                click: function() {
+                                    // 1. Obtenemos la tabla por su ID
+                                    var tabla = $$("dtable");
+                                    
+                                    // 2. Obtenemos el ID de la fila seleccionada
+                                    var idSeleccionado = tabla.getSelectedId();
+
+                                    if (idSeleccionado) {
+                                        // Aquí iría tu llamada al API para guardar en MariaDB si fuera necesario
+                                        // ...
+                                        
+                                        Swal.fire({
+                                        title: 'Rechazo de Documento',
+                                        text: 'Ingrese el motivo o comentario del rechazo:',
+                                        input: 'text',
+                                        inputPlaceholder: 'Escriba el motivo aquí...',
+                                        showCancelButton: true,
+                                        confirmButtonText: 'Aceptar',
+                                        cancelButtonText: 'Cancelar',
+                                        inputValidator: (value) => {
+                                            if (!value) {
+                                                return '¡El motivo es obligatorio para continuar!';
+                                            }
+                                        }
+                                        }).then((result) => {
+                                            if (result.isConfirmed) {
+                                                // El valor capturado está en result.value
+                                                var motivo = result.value;
+
+                                                // 1. Aquí llamarías a tu API enviando el motivo
+                                                // webix.ajax().post("/api/progap/validar", { id: idSeleccionado.id, nota: motivo });
+
+                                                webix.message({ type: "error", text: "Documento rechazado" });
+
+                                                // 2. Eliminamos la fila actual
+                                                tabla.remove(idSeleccionado);
+
+                                                // 3. Seleccionamos el siguiente para que se actualice el PDF
+                                                var primerId = tabla.getFirstId();
+                                                if (primerId) {
+                                                    tabla.select(primerId);
+                                                } else {
+                                                    // Si ya no hay más, limpiamos el visor
+                                                    $$("visor_progap").setValues({ src: "" });
+                                                }
+                                            }
+                                        });
+                                        
+                                    } else {
+                                        webix.message({ type: "error", text: "Por favor, selecciona una fila primero" });
+                                    }
+                                }
+                            },
 
                             /* {
                                 view: "button",
@@ -92,8 +206,6 @@
                                     onItemClick: agregar
                                 }
                             }, */
-                            
-                            {}, {},
                             {
                                 view: "combo", id: "cmbSoli", name: "cmbSoli", value: "<%=rows[0].id%>",
                                 width: 300,
@@ -126,6 +238,7 @@
 
                         ]
                     },
+                    {cols :[
                     {
                         view:"datatable", id:"dtable", select:true, footer:true, editable:true, hidden:false, minHeight:500, scroll:true,
                         resizeColumn: true,  navigation: true, resizeRow:true, css:"celda_compacta", 
@@ -184,7 +297,7 @@
                             }],
                         },			
                         {
-                            id: "programa", width: 300,sort: "string", css: { 'text-align': 'left' }, 
+                            id: "programa", width: 300, sort: "string", css: { 'text-align': 'left' }, 
                             fillspace:true, minWidth:150, header: [{text:"Programa posgrado",css:"my_style"}, {
                                 content: "textFilter", placeholder:"Filtrar",
                             }],
@@ -196,7 +309,50 @@
                             }],
                         },
                         ],
+                        on: {
+                            onAfterSelect: function(id, e, node) {
+                                var item = this.getItem(id.row);
+                                var visor = $$("visor_progap"); // ID del componente donde se verá la imagen/PDF
+
+                                // Agregamos una máscara de carga (opcional pero recomendado)
+                                webix.extend(visor, webix.ProgressBar);
+                                visor.showProgress();
+
+                                // Llamada a tu API pasando el ID del registro
+                                webix.ajax().get("/api/progap/progap_focamx2?id=" + item.id).then(function(res) {
+                                    var respuesta = res.json();
+                                    
+                                    if (respuesta && respuesta.success) {
+                                        // Si es una imagen en base64:
+                                        visor.setValues({ src: respuesta.data });
+                                        // Si usas el iframe que definimos antes, el template lo renderizará
+                                    } else {
+                                        webix.message({ type: "error", text: "No se pudo recuperar el archivo" });
+                                    }
+                                    visor.hideProgress();
+                                }).catch(function(err) {
+                                    webix.message({ type: "error", text: "Error de conexión con el servidor" });
+                                    visor.hideProgress();
+                                });
+                            }
+                        },
                     },
+                    { view:"resizer" }, // Opcional: para ajustar el ancho manualmente
+                    {
+                        view: "template",
+                        id: "visor_progap",
+                        width: 650,
+                        template: function(obj) {
+                            if (!obj.src) return "<div style='padding:20px;text-align:center;'>Esperando archivo...</div>";
+                            
+                            // Si lo que recibes es un PDF:
+                            return `<iframe src="${obj.src}" width="100%" height="100%" style="border:none;"></iframe>`;
+                            
+                            // SI ES UNA IMAGEN, cambia el retorno a:
+                            // return `<img src="${obj.src}" style="width:100%; height:auto;">`;
+                        }
+                    },
+                    ]},
                 ]
             });
 
