@@ -24,12 +24,18 @@ const fin_orde_compx = (async (req, res) => {
                     o.porc_anti, o.nume_parc, o.subtotal, o.iva_total, o.total, o.observaciones, o.fech_crea, o.resico, if(o.estatus=0,"Abierta", if(o.estatus=2,"Cerrada",if(o.estatus=9,"Cancelada", "Pendiente"))) as estatus
         FROM fin_orde_comp o INNER JOIN fin_proyecto p on o.proyecto = p.proyecto
             LEFT join gen_centros c ON p.id_cent = c.id_cent
-        ORDER BY o.foli_orde;
+            WHERE p.id_cent IN (SELECT id FROM gen_dere_proy WHERE user_id = ?) 
     `
+    parameters.push(req.userId);
+
     if (!!req.query.anio){
-        lcSQL = lcSQL + " WHERE YEAR(o.fech_emis) = ? "
+        lcSQL = lcSQL + " AND YEAR(o.fech_emis) = ? "
         parameters.push(req.query.lnConv);
     }
+    
+    lcSQL = lcSQL + `
+            ORDER BY o.foli_orde
+    `
 
     const rows = await util.gene_cons(lcSQL, parameters)
     return res.json(rows)
@@ -74,11 +80,12 @@ const fin_norde_compx = (async (req,res) => {
         }
     }
     
+    if (!encabezado.proyecto){               
+        return res.json({"status" : "error", "message": "Primero selecciona un proyecto"})
+    }
 
-    //console.log(req.body.generar)
     if (req.body.generar){
-
-        if (encabezado.tipo_orde || !encabezado.fech_emis || !encabezado.proyecto || !encabezado.rfc || !encabezado.proveedor ||
+        if (!encabezado.proyecto || !encabezado.tipo_orde || !encabezado.fech_emis || !encabezado.proyecto || !encabezado.rfc || !encabezado.proveedor ||
             !encabezado.domi_prov || !encabezado.tele_prov || !encabezado.corr_prov, !encabezado.fech_entr || !encabezado.luga_entr ||
             !encabezado.forma_pago || !encabezado.ures_depe || !encabezado.nomb_depe || !encabezado.tele_depe || !encabezado.domi_depe)
         {
@@ -103,8 +110,8 @@ const fin_norde_compx = (async (req,res) => {
         lcSQL = `
         INSERT INTO fin_orde_comp (tipo_orde, fech_emis, proyecto, rfc, proveedor, domi_prov, tele_prov, corr_prov, fech_entr, luga_entr, forma_pago,
 	            porc_anti, fech_inic, fech_fin, nume_parc, subtotal, iva_total, total, resico, observaciones, estatus, fech_crea, cambios, ures_depe, nomb_depe, 
-                padr_depe, tele_depe, domi_depe, usua_crea, apli_resico, nomb_elab, nomb_auto, nomb_vobo, domi_depe, tele_depe) 
-            VALUES (?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, 0, ?, 0, NOW(), CONCAT(?,'|INSERT|',NOW(),CHR(13)), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                padr_depe, tele_depe, domi_depe, usua_crea, apli_resico, nomb_elab, nomb_auto, nomb_vobo) 
+            VALUES (?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, 0, ?, 0, NOW(), CONCAT(?,'|INSERT|',NOW(),CHR(13)), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `
         //(!encabezado.fech_emis?null:encabezado.fech_emis),    Se quito por que la fecha de emisión se toma el día
         const laSend = [(!encabezado.tipo_orde?null:encabezado.tipo_orde), (!encabezado.proyecto?null:encabezado.proyecto), 
@@ -112,7 +119,7 @@ const fin_norde_compx = (async (req,res) => {
                             encabezado.luga_entr, (!encabezado.forma_pago?null:encabezado.forma_pago), (!encabezado.porc_anti?null:encabezado.porc_anti), (!encabezado.fech_inic?null:encabezado.fech_inic), 
                             (!encabezado.fech_fin?null:encabezado.fech_fin), (!encabezado.nume_parc?null:encabezado.nume_parc), encabezado.observaciones, req.userId,
                             encabezado.ures_depe, encabezado.nomb_depe, encabezado.padr_depe, encabezado.tele_depe, encabezado.domi_depe, req.userId, (!encabezado.apli_resico?0:encabezado.apli_resico), (!encabezado.nomb_elab?0:encabezado.nomb_elab),
-                            encabezado.nomb_auto, encabezado.nomb_vobo, encabezado.domi_depe, encabezado.tele_depe
+                            encabezado.nomb_auto, encabezado.nomb_vobo
                         ]
 
         const insert = await util.gene_cons(lcSQL, laSend)
@@ -149,7 +156,7 @@ const fin_norde_compx = (async (req,res) => {
                 return res.json({"status" : "error", "message": "Se econtraron artículos con costo o cantidad menor o igual a cero"})
             }
 
-            const campus_proy = await util.gene_cons("SELECT campus FROM gen_centros WHERE id_cent IN (SELECT id_cent FROM fin_proyecto WHERE proyecto = ?", [encabezado.proyecto])
+            const campus_proy = await util.gene_cons("SELECT campus FROM gen_centros WHERE id_cent IN (SELECT id_cent FROM fin_proyecto WHERE proyecto = ?)", [encabezado.proyecto])
             
             const laID = await util.gene_cons("CALL SP_NEWID (?, '')", ['OC_' + campus_proy[0].campus])
 
@@ -196,7 +203,7 @@ const fin_norde_compx = (async (req,res) => {
         UPDATE fin_orde_comp  SET tipo_orde = ?, fech_emis = NOW(), proyecto = ?, rfc = ?, proveedor = ?, domi_prov = ?, tele_prov = ?, corr_prov = ?, 
                 fech_entr = ?, luga_entr = ?, forma_pago = ?, porc_anti = ?, fech_inic = ?, fech_fin = ?, nume_parc = ?, subtotal = 0, iva_total = 0, total = 0, 
                 observaciones = ?, ures_depe = ?, nomb_depe = ?, padr_depe = ?, tele_depe = ?, domi_depe = ?, subtotal = ?, iva_total = ?, total = ?, apli_resico = ?, resico = ?, 
-                nomb_elab = ?, nomb_auto = ?, nomb_vobo = ?, domi_depe = ?, tele_depe = ?, cambios = CONCAT(IFNULL(cambios,''), ?,'|UPDATE|',NOW(),CHR(13)) 
+                nomb_elab = ?, nomb_auto = ?, nomb_vobo = ?, cambios = CONCAT(IFNULL(cambios,''), ?,'|UPDATE|',NOW(),CHR(13)) 
             WHERE id = ?
         `
         //(!encabezado.fech_emis?null:encabezado.fech_emis),    Se quito por que la fecha de emisión se toma el día
@@ -205,7 +212,7 @@ const fin_norde_compx = (async (req,res) => {
                             encabezado.luga_entr, (!encabezado.forma_pago?null:encabezado.forma_pago), (!encabezado.porc_anti?null:encabezado.porc_anti), (!encabezado.fech_inic?null:encabezado.fech_inic), 
                             (!encabezado.fech_fin?null:encabezado.fech_fin), (!encabezado.nume_parc?null:encabezado.nume_parc), encabezado.observaciones,  encabezado.ures_depe, encabezado.nomb_depe, encabezado.padr_depe, 
                             encabezado.tele_depe, encabezado.domi_depe, (!lnSubtodal?0:lnSubtodal), (!lnIVA?0:lnIVA), (!lnTotal?0:lnTotal), (!encabezado.apli_resico?0:encabezado.apli_resico), (!lnMRESICO?0:lnMRESICO), 
-                            (!encabezado.nomb_elab?0:encabezado.nomb_elab), encabezado.nomb_auto, encabezado.nomb_vobo, encabezado.domi_depe, encabezado.tele_depe, req.userId, encabezado.id_orde_comp]
+                            (!encabezado.nomb_elab?0:encabezado.nomb_elab), encabezado.nomb_auto, encabezado.nomb_vobo, req.userId, encabezado.id_orde_comp]
 
         const update = await util.gene_cons(lcSQL, laSend)
 

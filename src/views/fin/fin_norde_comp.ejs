@@ -69,7 +69,7 @@
                                     {
                                         cols: [
                                             {
-                                                view: "combo", id: "proyecto", name: "proyecto", value:"<%=rows[0].proyecto%>", label:"Proyecto", labelWidth: 80, required: true,
+                                                view: "combo", id: "proyecto", name: "proyecto", value:"<%=(rows.length <= 0?'':rows[0].proyecto)%>", label:"Proyecto", labelWidth: 80, required: true,
                                                 options: {
                                                     fitMaster: false,
                                                     width: 1000,
@@ -387,7 +387,7 @@
             <%}%>
         },        
         );
-        //busc_depe(<%=rows[0].proyecto%>);
+        //busc_depe(<%=//rows[0].proyecto%>);
         });
 
         function busc_depe(nuevo) {
