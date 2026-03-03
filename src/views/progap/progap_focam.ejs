@@ -53,6 +53,7 @@
                                     onItemClick: genera
                                 }
                             },
+                            <%if(llRevisor){%>
                             {
                                 view: "button",
                                 type: "icon",
@@ -63,6 +64,7 @@
                                     onItemClick: function () { deta_grup() }
                                 }
                             },
+                            <%}%>
                             {
                                 view: "button",
                                 type: "icon",
@@ -78,6 +80,7 @@
                                      }
                                 }
                             },
+                            <%if(llRevisor){%>
                             {
                                 view: "button",
                                 type: "icon",
@@ -100,6 +103,19 @@
                             },
                             {},
                             {
+                                view: "checkbox",
+                                id: "chk_todos",
+                                labelRight: "Ver todos los movimientos",
+                                labelWidth: 0,
+                                width: 250,
+                                on: {
+                                    onChange: function(newVal, oldVal) {
+                                        // newVal es 1 si está marcado, 0 si no
+                                        genera();
+                                    }
+                                }
+                            },
+                            {
                                 view: "button",
                                 type: "icon",
                                 id: "btn_Aceptar",
@@ -115,17 +131,44 @@
                                     var idSeleccionado = tabla.getSelectedId();
 
                                     if (idSeleccionado) {
-                                        // Aquí iría tu llamada al API para guardar en MariaDB si fuera necesario
-                                        // ...
-                                        
-                                        // 3. Mostramos el mensaje de éxito
-                                        webix.message({ type: "success", text: "Documento validado" });
+                                        webix.ajax().post("/api/progap/progap_focamx3", { id: idSeleccionado.id, acepta: true })
+                                            .then(function(res) {
+                                                var data = res.json();
+                                                console.log(data)
 
-                                        // 4. Eliminamos la fila de la tabla físicamente
-                                        tabla.remove(idSeleccionado);
-                                        
-                                        var primerId = tabla.getFirstId();
-                                        if (primerId) tabla.select(primerId);
+                                                // Verificamos si el backend regresó éxito (asumiendo que mandas {status: "success"})
+                                                if (data && data.status == "success") {
+                                                    
+                                                    // 1. Mensaje de éxito
+                                                    webix.message({ type: "success", text: "Documento validado correctamente" });
+
+                                                    // 2. Eliminamos la fila físicamente de la tabla
+                                                    tabla.remove(idSeleccionado);
+
+                                                    // 3. Seleccionamos el siguiente registro
+                                                    var primerId = tabla.getFirstId();
+                                                    if (primerId) {
+                                                        tabla.select(primerId);
+                                                    } else {
+                                                        // Si ya no hay registros, limpiamos el visor de PDF
+                                                        $$("visor_progap").setValues({ src: "" });
+                                                    }
+
+                                                } else {
+                                                    // Manejo de error lógico (ej. el registro ya estaba validado)
+                                                    webix.alert({
+                                                        title: "Atención",
+                                                        type: "alert-error",
+                                                        text: data.message || "Hubo un problema al validar el documento"
+                                                    });
+                                                }
+                                            })
+                                            .catch(function(err) {
+                                                tabla.hideProgress();
+                                                // Manejo de error de red o servidor (Error 500, 404, etc.)
+                                                webix.message({ type: "error", text: "Error de conexión con el servidor" });
+                                                console.error("Error Ajax:", err);
+                                            });
                                         
                                     } else {
                                         webix.message({ type: "error", text: "Por favor, selecciona una fila primero" });
@@ -169,22 +212,44 @@
                                                 // El valor capturado está en result.value
                                                 var motivo = result.value;
 
-                                                // 1. Aquí llamarías a tu API enviando el motivo
-                                                // webix.ajax().post("/api/progap/validar", { id: idSeleccionado.id, nota: motivo });
+                                                webix.ajax().post("/api/progap/progap_focamx3", { id: idSeleccionado.id, nota: motivo })
+                                                    .then(function(res) {
+                                                        var data = res.json();
+                                                        console.log(data)
 
-                                                webix.message({ type: "error", text: "Documento rechazado" });
+                                                        // Verificamos si el backend regresó éxito (asumiendo que mandas {status: "success"})
+                                                        if (data && data.status == "success") {
+                                                            
+                                                            // 1. Mensaje de éxito
+                                                            webix.message({ type: "error", text: "Documento rechazado" });
 
-                                                // 2. Eliminamos la fila actual
-                                                tabla.remove(idSeleccionado);
+                                                            // 2. Eliminamos la fila físicamente de la tabla
+                                                            tabla.remove(idSeleccionado);
 
-                                                // 3. Seleccionamos el siguiente para que se actualice el PDF
-                                                var primerId = tabla.getFirstId();
-                                                if (primerId) {
-                                                    tabla.select(primerId);
-                                                } else {
-                                                    // Si ya no hay más, limpiamos el visor
-                                                    $$("visor_progap").setValues({ src: "" });
-                                                }
+                                                            // 3. Seleccionamos el siguiente registro
+                                                            var primerId = tabla.getFirstId();
+                                                            if (primerId) {
+                                                                tabla.select(primerId);
+                                                            } else {
+                                                                // Si ya no hay registros, limpiamos el visor de PDF
+                                                                $$("visor_progap").setValues({ src: "" });
+                                                            }
+
+                                                        } else {
+                                                            // Manejo de error lógico (ej. el registro ya estaba validado)
+                                                            webix.alert({
+                                                                title: "Atención",
+                                                                type: "alert-error",
+                                                                text: data.message || "Hubo un problema al validar el documento"
+                                                            });
+                                                        }
+                                                    })
+                                                    .catch(function(err) {
+                                                        tabla.hideProgress();
+                                                        // Manejo de error de red o servidor (Error 500, 404, etc.)
+                                                        webix.message({ type: "error", text: "Error de conexión con el servidor" });
+                                                        console.error("Error Ajax:", err);
+                                                    });
                                             }
                                         });
                                         
@@ -193,36 +258,17 @@
                                     }
                                 }
                             },
-
-                            /* {
-                                view: "button",
-                                type: "icon",
-                                icon: "mdi mdi-plus",
-                                label: "Agregar grupo a oficio",  
-                                //disabled: tip == 2 ? true : false ,
-                                hidden: tip == 2 ? true : false,
-                                width: 200,
-                                on: {
-                                    onItemClick: agregar
-                                }
-                            }, */
+                            <%}else{%>
+                            {},
+                            <%}%>
                             {
                                 view: "combo", id: "cmbSoli", name: "cmbSoli", value: "<%=rows[0].id%>",
-                                width: 300,
+                                width: 120,
                                 options: {
                                     fitMaster: false,
-                                    width: 300,
+                                    width: 200,
                                     body: {
                                         data: [
-                                    <% // 
-                                    /*
-                                            SELECT cSoli
-                                    GO TOP
-                                    SCAN
-                                    */
-                                            %>
-                                    //        { id: <% //  Response.Write(cSoli.id_cent) %>, value: "<% // Response.Write(ALLTRIM(cSoli.depen))%>" },
-                                    <% //  ENDSCAN %>
                                     <%for (var i = 0; i < rows.length; i++) {%>
                                     { id: "<%= rows[i].id%>", value: "<%=rows[i].anio%>" },
                                     <%}%>
@@ -267,20 +313,20 @@
                             }],
                         },	
                         {
-                            id: "folio", width: 150,sort: "string", css: { 'text-align': 'left' }, 
+                            id: "folio", width: 80,sort: "string", css: { 'text-align': 'left' }, 
                             header: [{text:"Oficio",css:"my_style"}, {
                                 content: "textFilter", placeholder:"Filtrar",
                             }],
                         },
                         {
-                            id: "fecha_solicitud", width: 150,sort: "string", css: { 'text-align': 'center' }, 
+                            id: "fecha_solicitud", width: 120,sort: "string", css: { 'text-align': 'center' }, 
                             header: [{text:"Fecha solicitud",css:"my_style"}, {
                                 content: "textFilter", placeholder:"Filtrar",
                             }],
                         },                        	
                         {
-                            id: "dependencia", width: 250,sort: "string", css: { 'text-align': 'left' }, 
-                            minWidth:150, header: [{text:"Centro Universitario",css:"my_style"}, {
+                            id: "dependencia", width: 80,sort: "string", css: { 'text-align': 'left' }, 
+                            header: [{text:"Centro Universitario",css:"my_style"}, {
                                 content: "textFilter", placeholder:"Filtrar",
                             }],
                         },			
@@ -379,7 +425,7 @@
 
         function genera() {
             $$("dtable").clearAll();
-            $$("dtable").load("/api/progap/progap_focamx?lnConv=" + $$("cmbSoli").getValue())
+            $$("dtable").load("/api/progap/progap_focamx?lnConv=" + $$("cmbSoli").getValue() + "&llTodo=" + <%-(llRevisor?`$$("chk_todos").getValue()`:'0')%>)
 
         }
 

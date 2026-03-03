@@ -159,6 +159,7 @@ const progap_focam = (async (req, res) => {
         return res.render("sin_derecho")
     }
 
+    llRevisor = req.groups.indexOf(",REVI_PROGAP,") >= 0
     const lcSQL = `
     SELECT id AS id, anio AS anio  
         FROM PROGAP_CONVOCATORIA
@@ -167,7 +168,7 @@ const progap_focam = (async (req, res) => {
 
     const rows = await util.gene_cons(lcSQL)
     
-    return res.render("progap/progap_focam", {rows, skin:req.skin})
+    return res.render("progap/progap_focam", {rows, llRevisor, skin:req.skin})
 });
 
 const progap_progra = (async (req, res) => {

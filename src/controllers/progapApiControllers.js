@@ -145,7 +145,8 @@ const progap_exacamx = (async (req, res) => {
 
 const progap_focamx = (async (req, res) => {
 
-    const llAdmin = (req.groups.indexOf(",ADMI_PROGAP,") >= 0)
+    llRevisor = req.groups.indexOf(",REVI_PROGAP,") >= 0
+
     if (req.groups.indexOf(",PROGAP,") <= 0)        //si no tiene derechos
     {
         return res.json([])
@@ -165,25 +166,25 @@ const progap_focamx = (async (req, res) => {
         ${(!req.query.lnConv?'':'WHERE a.id_convocatoria = '+ req.query.lnConv)} ${(!req.query.id_cu?'':' AND u.id_centro_universitario = '+ req.query.id_cu)}  
         ORDER BY a.id */
     let rows
-    if(llAdmin){
+    if(llRevisor){
         lcSQL = `
-        SELECT ROW_NUMBER() OVER (ORDER BY a.id) AS rank, tf.folio,  concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, a.codigo, 
-                d.dependencia, CONCAT(p.clave_cgipv, ' - ', p.programa) AS programa, DATE_FORMAT(tf.fecha_solicitud, '%d/%m/%Y') AS fecha_solicitud,
+        SELECT ROW_NUMBER() OVER (ORDER BY a.id) AS rank, tf.id, tf.folio,  concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, a.codigo, 
+                d.siglas as dependencia, CONCAT(p.clave_cgipv, ' - ', p.programa) AS programa, DATE_FORMAT(tf.fecha_solicitud, '%d/%m/%Y') AS fecha_solicitud,
                 if(tf.id_estado = 4, "Rechazado", if(tf.id_estado = 3, "Solicitud completa", if(tf.id_estado = 5, "Es necesario corregir", 
                 if(tf.id_estado = 2, "Enviado a revisión", "Sin enviar")))) AS status
             FROM progap_tram_focam tf
                 LEFT JOIN progap_alumno a on tf.codigo = a.codigo 
                 LEFT JOIN progap_dependencias d ON tf.id_centro_universitario = d.id
                 LEFT JOIN progap_programa p ON tf.id_programa = p.id
-            WHERE tf.id_convocatoria = ?
+            WHERE tf.id_convocatoria = ? ${(req.query.llTodo!='1'?' AND tf.id_estado = 2 AND tf.id_centro_universitario IN (SELECT id FROM gen_dere_progap WHERE user_id = ?)':'')}
             ORDER BY a.id
         `
-        rows = await util.gene_cons(lcSQL, [(!req.query.lnConv?0:req.query.lnConv)])
+        rows = await util.gene_cons(lcSQL, [(!req.query.lnConv?0:req.query.lnConv),req.userId])
     }
     else {
     lcSQL = `
-        SELECT ROW_NUMBER() OVER (ORDER BY a.id) AS rank, tf.folio,  concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, a.codigo, 
-                d.dependencia, CONCAT(p.clave_cgipv, ' - ', p.programa) AS programa, DATE_FORMAT(tf.fecha_solicitud, '%d/%m/%Y') AS fecha_solicitud,
+        SELECT ROW_NUMBER() OVER (ORDER BY a.id) AS rank, tf.id, tf.folio,  concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, a.codigo, 
+                d.siglas as dependencia, CONCAT(p.clave_cgipv, ' - ', p.programa) AS programa, DATE_FORMAT(tf.fecha_solicitud, '%d/%m/%Y') AS fecha_solicitud,
                 if(tf.id_estado = 4, "Rechazado", if(tf.id_estado = 3, "Solicitud completa", if(tf.id_estado = 5, "Es necesario corregir", 
                 if(tf.id_estado = 2, "Enviado a revisión", "Sin enviar")))) AS status
             FROM progap_tram_focam tf
@@ -1894,6 +1895,53 @@ const progap_focamx2 = (async (req, res) => {
     }
 });
 
+
+const progap_focamx3 = (async (req, res) => {
+
+    if (req.groups.indexOf(",REVI_PROGAP,") < 0){
+        res.json({"status" : "error", "message": "No tienes permisos para aplicar cambio"})
+    }
+    
+    let lnStatus = 0;
+    let lcSQL = `
+    SELECT *
+        FROM progap_tram_focam 
+        where id = ?
+    `
+
+    const rows = await util.gene_cons(lcSQL, [req.body.id])
+
+    if (rows.length <= 0){
+        res.json({"status" : "error", "message": "No se localizó el trámite"})
+    }
+
+    if (rows[0].id_estado != 2){
+        res.json({"status" : "error", "message": "El etatus actual del trámite no perimite el cambio"})
+    }
+
+    if(req.body.acepta){
+        lnStatus = 3;
+    }else {
+        lnStatus = 4;
+        if (!req.body.nota){
+            res.json({"status" : "error", "message": "Faltó la nota del rechazo"})
+        }
+    }
+
+    lcSQL = `
+    UPDATE progap_tram_focam 
+        SET id_estado = ?, 
+            comentario_estado = ?, 
+            cambios = CONCAT(IFNULL(cambios, ''), 'UPDATE|', ?, '|', DATE_FORMAT(NOW(), "%d/%m/%Y %H:%m:%s"), CHR(13)) 
+        WHERE id = ?
+    `
+
+    const update = await util.gene_cons(lcSQL, [lnStatus, (!req.body.nota?'':req.body.nota), req.userId, req.body.id])
+
+    res.json({"status" : "success", "message": "El cambio se aplicó correctamente"})
+    
+});
+
 module.exports = {
     progap_usuariox,
     progap_directivox,
@@ -1920,5 +1968,6 @@ module.exports = {
     progap_recu_arch,
     pdownload,
     progap_actu_estux,
-    progap_focamx2
+    progap_focamx2,
+    progap_focamx3
 }

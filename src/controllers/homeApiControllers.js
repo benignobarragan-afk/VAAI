@@ -18,7 +18,7 @@ const usua_nuevx = (async (req, res) => {
     }
 
     let lcSQL = `
-        SELECT p.*, SUBSTRING_INDEX(SUBSTRING_INDEX(p.DN, '"', 3), '"', -1) AS apellidos, SUBSTRING_INDEX(p.DN, '"', -1) AS nombre, 
+        SELECT p.*, TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(p.DN, '"', 3), '"', -1)) AS apellidos, SUBSTRING_INDEX(p.DN, '"', -1) AS nombre, 
                 concat('(', IFNULL(c.clave,''), ') ',  c.dependen) as value
             FROM passfile p LEFT JOIN gen_centros c ON p.id_cent = c.id_cent
             WHERE codigo = ? 
@@ -31,6 +31,7 @@ const usua_nuevx = (async (req, res) => {
 
         req.body.txtApellidos = passfile[0].apellidos;
         req.body.txtNombre = passfile[0].nombre;
+        req.body.txtNomb_most = passfile[0].nomb_most;
         req.body.txtUser_id = passfile[0].USER_ID;
         req.body.txtCorreo = passfile[0].CORREO;
         req.body.txtPassword = passfile[0].PASSWORD;
@@ -48,7 +49,7 @@ const usua_nuevx = (async (req, res) => {
 
         if (!req.body.txtApellidos && !req.body.txtNombre){
             lcSQL = `
-            SELECT CONCAT(apepat, ' ', apemat) AS apellidos, nombre 
+            SELECT CONCAT(apepat, ' ', apemat) AS apellidos, nombre
                 FROM gen_personas 
                 WHERE codigo = ?
             `    
@@ -59,6 +60,7 @@ const usua_nuevx = (async (req, res) => {
             }
             req.body.txtApellidos = rows[0].apellidos;
             req.body.txtNombre = rows[0].nombre;
+            req.body.txtNomb_most = outil.proper(rows[0].nombre + ' ' +rows[0].apellidos);
             req.body.txtUser_id = req.body.txtCodigo;
         }
 
@@ -88,28 +90,29 @@ const usua_nuevx2 = (async (req, res) => {
 
     if(rows.length > 0){
         lcSQL = `
-        UPDATE passfile SET password = ?, codigo = ?, id_cent = ?, nombre = ?, dn = ?, \`groups\` = ?, correo = ?, 
+        UPDATE passfile SET password = ?, codigo = ?, id_cent = ?, nombre = ?, dn = ?, \`groups\` = ?, correo = ?, nomb_most = ?, 
             cambios = CONCAT(IFNULL(cambios,''),CHAR(13,10),'UPDATE|',?,'|',DATE_FORMAT(NOW(), '%m/%d/%Y %H:%I')) WHERE user_id = ?
         `
         lcMensaje = "El usuario se actualizo correctamente"
 
         parameters = [req.body.txtPassword, req.body.txtCodigo, (!req.body.cmbServicio ? '0' : req.body.cmbServicio),
             req.body.txtApellidos + ' ' + req.body.txtNombre, '"DN "' + req.body.txtApellidos + ' "DN "' + req.body.txtNombre,
-            (!req.body.txtDerecho ? '' : req.body.txtDerecho), (!req.body.txtCorreo ? '' : req.body.txtCorreo), req.userId, req.body.txtUser_id
+            (!req.body.txtDerecho ? '' : req.body.txtDerecho), (!req.body.txtCorreo ? '' : req.body.txtCorreo), 
+            (!req.body.txtNomb_most ? '' : req.body.txtNomb_most), req.userId, req.body.txtUser_id
         ]
 
     }
     else 
     {
         lcSQL = `
-        INSERT INTO passfile (user_id, password, codigo, id_cent, nombre, dn, \`groups\`, correo, acceso)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, UUID())
+        INSERT INTO passfile (user_id, password, codigo, id_cent, nombre, dn, \`groups\`, correo, acceso, nomb_most)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, UUID(), ?)
         `
         lcMensaje = "El usuario se registro exitomente"
 
         parameters = [req.body.txtUser_id, req.body.txtPassword, req.body.txtCodigo, (!req.body.cmbServicio ? '0' : req.body.cmbServicio), 
             req.body.txtApellidos + ' ' + req.body.txtNombre, '"DN "' + req.body.txtApellidos + ' "DN "' + req.body.txtNombre, 
-            (!req.body.txtDerecho ? '' : req.body.txtDerecho), (!req.body.txtCorreo ? '' : req.body.txtCorreo)
+            (!req.body.txtDerecho ? '' : req.body.txtDerecho), (!req.body.txtCorreo ? '' : req.body.txtCorreo), (!req.body.txtNomb_most ? '' : req.body.txtNomb_most)
         ]
     }
 

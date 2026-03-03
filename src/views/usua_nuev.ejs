@@ -69,6 +69,10 @@
 			{
 				view: "text", id: "txtNombre", name: "txtNombre", labelPosition: "top", label: "Nombre", value: ""
 			},
+			{ maxWidth: 15 },
+			{
+				view: "text", id: "txtNomb_most", name: "txtNomb_most", labelPosition: "top", label: "Nombre a mostrar", value: ""
+			},
 			]
 		},
 		{
@@ -113,7 +117,8 @@
 		{
 			view: "datatable", id: "dtable", name: "dtable", select: "row", editaction: "dblclick", rowCss: "#css#", drag:true, 
 			columns: [
-				{ id: "ID", template:"{common.checkbox()}", header: ["Selec."], css: { 'text-align': 'center' }  },
+				{ id: "ID", header: ["ID"], css: { 'text-align': 'center' }, hidden:true  },
+				{ id: "marcado", template:"{common.checkbox()}", header: ["Clave"], css: { 'text-align': 'center' }  },
 				{ id: "APARTADO", header: ["Apartado", { content: "selectFilter" }], width: 160, sort: "string", css: { 'text-align': 'left' } },
 				{ id: "GROUP", header: ["Groups", { content: "textFilter" }], width: 160, sort: "string", css: { 'text-align': 'left' } },
 				{ id: "DESCRIP", header: ["Descripción", { content: "textFilter" }], fillspace: true, width: 800, sort: "string", css: { 'text-align': 'left' } },
@@ -179,6 +184,7 @@
 								"txtPassword": webix.rules.isNotEmpty,
 								"txtApellidos": webix.rules.isNotEmpty,
 								"txtNombre": webix.rules.isNotEmpty,
+								"txtNomb_most": webix.rules.isNotEmpty,
 								"txtCorreo": webix.rules.isEmail,
 							},
 						}]
@@ -241,12 +247,12 @@
 						tabla.data.each(function(obj) {
 							lcBusca = ',' + obj.GROUP + ','
 							if(lcDere.includes(lcBusca)){
-								obj.ID = 1;
+								obj.marcado = 1;
 								//console.log(lcBusca)
 							}
 							else 
 							{
-								obj.ID = 0;
+								obj.marcado = 0;
 							}
 							tabla.updateItem(obj.id, obj);
 						});
@@ -316,7 +322,7 @@
 
 			let lcDere = ''
 			tabla.data.each(function(obj) {
-				if (obj.ID == 1) {
+				if (obj.marcado == 1) {
 					lcDere = lcDere + (lcDere.length == 0 ? '' : ',') + obj.GROUP
 				}
 			});
