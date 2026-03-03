@@ -1068,7 +1068,7 @@ const progap_impo_progx = ( async (req, res) => {
     //console.log(laExtencion);
 
     if(laExtencion != 'XLS' && laExtencion != 'XLSX'){
-        res.json({"status" : "error", "message": "El archivo no es un formato compatible", "data":{}})
+        return res.json({"status" : "error", "message": "El archivo no es un formato compatible", "data":{}})
     }
 
     const loExcel = await other_utils.leer_excel(req.file.path); 
@@ -1172,7 +1172,7 @@ const progap_actu_progx = ( async (req, res) => {
     //console.log(laExtencion);
 
     if(laExtencion != 'XLS' && laExtencion != 'XLSX'){
-        res.json({"status" : "error", "message": "El archivo no es un formato compatible", "data":{}})
+        return res.json({"status" : "error", "message": "El archivo no es un formato compatible", "data":{}})
     }
 
     const loExcel = await other_utils.leer_excel(req.file.path); 
@@ -1748,7 +1748,7 @@ const pdownload = (async (req, res) => {
         return res.status(404).send("El archivo no existe en el servidor.");
     }
 
-    res.download(absolutePath, rows[0].DESCRIP, (err) => {
+    return res.download(absolutePath, rows[0].DESCRIP, (err) => {
         if (err) {
             console.error("Error en la descarga:", err);
         }
@@ -1764,7 +1764,7 @@ const progap_actu_estux = ( async (req, res) => {
     //console.log(laExtencion);
 
     if(laExtencion != 'XLS' && laExtencion != 'XLSX'){
-        res.json({"status" : "error", "message": "El archivo no es un formato compatible", "data":{}})
+        return res.json({"status" : "error", "message": "El archivo no es un formato compatible", "data":{}})
     }
 
     const loExcel = await other_utils.leer_excel(req.file.path); 
@@ -1882,16 +1882,16 @@ const progap_focamx2 = (async (req, res) => {
             // Convertimos el buffer a cadena base64
             const base64str = Buffer.from(bitmap).toString('base64');
             
-            res.json({
+            return res.json({
                 success: true,
                 data: `data:application/pdf;base64,${base64str}`,
                 name: fileName
             });
         } else {
-            res.status(404).json({ success: false, message: "Archivo no encontrado" });
+            return res.status(404).json({ success: false, message: "Archivo no encontrado" });
         }
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        return res.status(500).json({ success: false, error: error.message });
     }
 });
 
@@ -1899,7 +1899,7 @@ const progap_focamx2 = (async (req, res) => {
 const progap_focamx3 = (async (req, res) => {
 
     if (req.groups.indexOf(",REVI_PROGAP,") < 0){
-        res.json({"status" : "error", "message": "No tienes permisos para aplicar cambio"})
+        return res.json({"status" : "error", "message": "No tienes permisos para aplicar cambio"})
     }
     
     let lnStatus = 0;
@@ -1912,11 +1912,11 @@ const progap_focamx3 = (async (req, res) => {
     const rows = await util.gene_cons(lcSQL, [req.body.id])
 
     if (rows.length <= 0){
-        res.json({"status" : "error", "message": "No se localizó el trámite"})
+        return res.json({"status" : "error", "message": "No se localizó el trámite"})
     }
 
     if (rows[0].id_estado != 2){
-        res.json({"status" : "error", "message": "El etatus actual del trámite no perimite el cambio"})
+        return res.json({"status" : "error", "message": "El etatus actual del trámite no perimite el cambio"})
     }
 
     if(req.body.acepta){
@@ -1924,7 +1924,7 @@ const progap_focamx3 = (async (req, res) => {
     }else {
         lnStatus = 4;
         if (!req.body.nota){
-            res.json({"status" : "error", "message": "Faltó la nota del rechazo"})
+            return res.json({"status" : "error", "message": "Faltó la nota del rechazo"})
         }
     }
 
@@ -1938,7 +1938,7 @@ const progap_focamx3 = (async (req, res) => {
 
     const update = await util.gene_cons(lcSQL, [lnStatus, (!req.body.nota?'':req.body.nota), req.userId, req.body.id])
 
-    res.json({"status" : "success", "message": "El cambio se aplicó correctamente"})
+    return res.json({"status" : "success", "message": "El cambio se aplicó correctamente"})
     
 });
 

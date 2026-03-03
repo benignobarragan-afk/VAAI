@@ -1,5 +1,17 @@
 <%- include('../partials/header'); %>
 
+<style>
+/* Esto quita la restricción de una sola línea en los headers de Webix */
+.header_multiline {
+    white-space: normal !important;
+    line-height: 1.2em !important;
+    font-size: 15px !important; 
+    padding: 5px 0;
+    overflow: visible !important;
+}
+
+</style>
+
 <body>
     <script>
         var tip = 0
@@ -287,7 +299,7 @@
                     {cols :[
                     {
                         view:"datatable", id:"dtable", select:true, footer:true, editable:true, hidden:false, minHeight:500, scroll:true,
-                        resizeColumn: true,  navigation: true, resizeRow:true, css:"celda_compacta", 
+                        resizeColumn: true,  navigation: true, resizeRow:true, css:"celda_compacta", tooltip:true,
                         rightSplit:1, leftSplit:3,
                         scheme: {
                             $init: function (obj) {
@@ -326,7 +338,7 @@
                         },                        	
                         {
                             id: "dependencia", width: 80,sort: "string", css: { 'text-align': 'left' }, 
-                            header: [{text:"Centro Universitario",css:"my_style"}, {
+                            header: [{text:"C. U.",css:"my_style"}, {
                                 content: "textFilter", placeholder:"Filtrar",
                             }],
                         },			
@@ -359,44 +371,57 @@
                             onAfterSelect: function(id, e, node) {
                                 var item = this.getItem(id.row);
                                 var visor = $$("visor_progap"); // ID del componente donde se verá la imagen/PDF
+                                var header = $$("head_visor"); // Seleccionamos el contenedor del título
+                                header.define("header", `<div class='header_multiline'>Tramite de: ${item.nombre} </br> ${item.programa}</div>`);
+                                header.refresh(); // VITAL para que Webix repinte el texto
 
                                 // Agregamos una máscara de carga (opcional pero recomendado)
                                 webix.extend(visor, webix.ProgressBar);
-                                visor.showProgress();
-
-                                // Llamada a tu API pasando el ID del registro
-                                webix.ajax().get("/api/progap/progap_focamx2?id=" + item.id).then(function(res) {
-                                    var respuesta = res.json();
-                                    
-                                    if (respuesta && respuesta.success) {
-                                        // Si es una imagen en base64:
-                                        visor.setValues({ src: respuesta.data });
-                                        // Si usas el iframe que definimos antes, el template lo renderizará
-                                    } else {
-                                        webix.message({ type: "error", text: "No se pudo recuperar el archivo" });
-                                    }
-                                    visor.hideProgress();
-                                }).catch(function(err) {
-                                    webix.message({ type: "error", text: "Error de conexión con el servidor" });
-                                    visor.hideProgress();
-                                });
+                                
+                                if(!$$("head_visor").config.collapsed){
+                                    visor.showProgress();
+                                    // Llamada a tu API pasando el ID del registro
+                                    webix.ajax().get("/api/progap/progap_focamx2?id=" + item.id).then(function(res) {
+                                        var respuesta = res.json();
+                                        
+                                        if (respuesta && respuesta.success) {
+                                            // Si es una imagen en base64:
+                                            visor.setValues({ src: respuesta.data });
+                                            // Si usas el iframe que definimos antes, el template lo renderizará
+                                        } else {
+                                            webix.message({ type: "error", text: "No se pudo recuperar el archivo" });
+                                        }
+                                        visor.hideProgress();
+                                    }).catch(function(err) {
+                                        webix.message({ type: "error", text: "Error de conexión con el servidor" });
+                                        visor.hideProgress();
+                                    });
+                                }
+                                else
+                                {
+                                    $$("visor_progap").setValues({ src: "" });
+                                }
                             }
                         },
                     },
                     { view:"resizer" }, // Opcional: para ajustar el ancho manualmente
                     {
-                        view: "template",
-                        id: "visor_progap",
-                        width: 650,
-                        template: function(obj) {
-                            if (!obj.src) return "<div style='padding:20px;text-align:center;'>Esperando archivo...</div>";
-                            
-                            // Si lo que recibes es un PDF:
-                            return `<iframe src="${obj.src}" width="100%" height="100%" style="border:none;"></iframe>`;
-                            
-                            // SI ES UNA IMAGEN, cambia el retorno a:
-                            // return `<img src="${obj.src}" style="width:100%; height:auto;">`;
-                        }
+                        id:"head_visor",
+                        header: "<div class='header_multiline'>Da clic en el trámite para ver el documento</div>",
+                        body:{
+                            view: "template",
+                            id: "visor_progap",
+                            width: 630,
+                            template: function(obj) {
+                                if (!obj.src) return "<div style='padding:20px;text-align:center;'>Esperando archivo...</div>";
+                                
+                                // Si lo que recibes es un PDF:
+                                return `<iframe src="${obj.src}" width="100%" height="100%" style="border:none;"></iframe>`;
+                                
+                                // SI ES UNA IMAGEN, cambia el retorno a:
+                                // return `<img src="${obj.src}" style="width:100%; height:auto;">`;
+                            }
+                        },
                     },
                     ]},
                 ]

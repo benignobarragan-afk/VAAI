@@ -28,7 +28,7 @@
             },
         }
         },
-        <%if (lcDerecho.indexOf(",ADMI_PROGAP,") >= 0 || lcDerecho.indexOf(",REVI_PROGAP,") >= 0){%>
+        <%if (lcDerecho.indexOf(",ADMI_PROGAP,") >= 0){%>
         {
         header: "<span class='mdi mdi-progress-check'></span>Catalogos", body: {
             view: "iframe", id: "progap_cata", src:"progap_cata",
@@ -48,7 +48,6 @@
         }
         },
         <%}%>
-        <%if (lcDerecho.indexOf(",PROGAP,") >= 0) {%>
         {
         header: "<span class='mdi mdi-account-check'></span>FoCam's", body: {
             view: "iframe", id: "progap_focam", src:"progap_focam",
@@ -57,7 +56,6 @@
             },
         }
         },
-        <%}%>
 
         // {
         //   header: "<span class='webix_icon mdi mdi-checkbox-multiple-marked-outline'></span>Insumos", body: {

@@ -387,7 +387,9 @@
             <%}%>
         },        
         );
-        //busc_depe(<%=//rows[0].proyecto%>);
+        <%if(rows.length > 0){%>
+        busc_depe(<%=rows[0].proyecto%>);
+        <%}%>
         });
 
         function busc_depe(nuevo) {
