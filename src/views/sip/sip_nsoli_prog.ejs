@@ -162,7 +162,8 @@ webix.ready(function(){
                                 { id: "dictamen", header: ["Dictamen", { content: "numberFilter" }], width: 150, footer: { colspan: "3", content: "rowCount", css: "footer" } },
                                 { id: "fecha", header: ["Fecha Dictamen", { content: "textFilter" }], width: 120, sort: "string", css: { 'text-align': 'center' } },
                                 { id: "fe_errata", header: ["Fe de Errata", { content: "textFilter" }], width: 100, sort: "string", css: { 'text-align': 'left' } },
-                                { id: "text_sesi", header: ["Sesión", { content: "textFilter" }], width: 300, sort: "string", css: { 'text-align': 'left' },  fillspace: true,  },
+                                { id: "text_sesi", header: ["Sesión", { content: "textFilter" }], width: 300, sort: "string", css: { 'text-align': 'left' },  fillspace: true, 
+                                template: "<div style='white-space:normal; line-height:20px;'>#text_sesi#</div>"},
                                 { id: "cambios", header: ["Cambios", { content: "textFilter" }], width: 300, sort: "string", css: { 'text-align': 'left' },  fillspace: true,  },
                                 {
                                     id: "archivo", header: ["archivo", { content: "textFilter" }], width: 120, sort: "string", css: { 'text-align': 'center' }, template: function (obj, common) {
@@ -181,15 +182,21 @@ webix.ready(function(){
                                 onBeforeLoad: function () { this.showOverlay("Cargando..."); },
                                 onAfterLoad: function () {
                                     this.hideOverlay();
-                                    //this.adjustRowHeight();
-                                    this.render();
+                                    webix.delay(function(){
+                                        // 1. Especificamos qué columna mandar a medir (la más larga)
+                                        // 2. El segundo parámetro 'true' es vital para que considere el ancho actual
+                                        if (this.count()){ 
+                                            //console.log("si entro");
+                                            this.adjustRowHeight(); 
+                                        }
+                                    }, this, [], 100);
                                 },
                                 onItemDblClick:  function(id) {
                                     openWindow("Detalle de oficialia", "/<% // Response.Write(config.ruta)%>/op_nadmi.fwx?lcID=" + id.row)
                                 }
                             },
                             scrollY: true, scrollX: true, resizeColumn: true, resizeRow: true, navigation: true,
-                            footer: true, borderless: false, fixedRowHeight: false, height: 600,
+                            footer: true, borderless: false, fixedRowHeight: true, height: 600,
                             <%if(dictamen.length>0){%>
                             data: datodictamen, 
                             <%}%>

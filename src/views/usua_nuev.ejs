@@ -114,9 +114,9 @@
 			view: "datatable", id: "dtable", name: "dtable", select: "row", editaction: "dblclick", rowCss: "#css#", drag:true, 
 			columns: [
 				{ id: "ID", template:"{common.checkbox()}", header: ["Selec."], css: { 'text-align': 'center' }  },
-				{ id: "APARTADO", header: ["Apartado", { content: "selectFilter" }], width: 240, sort: "string", css: { 'text-align': 'left' } },
-				{ id: "GROUP", header: ["Groups", { content: "textFilter" }], width: 240, sort: "string", css: { 'text-align': 'left' } },
-				{ id: "DESCRIP", header: ["Descripción", { content: "textFilter" }], width: 800, sort: "string", css: { 'text-align': 'left' } },
+				{ id: "APARTADO", header: ["Apartado", { content: "selectFilter" }], width: 160, sort: "string", css: { 'text-align': 'left' } },
+				{ id: "GROUP", header: ["Groups", { content: "textFilter" }], width: 160, sort: "string", css: { 'text-align': 'left' } },
+				{ id: "DESCRIP", header: ["Descripción", { content: "textFilter" }], fillspace: true, width: 800, sort: "string", css: { 'text-align': 'left' } },
 				{ id: "MODI_GROU", header: "", width: 50,
 					template: function(obj) {
 						// Si el dato 'adjunto' existe y no está vacío, mostramos el icono
