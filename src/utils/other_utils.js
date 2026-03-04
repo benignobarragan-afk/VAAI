@@ -404,7 +404,7 @@ const regi_even_segu = (async (userId, evento, ip) => {
         });
 
 
-    const montoALetras = ((monto) => {
+    const montoALetras = ((monto, moneda) => {
         const unidades = ["", "UN", "DOS", "TRES", "CUATRO", "CINCO", "SEIS", "SIETE", "OCHO", "NUEVE"];
         const decenas = ["DIEZ", "ONCE", "DOCE", "TRECE", "CATORCE", "QUINCE", "DIECISEIS", "DIECISIETE", "DIECIOCHO", "DIECINUEVE"];
         const decenasViente = ["VEINTE", "VEINTIUN", "VEINTIDOS", "VEINTITRES", "VEINTICUATRO", "VEINTICINCO", "VEINTISEIS", "VEINTISIETE", "VEINTIOCHO", "VEINTINUEVE"];
@@ -437,7 +437,7 @@ const regi_even_segu = (async (userId, evento, ip) => {
         let entero = parseInt(partes[0]);
         const centavos = partes[1];
 
-        if (entero === 0) return `CERO PESOS ${centavos}/100 M.N.`;
+        if (entero === 0) return `CERO ${moneda} ${centavos}/100 M.${(moneda=='PESOS'?'N':'E')}.`;
 
         let resultado = "";
 
@@ -460,7 +460,7 @@ const regi_even_segu = (async (userId, evento, ip) => {
             resultado += convertirSeccion(entero);
         }
 
-        return `(${resultado.trim()} PESOS ${centavos}/100 M.N.)`;
+        return `(${resultado.trim()} ${moneda} ${centavos}/100 M.${(moneda=='PESOS'?'N':'E')}.)`;
     });
 
 

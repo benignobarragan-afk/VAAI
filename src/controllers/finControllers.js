@@ -62,7 +62,7 @@ const fin_norde_comp = (async (req, res) => {
     SELECT o.id as id_orde_comp, o.tipo_orde, date_format(o.fech_emis, "%Y/%m/%d") AS fech_emis, o.proyecto, o.rfc, o.proveedor, o.domi_prov, 
 					o.tele_prov, o.corr_prov, date_format(o.fech_entr, "%Y/%m/%d") as fech_entr, o.luga_entr, o.forma_pago, o.porc_anti, 
                     date_format(o.fech_inic, "%Y/%m/%d") as fech_inic, date_format(o.fech_fin, "%Y/%m/%d") as fech_fin, o.nume_parc, 
-					o.subtotal, o.iva_total, o.total, o.observaciones, o.estatus, o.fech_crea, o.apli_resico, o.resico, o.nomb_elab
+					o.subtotal, o.iva_total, o.total, o.observaciones, o.estatus, o.fech_crea, o.apli_resico, o.resico, o.nomb_elab, o.moneda
         FROM fin_orde_comp o INNER JOIN fin_proyecto p on o.proyecto = p.proyecto
             LEFT join gen_centros c ON p.id_cent = c.id_cent
         WHERE o.id = ?

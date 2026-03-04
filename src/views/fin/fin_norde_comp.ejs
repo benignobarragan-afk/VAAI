@@ -279,6 +279,7 @@
                                     },
                                     {
                                         cols: [
+                                            { view: "combo", name: "moneda", label: "Moneda", options: ["PESOS","DOLARES"], width: 200, value:"PESOS"},
                                             {},
                                             { view: "button", value: "Agregar artículo", css: "webix_primary", click: agregarArticulo, width: 150, <%=(rows2[0]?.estatus > 1?' disabled: true':'')%>},
                                             { view: "button", value: "Elimina artículo", click: eliminarArticulo, width: 150, <%=(rows2[0]?.estatus > 1?' disabled: true':'')%>}
