@@ -2,7 +2,7 @@ const path = require("path")
 const pool = require(path.join(__dirname, "..", "db"))
 const config = require(path.join(__dirname, "..", "config"));
 const util = require(path.join(__dirname, "..", "utils/busquedaUtils"));
-
+const fs = require('fs');
 
 const progap = ((req, res) => {
 
@@ -431,7 +431,7 @@ const progap_dexacam = (async (req, res) => {
 
 const progap_nfocam = (async (req, res) => {
 
-    if (req.groups.indexOf(",ADMI_PROGAP,") < 0)       //si no tiene derechos
+    if (req.groups.indexOf(",REVI_PROGAP,") < 0)       //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -443,7 +443,15 @@ const progap_nfocam = (async (req, res) => {
     `
 
     const rows = await util.gene_cons(lcSQL)
-    let usuario = [], depe_id = '', depe_value = '', prog_id = '', prog_value = ''
+    let usuario = [], depe_id = '', depe_value = '', prog_id = '', prog_value = '', lfCarta = false, lfOrden = false, filePath = ''
+
+    filePath = path.join(config.SERV_ARCH, 'PROGAP', 'FOCAM', req.query.lnID + '.PDF');
+    lfCarta = fs.existsSync(filePath)
+    filePath = path.join(config.SERV_ARCH, 'PROGAP', 'OFOCAM', req.query.lnID + '.PDF');
+    lfOrden = fs.existsSync(filePath)
+
+    console.log(filePath)
+    console.log(lfCarta)
 
     if (req.query.lnID > 0){
 /*     lcSQL = `
@@ -495,7 +503,7 @@ const progap_nfocam = (async (req, res) => {
     }
     
 
-    return res.render("progap/progap_nfocam", {rows, usuario, depe_id, depe_value, prog_id, prog_value, skin:req.skin})
+    return res.render("progap/progap_nfocam", {rows, usuario, depe_id, depe_value, prog_id, prog_value, lfCarta, lfOrden, skin:req.skin})
 });
 
 const progap_actu_estu = ((req, res) => {

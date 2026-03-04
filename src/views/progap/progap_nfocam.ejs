@@ -6,7 +6,8 @@
 			color: #4CAF50 !important; /* Un tono de verde claro y visible */
 			font-weight: bold; /* Opcional: para que resalte más */
 		}
-	</style>
+
+</style>
 
 <script>
 
@@ -30,7 +31,8 @@ webix.ready(function(){
             // Fila: Código y Contraseña
             { cols:[
                 { view:"text", name:"id", label:"id", hidden: true },
-                { view:"text", name:"codigo", label:"Código de Estudiante *", placeholder:"Código de Estudiante", required:true, invalidMessage:"Requerido" },
+                { view:"text", name:"codigo", label:"Código de Estudiante *", placeholder:"Código de Estudiante", invalidMessage:"Requerido", readonly:true, width:150 },
+                {width:15},
                 // CURP
                 { cols:[
                     {
@@ -39,7 +41,7 @@ webix.ready(function(){
                         name: "curp",
                         label: "CURP *",
                         placeholder: "Escribe tu CURP",
-                        required: true,
+                        readonly:true,
                         attributes: { maxlength: 18 },
                         // Definimos la validación
                         validate: function(value) {
@@ -78,16 +80,31 @@ webix.ready(function(){
 
                     },
                 ]},
-                
+                { width:15 },
+                {
+                    view: "button", type: "icon",  icon: "mdi mdi-note-edit-outline", label: "Mostrar carta", width: 160, align: "center", <%=(lfCarta?'':' disabled: true, ')%>
+                    on: {
+                        // onItemClick: genera
+                    }
+                },
+                {width:15},
+                {
+                    view: "button", type: "icon",  icon: "mdi mdi-invoice-list-outline", label: "Orden de compra", width: 160, align: "center", <%=(lfOrden?'':' disabled: true, ')%>
+                    on: {
+                        // onItemClick: genera
+                    }
+                },
             ]},
 
             
             // Nombre Completo (3 columnas)
             { label:"Nombre completo *", view:"label" },
             { cols:[
-                { view:"text", name:"nombre", placeholder:"Nombre:", required:true },
-                { view:"text", name:"apellido_paterno", placeholder:"Apellido paterno:", required:true },
-                { view:"text", name:"apellido_materno", placeholder:"Apellido materno:", required:true }
+                { view:"text", name:"nombre", placeholder:"Nombre:", readonly:true },
+                {width:15},
+                { view:"text", name:"apellido_paterno", placeholder:"Apellido paterno:", readonly:true },
+                {width:15},
+                { view:"text", name:"apellido_materno", placeholder:"Apellido materno:", readonly:true }
             ]},
 
             // Selects
@@ -139,13 +156,13 @@ webix.ready(function(){
                 { id: "<%= rows[i].id%>", value: "<%=rows[i].nombre%>" },
                 <%}%>
             ], placeholder:"-- Seleccione --", required:true },
-
+            {width:15},
             { view:"richselect", name:"id_ciclo_curso", label:"Ciclo Escolar en Curso *", options:[
                 <%for (var i = 0; i < rows.length; i++) {%>
                 { id: "<%= rows[i].id%>", value: "<%=rows[i].nombre%>" },
                 <%}%>
             ], placeholder:"-- Seleccione --", required:true },
-
+            {width:15},
             { view:"richselect", name:"id_ciclo_condonar", label:"Ciclo Escolar por Condonar *", options:[
                 <%for (var i = 0; i < rows.length; i++) {%>
                 { id: "<%= rows[i].id%>", value: "<%=rows[i].nombre%>" },
@@ -158,7 +175,7 @@ webix.ready(function(){
             { cols:[
             // Correo
             { view:"text", name:"correo_institucional", label:"Correo Institucional *", placeholder:"Correo Institucional", validate:webix.rules.isEmail, required:true, invalidMessage:"Correo no válido" },
-
+            {width:15},
             // Estado
             { view:"combo", name:"id_estado", label:"Estado *", value:"1", options:[
                 { id:"1", value:"Activo" }, { id:"0", value:"Inactivo" }
