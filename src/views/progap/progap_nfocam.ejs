@@ -225,7 +225,7 @@ webix.ready(function(){
 				]},
                 <%}%>
                 {rows: [
-                { view:"button", value:"<%=(usuario.length<1?'Crear usuario de estudiante':'Modificar estudiante')%>", css:"webix_primary", width:250, click:guardarEstudiante }
+                { view:"button", value:"<%=(usuario.length<1?'Crear trámite':'Modificar trámite')%>", css:"webix_primary", width:250, click:guardarTramite }
                 ],
                 },
                 {
@@ -293,7 +293,7 @@ webix.ready(function(){
     });
 });
 
-function guardarEstudiante(){
+function guardarTramite(){
     var form = $$("form_registro");
     if(form.validate()){
         var datos = form.getValues();

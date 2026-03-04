@@ -286,11 +286,8 @@
                                     },
                                     {
                                         view: "datatable",
-                                        id: "detalles_tabla",
-                                        autoheight: true,
-                                        minHeight: 200,
-                                        select: true,
-                                        footer: true, // 1. Habilitamos el pie de página
+                                        id: "detalles_tabla", autoheight: false, minHeight: 200, fixedRowHeight: false, 
+                                        tooltip: true, select: true, footer: true, // 1. Habilitamos el pie de página
                                         columns: [
                                             { 
                                                 id: "articulo", 
@@ -330,7 +327,17 @@
                                                 footer: { content: "summColumn", css: { "text-align": "right" } } // 3. Sumatoria automática
                                             }
                                         ],
-                                        
+                                        on :{
+                                                "onresize":webix.once(function(){ 
+                                                    this.adjustRowHeight("articulo", true); 
+                                                }),
+
+                                                "data->onAfterAdd": function(id, index) {
+                                                    webix.delay(function(){
+                                                        this.adjustRowHeight("articulo");
+                                                    }, this);
+                                                },
+                                        },
                                         <%if(rows3.length>0){%>
                                         data: detaIniciales, 
                                         <%}%>
