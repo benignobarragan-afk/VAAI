@@ -389,11 +389,15 @@
                                             visor.setValues({ src: respuesta.data });
                                             // Si usas el iframe que definimos antes, el template lo renderizará
                                         } else {
+                                            visor.setValues({ src: "" });
                                             webix.message({ type: "error", text: "No se pudo recuperar el archivo" });
+
                                         }
                                         visor.hideProgress();
                                     }).catch(function(err) {
-                                        webix.message({ type: "error", text: "Error de conexión con el servidor" });
+                                        console.log(err)
+                                        visor.setValues({ src: "" });
+                                        webix.message({ type: "error", text: "No se econtro el archivo en el servidor" });
                                         visor.hideProgress();
                                     });
                                 }
