@@ -38,6 +38,7 @@ router.get("/pdownload", midd.verifyToken, progapCtrl.pdownload);
 router.post("/progap_actu_estux", midd.verifyToken, upload.single('upload'), progapCtrl.progap_actu_estux);
 router.get("/progap_focamx2", midd.verifyToken, progapCtrl.progap_focamx2);
 router.post("/progap_focamx3", midd.verifyToken, progapCtrl.progap_focamx3);
+router.get("/progap_focamx4", midd.verifyToken, progapCtrl.progap_focamx4);
 
 
 

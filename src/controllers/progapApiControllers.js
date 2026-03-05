@@ -168,7 +168,7 @@ const progap_focamx = (async (req, res) => {
     let rows
     if(llRevisor){
         lcSQL = `
-        SELECT ROW_NUMBER() OVER (ORDER BY a.id) AS rank, tf.id, tf.folio,  concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, a.codigo, 
+        SELECT ROW_NUMBER() OVER (ORDER BY a.id) AS rank, tf.uid as id, tf.folio,  concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, a.codigo, 
                 d.siglas as dependencia, CONCAT(p.clave_cgipv, ' - ', p.programa) AS programa, DATE_FORMAT(tf.fecha_solicitud, '%d/%m/%Y') AS fecha_solicitud,
                 if(tf.id_estado = 4, "Rechazado", if(tf.id_estado = 3, "Solicitud completa", if(tf.id_estado = 5, "Es necesario corregir", 
                 if(tf.id_estado = 2, "Enviado a revisión", "Sin enviar")))) AS status
@@ -183,7 +183,7 @@ const progap_focamx = (async (req, res) => {
     }
     else {
     lcSQL = `
-        SELECT ROW_NUMBER() OVER (ORDER BY a.id) AS rank, tf.id, tf.folio,  concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, a.codigo, 
+        SELECT ROW_NUMBER() OVER (ORDER BY a.id) AS rank, tf.uid as id, tf.folio,  concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, a.codigo, 
                 d.siglas as dependencia, CONCAT(p.clave_cgipv, ' - ', p.programa) AS programa, DATE_FORMAT(tf.fecha_solicitud, '%d/%m/%Y') AS fecha_solicitud,
                 if(tf.id_estado = 4, "Rechazado", if(tf.id_estado = 3, "Solicitud completa", if(tf.id_estado = 5, "Es necesario corregir", 
                 if(tf.id_estado = 2, "Enviado a revisión", "Sin enviar")))) AS status
@@ -1860,8 +1860,26 @@ lcSQL = `
 
 const progap_focamx2 = (async (req, res) => {
 
+
+    if (req.groups.indexOf(",PROGAP,") <= 0)        //si no tiene derechos
+    {
+        return res.json({ success: false, error: "No cuentas con derechos para ver el documento" });
+    }
+
+    let lcSQL = `
+    SELECT id 
+        FROM progap_tram_focam 
+        WHERE uid = ? 
+    `
+
+    const tramite = await util.gene_cons(lcSQL, [req.query.id])
+    
+    console.log(tramite)
+    if (tramite.length <= 0){
+        return res.json({ success: false, error: "No se localizó el archivo" });
+    }
     try {
-        const fileName = req.query.id + '.PDF';
+        const fileName = tramite[0].id + '.PDF';
         // Importante: Usar la ruta donde guardas los PDFs de PROGAP
         const filePath = path.join(config.SERV_ARCH, 'PROGAP', 'FOCAM', fileName);
 
@@ -1876,7 +1894,8 @@ const progap_focamx2 = (async (req, res) => {
                 name: fileName
             });
         } else {
-            return res.status(404).json({ success: false, message: "Archivo no encontrado" });
+            //return res.status(404).json({ success: false, message: "Archivo no encontrado" });
+            return res.json({ success: false, message: "Archivo no encontrado" });
         }
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
@@ -1930,6 +1949,65 @@ const progap_focamx3 = (async (req, res) => {
     
 });
 
+const progap_focamx4 = (async (req, res) => {
+
+    if (req.groups.indexOf(",PROGAP,") <= 0)        //si no tiene derechos
+    {
+        return res.json({ success: false, error: "No cuentas con derechos para ver el documento" });
+    }
+
+    llRevisor = req.groups.indexOf(",REVI_PROGAP,") >= 0, rows = []
+
+    let lcSQL = ''
+
+    if (llRevisor){
+        lcSQL = `
+        SELECT id 
+	        FROM progap_tram_focam
+	        WHERE uid = ?
+        `
+        rows = await util.gene_cons(lcSQL, [req.query.id])
+    }else{
+        lcSQL = `
+        SELECT id 
+            FROM progap_tram_focam
+            WHERE uid = ? AND id_centro_universitario IN (SELECT id 
+                                                            FROM gen_dere_progap
+                                                            WHERE user_id = ?)
+        `
+        rows = await util.gene_cons(lcSQL, [req.query.id, req.userId])
+    }
+
+    console.log(rows)
+    if (rows.length <= 0){
+        return res.json({"status" : "error", "message": "No se localizó archivo o no tienes derechos para verlo"})
+    }
+
+    try {
+        const fileName = rows[0].id + '.PDF';
+        // Importante: Usar la ruta donde guardas los PDFs de PROGAP
+        const filePath = path.join(config.SERV_ARCH, 'PROGAP', (req.query.tipo == 2?'OFOCAM':'FOCAM'), fileName);
+
+        if (fs.existsSync(filePath)) {
+            // 1. Configuramos las cabeceras para que el navegador sepa que es un PDF
+            res.setHeader('Content-Type', 'application/pdf');
+            
+            // Use 'inline' para que se abra en el visor del navegador
+            // Use 'attachment' si prefieres que se descargue automáticamente
+            res.setHeader('Content-Disposition', `inline; filename="${fileName}"`);
+
+            // 2. Creamos un flujo de lectura y lo conectamos a la respuesta
+            const filestream = fs.createReadStream(filePath);
+            filestream.pipe(res);
+        } else {
+            return res.status(404).json({ "status": "error", message: "Archivo no encontrado" });
+        }
+    } catch (error) {
+        return res.status(500).json({ "status": "error", error: error.message });
+    }
+    
+});
+
 module.exports = {
     progap_usuariox,
     progap_directivox,
@@ -1957,5 +2035,6 @@ module.exports = {
     pdownload,
     progap_actu_estux,
     progap_focamx2,
-    progap_focamx3
+    progap_focamx3,
+    progap_focamx4
 }

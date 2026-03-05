@@ -431,29 +431,56 @@ const progap_dexacam = (async (req, res) => {
 
 const progap_nfocam = (async (req, res) => {
 
-    if (req.groups.indexOf(",REVI_PROGAP,") < 0)       //si no tiene derechos
+    if (req.groups.indexOf(",PROGAP,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
-    
+
+    let llRevisor = req.groups.indexOf(",REVI_PROGAP,") >= 0
+    let llAdmin = req.groups.indexOf(",ADMI_PROGAP,") >= 0
+
     let lcSQL = `
+    SELECT id 
+        FROM progap_tram_focam 
+        WHERE uid = ?
+    `
+    tramite = await util.gene_cons(lcSQL, [req.query.lnID])
+
+    if (!llRevisor)       //si no es supervisor
+    {
+        if(tramite.length <= 0){
+            return res.render("sin_derecho")
+        }
+
+        lcSQL = `
+        SELECT id 
+            FROM progap_tram_focam
+            WHERE id = ? AND id_centro_universitario IN (SELECT id 
+                                                            FROM gen_dere_progap
+                                                            WHERE user_id = ?)
+
+        `
+        const derecho = await util.gene_cons(lcSQL, [tramite[0].id, req.userId])
+
+        if (derecho.length <= 0){
+            return res.render("sin_derecho")
+        }
+        
+    }
+    
+    lcSQL = `
     SELECT * 
         FROM progap_ciclos 
         ORDER BY nombre desc
     `
 
     const rows = await util.gene_cons(lcSQL)
-    let usuario = [], depe_id = '', depe_value = '', prog_id = '', prog_value = '', lfCarta = false, lfOrden = false, filePath = ''
+    let usuario = [], depe_id = '', depe_value = '', prog_id = '', prog_value = '', lfCarta = false, lfOrden = false, filePath = '', lcUID = ''
 
-    filePath = path.join(config.SERV_ARCH, 'PROGAP', 'FOCAM', req.query.lnID + '.PDF');
-    lfCarta = fs.existsSync(filePath)
-    filePath = path.join(config.SERV_ARCH, 'PROGAP', 'OFOCAM', req.query.lnID + '.PDF');
-    lfOrden = fs.existsSync(filePath)
-
-    console.log(filePath)
-    console.log(lfCarta)
-
-    if (req.query.lnID > 0){
+    //console.log(filePath)
+    //console.log(lfCarta)
+    if (tramite.length > 0){
+        console.log("si entro")
 /*     lcSQL = `
         SELECT a.id, a.codigo, u.contrasena, a.nombre, a.apellido_paterno, a.apellido_materno, a.curp, u.id_centro_universitario AS centro, 
                 a.id_programa AS programa, a.correo_institucional, a.id_ciclo_ingreso, a.id_ciclo_curso, a.id_ciclo_condonar, 
@@ -462,16 +489,16 @@ const progap_nfocam = (async (req, res) => {
             WHERE a.id = ${req.query.lnID}
 
         ` */
-    lcSQL = `
-        SELECT t.id, t.codigo, a.nombre, a.apellido_paterno, a.apellido_materno, a.curp, t.id_centro_universitario AS centro, 
-                t.id_programa AS programa, a.correo_institucional, t.id_ciclo_ingreso, t.id_ciclo_curso, t.id_ciclo_condonar, 
-                if(a.id_estado > 2, 1, 0) as id_estado 
-            FROM progap_tram_focam t LEFT JOIN progap_alumno a ON t.codigo = a.codigo
-            WHERE t.id = ?
+        lcSQL = `
+            SELECT t.id, t.codigo, a.nombre, a.apellido_paterno, a.apellido_materno, a.curp, t.id_centro_universitario AS centro, 
+                    t.id_programa AS programa, a.correo_institucional, t.id_ciclo_ingreso, t.id_ciclo_curso, t.id_ciclo_condonar, 
+                    if(a.id_estado > 2, 1, 0) as id_estado, t.uid 
+                FROM progap_tram_focam t LEFT JOIN progap_alumno a ON t.codigo = a.codigo
+                WHERE t.id = ?
+            `
+        usuario = await util.gene_cons(lcSQL, [tramite[0].id])
 
-        `
-
-        usuario = await util.gene_cons(lcSQL, [req.query.lnID])
+        lcUID = usuario[0].uid 
 
         //console.log(usuario)
         if(!!usuario[0].centro){                //verifica que exista la dependencia
@@ -500,10 +527,17 @@ const progap_nfocam = (async (req, res) => {
             prog_value = program[0].value
             //console.log(program)
         }
+
+        filePath = path.join(config.SERV_ARCH, 'PROGAP', 'FOCAM', usuario[0].id + '.PDF');
+        lfCarta = fs.existsSync(filePath)
+        filePath = path.join(config.SERV_ARCH, 'PROGAP', 'OFOCAM', usuario[0].id + '.PDF');
+        lfOrden = fs.existsSync(filePath)
+
     }
     
+    console.log(usuario)
 
-    return res.render("progap/progap_nfocam", {rows, usuario, depe_id, depe_value, prog_id, prog_value, lfCarta, lfOrden, skin:req.skin})
+    return res.render("progap/progap_nfocam", {rows, usuario, depe_id, depe_value, prog_id, prog_value, lfCarta, lfOrden, lcUID, llAdmin, skin:req.skin})
 });
 
 const progap_actu_estu = ((req, res) => {
