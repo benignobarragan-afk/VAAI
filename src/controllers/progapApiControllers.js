@@ -1774,12 +1774,15 @@ const progap_actu_estux = ( async (req, res) => {
     }
 
     let lcSQL = `
-    SELECT a.codigo, CONCAT(a.nombre, ' ', a.apellido_paterno, ' ', a.nombre) AS nombre, a.curp, a.correo_institucional,
-            d.siglas, p.clav_siia, p.programa, p.oferta, v.id_ciclo_ingreso, v.id_ciclo_curso, v.estatus, v.sus_desde, v.sus_hasta,
-            v.cred_obte, v.cred_carr, v.avance, p.clave_911
-        FROM progap_alumno a LEFT JOIN progap_alum_conv v ON a.codigo = v.codigo
-            LEFT JOIN progap_dependencias d ON v.id_centro_universitario = d.id
-            LEFT JOIN progap_programa p ON v.id_programa = p.id
+    SELECT a.codigo, a.nombre, a.apellido_paterno, a.apellido_materno, a.curp, a.correo_institucional, d.siglas, p.clav_siia, p.programa as desc_siia, 
+            p.oferta, ci.nombre AS ingreso, cc.nombre AS curso, cn.nombre AS condonar, a.id_estado, a.creditos, p.cred_carr, a.avance, p.clave_911, 
+            p.clave_CGIPV, p.programa
+        FROM progap_alumno a 
+            LEFT JOIN progap_dependencias d ON a.id_centro_universitario = d.id
+            LEFT JOIN progap_programa p ON a.id_programa = p.id
+            LEFT JOIN progap_ciclos ci ON a.id_ciclo_ingreso = ci.id
+            LEFT JOIN progap_ciclos cc ON a.id_ciclo_curso = cc.id
+            LEFT JOIN progap_ciclos cn ON a.id_ciclo_condonar = cn.id
 `
     const datosBD = await util.gene_cons(lcSQL)
 
@@ -1805,6 +1808,7 @@ lcSQL = `
     
 
     datosExcel = loExcel.datos;
+    return res.json(datosExcel)
     let lcUPDATE = "", lcORIGIN = "", laActualiza = []
 
     datosExcel.forEach(fila => {

@@ -86,7 +86,7 @@
                     {
                         view:"datatable", id:"dtable", select:true, minHeight:500, scroll:true,
                         resizeColumn: true,  navigation: true, resizeRow:true, tooltip:true, 
-                        rightSplit:1, leftSplit:3,
+                        rightSplit:1, leftSplit:2,
                         scheme: {
                             $init: function (obj) {
                                 obj.fecha = (obj.fecha ? (obj.fecha == '01/01/1900'?'': convertDate(obj.fecha) ) : '');
@@ -100,14 +100,26 @@
                             
                         },
                         {
-                            id: "codigo", width: 150,sort: "string", css: { 'text-align': 'left' }, 
+                            id: "codigo", width: 100,sort: "string", css: { 'text-align': 'left' }, 
                             header: [{text:"Código",css:"my_style"}, {
                                 content: "textFilter", placeholder:"Filtrar",
                             }],
                         },	
                         {
-                            id: "nombre", width: 300,sort: "string", css: { 'text-align': 'left' }, 
+                            id: "nombre", width: 150,sort: "string", css: { 'text-align': 'left' }, 
                             header: [{text:"Nombre",css:"my_style"}, {
+                                content: "textFilter", placeholder:"Filtrar",
+                            }],
+                        },
+                        {
+                            id: "apellido_paterno", width: 150,sort: "string", css: { 'text-align': 'left' }, 
+                            header: [{text:"Apellido Paterno",css:"my_style"}, {
+                                content: "textFilter", placeholder:"Filtrar",
+                            }],
+                        },
+                        {
+                            id: "apellido_materno", width: 150,sort: "string", css: { 'text-align': 'left' }, 
+                            header: [{text:"Apellido Nombre",css:"my_style"}, {
                                 content: "textFilter", placeholder:"Filtrar",
                             }],
                         },
@@ -151,13 +163,19 @@
                             }],
                         },
                         {
-                            id: "id_ciclo_ingreso", width: 100,sort: "string", css: { 'text-align': 'left' }, 
+                            id: "ingreso", width: 100,sort: "string", css: { 'text-align': 'left' }, 
                             header: [{text:"Ciclo ingreso",css:"my_style"}, {
                                 content: "textFilter", placeholder:"Filtrar",
                             }],
                         },
                         {
-                            id: "id_ciclo_curso", width: 100,sort: "string", css: { 'text-align': 'left' }, 
+                            id: "curso", width: 100,sort: "string", css: { 'text-align': 'left' }, 
+                            header: [{text:"Ciclo actual",css:"my_style"}, {
+                                content: "textFilter", placeholder:"Filtrar",
+                            }],
+                        },
+                        {
+                            id: "condonar", width: 100,sort: "string", css: { 'text-align': 'left' }, 
                             header: [{text:"Ciclo actual",css:"my_style"}, {
                                 content: "textFilter", placeholder:"Filtrar",
                             }],
