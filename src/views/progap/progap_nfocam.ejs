@@ -6,7 +6,8 @@
 			color: #4CAF50 !important; /* Un tono de verde claro y visible */
 			font-weight: bold; /* Opcional: para que resalte más */
 		}
-	</style>
+
+</style>
 
 <script>
 
@@ -30,7 +31,8 @@ webix.ready(function(){
             // Fila: Código y Contraseña
             { cols:[
                 { view:"text", name:"id", label:"id", hidden: true },
-                { view:"text", name:"codigo", label:"Código de Estudiante *", placeholder:"Código de Estudiante", required:true, invalidMessage:"Requerido" },
+                { view:"text", name:"codigo", label:"Código de Estudiante *", placeholder:"Código de Estudiante", invalidMessage:"Requerido", readonly:true, width:150 },
+                {width:15},
                 // CURP
                 { cols:[
                     {
@@ -39,7 +41,7 @@ webix.ready(function(){
                         name: "curp",
                         label: "CURP *",
                         placeholder: "Escribe tu CURP",
-                        required: true,
+                        readonly:true,
                         attributes: { maxlength: 18 },
                         // Definimos la validación
                         validate: function(value) {
@@ -78,16 +80,55 @@ webix.ready(function(){
 
                     },
                 ]},
-                
+                { width:15 },
+                {
+                    view: "button", type: "icon",  icon: "mdi mdi-note-edit-outline", label: "Mostrar carta", width: 160, align: "center", <%=(lfCarta?'':' disabled: true, ')%>
+                    on: {
+                        onItemClick: function() {
+                            var idSeleccionado = '<%=lcUID%>'
+
+                            if (idSeleccionado) {
+                                // Construimos la URL dinámica usando el ID de la fila seleccionada
+                                var url = "/api/progap/progap_focamx4?id=" + idSeleccionado;
+                                
+                                // Abrimos en una pestaña nueva del navegador
+                                window.open(url, '_blank');
+                            } else {
+                                webix.message({ type: "error", text: "No se econtró el archivo" });
+                            }
+                        }
+                    }
+                },
+                {width:15},
+                {
+                    view: "button", type: "icon",  icon: "mdi mdi-invoice-list-outline", label: "Orden de compra", width: 160, align: "center", <%=(lfOrden?'':' disabled: true, ')%>
+                    on: {
+                        onItemClick: function() {
+                            var idSeleccionado = '<%=lcUID%>'
+
+                            if (idSeleccionado) {
+                                // Construimos la URL dinámica usando el ID de la fila seleccionada
+                                var url = "/api/progap/progap_focamx4?tipo=2&id=" + idSeleccionado;
+                                
+                                // Abrimos en una pestaña nueva del navegador
+                                window.open(url, '_blank');
+                            } else {
+                                webix.message({ type: "error", text: "No se econtró el archivo" });
+                            }
+                        }
+                    }
+                },
             ]},
 
             
             // Nombre Completo (3 columnas)
             { label:"Nombre completo *", view:"label" },
             { cols:[
-                { view:"text", name:"nombre", placeholder:"Nombre:", required:true },
-                { view:"text", name:"apellido_paterno", placeholder:"Apellido paterno:", required:true },
-                { view:"text", name:"apellido_materno", placeholder:"Apellido materno:", required:true }
+                { view:"text", name:"nombre", placeholder:"Nombre:", readonly:true },
+                {width:15},
+                { view:"text", name:"apellido_paterno", placeholder:"Apellido paterno:", readonly:true },
+                {width:15},
+                { view:"text", name:"apellido_materno", placeholder:"Apellido materno:", readonly:true }
             ]},
 
             // Selects
@@ -139,13 +180,13 @@ webix.ready(function(){
                 { id: "<%= rows[i].id%>", value: "<%=rows[i].nombre%>" },
                 <%}%>
             ], placeholder:"-- Seleccione --", required:true },
-
+            {width:15},
             { view:"richselect", name:"id_ciclo_curso", label:"Ciclo Escolar en Curso *", options:[
                 <%for (var i = 0; i < rows.length; i++) {%>
                 { id: "<%= rows[i].id%>", value: "<%=rows[i].nombre%>" },
                 <%}%>
             ], placeholder:"-- Seleccione --", required:true },
-
+            {width:15},
             { view:"richselect", name:"id_ciclo_condonar", label:"Ciclo Escolar por Condonar *", options:[
                 <%for (var i = 0; i < rows.length; i++) {%>
                 { id: "<%= rows[i].id%>", value: "<%=rows[i].nombre%>" },
@@ -158,117 +199,21 @@ webix.ready(function(){
             { cols:[
             // Correo
             { view:"text", name:"correo_institucional", label:"Correo Institucional *", placeholder:"Correo Institucional", validate:webix.rules.isEmail, required:true, invalidMessage:"Correo no válido" },
-
+            {width:15},
             // Estado
             { view:"combo", name:"id_estado", label:"Estado *", value:"1", options:[
                 { id:"1", value:"Activo" }, { id:"0", value:"Inactivo" }
             ]},
             ]},
             // Botón Centrado
-            <%if(!!prog_id)%>
+            <%if(llAdmin){%>
             { margin:20, cols:[
-                <%if(!!prog_id){%>
                 {rows: [
-					{ 
-						view: "uploader", value: "Adjunta un archivo PDF", accept:"application/pdf",
-						name:"filePDF", id:"filePDF", width:300,
-						link:"list1",  upload:"/api/progap/progap_nfocamx",
-						formData: {
-							idFocam: <%=usuario[0].id%>,
-						},
-							on:{
-									onUploadComplete:(response, file)=>{
-
-									console.log(response);
-									console.log(response.message);
-									webix.message({ type:"info", text:response.message, id:"loadingMsg" });
-									$$("form_registro").enable();
-									carg_arch();
-
-									//$$("formPDF").hideProgress();
-								},
-								onBeforeFileAdd: function (item) {
-								//$$("formPDF").showProgress();
-
-								$$("form_registro").disable(); 
-								//$$("textoPDF").setValue("Subiendo y procesando archivo...");
-								webix.message({ type:"info", text:"Subiendo y procesando archivo...", id:"loadingMsg" });
-				
-								return true;
-								},
-								onUploadFail: function (item){
-								$$("form_registro").enable(); 
-								},
-							}
-						},
-						{
-						view:"list",  id:"list1", type:"uploader",
-						autoheight:true, borderless:true	
-						},
-				]},
-                <%}%>
-                {rows: [
-                { view:"button", value:"<%=(usuario.length<1?'Crear usuario de estudiante':'Modificar estudiante')%>", css:"webix_primary", width:250, click:guardarEstudiante }
+                { view:"button", value:"<%=(usuario.length<1?'Crear trámite':'Modificar trámite')%>", css:"webix_primary", width:250, click:guardarTramite }
                 ],
                 },
-                {
-                rows: [
-                    {view:"label", label:"Archivos"},
-                    {
-                        view: "list",
-                        id: "archivos_adjuntos", name: "archivos_adjuntos",
-                        height: 100,
-                        header: "Archivos Adjuntos",
-                        scroll: "y",      // Permite scroll vertical si hay muchos
-                        
-                        // **CLAVE:** Este template define cómo se verá cada archivo
-                        template: function(obj) {
-                            // obj es el objeto de datos (e.g., {id: 1, nombre: "factura.pdf", ...})
-                            
-                            let html = "<div class='file-item archivo-verde'>";
-                            
-                            // Icono basado en la extensión (ejemplo)
-                            html += "<span class='webix_icon wxi-trash delete-file'></span> ";
-                            
-                            // Enlace de descarga (usa el ID o la ruta)
-                            html += "<a href='/api/progap/pdownload?id=" + obj.id + "' target='_blank'>";
-                            html += obj.nombre; // Muestra el nombre del archivo
-                            html += "</a>";
-                            
-                            // Botón de eliminar (con un evento para manejar la lógica de borrado)
-                            html += "<span class='webix_icon wxi-file' data-id='" + obj.id + "'></span>";
-                            
-                            html += "</div>";
-                            return html;
-                            },
-                        on: {
-                            onItemClick: function(id_item, e, node) {
-                                
-                                if (e.target.className.indexOf('delete-file') !== -1) {
-                                    
-                                    let id_archivo_a_borrar = id_item; 
-                                    alert("Se hizo clic en el bote de basura para el archivo con ID: " + id_archivo_a_borrar);
-                                    
-                                    // **Llama a la función de confirmación y eliminación**
-                                    //confirmarYEliminarArchivo(id_archivo_a_borrar);
-                                    
-                                    // Prevenir que el evento se propague si es necesario
-                                    return false; 
-                                }
-                            }
-                        },
-                        
-                        // Configuración para cargar datos del servidor (metadatos de MariaDB)
-                        /* data:[
-                            { "id": 1, "nombre": "factura_compra_01.pdf", "ruta": "/uploads/a3b1c2.pdf" },
-                            { "id": 2, "nombre": "contrato_firmado.docx", "ruta": "/uploads/x9y8z7.docx" }
-                            ] */
-                        url: "/api/progap/progap_recu_arch?lnTram=<%=usuario[0].id%>"
-                    }
-                ] 
-                },
-                
             ]}
+            <%}%>
         ],
         <%if(usuario.length>0){%>
         data: datosIniciales,
@@ -276,7 +221,7 @@ webix.ready(function(){
     });
 });
 
-function guardarEstudiante(){
+function guardarTramite(){
     var form = $$("form_registro");
     if(form.validate()){
         var datos = form.getValues();

@@ -183,7 +183,7 @@
                                             });
                                         
                                     } else {
-                                        webix.message({ type: "error", text: "Por favor, selecciona una fila primero" });
+                                        webix.message({ type: "error", text: "Por favor, selecciona un trámite primero" });
                                     }
                                 }
                             },
@@ -266,7 +266,7 @@
                                         });
                                         
                                     } else {
-                                        webix.message({ type: "error", text: "Por favor, selecciona una fila primero" });
+                                        webix.message({ type: "error", text: "Por favor, selecciona un trámite primero" });
                                     }
                                 }
                             },
@@ -313,7 +313,7 @@
                             header: [{text:"",css:"my_style"}, {text:""}],
                             template:(obj)=>{
                                 return `
-                                    <a href="#" onClick="deta_grup(${obj.id});">
+                                    <a href="#" onClick="deta_grup('${obj.id}');">
                                         <i style='font-size:26px;color:#2b96cc;' class='fa-solid fa-magnifying-glass'></i>
                                     </a>`
                             }
@@ -389,11 +389,15 @@
                                             visor.setValues({ src: respuesta.data });
                                             // Si usas el iframe que definimos antes, el template lo renderizará
                                         } else {
+                                            visor.setValues({ src: "" });
                                             webix.message({ type: "error", text: "No se pudo recuperar el archivo" });
+
                                         }
                                         visor.hideProgress();
                                     }).catch(function(err) {
-                                        webix.message({ type: "error", text: "Error de conexión con el servidor" });
+                                        console.log(err)
+                                        visor.setValues({ src: "" });
+                                        webix.message({ type: "error", text: "No se econtro el archivo en el servidor" });
                                         visor.hideProgress();
                                     });
                                 }

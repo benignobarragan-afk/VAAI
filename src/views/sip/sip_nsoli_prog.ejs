@@ -182,15 +182,12 @@ webix.ready(function(){
                                 onBeforeLoad: function () { this.showOverlay("Cargando..."); },
                                 onAfterLoad: function () {
                                     this.hideOverlay();
-                                    webix.delay(function(){
-                                        // 1. Especificamos qué columna mandar a medir (la más larga)
-                                        // 2. El segundo parámetro 'true' es vital para que considere el ancho actual
-                                        if (this.count()){ 
-                                            //console.log("si entro");
-                                            this.adjustRowHeight(); 
-                                        }
-                                    }, this, [], 100);
-                                },
+                                    },
+
+                                "onresize":webix.once(function(){ 
+                                    this.adjustRowHeight("text_sesi", true); 
+                                }),
+
                                 onItemDblClick:  function(id) {
                                     openWindow("Detalle de oficialia", "/<% // Response.Write(config.ruta)%>/op_nadmi.fwx?lcID=" + id.row)
                                 }

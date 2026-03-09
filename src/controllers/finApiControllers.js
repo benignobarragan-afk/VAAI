@@ -21,7 +21,7 @@ const fin_orde_compx = (async (req, res) => {
     let lcSQL = `
     SELECT ROW_NUMBER() OVER (ORDER BY o.foli_orde) AS RANK, o.id, o.foli_orde, if(o.tipo_orde = 1, "Compra", "Servicio") as tipo_orde, DATE_FORMAT(o.fech_emis, '%d/%m/%Y') as fech_emis, 
                     o.proyecto, o.rfc, o.proveedor, o.domi_prov, o.tele_prov, o.corr_prov, DATE_FORMAT(o.fech_entr, '%d/%m/%Y') as fech_entr, o.luga_entr, o.forma_pago, 
-                    o.porc_anti, o.nume_parc, o.subtotal, o.iva_total, o.total, o.observaciones, o.fech_crea, o.resico, if(o.estatus=0,"Abierta", if(o.estatus=2,"Cerrada",if(o.estatus=9,"Cancelada", "Pendiente"))) as estatus
+                    o.porc_anti, o.nume_parc, o.subtotal, o.iva_total, o.total, o.observaciones, o.fech_crea, o.resico, if(o.estatus=0,"Abierta", if(o.estatus=2,"Cerrada",if(o.estatus=9,"Cancelada", "Pendiente"))) as estatus, o.moneda
         FROM fin_orde_comp o INNER JOIN fin_proyecto p on o.proyecto = p.proyecto
             LEFT join gen_centros c ON p.id_cent = c.id_cent
             WHERE p.id_cent IN (SELECT id FROM gen_dere_proy WHERE user_id = ?) OR p.proyecto IN (SELECT id FROM gen_dere_proy WHERE user_id = ?)
@@ -110,7 +110,7 @@ const fin_norde_compx = (async (req,res) => {
         lcSQL = `
         INSERT INTO fin_orde_comp (tipo_orde, fech_emis, proyecto, rfc, proveedor, domi_prov, tele_prov, corr_prov, fech_entr, luga_entr, forma_pago,
 	            porc_anti, fech_inic, fech_fin, nume_parc, subtotal, iva_total, total, resico, observaciones, estatus, fech_crea, cambios, ures_depe, nomb_depe, 
-                padr_depe, tele_depe, domi_depe, usua_crea, apli_resico, nomb_elab, nomb_auto, nomb_vobo) 
+                padr_depe, tele_depe, domi_depe, usua_crea, apli_resico, nomb_elab, nomb_auto, nomb_vobo, moneda) 
             VALUES (?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, 0, ?, 0, NOW(), CONCAT(?,'|INSERT|',NOW(),CHR(13)), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `
         //(!encabezado.fech_emis?null:encabezado.fech_emis),    Se quito por que la fecha de emisión se toma el día
@@ -119,7 +119,7 @@ const fin_norde_compx = (async (req,res) => {
                             encabezado.luga_entr, (!encabezado.forma_pago?null:encabezado.forma_pago), (!encabezado.porc_anti?null:encabezado.porc_anti), (!encabezado.fech_inic?null:encabezado.fech_inic), 
                             (!encabezado.fech_fin?null:encabezado.fech_fin), (!encabezado.nume_parc?null:encabezado.nume_parc), encabezado.observaciones, req.userId,
                             encabezado.ures_depe, encabezado.nomb_depe, encabezado.padr_depe, encabezado.tele_depe, encabezado.domi_depe, req.userId, (!encabezado.apli_resico?0:encabezado.apli_resico), (!encabezado.nomb_elab?0:encabezado.nomb_elab),
-                            encabezado.nomb_auto, encabezado.nomb_vobo
+                            encabezado.nomb_auto, encabezado.nomb_vobo, encabezado.moneda
                         ]
 
         const insert = await util.gene_cons(lcSQL, laSend)
@@ -203,7 +203,7 @@ const fin_norde_compx = (async (req,res) => {
         UPDATE fin_orde_comp  SET tipo_orde = ?, fech_emis = NOW(), proyecto = ?, rfc = ?, proveedor = ?, domi_prov = ?, tele_prov = ?, corr_prov = ?, 
                 fech_entr = ?, luga_entr = ?, forma_pago = ?, porc_anti = ?, fech_inic = ?, fech_fin = ?, nume_parc = ?, subtotal = 0, iva_total = 0, total = 0, 
                 observaciones = ?, ures_depe = ?, nomb_depe = ?, padr_depe = ?, tele_depe = ?, domi_depe = ?, subtotal = ?, iva_total = ?, total = ?, apli_resico = ?, resico = ?, 
-                nomb_elab = ?, nomb_auto = ?, nomb_vobo = ?, cambios = CONCAT(IFNULL(cambios,''), ?,'|UPDATE|',NOW(),CHR(13)) 
+                nomb_elab = ?, nomb_auto = ?, nomb_vobo = ?, moneda = ?, cambios = CONCAT(IFNULL(cambios,''), ?,'|UPDATE|',NOW(),CHR(13)) 
             WHERE id = ?
         `
         //(!encabezado.fech_emis?null:encabezado.fech_emis),    Se quito por que la fecha de emisión se toma el día
@@ -212,7 +212,7 @@ const fin_norde_compx = (async (req,res) => {
                             encabezado.luga_entr, (!encabezado.forma_pago?null:encabezado.forma_pago), (!encabezado.porc_anti?null:encabezado.porc_anti), (!encabezado.fech_inic?null:encabezado.fech_inic), 
                             (!encabezado.fech_fin?null:encabezado.fech_fin), (!encabezado.nume_parc?null:encabezado.nume_parc), encabezado.observaciones,  encabezado.ures_depe, encabezado.nomb_depe, encabezado.padr_depe, 
                             encabezado.tele_depe, encabezado.domi_depe, (!lnSubtodal?0:lnSubtodal), (!lnIVA?0:lnIVA), (!lnTotal?0:lnTotal), (!encabezado.apli_resico?0:encabezado.apli_resico), (!lnMRESICO?0:lnMRESICO), 
-                            (!encabezado.nomb_elab?0:encabezado.nomb_elab), encabezado.nomb_auto, encabezado.nomb_vobo, req.userId, encabezado.id_orde_comp]
+                            (!encabezado.nomb_elab?0:encabezado.nomb_elab), encabezado.nomb_auto, encabezado.nomb_vobo, encabezado.moneda, req.userId, encabezado.id_orde_comp]
 
         const update = await util.gene_cons(lcSQL, laSend)
 
@@ -284,7 +284,7 @@ const fin_impr_oc = (async (req,res) => {
 					o.tele_prov, o.corr_prov, DATE_FORMAT(o.fech_entr, '%d/%m/%Y') as fech_entr, o.luga_entr, o.forma_pago, o.porc_anti, o.nume_parc, 
                     DATE_FORMAT(o.fech_inic, '%d/%m/%Y') as fech_inic, DATE_FORMAT(o.fech_fin, '%d/%m/%Y') as fech_fin, DATE_FORMAT(o.fech_crea, '%d/%m/%Y') as fech_crea,
 					o.subtotal, o.iva_total, o.total, o.observaciones, o.estatus, p.fondo, p.nombre AS nomb_proy, p.tipo_proy, p.programa, o.padr_depe,
-                    o.nomb_auto, o.nomb_vobo, IFNULL(o.nomb_elab, '') as nomb_elab
+                    o.nomb_auto, o.nomb_vobo, IFNULL(o.nomb_elab, '') as nomb_elab, o.moneda
         FROM fin_orde_comp o INNER JOIN fin_proyecto p on o.proyecto = p.proyecto
             LEFT join gen_centros c ON p.id_cent = c.id_cent
             left join passfile ps on o.usua_crea = ps.user_id
@@ -388,7 +388,7 @@ const fin_impr_oc = (async (req,res) => {
         doc.page.margins.bottom = 0; 
 
         // Ahora imprimes tus textos de la parte inferior
-        doc.text(`${other_utils.montoALetras(datos[0].total)}`, 100, 530, {width: 325, align: 'center'});
+        doc.text(`${other_utils.montoALetras(datos[0].total, datos[0].moneda)}`, 100, 530, {width: 325, align: 'center'});
         doc.text(`${formatoMoneda.format(datos[0].subtotal)}`, 506, 531, {width: 73, align: 'right'});
         doc.text(`${formatoMoneda.format(datos[0].iva_total)}`, 506, 546, {width: 73, align: 'right'});
         doc.text(`${formatoMoneda.format(datos[0].total)}`, 506, 560, {width: 73, align: 'right'});
@@ -399,15 +399,16 @@ const fin_impr_oc = (async (req,res) => {
             doc.text(`${(!datos[0].porc_anti?'':datos[0].porc_anti+'%')}`, 330, 607, {width: 175, align: 'center'});
         }
         else {
-            doc.fontSize(6).text(`${datos[0].luga_entr}`, 157, 587, {width: 198, align: 'left'});
+            doc.fontSize(6).text(`${!datos[0].luga_entr?'':datos[0].luga_entr}`, 157, 587, {width: 198, align: 'left'});
             doc.fontSize(8).text(`${(!datos[0].porc_anti?'':datos[0].porc_anti+'%')}`, 331, 607, {width: 25, align: 'center'});
-            doc.text(`${datos[0].fech_inic}`, 440, 597, {width: 63, align: 'center'});
-            doc.text(`${datos[0].fech_fin}`, 440, 607, {width: 63, align: 'center'});
+            doc.text(`${!datos[0].fech_inic?'':datos[0].fech_inic}`, 440, 597, {width: 63, align: 'center'});
+            doc.text(`${!datos[0].fech_fin?'':datos[0].fech_fin}`, 440, 607, {width: 63, align: 'center'});
+            doc.text(`${!datos[0].fech_entr?'':datos[0].fech_entr}`, 152, 597, {width: 155, align: 'center'});
         }
         doc.text(`${(datos[0].forma_pago == 1 ? 'X':'')}`, 118, 598, {width: 195, align: 'left'});
         doc.text(`${(datos[0].forma_pago == 1 ? '':'X')}`, 118, 607, {width: 195, align: 'left'});
         doc.text(`${datos[0].fech_entr}`, 152, 597, {width: 155, align: 'center'});
-        doc.text(`${(datos[0].forma_pago ==1?'':datos[0].nume_parc)}`, 210, 607, {width: 30, align: 'center'});
+        doc.text(`${(datos[0].forma_pago ==1?'':(!datos[0].nume_parc?'':datos[0].nume_parc))}`, 210, 607, {width: 30, align: 'center'});
         
         doc.text(`${(datos[0].porc_anti ? 'X':'')}`, 569, 598, {width: 195, align: 'left'});
         doc.text(`${(!datos[0].porc_anti ? 'X':'')}`, 569, 607, {width: 195, align: 'left'});
@@ -461,7 +462,7 @@ const fin_impr_oc = (async (req,res) => {
     doc.page.margins.bottom = 0; 
 
     // Ahora imprimes tus textos de la parte inferior
-    doc.text(`${other_utils.montoALetras(datos[0].total)}`, 100, 530, {width: 325, align: 'center'});
+    doc.text(`${other_utils.montoALetras(datos[0].total, datos[0].moneda)}`, 100, 530, {width: 325, align: 'center'});
     doc.text(`${formatoMoneda.format(datos[0].subtotal)}`, 506, 531, {width: 73, align: 'right'});
     doc.text(`${formatoMoneda.format(datos[0].iva_total)}`, 506, 546, {width: 73, align: 'right'});
     doc.text(`${formatoMoneda.format(datos[0].total)}`, 506, 560, {width: 73, align: 'right'});
@@ -473,15 +474,15 @@ const fin_impr_oc = (async (req,res) => {
         doc.text(`A la entrega`, 152, 597, {width: 155, align: 'center'});
     }
     else {
-        doc.fontSize(6).text(`${datos[0].luga_entr}`, 157, 587, {width: 198, align: 'left'});
+        doc.fontSize(6).text(`${!datos[0].luga_entr?'':datos[0].luga_entr}`, 157, 587, {width: 198, align: 'left'});
         doc.fontSize(8).text(`${(!datos[0].porc_anti?'':datos[0].porc_anti+'%')}`, 331, 607, {width: 25, align: 'center'});
-        doc.text(`${datos[0].fech_inic}`, 440, 597, {width: 63, align: 'center'});
-        doc.text(`${datos[0].fech_fin}`, 440, 607, {width: 63, align: 'center'});
-        doc.text(`${datos[0].fech_entr}`, 152, 597, {width: 155, align: 'center'});
+        doc.text(`${!datos[0].fech_inic?'':datos[0].fech_inic}`, 440, 597, {width: 63, align: 'center'});
+        doc.text(`${!datos[0].fech_fin?'':datos[0].fech_fin}`, 440, 607, {width: 63, align: 'center'});
+        doc.text(`${!datos[0].fech_entr?'':datos[0].fech_entr}`, 152, 597, {width: 155, align: 'center'});
     }
     doc.text(`${(datos[0].forma_pago == 1 ? 'X':'')}`, 118, 598, {width: 195, align: 'left'});
     doc.text(`${(datos[0].forma_pago == 1 ? '':'X')}`, 118, 607, {width: 195, align: 'left'});
-    doc.text(`${(datos[0].forma_pago ==1?'':datos[0].nume_parc)}`, 210, 607, {width: 30, align: 'center'});
+    doc.text(`${(datos[0].forma_pago ==1?'':(!datos[0].nume_parc?'':datos[0].nume_parc))}`, 210, 607, {width: 30, align: 'center'});
     
     doc.text(`${(datos[0].porc_anti ? 'X':'')}`, 569, 598, {width: 195, align: 'left'});
     doc.text(`${(!datos[0].porc_anti ? 'X':'')}`, 569, 607, {width: 195, align: 'left'});
