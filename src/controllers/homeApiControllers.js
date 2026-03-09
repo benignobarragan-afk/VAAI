@@ -423,6 +423,41 @@ const dere_unicx = (async (req, res) => {
     
 });
 
+const sys_version = (async (req, res) => {
+    try {
+        // 1. Definimos los campos permitidos (Whitelist) para evitar inyección
+        const camposPermitidos = ['vih'];
+        
+        // 2. Validamos el parámetro que viene de la URL
+        const campoSolicitado = (!req.query.sys) ? 'vih' : req.query.sys;
+
+        if (!camposPermitidos.includes(campoSolicitado)) {
+            return res.status(400).send("Campo no válido");
+        }
+
+        // 3. Inyectamos el nombre de la columna de forma segura (ya validada)
+        // Usamos backticks `` para el nombre de la columna en MariaDB
+        const lcSQL = `
+            SELECT ${campoSolicitado} as version
+            FROM sys_version
+            LIMIT 1
+        `;
+
+        const rows = await util.gene_cons(lcSQL, []);
+
+        if (rows && rows.length > 0) {
+            // Enviamos el valor real de la columna de la base de datos
+            res.send(rows[0].version);
+        } else {
+            res.status(404).send("No se encontró información");
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error en el servidor");
+    }
+});
+
+
 module.exports = {
     usua_nuevx,
     usua_nuevx2,
@@ -432,4 +467,5 @@ module.exports = {
     prin_ca_pax,
     camb_skin,
     dere_unicx,
+    sys_version,
 }

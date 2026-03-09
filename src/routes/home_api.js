@@ -16,6 +16,7 @@ router.get("/usuariosx", midd.verifyToken, homeCtrl.usuariosx);
 router.post("/prin_ca_pax", midd.verifyToken, homeCtrl.prin_ca_pax);
 router.post("/camb_skin", midd.verifyToken, homeCtrl.camb_skin);
 router.post("/dere_unicx", midd.verifyToken, homeCtrl.dere_unicx);
+router.get("/sys_version", homeCtrl.sys_version);
 
 
 module.exports = router
