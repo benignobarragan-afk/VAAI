@@ -1811,7 +1811,6 @@ const progap_actu_estux = ( async (req, res) => {
         depenBD.map(centro => centro.siglas.trim().toUpperCase())
     );
 
-/*
     // 2. Filtramos los 10,000 registros usando la posición
     const alumnosConError = datosExcel.filter(alumno => {
         // Convierte el objeto en un arreglo de sus valores y toma la posición 6
@@ -1833,7 +1832,7 @@ const progap_actu_estux = ( async (req, res) => {
             clave_CGIPV: Object.values(fila)[18], programa: Object.values(fila)[19], actual: '', update: 'CENTRO NO ENCONTRADO'})
         })
         return res.json(laActualiza)
-    } */
+    } 
 
     //valida ciclos
     lcSQL = `
