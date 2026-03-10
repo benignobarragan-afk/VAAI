@@ -1775,8 +1775,8 @@ const progap_actu_estux = ( async (req, res) => {
 
     let lcSQL = `
     SELECT a.codigo, a.nombre, a.apellido_paterno, a.apellido_materno, a.curp, a.correo_institucional, d.siglas, p.clav_siia, p.programa as desc_siia, 
-            p.oferta, REPLACE(ci.nombre, '-', '') AS ingreso, REPLACE(cc.nombre, '-', '') AS curso, REPLACE(cn.nombre, '-', '') AS condonar, a.id_estado, 
-            a.creditos, p.cred_carr, a.avance, p.clave_911, p.clave_CGIPV, p.programa
+            p.oferta, ci.nombre AS ingreso, cc.nombre AS curso, cn.nombre AS condonar, a.id_estado, a.creditos, p.cred_carr, a.avance, p.clave_911, 
+            p.clave_CGIPV, p.programa
         FROM progap_alumno a 
             LEFT JOIN progap_dependencias d ON a.id_centro_universitario = d.id
             LEFT JOIN progap_programa p ON a.id_programa = p.id
@@ -1792,24 +1792,117 @@ const progap_actu_estux = ( async (req, res) => {
         mapaBD.set(reg.codigo.toString(), reg);
     });
 
-lcSQL = `
-    SELECT id, siglas, dependencia 
-        FROM progap_dependencias 
-        WHERE id_antecesor = 0 
-`
+    lcSQL = `
+        SELECT id, siglas, dependencia 
+            FROM progap_dependencias 
+            WHERE id_antecesor = 0 
+    `
 
     const depenBD = await util.gene_cons(lcSQL)
 
-    // Creamos el mapa usando el ID como llave para búsqueda rápida
-    const mdepeBD = new Map();
-    depenBD.forEach(reg => {
-        mdepeBD.set(reg.siglas.toString(), reg);
-    });
-    
+    let lcUPDATE = "", lcORIGIN = "", laActualiza = []
 
+    
     datosExcel = loExcel.datos;
 
-    let lcUPDATE = "", lcORIGIN = "", laActualiza = []
+     //validando datos dependencia
+    // 1. Mantenemos el catálogo como un Set ultra rápido
+    const centrosValidos = new Set(
+        depenBD.map(centro => centro.siglas.trim().toUpperCase())
+    );
+
+/*
+    // 2. Filtramos los 10,000 registros usando la posición
+    const alumnosConError = datosExcel.filter(alumno => {
+        // Convierte el objeto en un arreglo de sus valores y toma la posición 6
+        const valorCentro = Object.values(alumno)[6]; 
+        
+        // Verificamos si ese valor existe en nuestro catálogo
+        return !centrosValidos.has(valorCentro);
+    });
+
+    console.log(`Errores encontrados: ${alumnosConError.length}`);
+    if (alumnosConError.length > 0){
+        
+        alumnosConError.forEach(fila => {
+            laActualiza.push({marcar: 1, id: Object.values(fila)[0], codigo: Object.values(fila)[0], nombre: Object.values(fila)[1], 
+            apellido_paterno: Object.values(fila)[2], apellido_materno: Object.values(fila)[3], curp: Object.values(fila)[4], correo_institucional: Object.values(fila)[5], 
+            siglas: Object.values(fila)[6], clav_siia: Object.values(fila)[7], desc_siia: Object.values(fila)[8], oferta: Object.values(fila)[9], 
+            ingreso: Object.values(fila)[10], curso: Object.values(fila)[11], condonar: Object.values(fila)[12], id_estado: Object.values(fila)[13], 
+            creditos: Object.values(fila)[14], cred_carr: Object.values(fila)[15], avance: Object.values(fila)[16], clave_911: Object.values(fila)[17], 
+            clave_CGIPV: Object.values(fila)[18], programa: Object.values(fila)[19], actual: '', update: 'CENTRO NO ENCONTRADO'})
+        })
+        return res.json(laActualiza)
+    } */
+
+    //valida ciclos
+    lcSQL = `
+        SELECT id, nombre
+            FROM progap_ciclos
+    `
+
+    const cicloBD = await util.gene_cons(lcSQL)
+
+    const ciclosValidos = new Set(
+        cicloBD.map(ciclo => ciclo.nombre.trim().toUpperCase())
+    );
+
+    // 2. Filtramos los 10,000 registros usando la posición
+    const alumnosConError2 = datosExcel.filter(alumno => {
+        // Convierte el objeto en un arreglo de sus valores y toma la posición 6
+        const valorCiclo = Object.values(alumno)[10]; 
+        
+        // Verificamos si ese valor existe en nuestro catálogo
+        return !ciclosValidos.has(valorCiclo);
+    });
+
+    console.log(`Errores encontrados: ${alumnosConError2.length}`);
+    if (alumnosConError2.length > 0){
+        
+        alumnosConError2.forEach(fila => {
+            laActualiza.push({marcar: 1, id: Object.values(fila)[0], codigo: Object.values(fila)[0], nombre: Object.values(fila)[1], 
+            apellido_paterno: Object.values(fila)[2], apellido_materno: Object.values(fila)[3], curp: Object.values(fila)[4], correo_institucional: Object.values(fila)[5], 
+            siglas: Object.values(fila)[6], clav_siia: Object.values(fila)[7], desc_siia: Object.values(fila)[8], oferta: Object.values(fila)[9], 
+            ingreso: Object.values(fila)[10], curso: Object.values(fila)[11], condonar: Object.values(fila)[12], id_estado: Object.values(fila)[13], 
+            creditos: Object.values(fila)[14], cred_carr: Object.values(fila)[15], avance: Object.values(fila)[16], clave_911: Object.values(fila)[17], 
+            clave_CGIPV: Object.values(fila)[18], programa: Object.values(fila)[19], actual: '', update: 'CICLO INGRESO NO ECONTRADO'})
+        })
+        return res.json(laActualiza)
+    }
+
+    //valida programa
+    lcSQL = `
+        SELECT id, clave_CGIPV
+        	FROM progap_programa
+    `
+
+    const prograBD = await util.gene_cons(lcSQL)
+
+    const prograValidos = new Set(
+        prograBD.map(progra => progra.clave_CGIPV.trim().toUpperCase())
+    );
+
+    // 2. Filtramos los 10,000 registros usando la posición
+    const alumnosConError3 = datosExcel.filter(alumno => {
+        // Convierte el objeto en un arreglo de sus valores y toma la posición 6
+        const valorProgra = Object.values(alumno)[18]; 
+        // Verificamos si ese valor existe en nuestro catálogo
+        return !prograValidos.has(valorProgra);
+    });
+
+    console.log(`Errores encontrados: ${alumnosConError3.length}`);
+    if (alumnosConError3.length > 0){
+        
+        alumnosConError3.forEach(fila => {
+            laActualiza.push({marcar: 1, id: Object.values(fila)[0], codigo: Object.values(fila)[0], nombre: Object.values(fila)[1], 
+            apellido_paterno: Object.values(fila)[2], apellido_materno: Object.values(fila)[3], curp: Object.values(fila)[4], correo_institucional: Object.values(fila)[5], 
+            siglas: Object.values(fila)[6], clav_siia: Object.values(fila)[7], desc_siia: Object.values(fila)[8], oferta: Object.values(fila)[9], 
+            ingreso: Object.values(fila)[10], curso: Object.values(fila)[11], condonar: Object.values(fila)[12], id_estado: Object.values(fila)[13], 
+            creditos: Object.values(fila)[14], cred_carr: Object.values(fila)[15], avance: Object.values(fila)[16], clave_911: Object.values(fila)[17], 
+            clave_CGIPV: Object.values(fila)[18], programa: Object.values(fila)[19], actual: '', update: 'PROGRAMA NO ECONTRADO'})
+        })
+        return res.json(laActualiza)
+    }
 
     datosExcel.forEach(fila => {
         //console.log(fila)
@@ -1831,7 +1924,7 @@ lcSQL = `
                     lcORIGIN = lcORIGIN + (lcORIGIN != ''? ', ': '') + Object.keys(estatusActual)[i] + "= '" + (!Object.values(estatusActual)[i]?'':Object.values(estatusActual)[i]) + "'"
                 }
             }
-            for (i = 10; i < 13; i++){
+            for (i = 10; i < 11; i++){
                 if (Object.values(estatusActual)[i] != Object.values(fila)[i]){
                     lcUPDATE = lcUPDATE + (lcUPDATE != ''? ', ': '') + Object.keys(estatusActual)[i] + "= '" + (!Object.values(fila)[i]?'':Object.values(fila)[i]) + "'"
                     lcORIGIN = lcORIGIN + (lcORIGIN != ''? ', ': '') + Object.keys(estatusActual)[i] + "= '" + (!Object.values(estatusActual)[i]?'':Object.values(estatusActual)[i]) + "'"
@@ -1843,18 +1936,13 @@ lcSQL = `
                     lcORIGIN = lcORIGIN + (lcORIGIN != ''? ', ': '') + Object.keys(estatusActual)[i] + "= '" + (!Object.values(estatusActual)[i]?'':Object.values(estatusActual)[i]) + "'"
                 }
             }
-            if (lcUPDATE != ''){
-                if (mdepeBD.has(Object.values(fila)[1])) {
-                    lnIDDepen = mdepeBD.get(Object.values(fila)[1]).id
-                }
-            }
             
             laActualiza.push({ marcar: (lcUPDATE!=''?1:0), id: Object.values(estatusActual)[0], codigo: Object.values(fila)[0], nombre: Object.values(fila)[1], 
                 apellido_paterno: Object.values(fila)[2], apellido_materno: Object.values(fila)[3], curp: Object.values(fila)[4], correo_institucional: Object.values(fila)[5], 
                 siglas: Object.values(fila)[6], clav_siia: Object.values(fila)[7], desc_siia: Object.values(fila)[8], oferta: Object.values(fila)[9], 
                 ingreso: Object.values(fila)[10], curso: Object.values(fila)[11], condonar: Object.values(fila)[12], id_estado: Object.values(fila)[13], 
                 creditos: Object.values(fila)[14], cred_carr: Object.values(fila)[15], avance: Object.values(fila)[16], clave_911: Object.values(fila)[17], 
-                clave_CGIPV: Object.values(fila)[18], programa: Object.values(fila)[19], actual: lcORIGIN, update: lcUPDATE, id_cu : lnIDDepen})
+                clave_CGIPV: Object.values(fila)[18], programa: Object.values(fila)[19], actual: lcORIGIN, update: lcUPDATE})
 
             // Solo agregamos si el estatus es diferente
             /* if (estatusActual !== estatusExcel) {
@@ -1863,16 +1951,17 @@ lcSQL = `
         }
         else 
         {
-            if (mdepeBD.has(Object.values(fila)[1])) {
+
+/*             if (mdepeBD.has(Object.values(fila)[1])) {
                 lnIDDepen = mdepeBD.get(Object.values(fila)[1]).id
-            }
+            } */
             
             laActualiza.push({marcar: 1, id: Object.values(fila)[0], codigo: Object.values(fila)[0], nombre: Object.values(fila)[1], 
                 apellido_paterno: Object.values(fila)[2], apellido_materno: Object.values(fila)[3], curp: Object.values(fila)[4], correo_institucional: Object.values(fila)[5], 
                 siglas: Object.values(fila)[6], clav_siia: Object.values(fila)[7], desc_siia: Object.values(fila)[8], oferta: Object.values(fila)[9], 
                 ingreso: Object.values(fila)[10], curso: Object.values(fila)[11], condonar: Object.values(fila)[12], id_estado: Object.values(fila)[13], 
                 creditos: Object.values(fila)[14], cred_carr: Object.values(fila)[15], avance: Object.values(fila)[16], clave_911: Object.values(fila)[17], 
-                clave_CGIPV: Object.values(fila)[18], programa: Object.values(fila)[19], actual: '', update: 'NUEVO', id_cu : lnIDDepen})
+                clave_CGIPV: Object.values(fila)[18], programa: Object.values(fila)[19], actual: '', update: 'NUEVO'})
         }
     });
 

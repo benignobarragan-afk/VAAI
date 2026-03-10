@@ -111,17 +111,7 @@ const progap_estudia = (async (req, res) => {
         return res.render("sin_derecho")
     }
 
-    const lcSQL = `
-    SELECT id AS id, anio AS anio  
-        FROM PROGAP_CONVOCATORIA
-        ORDER BY 2 DESC
-    `
-
-    const rows = await util.gene_cons(lcSQL)
-
-    rows.push({id:0, anio:'TODOS'})
-    
-    return res.render("progap/progap_estudia", {rows, skin:req.skin})
+    return res.render("progap/progap_estudia", {skin:req.skin})
 });
 
 const progap_convoca = (async (req, res) => {

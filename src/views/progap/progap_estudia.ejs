@@ -90,35 +90,6 @@
                             
                             {}, {},
                             {
-                                view: "combo", id: "cmbSoli", name: "cmbSoli", value: "<%=rows[0].id%>",
-                                width: 300,
-                                options: {
-                                    fitMaster: false,
-                                    width: 300,
-                                    body: {
-                                        data: [
-                                    <% // 
-                                    /*
-                                            SELECT cSoli
-                                    GO TOP
-                                    SCAN
-                                    */
-                                            %>
-                                    //        { id: <% //  Response.Write(cSoli.id_cent) %>, value: "<% // Response.Write(ALLTRIM(cSoli.depen))%>" },
-                                    <% //  ENDSCAN %>
-                                    <%for (var i = 0; i < rows.length; i++) {%>
-                                    { id: "<%= rows[i].id%>", value: "<%=rows[i].anio%>" },
-                                    <%}%>
-
-                                ]
-                                    }
-                                },
-                                on: {
-                                    onChange: genera
-
-                                }
-                            },
-                            {
                                 view: "button",
                                 type: "icon",
                                 icon: "mdi mdi-upload",
