@@ -1805,10 +1805,13 @@ const progap_actu_estux = ( async (req, res) => {
     
     datosExcel = loExcel.datos;
 
-     //validando datos dependencia
+    //validando datos dependencia
     // 1. Mantenemos el catálogo como un Set ultra rápido
-    const centrosValidos = new Set(
-        depenBD.map(centro => centro.siglas.trim().toUpperCase())
+    const centrosValidos = new Map(
+        depenBD.map(centro => {
+            let claveLimpia = centro.siglas ? centro.siglas.trim().toUpperCase() : "";
+            return [claveLimpia, centro.id];
+        })
     );
 
     // 2. Filtramos los 10,000 registros usando la posición
@@ -1831,8 +1834,8 @@ const progap_actu_estux = ( async (req, res) => {
             creditos: Object.values(fila)[14], cred_carr: Object.values(fila)[15], avance: Object.values(fila)[16], clave_911: Object.values(fila)[17], 
             clave_CGIPV: Object.values(fila)[18], programa: Object.values(fila)[19], actual: '', update: 'CENTRO NO ENCONTRADO'})
         })
-        return res.json(laActualiza)
-    } 
+        return res.json({erro_arch: true, laActualiza})
+    }
 
     //valida ciclos
     lcSQL = `
@@ -1842,8 +1845,13 @@ const progap_actu_estux = ( async (req, res) => {
 
     const cicloBD = await util.gene_cons(lcSQL)
 
-    const ciclosValidos = new Set(
-        cicloBD.map(ciclo => ciclo.nombre.trim().toUpperCase())
+    const ciclosValidos = new Map(
+        cicloBD.map(ciclo => {
+            let claveLimpia = ciclo.nombre ? ciclo.nombre.trim().toUpperCase() : "";
+
+            return [claveLimpia, ciclo.id];
+            
+        })
     );
 
     // 2. Filtramos los 10,000 registros usando la posición
@@ -1866,7 +1874,7 @@ const progap_actu_estux = ( async (req, res) => {
             creditos: Object.values(fila)[14], cred_carr: Object.values(fila)[15], avance: Object.values(fila)[16], clave_911: Object.values(fila)[17], 
             clave_CGIPV: Object.values(fila)[18], programa: Object.values(fila)[19], actual: '', update: 'CICLO INGRESO NO ECONTRADO'})
         })
-        return res.json(laActualiza)
+        return res.json({erro_arch: true, laActualiza})
     }
 
     //valida programa
@@ -1877,8 +1885,11 @@ const progap_actu_estux = ( async (req, res) => {
 
     const prograBD = await util.gene_cons(lcSQL)
 
-    const prograValidos = new Set(
-        prograBD.map(progra => progra.clave_CGIPV.trim().toUpperCase())
+    const prograValidos = new Map(
+        prograBD.map(progra => {
+            let claveLimpia = progra.clave_CGIPV ? progra.clave_CGIPV.trim().toUpperCase() : "";
+            return [claveLimpia, progra.id];
+        })
     );
 
     // 2. Filtramos los 10,000 registros usando la posición
@@ -1900,7 +1911,7 @@ const progap_actu_estux = ( async (req, res) => {
             creditos: Object.values(fila)[14], cred_carr: Object.values(fila)[15], avance: Object.values(fila)[16], clave_911: Object.values(fila)[17], 
             clave_CGIPV: Object.values(fila)[18], programa: Object.values(fila)[19], actual: '', update: 'PROGRAMA NO ECONTRADO'})
         })
-        return res.json(laActualiza)
+        return res.json({erro_arch: true, laActualiza})
     }
 
     datosExcel.forEach(fila => {
@@ -1936,12 +1947,17 @@ const progap_actu_estux = ( async (req, res) => {
                 }
             }
             
+            lnIDDepe = centrosValidos.get(Object.values(fila)[6])
+            lnIDCicl = ciclosValidos.get(Object.values(fila)[10])
+            lnIDProg = prograValidos.get(Object.values(fila)[18])
+
             laActualiza.push({ marcar: (lcUPDATE!=''?1:0), id: Object.values(estatusActual)[0], codigo: Object.values(fila)[0], nombre: Object.values(fila)[1], 
                 apellido_paterno: Object.values(fila)[2], apellido_materno: Object.values(fila)[3], curp: Object.values(fila)[4], correo_institucional: Object.values(fila)[5], 
                 siglas: Object.values(fila)[6], clav_siia: Object.values(fila)[7], desc_siia: Object.values(fila)[8], oferta: Object.values(fila)[9], 
                 ingreso: Object.values(fila)[10], curso: Object.values(fila)[11], condonar: Object.values(fila)[12], id_estado: Object.values(fila)[13], 
                 creditos: Object.values(fila)[14], cred_carr: Object.values(fila)[15], avance: Object.values(fila)[16], clave_911: Object.values(fila)[17], 
-                clave_CGIPV: Object.values(fila)[18], programa: Object.values(fila)[19], actual: lcORIGIN, update: lcUPDATE})
+                clave_CGIPV: Object.values(fila)[18], programa: Object.values(fila)[19], actual: lcORIGIN, update: lcUPDATE, id_centro_universitario:(!lnIDDepe?0:lnIDDepe),
+                id_ciclo_ingreso: (!lnIDCicl?0:lnIDCicl), id_programa: (!lnIDProg?0:lnIDProg)})
 
             // Solo agregamos si el estatus es diferente
             /* if (estatusActual !== estatusExcel) {
@@ -1955,16 +1971,21 @@ const progap_actu_estux = ( async (req, res) => {
                 lnIDDepen = mdepeBD.get(Object.values(fila)[1]).id
             } */
             
+            lnIDDepe = centrosValidos.get(Object.values(fila)[6])
+            lnIDCicl = ciclosValidos.get(Object.values(fila)[10])
+            lnIDProg = prograValidos.get(Object.values(fila)[18])
+
             laActualiza.push({marcar: 1, id: Object.values(fila)[0], codigo: Object.values(fila)[0], nombre: Object.values(fila)[1], 
                 apellido_paterno: Object.values(fila)[2], apellido_materno: Object.values(fila)[3], curp: Object.values(fila)[4], correo_institucional: Object.values(fila)[5], 
                 siglas: Object.values(fila)[6], clav_siia: Object.values(fila)[7], desc_siia: Object.values(fila)[8], oferta: Object.values(fila)[9], 
                 ingreso: Object.values(fila)[10], curso: Object.values(fila)[11], condonar: Object.values(fila)[12], id_estado: Object.values(fila)[13], 
                 creditos: Object.values(fila)[14], cred_carr: Object.values(fila)[15], avance: Object.values(fila)[16], clave_911: Object.values(fila)[17], 
-                clave_CGIPV: Object.values(fila)[18], programa: Object.values(fila)[19], actual: '', update: 'NUEVO'})
+                clave_CGIPV: Object.values(fila)[18], programa: Object.values(fila)[19], actual: '', update: 'NUEVO', id_centro_universitario:(!lnIDDepe?0:lnIDDepe),
+                id_ciclo_ingreso: (!lnIDCicl?0:lnIDCicl), id_programa: (!lnIDProg?0:lnIDProg)})
         }
     });
 
-    return res.json(laActualiza)
+    return res.json({erro_arch: false, laActualiza})
 
 });
 

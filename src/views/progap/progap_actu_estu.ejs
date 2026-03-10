@@ -34,33 +34,63 @@
                                 name:"filePDF", id:"filePDF", 
                                 link:"list1",  upload:"/api/progap/progap_actu_estux",
                                     on:{
-                                            onUploadComplete:(response, file)=>{
+                                        onUploadComplete: function(response, file) {
+                                            var form = $$("formPDF");
+                                            form.enable();
+                                            form.hideProgress(); // Apagamos la barra de progreso
                                             
-                                            //console.log("si entro");
-                                            //console.log(response);
-                                            $$("formPDF").enable();
-                                            //$$("formPDF").hideProgress();
-
-                                            if (response.status === "error"){
-                                                //webix.message({ type:"info", text: response.message });
-                                                return false;
+                                            // 1. Manejo de error grave desde el backend (ej. archivo corrupto, error SQL en MariaDB)
+                                            if (response.status === "error") {
+                                                webix.alert({
+                                                    title: "Error del Servidor",
+                                                    type: "alert-error",
+                                                    text: response.message || "No se pudo procesar el archivo."
+                                                });
+                                                return false; // Detenemos la ejecución aquí
                                             }
+
+                                            // 2. Manejo de errores lógicos (los datos se leyeron, pero hay Centros Universitarios no válidos)
+                                            if (response.erro_arch) {
+                                                $$("cmdAplica").disable();
+                                                webix.alert({
+                                                    title: "Revisión necesaria",
+                                                    type: "alert-warning",
+                                                    text: "Hay algunos errores de los catálogos en el archivo. Revísalo y corrígelo para poder aplicar."
+                                                });
+                                            } else {
+                                                $$("cmdAplica").enable();
+                                                webix.message({ type: "success", text: "Archivo validado correctamente. Listo para aplicar." });
+                                            }
+
+                                            // 3. Limpiamos y cargamos la tabla SOLO si recibimos el arreglo de actualización
                                             $$("dtable").clearAll();
-                                            $$("dtable").parse(response);
-                                            //$$("dtable").filter("#marcar#", 1);
-                                            
+                                            if (response.laActualiza && response.laActualiza.length > 0) {
+                                                $$("dtable").parse(response.laActualiza);
+                                            }
                                         },
                                         onBeforeFileAdd: function (item) {
-                                        //$$("formPDF").showProgress();
-
-                                        $$("formPDF").disable(); 
-                                        //$$("textoPDF").setValue("Subiendo y procesando archivo...");
-                                        webix.message({ type:"info", text:"Subiendo y procesando archivo..."});
+                                            var form = $$("formPDF");
+                                            form.disable(); 
+                                            
+                                            // Activamos la barra de progreso para que el usuario sepa que Node.js está trabajando
+                                            webix.extend(form, webix.ProgressBar);
+                                            form.showProgress();
+                                            
+                                            webix.message({ type: "info", text: "Subiendo y procesando archivo de Excel..." });
                                             return true;
                                         },
-                                        onUploadFail: function (item){
-                                        $$("formPDF").enable(); 
-                                        },
+                                        onUploadFail: function (item) {
+                                            var form = $$("formPDF");
+                                            form.enable(); 
+                                            form.hideProgress();
+                                            
+                                            // Esto salta si el puerto 3000 se cae o hay un error 500/404 de red
+                                            webix.alert({
+                                                title: "Error de Conexión",
+                                                type: "alert-error",
+                                                text: "No se pudo establecer comunicación con el servidor. Intenta de nuevo."
+                                            });
+                                        }
 
                                     }
                                 },
@@ -72,6 +102,7 @@
                         },
                         {
                             view: "button",
+                            id:"cmdAplica",
                             type: "icon",
                             icon: "mdi mdi-database-import",
                             label: "Aplicar cambios",
@@ -80,6 +111,21 @@
                                 onItemClick: function () { 
                                     guardar();
                                 }
+                            }
+                        },
+                        {
+                            view: "button",
+                            type: "icon",
+                            icon: "mdi mdi-file-excel",
+                            label: "Descargar",
+                            width: 130,
+                            on: {
+                                onItemClick: function () { 
+                                    webix.toExcel("dtable", {
+                                        //spans:true,
+                                        //styles:true
+                                    });
+                                    }
                             }
                         },
                     ]},
