@@ -5,7 +5,7 @@
             <div id="view_ui"></div>
     </div>
     <script>
-        var tip = 0<% // Response.write(lnTipo)%>;
+        var tip = 0
         var w1;
         var mygrid;
 
@@ -84,9 +84,9 @@
                         },
                     ]},
                     {
-                        view:"datatable", id:"dtable", select:true, minHeight:500, scroll:true,
+                        view:"datatable", id:"dtable", select:true, minHeight:500, scroll:true, footer:true,
                         resizeColumn: true,  navigation: true, resizeRow:true, tooltip:true, 
-                        rightSplit:1, leftSplit:2,
+                        rightSplit:2, leftSplit:2,
                         scheme: {
                             $init: function (obj) {
                                 obj.fecha = (obj.fecha ? (obj.fecha == '01/01/1900'?'': convertDate(obj.fecha) ) : '');
@@ -96,7 +96,10 @@
                         columns:[	
                         { id: "marcar", 
                             header: ["", { content: "selectFilter" }], template: "{common.checkbox()}", width: 50,
-                            footer: { colspan: "2", content: "rowCount"} 
+                            //footer: { colspan: "2", content: "rowCount"} 
+                            footer: { colspan: "2", content: "summColumn", template: function(obj) {
+                                return "Total: " + obj.value;
+                            }}
                             
                         },
                         {
@@ -222,7 +225,25 @@
                                 content: "selectFilter", placeholder:"Filtrar",
                             }],
                         },
-                        ], footer:true,
+                        {
+                            id: "clave_CGIPV", width: 140,sort: "string", css: { 'text-align': 'left' }, 
+                            header: [{text:"Clave única",css:"my_style"}, {
+                                content: "textFilter", placeholder:"Filtrar",
+                            }],
+                        },
+                        {
+                            id: "actual", width: 300,sort: "string", css: { 'text-align': 'left' }, 
+                            header: [{text:"Valor actual",css:"my_style"}, {
+                                content: "excelFilter", placeholder:"Filtrar",
+                            }],
+                        },
+                        {
+                            id: "update", width: 300,sort: "string", css: { 'text-align': 'left' }, 
+                            header: [{text:"Cambios",css:"my_style"}, {
+                                content: "excelFilter", placeholder:"Filtrar",
+                            }],
+                        },
+                        ], 
                     },
                 ]
             });

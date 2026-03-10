@@ -1775,8 +1775,8 @@ const progap_actu_estux = ( async (req, res) => {
 
     let lcSQL = `
     SELECT a.codigo, a.nombre, a.apellido_paterno, a.apellido_materno, a.curp, a.correo_institucional, d.siglas, p.clav_siia, p.programa as desc_siia, 
-            p.oferta, ci.nombre AS ingreso, cc.nombre AS curso, cn.nombre AS condonar, a.id_estado, a.creditos, p.cred_carr, a.avance, p.clave_911, 
-            p.clave_CGIPV, p.programa
+            p.oferta, REPLACE(ci.nombre, '-', '') AS ingreso, REPLACE(cc.nombre, '-', '') AS curso, REPLACE(cn.nombre, '-', '') AS condonar, a.id_estado, 
+            a.creditos, p.cred_carr, a.avance, p.clave_911, p.clave_CGIPV, p.programa
         FROM progap_alumno a 
             LEFT JOIN progap_dependencias d ON a.id_centro_universitario = d.id
             LEFT JOIN progap_programa p ON a.id_programa = p.id
@@ -1808,7 +1808,7 @@ lcSQL = `
     
 
     datosExcel = loExcel.datos;
-    return res.json(datosExcel)
+
     let lcUPDATE = "", lcORIGIN = "", laActualiza = []
 
     datosExcel.forEach(fila => {
@@ -1825,7 +1825,19 @@ lcSQL = `
             const estatusActual = mapaBD.get(idExcel);
             //console.log(fila)
             //console.log(estatusActual)
-            for (i = 0; i < 6; i++){
+            for (i = 1; i < 7; i++){
+                if (Object.values(estatusActual)[i] != Object.values(fila)[i]){
+                    lcUPDATE = lcUPDATE + (lcUPDATE != ''? ', ': '') + Object.keys(estatusActual)[i] + "= '" + (!Object.values(fila)[i]?'':Object.values(fila)[i]) + "'"
+                    lcORIGIN = lcORIGIN + (lcORIGIN != ''? ', ': '') + Object.keys(estatusActual)[i] + "= '" + (!Object.values(estatusActual)[i]?'':Object.values(estatusActual)[i]) + "'"
+                }
+            }
+            for (i = 10; i < 13; i++){
+                if (Object.values(estatusActual)[i] != Object.values(fila)[i]){
+                    lcUPDATE = lcUPDATE + (lcUPDATE != ''? ', ': '') + Object.keys(estatusActual)[i] + "= '" + (!Object.values(fila)[i]?'':Object.values(fila)[i]) + "'"
+                    lcORIGIN = lcORIGIN + (lcORIGIN != ''? ', ': '') + Object.keys(estatusActual)[i] + "= '" + (!Object.values(estatusActual)[i]?'':Object.values(estatusActual)[i]) + "'"
+                }
+            }
+            for (i = 18; i < 19; i++){
                 if (Object.values(estatusActual)[i] != Object.values(fila)[i]){
                     lcUPDATE = lcUPDATE + (lcUPDATE != ''? ', ': '') + Object.keys(estatusActual)[i] + "= '" + (!Object.values(fila)[i]?'':Object.values(fila)[i]) + "'"
                     lcORIGIN = lcORIGIN + (lcORIGIN != ''? ', ': '') + Object.keys(estatusActual)[i] + "= '" + (!Object.values(estatusActual)[i]?'':Object.values(estatusActual)[i]) + "'"
@@ -1836,10 +1848,13 @@ lcSQL = `
                     lnIDDepen = mdepeBD.get(Object.values(fila)[1]).id
                 }
             }
-
-            laActualiza.push({ marcar: (lcUPDATE!=''?1:0), id: Object.values(estatusActual)[6], clave_cgipv: Object.values(fila)[0], siglas: Object.values(fila)[1], 
-                nivel: Object.values(fila)[2], programa: Object.values(fila)[3], clave_911: Object.values(fila)[4], 
-                duracion: Object.values(fila)[5], actual: lcORIGIN, update: lcUPDATE, id_cu : lnIDDepen})
+            
+            laActualiza.push({ marcar: (lcUPDATE!=''?1:0), id: Object.values(estatusActual)[0], codigo: Object.values(fila)[0], nombre: Object.values(fila)[1], 
+                apellido_paterno: Object.values(fila)[2], apellido_materno: Object.values(fila)[3], curp: Object.values(fila)[4], correo_institucional: Object.values(fila)[5], 
+                siglas: Object.values(fila)[6], clav_siia: Object.values(fila)[7], desc_siia: Object.values(fila)[8], oferta: Object.values(fila)[9], 
+                ingreso: Object.values(fila)[10], curso: Object.values(fila)[11], condonar: Object.values(fila)[12], id_estado: Object.values(fila)[13], 
+                creditos: Object.values(fila)[14], cred_carr: Object.values(fila)[15], avance: Object.values(fila)[16], clave_911: Object.values(fila)[17], 
+                clave_CGIPV: Object.values(fila)[18], programa: Object.values(fila)[19], actual: lcORIGIN, update: lcUPDATE, id_cu : lnIDDepen})
 
             // Solo agregamos si el estatus es diferente
             /* if (estatusActual !== estatusExcel) {
@@ -1852,9 +1867,12 @@ lcSQL = `
                 lnIDDepen = mdepeBD.get(Object.values(fila)[1]).id
             }
             
-            laActualiza.push({marcar: 1, id: Object.values(fila)[0], clave_cgipv: Object.values(fila)[0], siglas: Object.values(fila)[1], 
-                    nivel: Object.values(fila)[2], programa: Object.values(fila)[3], clave_911: Object.values(fila)[4], 
-                    duracion: Object.values(fila)[5], actual: '', update: 'NUEVO', id_cu : lnIDDepen})
+            laActualiza.push({marcar: 1, id: Object.values(fila)[0], codigo: Object.values(fila)[0], nombre: Object.values(fila)[1], 
+                apellido_paterno: Object.values(fila)[2], apellido_materno: Object.values(fila)[3], curp: Object.values(fila)[4], correo_institucional: Object.values(fila)[5], 
+                siglas: Object.values(fila)[6], clav_siia: Object.values(fila)[7], desc_siia: Object.values(fila)[8], oferta: Object.values(fila)[9], 
+                ingreso: Object.values(fila)[10], curso: Object.values(fila)[11], condonar: Object.values(fila)[12], id_estado: Object.values(fila)[13], 
+                creditos: Object.values(fila)[14], cred_carr: Object.values(fila)[15], avance: Object.values(fila)[16], clave_911: Object.values(fila)[17], 
+                clave_CGIPV: Object.values(fila)[18], programa: Object.values(fila)[19], actual: '', update: 'NUEVO', id_cu : lnIDDepen})
         }
     });
 
