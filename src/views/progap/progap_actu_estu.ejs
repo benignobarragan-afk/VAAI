@@ -296,31 +296,46 @@
 
     }
 
-    function guardar(){
-        var checked = [];
-        $$("dtable").data.each(function (obj) {
-            if (obj.marcar == 1 && obj.update != obj.actual) {
-                checked.push({id:obj.id, update:obj.update});
-            }
+    function guardar() {
+        // Webix filtra la tabla y nos devuelve solo los objetos marcados
+        var checked = $$("dtable").find(function(obj) {
+            return obj.marcar == 1;
         });
 
+        // Pequeña validación por si le dan a guardar sin marcar nada
+        if (checked.length === 0) {
+            webix.message({ type: "warning", text: "Por favor, marca al menos un registro." });
+            return;
+        }
+
         Swal.fire({
-				title: '¿Seguro de aplicar el(los) ' + checked.length + ' cambio(s)?', icon: 'warning', showCancelButton: true,
-				confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Aceptar',
-			}).then((result) => {
-				if(result.isConfirmed){
-					webix.ajax().headers({"Content-Type": "application/json"})
-                        .post("/api/progap/progap_actu_estux2", JSON.stringify(checked)).then(function (res) {
-						webix.message({ type: (res.json().error ? "error" : "success"), text: res.json().mensage, expire: 2500 });
-						if (!res.json().error) {
-							//$$("myform").clear();
-							$$("dtable").clearAll();
-						}
-					});
-				}
-			}) 
-        //console.log(checked)
-    } 
+            title: '¿Seguro de aplicar el(los) ' + checked.length + ' cambio(s)?', 
+            icon: 'warning', 
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6', 
+            cancelButtonColor: '#d33', 
+            confirmButtonText: 'Aceptar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                webix.ajax().headers({"Content-Type": "application/json"})
+                    .post("/api/progap/progap_actu_estux2", JSON.stringify(checked))
+                    .then(function (res) {
+                        var response = res.json();
+                        webix.message({ 
+                            type: (response.error ? "error" : "success"), 
+                            text: response.mensage, 
+                            expire: 2500 
+                        });
+                        
+                        if (!response.error) {
+                            $$("dtable").clearAll();
+                        }
+                    }).fail(function(err){
+                        webix.message({ type: "error", text: "Error de comunicación con el servidor." });
+                    });
+            }
+        });
+    }
     
     </script>
 </body>

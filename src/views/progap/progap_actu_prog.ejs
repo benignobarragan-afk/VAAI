@@ -34,33 +34,47 @@
                                 name:"filePDF", id:"filePDF", 
                                 link:"list1",  upload:"/api/progap/progap_actu_progx",
                                     on:{
-                                            onUploadComplete:(response, file)=>{
-                                            
-                                            //console.log("si entro");
-                                            //console.log(response);
+                                        onUploadComplete:(response, file)=>{
                                             $$("formPDF").enable();
                                             //$$("formPDF").hideProgress();
 
-                                            if (response.status === "error"){
-                                                //webix.message({ type:"info", text: response.message });
+                                            if (response.status === "error") {
+                                                // Descomentamos el mensaje, pero lo cambiamos a type:"error" para que salga en rojo
+                                                webix.message({ 
+                                                    type: "error", 
+                                                    text: response.message || "Error al procesar el archivo en el servidor.",
+                                                    expire: 5000 
+                                                });
                                                 return false;
                                             }
-                                            $$("dtable").clearAll();
-                                            $$("dtable").parse(response);
-                                            //$$("dtable").filter("#marcar#", 1);
-                                            
+                                            try {
+                                                $$("dtable").clearAll();
+                                                $$("dtable").parse(response);
+                                                webix.message({ type: "success", text: "Archivo cargado y procesado correctamente." });
+                                            } catch (e) {
+                                                console.error("Error al procesar la respuesta en la tabla:", e);
+                                                webix.message({ type: "error", text: "El servidor devolvió datos con un formato incorrecto." });
+                                            }  
                                         },
-                                        onBeforeFileAdd: function (item) {
-                                        //$$("formPDF").showProgress();
 
-                                        $$("formPDF").disable(); 
-                                        //$$("textoPDF").setValue("Subiendo y procesando archivo...");
-                                        webix.message({ type:"info", text:"Subiendo y procesando archivo..."});
+                                        onBeforeFileAdd: function (item) {
+                                            $$("formPDF").disable(); 
+                                            webix.message({ type: "info", text: "Subiendo y procesando archivo...", expire: 3000 });
                                             return true;
                                         },
-                                        onUploadFail: function (item){
-                                        $$("formPDF").enable(); 
+
+                                        onFileUploadError: function(item, response) {
+                                            $$("formPDF").enable();
+                                            webix.message({ 
+                                                type: "error", 
+                                                text: "Fallo la comunicación con el servidor al intentar subir el archivo." 
+                                            });
                                         },
+
+                                        onUploadFail: function (item){
+                                            $$("formPDF").enable(); 
+                                            webix.message({ type: "error", text: "La carga del archivo ha fallado." });
+                                        }
 
                                     }
                                 },

@@ -39,7 +39,7 @@ router.post("/progap_actu_estux", midd.verifyToken, upload.single('upload'), pro
 router.get("/progap_focamx2", midd.verifyToken, progapCtrl.progap_focamx2);
 router.post("/progap_focamx3", midd.verifyToken, progapCtrl.progap_focamx3);
 router.get("/progap_focamx4", midd.verifyToken, progapCtrl.progap_focamx4);
-
+router.post("/progap_actu_estux2", midd.verifyToken, progapCtrl.progap_actu_estux2);
 
 
 module.exports = router

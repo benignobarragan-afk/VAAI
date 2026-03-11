@@ -69,9 +69,9 @@ const progap_estudiax = (async (req, res) => {
     }
 
     const lcSQL = `
-    SELECT ROW_NUMBER() OVER (ORDER BY a.nombre, a.apellido_paterno, a.apellido_materno) as rank, a.id, a.codigo, a.nombre, a.apellido_paterno, 
-            a.apellido_materno, a.curp, a.correo_institucional, d.siglas, p.clav_siia, p.programa as desc_siia, p.oferta, ci.nombre AS ingreso, 
-            cc.nombre AS curso, cn.nombre AS condonar, a.id_estado, a.creditos, p.cred_carr, a.avance, p.clave_911, p.clave_CGIPV, p.programa
+    SELECT ROW_NUMBER() OVER (ORDER BY a.nombre, a.apellido_paterno, a.apellido_materno) as rank, a.id, a.codigo, a.nombre, a.apellido_paterno, a.apellido_materno, 
+            a.curp, a.correo_institucional, d.siglas, p.clav_siia, p.programa as desc_siia, p.oferta, ci.nombre AS ingreso, cc.nombre AS curso, 
+            cn.nombre AS condonar, if(a.id_estado = 1, "Activo", "Inactivo") as status, a.creditos, p.cred_carr, a.avance, p.clave_911, p.clave_CGIPV, p.programa
         FROM progap_alumno a 
             LEFT JOIN progap_dependencias d ON a.id_centro_universitario = d.id
             LEFT JOIN progap_programa p ON a.id_programa = p.id
@@ -1775,7 +1775,7 @@ const progap_actu_estux = ( async (req, res) => {
     // Creamos el mapa usando el ID como llave para búsqueda rápida
     const mapaBD = new Map();
     datosBD.forEach(reg => {
-        mapaBD.set(reg.codigo.toString(), reg);
+        mapaBD.set(reg.codigo.toString().trim(), reg);
     });
 
     lcSQL = `
@@ -1917,7 +1917,7 @@ const progap_actu_estux = ( async (req, res) => {
             //console.log(estatusActual)
             for (i = 1; i < 7; i++){
                 if (Object.values(estatusActual)[i] != Object.values(fila)[i]){
-                    if(i == 7){
+                    if(i == 6){
                         lcUPDATER = lcUPDATER + (lcUPDATER != ''? ', ': '') +  " id_centro_universitario = " + centrosValidos.get(Object.values(fila)[6]) 
                     }else{
                         lcUPDATER = lcUPDATER + (lcUPDATER != ''? ', ': '') + Object.keys(estatusActual)[i] + "= '" + (!Object.values(fila)[i]?'':Object.values(fila)[i]) + "'"
@@ -2144,6 +2144,63 @@ const progap_focamx4 = (async (req, res) => {
     
 });
 
+const progap_actu_estux2 = (async (req, res) => {
+
+    
+    //console.log(req.body)
+    let lcSQL = '', rows = [], lnCambios = 0, lnNuevo = 0, lnCiclo = 0
+
+    rows = await util.gene_cons("SELECT max(id) AS id FROM progap_ciclos WHERE estado = 1")
+
+    lnCiclo = rows[0].id
+
+    for(i = 0; i < req.body.length; i++){
+
+        if(req.body[i].update == 'NUEVO'){
+
+            lcSQL = `
+            SELECT codigo 
+                FROM progap_alumno 
+                WHERE codigo = ?
+            `
+
+            rows = await util.gene_cons(lcSQL, [req.body[i].codigo])
+            console.log(rows)
+            console.log(rows.length)
+
+            if(rows.length >= 0){
+                lcSQL = `
+                INSERT INTO progap_alumno (codigo, nombre, apellido_paterno, apellido_materno, curp, id_centro_universitario, id_programa, correo_institucional, id_ciclo_ingreso,
+		                id_ciclo_curso, id_ciclo_condonar, id_estado, creditos, avance, cambios) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,CONCAT(?,'|INSERT|',NOW(),CHR(13)))
+                `
+
+                console.log(lcSQL)
+                rows = await util.gene_cons(lcSQL, [req.body[i].codigo, req.body[i].nombre, req.body[i].apellido_paterno, req.body[i].apellido_materno, req.body[i].curp, 
+                        req.body[i].id_centro_universitario, req.body[i].id_programa, req.body[i].correo_institucional, req.body[i].id_ciclo_ingreso, lnCiclo, lnCiclo, 
+                        1, (!req.body[i].creditos?0:req.body[i].creditos), (!req.body[i].avance?0:req.body[i].avance), req.userId])
+                
+                lnNuevo = lnNuevo + Number(rows.affectedRows)
+            }
+
+        }else {
+            lcSQL = `UPDATE progap_alumno SET ${req.body[i].lcUPDATER}, cambios = CONCAT(IFNULL(cambios, ''),'${req.body[i].codigo}|INSERT|',NOW(),CHR(13)) WHERE codigo = '${req.body[i].codigo}'`
+            rows = await util.gene_cons(lcSQL, [])
+            //console.log(rows)
+            lnCambios = lnCambios + Number(rows.affectedRows)
+        }
+        
+
+
+        
+        
+        
+        //console.log(rows)
+    }
+    //console.log(lnCambios)
+
+    return res.json({"error":false, "mensage":"Se aplicaron " + lnCambios + " cambios exitosamente y se insertaron " + lnNuevo + " registros"})
+});
+
 
 module.exports = {
     progap_usuariox,
@@ -2174,4 +2231,5 @@ module.exports = {
     progap_focamx2,
     progap_focamx3,
     progap_focamx4,
+    progap_actu_estux2
 }
