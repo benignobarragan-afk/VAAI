@@ -64,16 +64,20 @@ const progap_estudiax = (async (req, res) => {
 
     let lcWhere = ''
 
-    if (req.query.llTodo =! 1){
-        lcWhere = " WHERE a.id_estado = 2 "
+    if (req.query.llTodo != 1){
+        lcWhere = " WHERE a.id_estado = 1 "
     }
 
-
     const lcSQL = `
-    SELECT ROW_NUMBER() OVER (ORDER BY a.nombre, a.apellido_paterno, a.apellido_materno) as rank, a.id, a.codigo, CONCAT(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, a.correo_institucional,
-            d.siglas, if(IFNULL(a.id_estado, 0) = 1, 'Activo', 'Inactivo') AS status
+    SELECT ROW_NUMBER() OVER (ORDER BY a.nombre, a.apellido_paterno, a.apellido_materno) as rank, a.id, a.codigo, a.nombre, a.apellido_paterno, 
+            a.apellido_materno, a.curp, a.correo_institucional, d.siglas, p.clav_siia, p.programa as desc_siia, p.oferta, ci.nombre AS ingreso, 
+            cc.nombre AS curso, cn.nombre AS condonar, a.id_estado, a.creditos, p.cred_carr, a.avance, p.clave_911, p.clave_CGIPV, p.programa
         FROM progap_alumno a 
-            LEFT JOIN progap_dependencias d ON a.id_centro_universitario = d.id 
+            LEFT JOIN progap_dependencias d ON a.id_centro_universitario = d.id
+            LEFT JOIN progap_programa p ON a.id_programa = p.id
+            LEFT JOIN progap_ciclos ci ON a.id_ciclo_ingreso = ci.id
+            LEFT JOIN progap_ciclos cc ON a.id_ciclo_curso = cc.id
+            LEFT JOIN progap_ciclos cn ON a.id_ciclo_condonar = cn.id
             ${(lcWhere.length > 0?lcWhere:'')}
         ORDER BY a.nombre, a.apellido_paterno, a.apellido_materno
     `
@@ -2049,7 +2053,7 @@ const progap_focamx3 = (async (req, res) => {
     }else {
         lnStatus = 4;
         lnCorreo = 5;
-        lcTexto = rows[0].nombre + ',' + rows[0].ciclo + ',' + rows[0].folio + ',' + rows[0].motivo 
+        lcTexto = rows[0].nombre + ',' + rows[0].ciclo + ',' + rows[0].folio + ',' + req.body.nota
         if (!req.body.nota){
             return res.json({"status" : "error", "message": "Faltó la nota del rechazo"})
         }
@@ -2063,10 +2067,9 @@ const progap_focamx3 = (async (req, res) => {
         WHERE uid = ?
     `    
     const laCampos = lcTexto.split(',');
-
-    lcResp = other_utils.envi_corr(lnCorreo, 'progap.vaai@udg.mx', laCampos);
     
     const update = await util.gene_cons(lcSQL, [lnStatus, (!req.body.nota?'':req.body.nota), req.userId, req.body.id])
+    lcResp = other_utils.envi_corr(lnCorreo, 'progap.vaai@udg.mx', laCampos);
 
 
 
