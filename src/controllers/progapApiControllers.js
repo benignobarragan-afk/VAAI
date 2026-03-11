@@ -2077,7 +2077,7 @@ const progap_focamx3 = (async (req, res) => {
     const laCampos = lcTexto.split(',');
     
     const update = await util.gene_cons(lcSQL, [lnStatus, (!req.body.nota?'':req.body.nota), req.userId, req.body.id])
-    lcResp = other_utils.envi_corr(lnCorreo, 'progap.vaai@udg.mx', laCampos);
+    lcResp = other_utils.envi_corr(lnCorreo, rows[0].correo_institucional, laCampos);
 
 
 
