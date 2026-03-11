@@ -154,16 +154,16 @@ const progap_focamx = (async (req, res) => {
     let rows
     if(llRevisor){
         lcSQL = `
-        SELECT ROW_NUMBER() OVER (ORDER BY a.id) AS rank, tf.uid as id, tf.folio,  concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, a.codigo, 
+        SELECT ROW_NUMBER() OVER (ORDER BY tf.folio) AS rank, tf.uid as id, tf.folio,  concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, a.codigo, 
                 d.siglas as dependencia, CONCAT(p.clave_cgipv, ' - ', p.programa) AS programa, DATE_FORMAT(tf.fecha_solicitud, '%d/%m/%Y') AS fecha_solicitud,
                 if(tf.id_estado = 4, "Rechazado", if(tf.id_estado = 3, "Solicitud completa", if(tf.id_estado = 5, "Es necesario corregir", 
-                if(tf.id_estado = 2, "Enviado a revisión", "Sin enviar")))) AS status
+                if(tf.id_estado = 2, "Enviado a revisión", "Sin enviar")))) AS status, tf.comentario_estado
             FROM progap_tram_focam tf
                 LEFT JOIN progap_alumno a on tf.codigo = a.codigo 
                 LEFT JOIN progap_dependencias d ON tf.id_centro_universitario = d.id
                 LEFT JOIN progap_programa p ON tf.id_programa = p.id
             WHERE tf.id_convocatoria = ? ${(req.query.llTodo!='1'?' AND tf.id_estado = 2 AND tf.id_centro_universitario IN (SELECT id FROM gen_dere_progap WHERE user_id = ?)':'')}
-            ORDER BY a.id
+            ORDER BY tf.folio
         `
         rows = await util.gene_cons(lcSQL, [(!req.query.lnConv?0:req.query.lnConv),req.userId])
     }
@@ -1786,7 +1786,7 @@ const progap_actu_estux = ( async (req, res) => {
 
     const depenBD = await util.gene_cons(lcSQL)
 
-    let lcUPDATE = "", lcORIGIN = "", laActualiza = []
+    let lcUPDATER = "", lcUPDATE = "", lcORIGIN = "", laActualiza = []
 
     
     datosExcel = loExcel.datos;
@@ -1907,6 +1907,7 @@ const progap_actu_estux = ( async (req, res) => {
         //const estatusExcel = fila["ESTATUS"];  // Ajusta al nombre de tu columna en Excel
 
         // Si el ID existe en la BD
+        lcUPDATER = ""
         lcUPDATE = ""
         lcORIGIN = ""
         lnIDDepen = ''
@@ -1916,18 +1917,25 @@ const progap_actu_estux = ( async (req, res) => {
             //console.log(estatusActual)
             for (i = 1; i < 7; i++){
                 if (Object.values(estatusActual)[i] != Object.values(fila)[i]){
+                    if(i == 7){
+                        lcUPDATER = lcUPDATER + (lcUPDATER != ''? ', ': '') +  " id_centro_universitario = " + centrosValidos.get(Object.values(fila)[6]) 
+                    }else{
+                        lcUPDATER = lcUPDATER + (lcUPDATER != ''? ', ': '') + Object.keys(estatusActual)[i] + "= '" + (!Object.values(fila)[i]?'':Object.values(fila)[i]) + "'"
+                    }
                     lcUPDATE = lcUPDATE + (lcUPDATE != ''? ', ': '') + Object.keys(estatusActual)[i] + "= '" + (!Object.values(fila)[i]?'':Object.values(fila)[i]) + "'"
                     lcORIGIN = lcORIGIN + (lcORIGIN != ''? ', ': '') + Object.keys(estatusActual)[i] + "= '" + (!Object.values(estatusActual)[i]?'':Object.values(estatusActual)[i]) + "'"
                 }
             }
             for (i = 10; i < 11; i++){
                 if (Object.values(estatusActual)[i] != Object.values(fila)[i]){
+                    lcUPDATER = lcUPDATER + (lcUPDATER != ''? ', ': '') +  " id_ciclo_ingreso = " + ciclosValidos.get(Object.values(fila)[10])
                     lcUPDATE = lcUPDATE + (lcUPDATE != ''? ', ': '') + Object.keys(estatusActual)[i] + "= '" + (!Object.values(fila)[i]?'':Object.values(fila)[i]) + "'"
                     lcORIGIN = lcORIGIN + (lcORIGIN != ''? ', ': '') + Object.keys(estatusActual)[i] + "= '" + (!Object.values(estatusActual)[i]?'':Object.values(estatusActual)[i]) + "'"
                 }
             }
             for (i = 18; i < 19; i++){
                 if (Object.values(estatusActual)[i] != Object.values(fila)[i]){
+                    lcUPDATER = lcUPDATER + (lcUPDATER != ''? ', ': '') +  " id_programa = " + prograValidos.get(Object.values(fila)[18])
                     lcUPDATE = lcUPDATE + (lcUPDATE != ''? ', ': '') + Object.keys(estatusActual)[i] + "= '" + (!Object.values(fila)[i]?'':Object.values(fila)[i]) + "'"
                     lcORIGIN = lcORIGIN + (lcORIGIN != ''? ', ': '') + Object.keys(estatusActual)[i] + "= '" + (!Object.values(estatusActual)[i]?'':Object.values(estatusActual)[i]) + "'"
                 }
@@ -1943,7 +1951,7 @@ const progap_actu_estux = ( async (req, res) => {
                 ingreso: Object.values(fila)[10], curso: Object.values(fila)[11], condonar: Object.values(fila)[12], id_estado: Object.values(fila)[13], 
                 creditos: Object.values(fila)[14], cred_carr: Object.values(fila)[15], avance: Object.values(fila)[16], clave_911: Object.values(fila)[17], 
                 clave_CGIPV: Object.values(fila)[18], programa: Object.values(fila)[19], actual: lcORIGIN, update: lcUPDATE, id_centro_universitario:(!lnIDDepe?0:lnIDDepe),
-                id_ciclo_ingreso: (!lnIDCicl?0:lnIDCicl), id_programa: (!lnIDProg?0:lnIDProg)})
+                id_ciclo_ingreso: (!lnIDCicl?0:lnIDCicl), id_programa: (!lnIDProg?0:lnIDProg), lcUPDATER})
 
             // Solo agregamos si el estatus es diferente
             /* if (estatusActual !== estatusExcel) {

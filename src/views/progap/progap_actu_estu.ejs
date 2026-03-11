@@ -132,7 +132,7 @@
                     {
                         view:"datatable", id:"dtable", select:true, minHeight:500, scroll:true, footer:true,
                         resizeColumn: true,  navigation: true, resizeRow:true, tooltip:true, 
-                        rightSplit:2, leftSplit:2,
+                        rightSplit:2, leftSplit:1,
                         scheme: {
                             $init: function (obj) {
                                 obj.fecha = (obj.fecha ? (obj.fecha == '01/01/1900'?'': convertDate(obj.fecha) ) : '');

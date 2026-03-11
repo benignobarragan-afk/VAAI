@@ -42,11 +42,18 @@
         //function doOnLoad() {
         webix.ready(function(){
 
-            webix.ui.datafilter.rowCount = webix.extend({
-                refresh: function (master, node, value) {
-                    node.firstChild.innerHTML = "Total: " + master.count();
+            webix.ui.datafilter.conteoFilas = {
+                // 1. Render: Webix lo exige para saber qué dibujar al cargar la página por primera vez
+                render: function(master, config) {
+                    return " "; // Retornamos un espacio en blanco inicial
+                },
+                
+                // 2. Refresh: Se ejecuta un milisegundo después y cada vez que filtras
+                refresh: function(master, node, value) {
+                    var total = master.count(); 
+                    node.innerHTML = "<span style='font-weight:bold;'>Total de registros: " + total + "</span>";
                 }
-            }, webix.ui.datafilter.summColumn)
+            };
 
 
             var ui = webix.ui({
@@ -316,6 +323,10 @@
                                     <a href="#" onClick="deta_grup('${obj.id}');">
                                         <i style='font-size:26px;color:#2b96cc;' class='fa-solid fa-magnifying-glass'></i>
                                     </a>`
+                            },
+                            footer: { 
+                                colspan: "3", 
+                                content: "conteoFilas" // Usamos el nombre exacto que definimos arriba
                             }
                         },
                         {
@@ -372,8 +383,20 @@
                                 var item = this.getItem(id.row);
                                 var visor = $$("visor_progap"); // ID del componente donde se verá la imagen/PDF
                                 var header = $$("head_visor"); // Seleccionamos el contenedor del título
-                                header.define("header", `<div class='header_multiline'>Tramite de: ${item.nombre} </br> ${item.programa}</div>`);
+                                //header.define("header", `<div class='header_multiline'>Tramite de: ${item.nombre} </br> ${item.programa} </br> ${item.comentario_estado}</div>`);
+                                if (item.status == "Rechazado"){
+                                    header.define("header", `<div class='header_multiline'>Tramite de: ${item.nombre} </br> ${item.programa} </br> Motivo rechazo: ${item.comentario_estado}</div>`);
+                                    header.define("headerHeight", 80);
+                                    header.resize();
+                                }else {
+                                    header.define("header", `<div class='header_multiline'>Tramite de: ${item.nombre} </br> ${item.programa} </div>`);
+                                    header.define("headerHeight", 42);
+                                    header.resize();
+                                }
                                 header.refresh(); // VITAL para que Webix repinte el texto
+
+                                
+
 
                                 // Agregamos una máscara de carga (opcional pero recomendado)
                                 webix.extend(visor, webix.ProgressBar);
