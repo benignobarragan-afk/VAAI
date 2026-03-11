@@ -63,40 +63,22 @@ const progap_estudiax = (async (req, res) => {
     }
 
     let lcWhere = ''
-/*     const lcSQL = `
-    SELECT ROW_NUMBER() OVER (ORDER BY nombre_completo) AS rank, id, codigo, nombre_completo AS nombre, correo, campus, if(estado = 1, "Activo", "Inactivo") AS status 
-        FROM progap_accesos
-        ${(!req.query.lnConv?'':'WHERE codigo IN (SELECT usuario FROM progap_usuarios WHERE id_convocatoria = '+ req.query.lnConv) + ')'}
-        order by nombre_completo
-    `
- 
-    const lcSQL = `
-    SELECT ROW_NUMBER() OVER (ORDER BY a.nombre, a.apellido_paterno, a.apellido_materno) as rank, a.id, a.codigo, CONCAT(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, a.correo_institucional,
-            d.siglas, if(IFNULL(a.id_estado, 0) < 3, 'Inactivo', 'Activo') AS status
-        FROM progap_alumnos a 
-            LEFT JOIN progap_dependencias d ON a.id_centro_universitario = d.id 
-        ${!req.query.lnConv?'':'WHERE a.id_convocatoria = ' + req.query.lnConv}
-        ORDER BY a.nombre, a.apellido_paterno, a.apellido_materno
-    `
-*/
-    if (req.query.lnConv > 0){
-        lcWhere = `WHERE a.codigo in 
-            (SELECT codigo 
-                FROM progap_tram_focam 
-                WHERE id_convocatoria = ?)
-        `
+
+    if (req.query.llTodo =! 1){
+        lcWhere = " WHERE a.id_estado = 2 "
     }
+
 
     const lcSQL = `
     SELECT ROW_NUMBER() OVER (ORDER BY a.nombre, a.apellido_paterno, a.apellido_materno) as rank, a.id, a.codigo, CONCAT(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, a.correo_institucional,
-            d.siglas, if(IFNULL(a.id_estado, 0) < 3, 'Inactivo', 'Activo') AS status
+            d.siglas, if(IFNULL(a.id_estado, 0) = 1, 'Activo', 'Inactivo') AS status
         FROM progap_alumno a 
             LEFT JOIN progap_dependencias d ON a.id_centro_universitario = d.id 
             ${(lcWhere.length > 0?lcWhere:'')}
         ORDER BY a.nombre, a.apellido_paterno, a.apellido_materno
     `
 
-    const rows = await util.gene_cons(lcSQL, [req.query.lnConv])
+    const rows = await util.gene_cons(lcSQL, [])
     return res.json(rows)
 });
 
@@ -2040,11 +2022,14 @@ const progap_focamx3 = (async (req, res) => {
         return res.json({"status" : "error", "message": "No tienes permisos para aplicar cambio"})
     }
     
-    let lnStatus = 0;
+    let lnStatus = 0, lnCorreo = 0, lcTexto = '';
     let lcSQL = `
-    SELECT *
-        FROM progap_tram_focam 
-        where id = ?
+    SELECT t.folio, concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre,
+            c.nombre as ciclo, a.correo_institucional, t.id_estado, t.comentario_estado AS motivo
+        FROM progap_tram_focam t
+            LEFT JOIN progap_alumno a ON t.codigo = a.codigo
+            LEFT JOIN progap_ciclos c ON t.id_ciclo_condonar = c.id
+        WHERE uid = ?
     `
 
     const rows = await util.gene_cons(lcSQL, [req.body.id])
@@ -2059,8 +2044,12 @@ const progap_focamx3 = (async (req, res) => {
 
     if(req.body.acepta){
         lnStatus = 3;
+        lnCorreo = 4;
+        lcTexto = rows[0].nombre + ',' + rows[0].ciclo + ',' + rows[0].folio
     }else {
         lnStatus = 4;
+        lnCorreo = 5;
+        lcTexto = rows[0].nombre + ',' + rows[0].ciclo + ',' + rows[0].folio + ',' + rows[0].motivo 
         if (!req.body.nota){
             return res.json({"status" : "error", "message": "Faltó la nota del rechazo"})
         }
@@ -2071,10 +2060,15 @@ const progap_focamx3 = (async (req, res) => {
         SET id_estado = ?, 
             comentario_estado = ?, 
             cambios = CONCAT(IFNULL(cambios, ''), 'UPDATE|', ?, '|', DATE_FORMAT(NOW(), "%d/%m/%Y %H:%m:%s"), CHR(13)) 
-        WHERE id = ?
-    `
+        WHERE uid = ?
+    `    
+    const laCampos = lcTexto.split(',');
 
+    lcResp = other_utils.envi_corr(lnCorreo, 'progap.vaai@udg.mx', laCampos);
+    
     const update = await util.gene_cons(lcSQL, [lnStatus, (!req.body.nota?'':req.body.nota), req.userId, req.body.id])
+
+
 
     return res.json({"status" : "success", "message": "El cambio se aplicó correctamente"})
     
@@ -2139,6 +2133,7 @@ const progap_focamx4 = (async (req, res) => {
     
 });
 
+
 module.exports = {
     progap_usuariox,
     progap_directivox,
@@ -2167,5 +2162,5 @@ module.exports = {
     progap_actu_estux,
     progap_focamx2,
     progap_focamx3,
-    progap_focamx4
+    progap_focamx4,
 }
