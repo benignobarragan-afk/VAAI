@@ -12,7 +12,7 @@ const { cacheUsuarios } = require("../middlewares/authjwt");
 
 const progap_usuariox = (async (req, res) => {
 
-    if (req.groups.indexOf(",ADMI_PROGAP,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",ADMI_PROGAP,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -37,7 +37,7 @@ const progap_usuariox = (async (req, res) => {
 
 const progap_directivox = (async (req, res) => {
 
-    if (req.groups.indexOf(",ADMI_PROGAP,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",ADMI_PROGAP,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -57,7 +57,7 @@ const progap_directivox = (async (req, res) => {
 
 const progap_estudiax = (async (req, res) => {
 
-    if (req.groups.indexOf(",ADMI_PROGAP,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",ADMI_PROGAP,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -88,7 +88,7 @@ const progap_estudiax = (async (req, res) => {
 
 const progap_convocax = (async (req, res) => {
 
-    if (req.groups.indexOf(",ADMI_PROGAP,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",ADMI_PROGAP,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -109,7 +109,7 @@ const progap_convocax = (async (req, res) => {
 
 const progap_exacamx = (async (req, res) => {
 
-    if (req.groups.indexOf(",ADMI_PROGAP,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",ADMI_PROGAP,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -131,9 +131,10 @@ const progap_exacamx = (async (req, res) => {
 
 const progap_focamx = (async (req, res) => {
 
-    llRevisor = req.groups.indexOf(",REVI_PROGAP,") >= 0
+    const llRevisor = req.groups.indexOf(",REVI_PROGAP,") >= 0
+    const llAdmin = (req.groups.indexOf(",ADMI_PROGAP,") >= 0)
 
-    if (req.groups.indexOf(",PROGAP,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",PROGAP,") < 0)        //si no tiene derechos
     {
         return res.json([])
     }
@@ -153,18 +154,35 @@ const progap_focamx = (async (req, res) => {
         ORDER BY a.id */
     let rows
     if(llRevisor){
-        lcSQL = `
-        SELECT ROW_NUMBER() OVER (ORDER BY tf.folio) AS rank, tf.uid as id, tf.folio,  concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, a.codigo, 
-                d.siglas as dependencia, CONCAT(p.clave_cgipv, ' - ', p.programa) AS programa, DATE_FORMAT(tf.fecha_solicitud, '%d/%m/%Y') AS fecha_solicitud,
-                if(tf.id_estado = 4, "Rechazado", if(tf.id_estado = 3, "Solicitud completa", if(tf.id_estado = 5, "Es necesario corregir", 
-                if(tf.id_estado = 2, "Enviado a revisión", "Sin enviar")))) AS status, tf.comentario_estado
-            FROM progap_tram_focam tf
-                LEFT JOIN progap_alumno a on tf.codigo = a.codigo 
-                LEFT JOIN progap_dependencias d ON tf.id_centro_universitario = d.id
-                LEFT JOIN progap_programa p ON tf.id_programa = p.id
-            WHERE tf.id_convocatoria = ? ${(req.query.llTodo!='1'?' AND tf.id_estado = 2 AND tf.id_centro_universitario IN (SELECT id FROM gen_dere_progap WHERE user_id = ?)':'')}
-            ORDER BY tf.folio
-        `
+        if(llAdmin){
+            lcSQL = `
+            SELECT ROW_NUMBER() OVER (ORDER BY tf.folio) AS rank, tf.uid as id, tf.folio,  concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, a.codigo, 
+                    d.siglas as dependencia, CONCAT(p.clave_cgipv, ' - ', p.programa) AS programa, DATE_FORMAT(tf.fecha_solicitud, '%d/%m/%Y') AS fecha_solicitud,
+                    if(tf.id_estado = 4, "Rechazado", if(tf.id_estado = 3, "Solicitud completa", if(tf.id_estado = 5, "Es necesario corregir", 
+                    if(tf.id_estado = 2, "Enviado a revisión", "Sin enviar")))) AS status, tf.comentario_estado
+                FROM progap_tram_focam tf
+                    LEFT JOIN progap_alumno a on tf.codigo = a.codigo 
+                    LEFT JOIN progap_dependencias d ON tf.id_centro_universitario = d.id
+                    LEFT JOIN progap_programa p ON tf.id_programa = p.id
+                WHERE tf.id_convocatoria = ? ${(req.query.llTodo!='1'?' AND tf.id_estado = 2 ':'')}
+                ORDER BY tf.folio
+            `
+        }else {
+            lcSQL = `
+            SELECT ROW_NUMBER() OVER (ORDER BY tf.folio) AS rank, tf.uid as id, tf.folio,  concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, a.codigo, 
+                    d.siglas as dependencia, CONCAT(p.clave_cgipv, ' - ', p.programa) AS programa, DATE_FORMAT(tf.fecha_solicitud, '%d/%m/%Y') AS fecha_solicitud,
+                    if(tf.id_estado = 4, "Rechazado", if(tf.id_estado = 3, "Solicitud completa", if(tf.id_estado = 5, "Es necesario corregir", 
+                    if(tf.id_estado = 2, "Enviado a revisión", "Sin enviar")))) AS status, tf.comentario_estado
+                FROM progap_tram_focam tf
+                    LEFT JOIN progap_alumno a on tf.codigo = a.codigo 
+                    LEFT JOIN progap_dependencias d ON tf.id_centro_universitario = d.id
+                    LEFT JOIN progap_programa p ON tf.id_programa = p.id
+                WHERE tf.id_convocatoria = ? ${(req.query.llTodo!='1'?' AND tf.id_estado = 2 AND tf.id_centro_universitario IN (SELECT id FROM gen_dere_progap WHERE user_id = ?)':'')}
+                ORDER BY tf.folio
+            `
+
+        }
+
         rows = await util.gene_cons(lcSQL, [(!req.query.lnConv?0:req.query.lnConv),req.userId])
     }
     else {
@@ -190,7 +208,7 @@ const progap_focamx = (async (req, res) => {
 
 const progap_form01 = ( async (req, res) => {
 
-    if (req.groups.indexOf(",ADMI_PROGAP,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",ADMI_PROGAP,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -343,7 +361,7 @@ ${laAlumno[0].municipio}, Jalisco, México, a ${fechaFormateada}`, {align: 'cent
 
 const progap_form02 = ( async (req, res) => {
 
-    if (req.groups.indexOf(",ADMI_PROGAP,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",ADMI_PROGAP,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }

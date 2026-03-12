@@ -11,7 +11,7 @@ const { cacheUsuarios } = require("../middlewares/authjwt");
 
 
 const sip_soli_progx = (async (req, res) => {
-    if (req.groups.indexOf(",SIP_SOLI_PROG,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",SIP_SOLI_PROG,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }

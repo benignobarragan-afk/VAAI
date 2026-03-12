@@ -13,7 +13,7 @@ const { cacheUsuarios } = require("../middlewares/authjwt");
 
 const fin_orde_compx = (async (req, res) => {
 
-    if (req.groups.indexOf(",ORDE_COMP,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",ORDE_COMP,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -44,7 +44,7 @@ const fin_orde_compx = (async (req, res) => {
 
 const fin_norde_compx2 = (async (req, res) => {
 
-    if (req.groups.indexOf(",ORDE_COMP,") <= 0 || !req.body.proyecto)        //si no tiene derechos
+    if (req.groups.indexOf(",ORDE_COMP,") < 0 || !req.body.proyecto)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -64,7 +64,7 @@ const fin_norde_compx2 = (async (req, res) => {
 
 const fin_norde_compx = (async (req,res) => {
 
-    if (req.groups.indexOf(",ORDE_COMP,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",ORDE_COMP,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -260,7 +260,7 @@ const fin_norde_compx = (async (req,res) => {
 
 const fin_impr_oc = (async (req,res) => {
 
-    if (req.groups.indexOf(",ORDE_COMP,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",ORDE_COMP,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -727,7 +727,7 @@ const fin_norde_compx3 = (async (req, res) => {
 
     //console.log(req.body) 
 
-    if (req.groups.indexOf(",ORDE_COMP,") <= 0 || !req.body.ures_depe)        //si no tiene derechos
+    if (req.groups.indexOf(",ORDE_COMP,") < 0 || !req.body.ures_depe)        //si no tiene derechos
     {
         return res.json({"status" : "error", "message": "No tienes derechos para actualizar los datos"})
     }
