@@ -1287,10 +1287,10 @@ const progap_nestudiax = (async (req, res) => {
         
         lcSQL = `
             SELECT * 
-                FROM progap_alumnos
-                WHERE id = ${req.body.id}
+                FROM progap_alumno
+                WHERE id = ?
         `
-        modifica = await util.gene_cons(lcSQL)
+        modifica = await util.gene_cons(lcSQL, [req.body.id])
 
         //console.log(req.body.id)
         //console.log(modifica)
@@ -1301,11 +1301,11 @@ const progap_nestudiax = (async (req, res) => {
 
         lcSQL = `
             SELECT * 
-                FROM progap_alumnos
-                WHERE codigo = '${req.body.codigo}' AND id != ${req.body.id} AND id_convocatoria = ${modifica[0].id_convocatoria}
+                FROM progap_alumno
+                WHERE codigo = ? AND id != ? 
         `
 
-        activo = await util.gene_cons(lcSQL)
+        activo = await util.gene_cons(lcSQL, [req.body.codigo, req.body.id])
 
         if (activo.length > 0){
             return res.json({"status" : "error", "message": "El usuario ya existe"})
@@ -1321,21 +1321,27 @@ const progap_nestudiax = (async (req, res) => {
             correo = '${req.body.correo_institucional}' 
         WHERE id = ${req.body.id}
         ` */
-        lcSQL = `UPDATE progap_alumnos SET codigo = '${req.body.codigo}', 
-            nombre = '${req.body.nombre}', 
-            apellido_paterno = '${req.body.apellido_paterno}', 
-            apellido_materno = '${req.body.apellido_materno}', 
-            curp = '${req.body.curp}', 
-            id_centro_universitario = ${req.body.centro}, 
-            id_programa = ${req.body.programa}, 
-            correo_institucional = '${req.body.correo_institucional}', 
-            id_ciclo_ingreso = ${req.body.id_ciclo_ingreso}, 
-            id_ciclo_curso = ${req.body.id_ciclo_curso}, 
-            id_ciclo_condonar = ${req.body.id_ciclo_condonar} 
-        WHERE id = ${req.body.id}
+        lcSQL = `
+        UPDATE progap_alumno SET codigo = ?, 
+            nombre = ?, 
+            apellido_paterno = ?, 
+            apellido_materno = ?, 
+            curp = ?, 
+            id_centro_universitario = ?, 
+            id_programa = ?, 
+            correo_institucional = ?, 
+            id_ciclo_ingreso = ?, 
+            id_ciclo_curso = ?, 
+            id_ciclo_condonar = ?, 
+            cambios = CONCAT(IFNULL(cambios,''), ?, '|UPDATE|', NOW(), CHR(13))
+        WHERE id = ?
         `
 
-        modifico = await util.gene_cons(lcSQL)
+        parameters = [req.body.codigo, req.body.nombre, req.body.apellido_paterno, req.body.apellido_materno, req.body.curp, req.body.centro, req.body.programa,
+            req.body.correo_institucional, req.body.id_ciclo_ingreso, req.body.id_ciclo_curso, req.body.id_ciclo_condonar, req.userId, req.body.id
+        ]
+
+        modifico = await util.gene_cons(lcSQL, parameters)
 
         return res.json({"status" : "server", "message": "El estudiante se modificó exitosamente"})
         

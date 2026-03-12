@@ -34,55 +34,53 @@ webix.ready(function(){
             { cols:[
                 { view:"text", name:"id", label:"id", hidden: true },
                 { view:"text", name:"codigo", label:"Código de Estudiante *", placeholder:"Código de Estudiante", required:true, invalidMessage:"Requerido" },
-                { view:"text", type:"password", name:"contrasena", label:"Contraseña *", placeholder:"Contraseña:", required:true, invalidMessage:"Requerido" }
-            ]},
+                // CURP
+                { cols:[
+                    {
+                        view: "text",
+                        id: "curp",
+                        name: "curp",
+                        label: "CURP *",
+                        placeholder: "Escribe tu CURP",
+                        required: true,
+                        attributes: { maxlength: 18 },
+                        // Definimos la validación
+                        validate: function(value) {
+                            return validarCURP(value);
+                        },
+                        invalidMessage: "Formato de CURP incorrecto",
+                        on: {
+                            // Convertir automáticamente a mayúsculas mientras el usuario escribe
+                            onTimedKeyPress: function() {
+                                var value = this.getValue().toUpperCase();
+                                this.setValue(value);
 
-            // CURP
-            { cols:[
-                {
-                    view: "text",
-                    id: "curp",
-                    name: "curp",
-                    label: "CURP *",
-                    placeholder: "Escribe tu CURP",
-                    required: true,
-                    attributes: { maxlength: 18 },
-                    // Definimos la validación
-                    validate: function(value) {
-                        return validarCURP(value);
-                    },
-                    invalidMessage: "Formato de CURP incorrecto",
-                    on: {
-                        // Convertir automáticamente a mayúsculas mientras el usuario escribe
-                        onTimedKeyPress: function() {
-                            var value = this.getValue().toUpperCase();
-                            this.setValue(value);
+                                if($$("contador")){
+                                    $$("contador").setHTML(value.length + " / 18");
+                                    //$$("contador").setHTML(val.length + " / 18");
+                                }
 
-                            if($$("contador")){
-                                $$("contador").setHTML(value.length + " / 18");
-                                //$$("contador").setHTML(val.length + " / 18");
-                            }
-
-                            // 3. Opcional: Cambiar el color si se pasa de 18 (por seguridad)
-                            if (value.length < 18) {
-                                $$("contador").$view.style.color = "red";
-                            } else {
-                                $$("contador").$view.style.color = ""; // Color original
+                                // 3. Opcional: Cambiar el color si se pasa de 18 (por seguridad)
+                                if (value.length < 18) {
+                                    $$("contador").$view.style.color = "red";
+                                } else {
+                                    $$("contador").$view.style.color = ""; // Color original
+                                }
                             }
                         }
-                    }
-                },
-                { 
-                    view: "template", // Cambiado de label a template para mejor manejo de HTML
-                    id: "contador", 
-                    name: "contador", 
-                    template: "0 / 18", 
-                    borderless: true, // Para que no se vea el recuadro del template
-                    css: "char_counter", 
-                    height: 25,
-                    width: 50,
+                    },
+                    { 
+                        view: "template", // Cambiado de label a template para mejor manejo de HTML
+                        id: "contador", 
+                        name: "contador", 
+                        template: "0 / 18", 
+                        borderless: true, // Para que no se vea el recuadro del template
+                        css: "char_counter", 
+                        height: 25,
+                        width: 50,
 
-                },
+                    },
+                ]},
             ]},
             // Nombre Completo (3 columnas)
             { label:"Nombre completo *", view:"label" },
@@ -163,7 +161,7 @@ webix.ready(function(){
 
             // Estado
             { view:"combo", name:"id_estado", label:"Estado *", value:"1", options:[
-                { id:"1", value:"Activo" }, { id:"0", value:"Inactivo" }
+                { id:"1", value:"Activo" }, { id:"2", value:"Inactivo" }
             ]},
             ]},
             // Botón Centrado
