@@ -1048,7 +1048,7 @@ const progap_dashboardx4 = (async (req, res) => {
 
 const progap_prograx = (async (req, res) => {
 
-    if (req.groups.indexOf(",ADMI_PROGAP,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",ADMI_PROGAP,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -1277,7 +1277,7 @@ const progap_impo_progx2 = (async (req, res) => {
 
 const progap_nestudiax = (async (req, res) => {
 
-    if (req.groups.indexOf(",ADMI_PROGAP,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",ADMI_PROGAP,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -1385,7 +1385,7 @@ const progap_nestudiax = (async (req, res) => {
 
 const progap_ndirectivox = (async (req, res) => {
 
-    if (req.groups.indexOf(",ADMI_PROGAP,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",ADMI_PROGAP,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -1441,7 +1441,7 @@ const progap_ndirectivox = (async (req, res) => {
 
 const progap_nusuariox = (async (req, res) => {
 
-    if (req.groups.indexOf(",ADMI_PROGAP,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",ADMI_PROGAP,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -1531,7 +1531,7 @@ const progap_nusuariox = (async (req, res) => {
 
 const progap_nprograx = (async (req, res) => {
 
-    if (req.groups.indexOf(",ADMI_PROGAP,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",ADMI_PROGAP,") < 0)        //si no tiene derechos
     {
         return res.render("sin_derecho")
     }
@@ -2010,7 +2010,7 @@ const progap_actu_estux = ( async (req, res) => {
 const progap_focamx2 = (async (req, res) => {
 
 
-    if (req.groups.indexOf(",PROGAP,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",PROGAP,") < 0)        //si no tiene derechos
     {
         return res.json({ success: false, error: "No cuentas con derechos para ver el documento" });
     }
@@ -2111,7 +2111,7 @@ const progap_focamx3 = (async (req, res) => {
 
 const progap_focamx4 = (async (req, res) => {
 
-    if (req.groups.indexOf(",PROGAP,") <= 0)        //si no tiene derechos
+    if (req.groups.indexOf(",PROGAP,") < 0)        //si no tiene derechos
     {
         return res.json({ success: false, error: "No cuentas con derechos para ver el documento" });
     }
