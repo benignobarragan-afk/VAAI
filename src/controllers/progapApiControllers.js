@@ -1333,12 +1333,13 @@ const progap_nestudiax = (async (req, res) => {
             id_ciclo_ingreso = ?, 
             id_ciclo_curso = ?, 
             id_ciclo_condonar = ?, 
+            id_estado = ?, 
             cambios = CONCAT(IFNULL(cambios,''), ?, '|UPDATE|', NOW(), CHR(13))
         WHERE id = ?
         `
 
         parameters = [req.body.codigo, req.body.nombre, req.body.apellido_paterno, req.body.apellido_materno, req.body.curp, req.body.centro, req.body.programa,
-            req.body.correo_institucional, req.body.id_ciclo_ingreso, req.body.id_ciclo_curso, req.body.id_ciclo_condonar, req.userId, req.body.id
+            req.body.correo_institucional, req.body.id_ciclo_ingreso, req.body.id_ciclo_curso, req.body.id_ciclo_condonar, req.body.id_estado, req.userId, req.body.id
         ]
 
         modifico = await util.gene_cons(lcSQL, parameters)
