@@ -2062,7 +2062,7 @@ const progap_focamx3 = (async (req, res) => {
     let lnStatus = 0, lnCorreo = 0, lcTexto = '';
     let lcSQL = `
     SELECT t.folio, concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre,
-            c.nombre as ciclo, a.correo_institucional, t.id_estado, t.comentario_estado AS motivo
+            c.nombre as ciclo, a.correo_institucional, t.id_estado, t.comentario_estado AS motivo, a.codigo
         FROM progap_tram_focam t
             LEFT JOIN progap_alumno a ON t.codigo = a.codigo
             LEFT JOIN progap_ciclos c ON t.id_ciclo_condonar = c.id
@@ -2094,7 +2094,7 @@ const progap_focamx3 = (async (req, res) => {
         }else{
             lnStatus = 4;
             lnCorreo = 5;
-            lcTexto = rows[0].nombre + ',' + rows[0].ciclo + ',' + rows[0].folio + ',' + req.body.nota
+            lcTexto = rows[0].nombre + '|' + rows[0].ciclo + '|' + rows[0].folio + '|' + req.body.nota
             if (!req.body.nota){
                 return res.json({"status" : "error", "message": "Faltó la nota del rechazo"})
             }
@@ -2108,12 +2108,26 @@ const progap_focamx3 = (async (req, res) => {
             comentario_estado = ?, 
             cambios = CONCAT(IFNULL(cambios, ''), 'UPDATE|', ?, '|', DATE_FORMAT(NOW(), "%d/%m/%Y %H:%m:%s"), CHR(13)) 
         WHERE uid = ?
-    `    
-    const laCampos = lcTexto.split(',');
+    ` 
+    
+    const laCampos = lcTexto.split('|');
     
     const update = await util.gene_cons(lcSQL, [lnStatus, (!req.body.nota?'':req.body.nota), req.userId, req.body.id])
-    //lcResp = other_utils.envi_corr(lnCorreo, rows[0].correo_institucional, laCampos);
-    lcResp = other_utils.envi_corr(lnCorreo, "progap.cgipv@udg.mx", laCampos);
+
+    if (lnStatus == 4){                 //cambia el usuario a inactivo
+        lcSQL = `
+        UPDATE progap_alumno 
+            SET id_estado = 2,  
+                cambios = CONCAT(IFNULL(cambios, ''), 'BAJA_TRAMITE|', ?, '|', DATE_FORMAT(NOW(), "%d/%m/%Y %H:%m:%s"), CHR(13)) 
+            WHERE codigo = ?
+        `   
+        const update2 = await util.gene_cons(lcSQL, [req.userId, rows[0].codigo])
+    }
+
+
+
+    lcResp = other_utils.envi_corr(lnCorreo, rows[0].correo_institucional, laCampos);
+    //lcResp = other_utils.envi_corr(lnCorreo, "progap.cgipv@udg.mx", laCampos);
 
 
 
