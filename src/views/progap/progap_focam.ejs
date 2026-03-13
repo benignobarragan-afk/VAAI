@@ -401,10 +401,30 @@
                         rightSplit:1, leftSplit:3,
                         scheme: {
                             $init: function (obj) {
-                                obj.fecha = (obj.fecha ? (obj.fecha == '01/01/1900'?'': convertDate(obj.fecha) ) : '');
+                                
+                                // TIP DE DEPURACIÓN: Descomenta esta línea si sigue sin pintar, 
+                                // para ver si MariaDB te está mandando la palabra con mayúsculas (ej. obj.MARCADO)
+                                // console.log("Revisando alumno:", obj.nombre, " - Estatus de marcado:", obj.marcado);
+
+                                // Marcado 2 = Rojo (Rechazado/Alerta)
+                                if (obj.marcado == 2) {
+                                    // En lugar de una clase, pasamos el estilo puro
+                                    obj.$css = { 
+                                        "background-color": "#f8d7da !important", 
+                                        "color": "#721c24 !important",
+                                        "font-weight": "bold !important" // Un extra para que resalte más
+                                    }; 
+                                } 
+                                // Marcado 1 = Azul (Aceptado/Primario)
+                                else if (obj.marcado == 1) {
+                                    obj.$css = { 
+                                        "background-color": "#cce5ff !important", 
+                                        "color": "#004085 !important",
+                                        "font-weight": "bold !important"
+                                    }; 
+                                }
                             }
                         },
-
                         columns:[
                         {
                             id: "detalle", width: 40,sort: "int", css: { 'text-align': 'center' }, 

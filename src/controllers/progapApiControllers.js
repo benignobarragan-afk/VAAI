@@ -134,6 +134,8 @@ const progap_focamx = (async (req, res) => {
     const llRevisor = req.groups.indexOf(",REVI_PROGAP,") >= 0
     const llAdmin = (req.groups.indexOf(",ADMI_PROGAP,") >= 0)
 
+    ciclo = await util.gene_cons("SELECT MAX(nombre) as cicl_actu FROM progap_ciclos WHERE estado = 1 ")
+
     if (req.groups.indexOf(",PROGAP,") < 0)        //si no tiene derechos
     {
         return res.json([])
@@ -159,11 +161,13 @@ const progap_focamx = (async (req, res) => {
             SELECT ROW_NUMBER() OVER (ORDER BY tf.folio) AS rank, tf.uid as id, tf.folio,  concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, a.codigo, 
                     d.siglas as dependencia, CONCAT(p.clave_cgipv, ' - ', p.programa) AS programa, DATE_FORMAT(tf.created_at, '%d/%m/%Y %H:%m') AS fecha_solicitud,
                     if(tf.id_estado = 4, "Rechazado", if(tf.id_estado = 3, "Solicitud completa", if(tf.id_estado = 5, "Es necesario corregir", 
-                    if(tf.id_estado = 2, "Enviado a revisión", "Sin enviar")))) AS status, tf.comentario_estado
+                    if(tf.id_estado = 2, "Enviado a revisión", "Sin enviar")))) AS status, tf.comentario_estado, c.nombre as ingr_cicl,  a.ulti_cicl, a.grac_cicl,
+                    IF(a.grac_cicl < '${ciclo[0].cicl_actu}', 2, IF(a.ulti_cicl < '${ciclo[0].cicl_actu}', 1, 0)) as marcado
                 FROM progap_tram_focam tf
                     LEFT JOIN progap_alumno a on tf.codigo = a.codigo 
                     LEFT JOIN progap_dependencias d ON tf.id_centro_universitario = d.id
                     LEFT JOIN progap_programa p ON tf.id_programa = p.id
+                    LEFT JOIN progap_ciclos c ON a.id_ciclo_ingreso = c.id
                 WHERE tf.id_convocatoria = ? ${(req.query.llTodo!='1'?' AND tf.id_estado = 2 ':'')}
                 ORDER BY tf.folio
             `
@@ -172,11 +176,13 @@ const progap_focamx = (async (req, res) => {
             SELECT ROW_NUMBER() OVER (ORDER BY tf.folio) AS rank, tf.uid as id, tf.folio,  concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, a.codigo, 
                     d.siglas as dependencia, CONCAT(p.clave_cgipv, ' - ', p.programa) AS programa, DATE_FORMAT(tf.fecha_solicitud, '%d/%m/%Y') AS fecha_solicitud,
                     if(tf.id_estado = 4, "Rechazado", if(tf.id_estado = 3, "Solicitud completa", if(tf.id_estado = 5, "Es necesario corregir", 
-                    if(tf.id_estado = 2, "Enviado a revisión", "Sin enviar")))) AS status, tf.comentario_estado
+                    if(tf.id_estado = 2, "Enviado a revisión", "Sin enviar")))) AS status, tf.comentario_estado, c.nombre as ingr_cicl,  a.ulti_cicl, a.grac_cicl,
+                    IF(a.grac_cicl < '${ciclo[0].cicl_actu}', 2, IF(a.ulti_cicl < '${ciclo[0].cicl_actu}', 1, 0)) as marcado
                 FROM progap_tram_focam tf
                     LEFT JOIN progap_alumno a on tf.codigo = a.codigo 
                     LEFT JOIN progap_dependencias d ON tf.id_centro_universitario = d.id
                     LEFT JOIN progap_programa p ON tf.id_programa = p.id
+                    LEFT JOIN progap_ciclos c ON a.id_ciclo_ingreso = c.id
                 WHERE tf.id_convocatoria = ? ${(req.query.llTodo!='1'?' AND tf.id_estado = 2 AND tf.id_centro_universitario IN (SELECT id FROM gen_dere_progap WHERE user_id = ?)':'')}
                 ORDER BY tf.folio
             `
