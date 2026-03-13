@@ -143,7 +143,7 @@ const progap_focamx = (async (req, res) => {
 
     ///CODIGO ANTERIOR
 /*     SELECT ROW_NUMBER() OVER (ORDER BY a.id) AS rank, a.id, a.id as folio, concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, a.codigo, 
-    		 d.dependencia, CONCAT(p.clave_cgipv, ' - ', p.programa) AS programa, DATE_FORMAT(a.fecha_solicitud, '%d/%m/%Y') AS fecha_solicitud,
+    		 d.dependencia, CONCAT(p.clave_cgipv, ' - ', p.programa) AS programa, DATE_FORMAT(a.fecha_envio, '%d/%m/%Y') AS fecha_solicitud,
             if(a.id_estado = 4, "Rechazado", if(a.id_estado = 3, "Solicitud completa", if(a.id_estado = 5, "Es necesario corregir", 
 		    if(a.id_estado = 2, "Enviado a revisión", "Sin enviar")))) AS status
         FROM progap_alumnos a 
