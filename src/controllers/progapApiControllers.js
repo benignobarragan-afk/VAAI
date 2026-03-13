@@ -1314,7 +1314,7 @@ const progap_nestudiax = (async (req, res) => {
         activo = await util.gene_cons(lcSQL, [req.body.codigo, req.body.id])
 
         if (activo.length > 0){
-            return res.json({"status" : "error", "message": "El usuario ya existe"})
+            return res.json({"status" : "error", "message": "El alumno ya existe"})
         }
 
 
@@ -1328,20 +1328,27 @@ const progap_nestudiax = (async (req, res) => {
         WHERE id = ${req.body.id}
         ` */
         lcSQL = `
-        UPDATE progap_alumno SET codigo = ?, 
-            nombre = ?, 
-            apellido_paterno = ?, 
-            apellido_materno = ?, 
-            curp = ?, 
-            id_centro_universitario = ?, 
-            id_programa = ?, 
-            correo_institucional = ?, 
-            id_ciclo_ingreso = ?, 
-            id_ciclo_curso = ?, 
-            id_ciclo_condonar = ?, 
-            id_estado = ?, 
-            cambios = CONCAT(IFNULL(cambios,''), ?, '|UPDATE|', NOW(), CHR(13))
-        WHERE id = ?
+        UPDATE progap_alumno a
+	            LEFT JOIN progap_programa p ON a.id_programa = p.id
+	            LEFT JOIN progap_ciclos c ON a.id_ciclo_ingreso = c.id
+            SET a.codigo = ?, 
+            a.nombre = ?, 
+            a.apellido_paterno = ?, 
+            a.apellido_materno = ?, 
+            a.curp = ?, 
+            a.id_centro_universitario = ?, 
+            a.id_programa = ?, 
+            a.correo_institucional = ?, 
+            a.id_ciclo_ingreso = ?, 
+            a.id_ciclo_curso = ?, 
+            a.id_ciclo_condonar = ?, 
+            a.id_estado = ?, 
+            a.cambios = CONCAT(IFNULL(cambios,''), ?, '|UPDATE|', NOW(), CHR(13)), 
+            a.ulti_cicl = concat(FLOOR(c.año + ((p.duracion-1) / 2)) + IF(MOD((p.duracion-1), 2) > 0 AND c.periodo = 'B', 1, 0), 
+			    IF(MOD(p.duracion, 2) > 0, c.periodo, if(c.periodo = "A", "B", "A"))),
+            a.grac_cicl = concat(FLOOR((c.año+1) + ((p.duracion-1) / 2)) + IF(MOD((p.duracion-1), 2) > 0 AND c.periodo = 'B', 1, 0), 
+		    	IF(MOD(p.duracion, 2) > 0, c.periodo, if(c.periodo = "A", "B", "A")))
+        WHERE a.id = ?
         `
 
         parameters = [req.body.codigo, req.body.nombre, req.body.apellido_paterno, req.body.apellido_materno, req.body.curp, req.body.centro, req.body.programa,
@@ -1364,10 +1371,10 @@ const progap_nestudiax = (async (req, res) => {
         activo = await util.gene_cons(lcSQL)
 
         if (activo.length > 0){
-            return res.json({"status" : "error", "message": "El usuario ya existe"})
+            return res.json({"status" : "error", "message": "El alumno ya existe"})
         }
 
-        lcSQL = `
+        /* lcSQL = `
         INSERT INTO progap_usuarios (usuario, contrasena, md5HASH, nombre, apellido_paterno, apellido_materno, id_centro_universitario, correo,
             id_tipo_usuario, estado, id_convocatoria) 
         VALUES ('${req.body.codigo}', '${req.body.contrasena}', UUID(), '${req.body.nombre}', '${req.body.apellido_paterno}', 
@@ -1382,11 +1389,31 @@ const progap_nestudiax = (async (req, res) => {
                 ${req.body.id_ciclo_condonar}, ${req.body.id_estado},
                 (SELECT id FROM progap_convocatoria WHERE id_status = 1 order BY id desc LIMIT 1)
                 )
-    `
-        //console.log(lcSQL)
-        rows = await util.gene_cons(lcSQL)
+    ` */
 
-        return res.json({"status" : "server", "message": "El usuario se creo exitosamente"})
+        lcSQL = `
+            INSERT INTO progap_alumno (codigo, nombre, apellido_paterno, apellido_materno, curp, id_centro_universitario, id_programa,
+                correo_institucional, id_ciclo_ingreso, id_ciclo_curso, id_ciclo_condonar, id_estado) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `
+            //console.log(lcSQL)
+            parameters =[req.body.codigo, req.body.nombre, req.body.apellido_paterno, req.body.apellido_materno, req.body.curp, 
+                    req.body.centro, req.body.programa, req.body.correo_institucional, req.body.id_ciclo_ingreso, req.body.id_ciclo_curso,
+                    req.body.id_ciclo_condonar, req.body.id_estado]
+            rows = await util.gene_cons(lcSQL, parameters)
+        
+        lcSQL = `
+        UPDATE progap_alumno a
+            LEFT JOIN progap_programa p ON a.id_programa = p.id
+            LEFT JOIN progap_ciclos c ON a.id_ciclo_ingreso = c.id
+            SET a.ulti_cicl = concat(FLOOR(c.año + ((p.duracion-1) / 2)) + IF(MOD((p.duracion-1), 2) > 0 AND c.periodo = 'B', 1, 0), 
+                    IF(MOD(p.duracion, 2) > 0, c.periodo, if(c.periodo = "A", "B", "A"))),
+                a.grac_cicl = concat(FLOOR((c.año+1) + ((p.duracion-1) / 2)) + IF(MOD((p.duracion-1), 2) > 0 AND c.periodo = 'B', 1, 0), 
+                    IF(MOD(p.duracion, 2) > 0, c.periodo, if(c.periodo = "A", "B", "A")))
+            WHERE codigo = ?
+        `
+        update = await util.gene_cons(lcSQL, [req.body.codigo])
+        return res.json({"status" : "server", "message": "El alumno se creo exitosamente"})
     }
 });
 

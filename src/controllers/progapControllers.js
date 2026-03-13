@@ -222,7 +222,8 @@ const progap_nestudia = (async (req, res) => {
     if (req.query.lnID > 0){
     lcSQL = `
         SELECT a.id, a.codigo, a.contrasena, a.nombre, a.apellido_paterno, a.apellido_materno, a.curp, a.id_centro_universitario AS centro, 
-                a.id_programa AS programa, a.correo_institucional, a.id_ciclo_ingreso, a.id_ciclo_curso, a.id_ciclo_condonar, a.id_estado
+                a.id_programa AS programa, a.correo_institucional, a.id_ciclo_ingreso, a.id_ciclo_curso, a.id_ciclo_condonar, a.id_estado, 
+                a.ulti_cicl, a.grac_cicl
             FROM progap_alumno a 
             WHERE a.id = ?
         `
