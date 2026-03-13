@@ -157,7 +157,7 @@ const progap_focamx = (async (req, res) => {
         if(llAdmin){
             lcSQL = `
             SELECT ROW_NUMBER() OVER (ORDER BY tf.folio) AS rank, tf.uid as id, tf.folio,  concat(a.nombre, ' ', a.apellido_paterno, ' ', a.apellido_materno) AS nombre, a.codigo, 
-                    d.siglas as dependencia, CONCAT(p.clave_cgipv, ' - ', p.programa) AS programa, DATE_FORMAT(tf.fecha_envio, '%d/%m/%Y') AS fecha_solicitud,
+                    d.siglas as dependencia, CONCAT(p.clave_cgipv, ' - ', p.programa) AS programa, DATE_FORMAT(tf.fecha_envio, '%d/%m/%Y %H:%m') AS fecha_solicitud,
                     if(tf.id_estado = 4, "Rechazado", if(tf.id_estado = 3, "Solicitud completa", if(tf.id_estado = 5, "Es necesario corregir", 
                     if(tf.id_estado = 2, "Enviado a revisión", "Sin enviar")))) AS status, tf.comentario_estado
                 FROM progap_tram_focam tf
