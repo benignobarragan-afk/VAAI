@@ -481,7 +481,7 @@ const progap_form02 = ( async (req, res) => {
     doc.font('Helvetica');
     doc.fontSize(10);
     //doc.moveDown(3);
-    console.log(ltTotal)
+    //console.log(ltTotal)
     doc.text(`${ltTotal[1][0].numero_oficio}`, { align: 'right' });
     doc.fontSize(11);
     doc.moveDown(1);
@@ -1494,7 +1494,7 @@ const progap_nusuariox = (async (req, res) => {
         WHERE id = ${req.body.id}            
         `
 
-        console.log(lcSQL)
+        //console.log(lcSQL)
 
         modifico = await util.gene_cons(lcSQL)
 
@@ -1523,7 +1523,7 @@ const progap_nusuariox = (async (req, res) => {
             (SELECT id FROM progap_convocatoria WHERE id_status = 1 order BY id desc LIMIT 1), ${req.body.genero}, ${req.body.id_nivel_estudios},
             '${req.body.telefonos}', '${req.body.extension}', '${req.body.celular}');
     `
-        console.log(lcSQL)
+        //console.log(lcSQL)
         rows = await util.gene_cons(lcSQL)
 
         return res.json({"status" : "server", "message": "El usuario se creo exitosamente"})
@@ -1575,7 +1575,7 @@ const progap_nprograx = (async (req, res) => {
             participa = ${req.body.participa}
         WHERE id = ${req.body.id}
         `
-        console.log(lcSQL)
+        //console.log(lcSQL)
         modifico = await util.gene_cons(lcSQL)
 
         return res.json({"status" : "server", "message": "El programa se modificó exitosamente"})
@@ -1622,19 +1622,19 @@ const progap_nfocamx = (async (req, res) => {
     laComando = path.join(__dirname, "../apipython", "leeQR2.py") 
     laArgs  = path.join(__dirname, "../uploads/", req.file.filename)
 
-    console.log(laComando)
-    console.log(laArgs)
+    //console.log(laComando)
+    //console.log(laArgs)
 
 
     try {
         // 5. ESPERAR a que la Promesa de Python se resuelva
         const resultadoPython = await other_utils.ejecutarPython(laComando, laArgs);
         
-        console.log(resultadoPython)
+        //console.log(resultadoPython)
         
         if (resultadoPython.substring(0,13) == "Contenido QR:"){
             idExtraido = resultadoPython.split('/').pop();
-            console.log(idExtraido); 
+            //console.log(idExtraido); 
             
             lcSQL = `
             SELECT * 
@@ -1643,7 +1643,7 @@ const progap_nfocamx = (async (req, res) => {
             `
             rows = await util.gene_cons(lcSQL, [idExtraido])
 
-            console.log(rows); 
+            //console.log(rows); 
             
             if (rows.length <= 0){
                 return res.json({"status" : false, "message": "El QR no se econtro en la base de datos", "data":{}})
@@ -1753,7 +1753,7 @@ const pdownload = (async (req, res) => {
     
     //absolutePath = path.resolve(__dirname, 'uploads', ruta_fisica);
     const absolutePath = path.resolve(ruta_fisica);
-    console.log(absolutePath)
+    //console.log(absolutePath)
 
     if (!fs.existsSync(absolutePath)) {
         return res.status(404).send("El archivo no existe en el servidor.");
@@ -2024,7 +2024,7 @@ const progap_focamx2 = (async (req, res) => {
 
     const tramite = await util.gene_cons(lcSQL, [req.query.id])
     
-    console.log(tramite)
+    //console.log(tramite)
     if (tramite.length <= 0){
         return res.json({ success: false, error: "No se localizó el archivo" });
     }
@@ -2112,8 +2112,8 @@ const progap_focamx3 = (async (req, res) => {
     const laCampos = lcTexto.split(',');
     
     const update = await util.gene_cons(lcSQL, [lnStatus, (!req.body.nota?'':req.body.nota), req.userId, req.body.id])
-    lcResp = other_utils.envi_corr(lnCorreo, rows[0].correo_institucional, laCampos);
-    //lcResp = other_utils.envi_corr(lnCorreo, "benigno.barragan@udg.mx", laCampos);
+    //lcResp = other_utils.envi_corr(lnCorreo, rows[0].correo_institucional, laCampos);
+    lcResp = other_utils.envi_corr(lnCorreo, "progap.cgipv@udg.mx", laCampos);
 
 
 
@@ -2150,7 +2150,7 @@ const progap_focamx4 = (async (req, res) => {
         rows = await util.gene_cons(lcSQL, [req.query.id, req.userId])
     }
 
-    console.log(rows)
+    //console.log(rows)
     if (rows.length <= 0){
         return res.json({"status" : "error", "message": "No se localizó archivo o no tienes derechos para verlo"})
     }
@@ -2201,8 +2201,8 @@ const progap_actu_estux2 = (async (req, res) => {
             `
 
             rows = await util.gene_cons(lcSQL, [req.body[i].codigo])
-            console.log(rows)
-            console.log(rows.length)
+            //console.log(rows)
+            //console.log(rows.length)
 
             if(rows.length >= 0){
                 lcSQL = `
@@ -2210,7 +2210,7 @@ const progap_actu_estux2 = (async (req, res) => {
 		                id_ciclo_curso, id_ciclo_condonar, id_estado, creditos, avance, cambios) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,CONCAT(?,'|INSERT|',NOW(),CHR(13)))
                 `
 
-                console.log(lcSQL)
+                //console.log(lcSQL)
                 rows = await util.gene_cons(lcSQL, [req.body[i].codigo, req.body[i].nombre, req.body[i].apellido_paterno, req.body[i].apellido_materno, req.body[i].curp, 
                         req.body[i].id_centro_universitario, req.body[i].id_programa, req.body[i].correo_institucional, req.body[i].id_ciclo_ingreso, lnCiclo, lnCiclo, 
                         1, (!req.body[i].creditos?0:req.body[i].creditos), (!req.body[i].avance?0:req.body[i].avance), req.userId])

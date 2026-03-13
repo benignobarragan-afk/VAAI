@@ -36,6 +36,10 @@
                 refresh: function(master, node, value) {
                     var total = master.count(); 
                     node.innerHTML = "<span style='font-weight:bold;'>Total de registros: " + total + "</span>";
+                },
+                getValue: function(node) {
+                    // Extraemos solo el texto limpio (sin el HTML de los colores y negritas)
+                    return node.innerText || node.textContent; 
                 }
             };
 
