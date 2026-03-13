@@ -2084,12 +2084,22 @@ const progap_focamx3 = (async (req, res) => {
         lnCorreo = 4;
         lcTexto = rows[0].nombre + ',' + rows[0].ciclo + ',' + rows[0].folio
     }else {
-        lnStatus = 4;
-        lnCorreo = 5;
-        lcTexto = rows[0].nombre + ',' + rows[0].ciclo + ',' + rows[0].folio + ',' + req.body.nota
-        if (!req.body.nota){
-            return res.json({"status" : "error", "message": "Faltó la nota del rechazo"})
+        if (req.body.tipo == 'O'){
+            lnStatus = 5;
+            lnCorreo = 6;
+            lcTexto = rows[0].nombre + ',' + rows[0].ciclo + ',' + rows[0].folio + ',' + req.body.nota
+            if (!req.body.nota){
+                return res.json({"status" : "error", "message": "Faltó la nota del rechazo con observaciones"})
+            }
+        }else{
+            lnStatus = 4;
+            lnCorreo = 5;
+            lcTexto = rows[0].nombre + ',' + rows[0].ciclo + ',' + rows[0].folio + ',' + req.body.nota
+            if (!req.body.nota){
+                return res.json({"status" : "error", "message": "Faltó la nota del rechazo"})
+            }
         }
+
     }
 
     lcSQL = `
@@ -2103,6 +2113,7 @@ const progap_focamx3 = (async (req, res) => {
     
     const update = await util.gene_cons(lcSQL, [lnStatus, (!req.body.nota?'':req.body.nota), req.userId, req.body.id])
     lcResp = other_utils.envi_corr(lnCorreo, rows[0].correo_institucional, laCampos);
+    //lcResp = other_utils.envi_corr(lnCorreo, "benigno.barragan@udg.mx", laCampos);
 
 
 

@@ -139,6 +139,7 @@
                                 type: "icon",
                                 id: "btn_Aceptar",
                                 label: "Aceptar (Ctrl+A)",
+                                css: "webix_primary", 
                                 icon: "mdi mdi-check-circle",
                                 hotkey: "ctrl-a", 
                                 width: 180,
@@ -188,6 +189,90 @@
                                                 webix.message({ type: "error", text: "Error de conexión con el servidor" });
                                                 console.error("Error Ajax:", err);
                                             });
+                                        
+                                    } else {
+                                        webix.message({ type: "error", text: "Por favor, selecciona un trámite primero" });
+                                    }
+                                }
+                            },
+                            {
+                                view: "button",
+                                type: "icon",
+                                id: "btn_rechazarO",
+                                label: "Rechazar con Observación (Ctrl+O)",
+                                icon: "mdi mdi-close-circle-multiple",
+                                hotkey: "ctrl-o", 
+                                css: "webix_danger", 
+                                width: 280,
+                                click: function() {
+                                    // 1. Obtenemos la tabla por su ID
+                                    var tabla = $$("dtable");
+                                    
+                                    // 2. Obtenemos el ID de la fila seleccionada
+                                    var idSeleccionado = tabla.getSelectedId();
+
+                                    if (idSeleccionado) {
+                                        // Aquí iría tu llamada al API para guardar en MariaDB si fuera necesario
+                                        // ...
+                                        
+                                        Swal.fire({
+                                        title: 'Rechazo de Documento con Observación',
+                                        text: 'Ingrese el motivo o comentario del rechazo:',
+                                        input: 'text',  
+                                        inputPlaceholder: 'Escriba el motivo aquí...',
+                                        showCancelButton: true,
+                                        confirmButtonText: 'Aceptar',
+                                        cancelButtonText: 'Cancelar',
+                                        inputValidator: (value) => {
+                                            if (!value) {
+                                                return '¡El motivo es obligatorio para continuar!';
+                                            }
+                                        }
+                                        }).then((result) => {
+                                            if (result.isConfirmed) {
+                                                // El valor capturado está en result.value
+                                                var motivo = result.value;
+
+                                                webix.ajax().post("/api/progap/progap_focamx3", { id: idSeleccionado.id, nota: motivo, tipo: 'O' })
+                                                    .then(function(res) {
+                                                        var data = res.json();
+                                                        console.log(data)
+
+                                                        // Verificamos si el backend regresó éxito (asumiendo que mandas {status: "success"})
+                                                        if (data && data.status == "success") {
+                                                            
+                                                            // 1. Mensaje de éxito
+                                                            webix.message({ type: "error", text: "Documento rechazado" });
+
+                                                            // 2. Eliminamos la fila físicamente de la tabla
+                                                            tabla.remove(idSeleccionado);
+
+                                                            // 3. Seleccionamos el siguiente registro
+                                                            var primerId = tabla.getFirstId();
+                                                            if (primerId) {
+                                                                tabla.select(primerId);
+                                                            } else {
+                                                                // Si ya no hay registros, limpiamos el visor de PDF
+                                                                $$("visor_progap").setValues({ src: "" });
+                                                            }
+
+                                                        } else {
+                                                            // Manejo de error lógico (ej. el registro ya estaba validado)
+                                                            webix.alert({
+                                                                title: "Atención",
+                                                                type: "alert-error",
+                                                                text: data.message || "Hubo un problema al validar el documento"
+                                                            });
+                                                        }
+                                                    })
+                                                    .catch(function(err) {
+                                                        tabla.hideProgress();
+                                                        // Manejo de error de red o servidor (Error 500, 404, etc.)
+                                                        webix.message({ type: "error", text: "Error de conexión con el servidor" });
+                                                        console.error("Error Ajax:", err);
+                                                    });
+                                            }
+                                        });
                                         
                                     } else {
                                         webix.message({ type: "error", text: "Por favor, selecciona un trámite primero" });
