@@ -2128,7 +2128,7 @@ const progap_focamx3 = (async (req, res) => {
 
     lcResp = other_utils.envi_corr(lnCorreo, rows[0].correo_institucional, laCampos);
     //lcResp = other_utils.envi_corr(lnCorreo, "progap.cgipv@udg.mx", laCampos);
-
+    //lcResp = other_utils.envi_corr(lnCorreo, "benigno.barragan@udg.mx", laCampos);
 
 
     return res.json({"status" : "success", "message": "El cambio se aplicó correctamente"})
