@@ -2082,12 +2082,12 @@ const progap_focamx3 = (async (req, res) => {
     if(req.body.acepta){
         lnStatus = 3;
         lnCorreo = 4;
-        lcTexto = rows[0].nombre + ',' + rows[0].ciclo + ',' + rows[0].folio
+        lcTexto = rows[0].nombre + '|' + rows[0].ciclo + '|' + rows[0].folio
     }else {
         if (req.body.tipo == 'O'){
             lnStatus = 5;
             lnCorreo = 6;
-            lcTexto = rows[0].nombre + ',' + rows[0].ciclo + ',' + rows[0].folio + ',' + req.body.nota
+            lcTexto = rows[0].nombre + '|' + rows[0].ciclo + '|' + rows[0].folio + '|' + req.body.nota
             if (!req.body.nota){
                 return res.json({"status" : "error", "message": "Faltó la nota del rechazo con observaciones"})
             }
